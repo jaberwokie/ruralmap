@@ -1,6 +1,9 @@
 import { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
+import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 
@@ -164,10 +167,26 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
       });
   }, [filteredFacilities, layers.radius, radiusKm]);
 
-  // Draw facility markers
+  // Draw facility markers with clustering
   useEffect(() => {
-    if (!markersRef.current) return;
+    if (!markersRef.current || !mapRef.current) return;
     markersRef.current.clearLayers();
+
+    const clusterGroup = (L as any).markerClusterGroup({
+      maxClusterRadius: 40,
+      spiderfyOnMaxZoom: true,
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      iconCreateFunction: (cluster: any) => {
+        const count = cluster.getChildCount();
+        return L.divIcon({
+          className: '',
+          html: `<div class="cluster-marker">${count}</div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+      },
+    });
 
     filteredFacilities.forEach(facility => {
       if (facility.type === 'hospital' && !layers.hospitals) return;
@@ -201,8 +220,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
         className: 'facility-tooltip',
       });
 
-      markersRef.current!.addLayer(marker);
+      clusterGroup.addLayer(marker);
     });
+
+    markersRef.current.addLayer(clusterGroup);
   }, [filteredFacilities, layers.hospitals, layers.clinics, layers.tier1, onFacilityClick]);
 
   return <div ref={containerRef} className="w-full h-full" />;
