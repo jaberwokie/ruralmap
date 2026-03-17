@@ -503,28 +503,42 @@ const Sidebar = ({
         </button>
         {facilitiesOpen && (
           <div className="flex-1 overflow-y-auto space-y-0.5">
-            {displayFacilities.map(facility => (
-              <button
-                key={facility.id}
-                onClick={() => onFacilityClick(facility)}
-                className="w-full text-left px-2 py-2 rounded hover:bg-secondary transition-colors duration-150"
-              >
-                <div className="flex items-start gap-2">
-                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                    facility.type === 'hospital' ? 'bg-hospital' :
-                    facility.type === 'tier1' ? 'bg-green-500' : 'bg-clinic'
-                  }`} />
-                  <div className="min-w-0">
-                    <div className="text-xs font-medium text-foreground truncate">
-                      {facility.name}
-                    </div>
-                    <div className="text-[11px] text-muted-foreground">
-                      {facility.city}{facility.county ? `, ${facility.county} Co.` : ''}
+            {displayFacilities.length === 0 ? (
+              <div className="py-8 text-center">
+                <p className="text-xs text-muted-foreground">No facilities match your search or filters.</p>
+                {(searchQuery || filters.types.size > 0 || filters.counties.size > 0) && (
+                  <button
+                    onClick={() => { onSearchChange(''); onFiltersChange({ types: new Set(), counties: new Set() }); }}
+                    className="mt-2 text-[11px] text-primary hover:underline"
+                  >
+                    Clear all filters
+                  </button>
+                )}
+              </div>
+            ) : (
+              displayFacilities.map(facility => (
+                <button
+                  key={facility.id}
+                  onClick={() => onFacilityClick(facility)}
+                  className="w-full text-left px-2 py-2 rounded hover:bg-secondary transition-colors duration-150"
+                >
+                  <div className="flex items-start gap-2">
+                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
+                      facility.type === 'hospital' ? 'bg-hospital' :
+                      facility.type === 'tier1' ? 'bg-green-500' : 'bg-clinic'
+                    }`} />
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-foreground truncate">
+                        {facility.name}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {facility.city}{facility.county ? `, ${facility.county} Co.` : ''}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              ))
+            )}
           </div>
         )}
       </div>
