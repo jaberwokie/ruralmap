@@ -93,6 +93,8 @@ const Index = () => {
           onFacilityClick={handleFacilityClick}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
+          coverageRadius={coverageRadius}
+          coverageGaps={coverageGaps}
         />
         {selectedFacility && (
           <DetailPanel
