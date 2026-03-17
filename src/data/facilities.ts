@@ -1,4 +1,5 @@
 export type FacilityType = 'hospital' | 'clinic' | 'tier1';
+export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
 
 export interface Facility {
   id: string;
@@ -9,6 +10,7 @@ export interface Facility {
   lat: number;
   lng: number;
   notes?: string;
+  tier?: FacilityTier;
 }
 
 export const defaultFacilities: Facility[] = [

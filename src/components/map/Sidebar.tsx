@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, MapPin, Building2, Plus } from 'lucide-react';
+import { useState, useRef, useMemo } from 'react';
+import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-react';
 import { Facility, FacilityType } from '@/data/facilities';
+import { Filters } from '@/pages/Index';
 
 interface LayerState {
   counties: boolean;
@@ -13,11 +14,14 @@ interface LayerState {
 interface SidebarProps {
   layers: LayerState;
   onToggleLayer: (layer: keyof LayerState) => void;
+  allFacilities: Facility[];
   facilities: Facility[];
   onAddFacilities: (facilities: Facility[]) => void;
   searchQuery: string;
   onSearchChange: (query: string) => void;
   onFacilityClick: (facility: Facility) => void;
+  filters: Filters;
+  onFiltersChange: (filters: Filters) => void;
 }
 
 const LAYER_CONFIG = [
@@ -31,19 +35,49 @@ const LAYER_CONFIG = [
 const Sidebar = ({
   layers,
   onToggleLayer,
+  allFacilities,
   facilities,
   onAddFacilities,
   searchQuery,
   onSearchChange,
   onFacilityClick,
+  filters,
+  onFiltersChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
   const clinicCount = facilities.filter(f => f.type === 'clinic').length;
   const tier1Count = facilities.filter(f => f.type === 'tier1').length;
+  const totalCount = facilities.length;
+
+  // Unique counties from all facilities
+  const allCounties = useMemo(() => {
+    const set = new Set(allFacilities.map(f => f.county).filter(Boolean));
+    return Array.from(set).sort();
+  }, [allFacilities]);
+
+  const activeFilterCount = filters.types.size + filters.counties.size;
+
+  const toggleTypeFilter = (type: string) => {
+    const next = new Set(filters.types);
+    if (next.has(type)) next.delete(type); else next.add(type);
+    onFiltersChange({ ...filters, types: next });
+  };
+
+  const toggleCountyFilter = (county: string) => {
+    const next = new Set(filters.counties);
+    if (next.has(county)) next.delete(county); else next.add(county);
+    onFiltersChange({ ...filters, counties: next });
+  };
+
+  const clearFilters = () => {
+    onFiltersChange({ types: new Set(), counties: new Set() });
+  };
 
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,7 +129,7 @@ const Sidebar = ({
     e.target.value = '';
   };
 
-  const filteredFacilities = searchQuery
+  const displayFacilities = searchQuery
     ? facilities.filter(f =>
         f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -108,21 +142,25 @@ const Sidebar = ({
       {/* Header */}
       <div className="p-4 pb-3">
         <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Nevada Behavioral Health
-        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
       </div>
 
       {/* Stats Bar */}
-      <div className="px-4 pb-3 flex gap-3 text-xs">
+      <div className="px-4 pb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
         <span className="text-muted-foreground">
+          <span className="font-mono font-medium text-foreground">{totalCount}</span> Total
+        </span>
+        <span className="text-muted-foreground flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
           <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
         </span>
-        <span className="text-muted-foreground">
+        <span className="text-muted-foreground flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-clinic inline-block" />
           <span className="font-mono font-medium text-foreground">{clinicCount}</span> Clinics
         </span>
         {tier1Count > 0 && (
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
             <span className="font-mono font-medium text-foreground">{tier1Count}</span> Tier 1
           </span>
         )}
@@ -142,8 +180,89 @@ const Sidebar = ({
         </div>
       </div>
 
-      {/* Layer Manager */}
+      {/* Filter Panel */}
       <div className="px-4 pb-3">
+        <button
+          onClick={() => setFiltersOpen(!filtersOpen)}
+          className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors w-full"
+        >
+          {filtersOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          <Filter className="w-3 h-3" />
+          <span>Filters</span>
+          {activeFilterCount > 0 && (
+            <span className="ml-auto flex items-center gap-1">
+              <span className="bg-primary text-primary-foreground text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full">
+                {activeFilterCount}
+              </span>
+              <button
+                onClick={(e) => { e.stopPropagation(); clearFilters(); }}
+                className="p-0.5 hover:bg-secondary rounded"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          )}
+        </button>
+        {filtersOpen && (
+          <div className="space-y-3">
+            {/* Type Filter */}
+            <div>
+              <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">Type</div>
+              <div className="flex gap-1.5">
+                {[
+                  { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
+                  { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
+                  { value: 'tier1', label: 'Tier 1', color: 'bg-green-500' },
+                ].map(({ value, label, color }) => {
+                  const active = filters.types.has(value);
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => toggleTypeFilter(value)}
+                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] transition-all duration-150 ${
+                        active
+                          ? 'bg-foreground text-background font-medium'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${color} ${!active ? 'opacity-50' : 'opacity-100'}`} />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* County Filter */}
+            <div>
+              <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">County</div>
+              <div className="flex flex-wrap gap-1">
+                {allCounties.map(county => {
+                  const active = filters.counties.has(county);
+                  return (
+                    <button
+                      key={county}
+                      onClick={() => toggleCountyFilter(county)}
+                      className={`px-2 py-0.5 rounded text-[11px] transition-all duration-150 ${
+                        active
+                          ? 'bg-foreground text-background font-medium'
+                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      {county}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-border mx-4" />
+
+      {/* Layer Manager */}
+      <div className="px-4 py-3">
         <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
           Layers
         </div>
@@ -215,7 +334,7 @@ const Sidebar = ({
               <span>Drop CSV or click to upload</span>
             </button>
             <p className="text-[10px] text-muted-foreground mt-1.5 px-1">
-              Required: name, latitude, longitude. Optional: type, city, county.
+              Required: name, latitude, longitude. Optional: type, city, county, tier.
             </p>
           </div>
         )}
@@ -228,15 +347,15 @@ const Sidebar = ({
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
         >
           {facilitiesOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          Facilities ({filteredFacilities.length})
+          Facilities ({displayFacilities.length})
         </button>
         {facilitiesOpen && (
           <div className="flex-1 overflow-y-auto space-y-0.5">
-            {filteredFacilities.map(facility => (
+            {displayFacilities.map(facility => (
               <button
                 key={facility.id}
                 onClick={() => onFacilityClick(facility)}
-                className="w-full text-left px-2 py-2 rounded hover:bg-secondary transition-colors duration-150 group"
+                className="w-full text-left px-2 py-2 rounded hover:bg-secondary transition-colors duration-150"
               >
                 <div className="flex items-start gap-2">
                   <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
