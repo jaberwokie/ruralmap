@@ -98,6 +98,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     memberVolumeRef.current = L.layerGroup().addTo(map);
+    tier1Ref.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
