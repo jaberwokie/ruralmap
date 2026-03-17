@@ -34,6 +34,7 @@ const Index = () => {
     tier1: true,
     radius: false,
     gaps: false,
+    memberVolume: false,
   });
 
   const filteredFacilities = useMemo(() => {
