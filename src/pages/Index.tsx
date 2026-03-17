@@ -70,26 +70,48 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-background">
-      <Sidebar
-        layers={layers}
-        onToggleLayer={handleToggleLayer}
-        allFacilities={facilities}
-        facilities={filteredFacilities}
-        onAddFacilities={handleAddFacilities}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onFacilityClick={handleFacilityClick}
-        filters={filters}
-        onFiltersChange={setFilters}
-        radiusKm={radiusKm}
-        onRadiusChange={setRadiusKm}
-        coverageRadius={coverageRadius}
-        coverageGaps={coverageGaps}
-        onCoverageRadiusChange={handleCoverageRadiusChange}
-        onCoverageGapsChange={handleCoverageGapsChange}
-      />
-      <div className="flex-1 relative">
+    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+      {/* Mobile header */}
+      <div className="md:hidden flex items-center justify-between p-3 bg-card border-b border-border">
+        <div>
+          <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
+          <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
+        </div>
+        <button
+          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
+          className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium"
+        >
+          {mobileSidebarOpen ? 'Map' : 'Filters'}
+        </button>
+      </div>
+
+      {/* Sidebar: always visible on desktop, toggled on mobile */}
+      <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 h-[calc(100vh-52px)] md:h-full`}>
+        <Sidebar
+          layers={layers}
+          onToggleLayer={handleToggleLayer}
+          allFacilities={facilities}
+          facilities={filteredFacilities}
+          onAddFacilities={handleAddFacilities}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onFacilityClick={(facility) => {
+            handleFacilityClick(facility);
+            setMobileSidebarOpen(false);
+          }}
+          filters={filters}
+          onFiltersChange={setFilters}
+          radiusKm={radiusKm}
+          onRadiusChange={setRadiusKm}
+          coverageRadius={coverageRadius}
+          coverageGaps={coverageGaps}
+          onCoverageRadiusChange={handleCoverageRadiusChange}
+          onCoverageGapsChange={handleCoverageGapsChange}
+        />
+      </div>
+
+      {/* Map */}
+      <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 relative h-[calc(100vh-52px)] md:h-full`}>
         <MapView
           facilities={filteredFacilities}
           layers={layers}
