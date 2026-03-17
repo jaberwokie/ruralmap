@@ -176,12 +176,14 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
 
       const markerClass = facility.type === 'hospital' ? 'hospital' :
                           facility.type === 'tier1' ? 'tier1' : 'clinic';
+      const isTier1 = facility.type === 'tier1';
+      const size = isTier1 ? 18 : 12;
 
       const icon = L.divIcon({
         className: '',
         html: `<div class="facility-marker ${markerClass}"></div>`,
-        iconSize: [12, 12],
-        iconAnchor: [6, 6],
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
       });
 
       const marker = L.marker([facility.lat, facility.lng], { icon });
