@@ -22,6 +22,7 @@ const Index = () => {
   const [facilities, setFacilities] = useState<Facility[]>(defaultFacilities);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [radiusKm, setRadiusKm] = useState(50);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
@@ -65,6 +66,8 @@ const Index = () => {
         onFacilityClick={handleFacilityClick}
         filters={filters}
         onFiltersChange={setFilters}
+        radiusKm={radiusKm}
+        onRadiusChange={setRadiusKm}
       />
       <div className="flex-1 relative">
         <MapView
@@ -72,6 +75,7 @@ const Index = () => {
           layers={layers}
           onFacilityClick={handleFacilityClick}
           searchQuery={searchQuery}
+          radiusKm={radiusKm}
         />
         {selectedFacility && (
           <DetailPanel
