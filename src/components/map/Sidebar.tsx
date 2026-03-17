@@ -38,8 +38,6 @@ const LAYER_CONFIG = [
   { key: 'clinics' as const, label: 'Clinics / FQHCs', color: 'bg-clinic' },
   { key: 'zones' as const, label: 'Operational Zones', color: 'bg-primary/30' },
   { key: 'tier1' as const, label: 'Tier 1 Providers', color: 'bg-green-500' },
-  { key: 'radius' as const, label: 'Coverage Radius', color: 'bg-primary' },
-  { key: 'gaps' as const, label: 'Coverage Gaps', color: 'bg-destructive' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
 ];
 
