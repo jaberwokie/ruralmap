@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-react';
 import { Facility, FacilityType } from '@/data/facilities';
+import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 
 interface LayerState {
