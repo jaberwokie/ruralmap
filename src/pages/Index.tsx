@@ -75,6 +75,7 @@ const Index = () => {
           layers={layers}
           onFacilityClick={handleFacilityClick}
           searchQuery={searchQuery}
+          radiusKm={radiusKm}
         />
         {selectedFacility && (
           <DetailPanel

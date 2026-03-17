@@ -334,19 +334,37 @@ const Sidebar = ({
         </div>
         <div className="space-y-1">
           {LAYER_CONFIG.map(({ key, label, color }) => (
-            <button
-              key={key}
-              onClick={() => onToggleLayer(key)}
-              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs hover:bg-secondary transition-colors duration-200"
-            >
-              <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-              <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
-                {label}
-              </span>
-              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
-              </div>
-            </button>
+            <div key={key}>
+              <button
+                onClick={() => onToggleLayer(key)}
+                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs hover:bg-secondary transition-colors duration-200"
+              >
+                <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  {key === 'radius' ? `${label} (${radiusKm} km)` : label}
+                </span>
+                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+                </div>
+              </button>
+              {key === 'radius' && layers.radius && (
+                <div className="px-2 pb-1 pt-0.5">
+                  <input
+                    type="range"
+                    min={10}
+                    max={150}
+                    step={5}
+                    value={radiusKm}
+                    onChange={(e) => onRadiusChange(Number(e.target.value))}
+                    className="w-full h-1 accent-primary cursor-pointer"
+                  />
+                  <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
+                    <span>10 km</span>
+                    <span>150 km</span>
+                  </div>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
