@@ -373,6 +373,23 @@ const Sidebar = ({
                   Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius. Adjust the radius slider to change the threshold.
                 </p>
               )}
+              {key === 'memberVolume' && layers.memberVolume && (
+                <div className="px-2 pb-1 pt-1 space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex-1 h-2.5 rounded-sm" style={{
+                      background: 'linear-gradient(to right, hsl(190, 40%, 92%), hsl(190, 55%, 64%), hsl(190, 70%, 37%))'
+                    }} />
+                  </div>
+                  <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                    <span>0</span>
+                    <span>5,000</span>
+                    <span>10,764</span>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Member count by county. Darker = higher volume.
+                  </p>
+                </div>
+              )}
             </div>
           ))}
         </div>
