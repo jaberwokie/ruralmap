@@ -80,34 +80,88 @@ const Sidebar = ({
     onFiltersChange({ types: new Set(), counties: new Set() });
   };
 
+  const normalizeHeader = (h: string) =>
+    String(h).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const parseCSVLine = (line: string): string[] => {
+    const values: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === ',' && !inQuotes) {
+        values.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+    return values;
+  };
+
+  const stripLineQuotes = (line: string): string => {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+      return trimmed.slice(1, -1);
+    }
+    return trimmed;
+  };
+
   const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const text = event.target?.result as string;
-      const lines = text.split('\n').filter(l => l.trim());
-      if (lines.length < 2) return;
+      let text = event.target?.result as string;
+      if (!text) { toast.error('Failed to read file.'); return; }
 
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      const nameIdx = headers.indexOf('name');
-      const typeIdx = headers.indexOf('type');
-      const cityIdx = headers.indexOf('city');
-      const countyIdx = headers.indexOf('county');
-      const latIdx = headers.indexOf('latitude') !== -1 ? headers.indexOf('latitude') : headers.indexOf('lat');
-      const lngIdx = headers.indexOf('longitude') !== -1 ? headers.indexOf('longitude') : headers.indexOf('lng');
+      // Strip BOM
+      if (text.startsWith('\uFEFF')) text = text.substring(1);
 
-      if (nameIdx === -1 || latIdx === -1 || lngIdx === -1) return;
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { toast.error('CSV file has no data rows.'); return; }
+
+      const headers = parseCSVLine(stripLineQuotes(lines[0]));
+      const norm = headers.map(normalizeHeader);
+
+      const find = (key: string) => {
+        let idx = norm.indexOf(key);
+        if (idx === -1) idx = norm.findIndex(h => h.startsWith(key));
+        if (idx === -1) idx = norm.findIndex(h => h.includes(key));
+        return idx;
+      };
+
+      const nameIdx = find('name');
+      const latIdx = find('lat');
+      const lngIdx = find('lon') !== -1 ? find('lon') : find('lng');
+      const typeIdx = find('type');
+      const cityIdx = find('city');
+      const countyIdx = find('county');
+      const notesIdx = find('note');
+      const tierIdx = find('tier');
+
+      if (nameIdx === -1 || latIdx === -1 || lngIdx === -1) {
+        toast.error('Missing required columns: name, latitude, longitude.');
+        return;
+      }
 
       const newFacilities: Facility[] = [];
       for (let i = 1; i < lines.length; i++) {
-        const cols = lines[i].split(',').map(c => c.trim());
+        const cols = parseCSVLine(stripLineQuotes(lines[i]));
         const lat = parseFloat(cols[latIdx]);
         const lng = parseFloat(cols[lngIdx]);
         if (isNaN(lat) || isNaN(lng)) continue;
 
-        const rawType = (cols[typeIdx] || 'clinic').toLowerCase();
+        const rawType = (typeIdx !== -1 ? cols[typeIdx] || '' : '').toLowerCase();
         const type: FacilityType = rawType.includes('hospital') ? 'hospital' :
                                     rawType.includes('tier') ? 'tier1' : 'clinic';
 
@@ -115,15 +169,20 @@ const Sidebar = ({
           id: `csv-${Date.now()}-${i}`,
           name: cols[nameIdx] || `Facility ${i}`,
           type,
-          city: cols[cityIdx] || '',
-          county: cols[countyIdx] || '',
+          city: cityIdx !== -1 ? cols[cityIdx] || '' : '',
+          county: countyIdx !== -1 ? cols[countyIdx] || '' : '',
           lat,
           lng,
+          notes: notesIdx !== -1 ? cols[notesIdx] : undefined,
+          tier: tierIdx !== -1 ? (cols[tierIdx] as any) : undefined,
         });
       }
 
       if (newFacilities.length > 0) {
         onAddFacilities(newFacilities);
+        toast.success(`Imported ${newFacilities.length} facilities.`);
+      } else {
+        toast.error('No valid facilities found in the CSV.');
       }
     };
     reader.readAsText(file);
