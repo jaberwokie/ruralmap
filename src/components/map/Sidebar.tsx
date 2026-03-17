@@ -337,11 +337,17 @@ const Sidebar = ({
           Layers
         </div>
         <div className="space-y-1">
-          {LAYER_CONFIG.map(({ key, label, color }) => (
+          {LAYER_CONFIG.map(({ key, label, color }) => {
+            const isGaps = key === 'gaps';
+            const isDisabled = isGaps && !layers.radius;
+            return (
             <div key={key}>
               <button
                 onClick={() => onToggleLayer(key)}
-                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs hover:bg-secondary transition-colors duration-200"
+                className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 ${
+                  isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-secondary'
+                }`}
+                disabled={isDisabled}
               >
                 <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
                 <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -373,6 +379,11 @@ const Sidebar = ({
                   Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius. Adjust the radius slider to change the threshold.
                 </p>
               )}
+              {isGaps && !layers.gaps && (
+                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
+                  Computed from the active coverage radius.
+                </p>
+              )}
               {key === 'memberVolume' && layers.memberVolume && (
                 <div className="px-2 pb-1 pt-1 space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -391,7 +402,8 @@ const Sidebar = ({
                 </div>
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
