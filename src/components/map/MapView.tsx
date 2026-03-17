@@ -249,7 +249,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
-    if (!layers.gaps) return;
+    if (!coverageGaps) return;
 
     const hospitals = facilities.filter(f => f.type === 'hospital');
 
