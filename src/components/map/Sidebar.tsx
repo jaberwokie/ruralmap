@@ -12,6 +12,7 @@ interface LayerState {
   tier1: boolean;
   radius: boolean;
   gaps: boolean;
+  memberVolume: boolean;
 }
 
 interface SidebarProps {
@@ -37,6 +38,7 @@ const LAYER_CONFIG = [
   { key: 'tier1' as const, label: 'Tier 1 Providers', color: 'bg-green-500' },
   { key: 'radius' as const, label: 'Coverage Radius', color: 'bg-primary' },
   { key: 'gaps' as const, label: 'Coverage Gaps', color: 'bg-destructive' },
+  { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
 ];
 
 const Sidebar = ({

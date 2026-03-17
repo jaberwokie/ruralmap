@@ -12,6 +12,7 @@ interface LayerState {
   tier1: boolean;
   radius: boolean;
   gaps: boolean;
+  memberVolume: boolean;
 }
 
 export interface Filters {
@@ -33,6 +34,7 @@ const Index = () => {
     tier1: true,
     radius: false,
     gaps: false,
+    memberVolume: false,
   });
 
   const filteredFacilities = useMemo(() => {

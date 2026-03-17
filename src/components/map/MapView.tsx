@@ -6,6 +6,7 @@ import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
+import { memberVolumeData } from '@/data/member-volume';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -17,6 +18,7 @@ interface MapViewProps {
     tier1: boolean;
     radius: boolean;
     gaps: boolean;
+    memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
@@ -57,6 +59,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
+  const memberVolumeRef = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -93,6 +96,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
     labelsRef.current = L.layerGroup().addTo(map);
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
+    memberVolumeRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
@@ -271,6 +275,44 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
       }
     });
   }, [facilities, layers.gaps, radiusKm]);
+
+  // Draw member volume choropleth
+  useEffect(() => {
+    if (!memberVolumeRef.current) return;
+    memberVolumeRef.current.clearLayers();
+
+    if (!layers.memberVolume) return;
+
+    const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
+    const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
+
+    nevadaCounties.forEach(county => {
+      const count = volumeMap.get(county.name) ?? 0;
+      const intensity = maxCount > 0 ? count / maxCount : 0;
+      // Interpolate from light teal to deep teal
+      const lightness = 92 - intensity * 55; // 92% (light) → 37% (dark)
+      const saturation = 40 + intensity * 30; // 40% → 70%
+      const fillColor = `hsl(190, ${saturation}%, ${lightness}%)`;
+      const borderColor = `hsl(190, ${saturation + 10}%, ${Math.max(lightness - 15, 20)}%)`;
+
+      const polygon = L.polygon(county.boundaries, {
+        color: borderColor,
+        weight: 1.5,
+        fillColor,
+        fillOpacity: 0.75,
+      });
+
+      polygon.bindTooltip(
+        `<div style="padding: 6px 10px; font-size: 12px;">
+          <div style="font-weight: 600; margin-bottom: 2px;">${county.name} County</div>
+          <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${count.toLocaleString()} members</div>
+        </div>`,
+        { sticky: true, className: 'facility-tooltip' }
+      );
+
+      memberVolumeRef.current!.addLayer(polygon);
+    });
+  }, [layers.memberVolume]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
