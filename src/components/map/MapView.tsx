@@ -18,6 +18,7 @@ interface MapViewProps {
     tier1: boolean;
     radius: boolean;
     gaps: boolean;
+    memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
