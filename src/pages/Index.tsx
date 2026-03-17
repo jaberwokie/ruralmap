@@ -36,11 +36,14 @@ const Index = () => {
   });
 
   const filteredFacilities = useMemo(() => {
-    return facilities.filter(f => {
-      if (filters.types.size > 0 && !filters.types.has(f.type)) return false;
-      if (filters.counties.size > 0 && !filters.counties.has(f.county)) return false;
-      return true;
-    });
+    return facilities
+      .filter(f => {
+        // Skip facilities with missing/invalid coordinates
+        if (!f.lat || !f.lng || isNaN(f.lat) || isNaN(f.lng)) return false;
+        if (filters.types.size > 0 && !filters.types.has(f.type)) return false;
+        if (filters.counties.size > 0 && !filters.counties.has(f.county)) return false;
+        return true;
+      });
   }, [facilities, filters]);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
