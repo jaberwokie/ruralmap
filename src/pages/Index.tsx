@@ -29,6 +29,7 @@ const Index = () => {
     clinics: true,
     zones: true,
     tier1: true,
+    radius: false,
   });
 
   const filteredFacilities = useMemo(() => {

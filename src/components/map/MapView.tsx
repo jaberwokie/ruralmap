@@ -141,6 +141,30 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery }: MapViewPr
     });
   }, [layers.zones]);
 
+  // Draw hospital coverage radius circles
+  useEffect(() => {
+    if (!radiusRef.current) return;
+    radiusRef.current.clearLayers();
+
+    if (!layers.radius) return;
+
+    const RADIUS_METERS = 50000; // 50 km
+
+    filteredFacilities
+      .filter(f => f.type === 'hospital')
+      .forEach(facility => {
+        const circle = L.circle([facility.lat, facility.lng], {
+          radius: RADIUS_METERS,
+          color: 'hsla(217, 91%, 60%, 0.35)',
+          weight: 1.5,
+          fillColor: 'hsla(217, 91%, 60%, 0.06)',
+          fillOpacity: 1,
+          dashArray: '6 4',
+        });
+        radiusRef.current!.addLayer(circle);
+      });
+  }, [filteredFacilities, layers.radius]);
+
   // Draw facility markers
   useEffect(() => {
     if (!markersRef.current) return;
