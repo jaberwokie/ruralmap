@@ -10,6 +10,7 @@ export interface Facility {
   lat: number;
   lng: number;
   notes?: string;
+  tier?: FacilityTier;
 }
 
 export const defaultFacilities: Facility[] = [
