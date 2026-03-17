@@ -60,6 +60,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const memberVolumeRef = useRef<L.LayerGroup | null>(null);
+  const tier1Ref = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
