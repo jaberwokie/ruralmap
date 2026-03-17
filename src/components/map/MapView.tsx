@@ -189,8 +189,9 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
 
   // Draw facility markers with clustering
   useEffect(() => {
-    if (!markersRef.current || !mapRef.current) return;
+    if (!markersRef.current || !mapRef.current || !tier1Ref.current) return;
     markersRef.current.clearLayers();
+    tier1Ref.current.clearLayers();
 
     const clusterGroup = (L as any).markerClusterGroup({
       maxClusterRadius: 40,
@@ -213,9 +214,9 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       if (facility.type === 'clinic' && !layers.clinics) return;
       if (facility.type === 'tier1' && !layers.tier1) return;
 
-      const markerClass = facility.type === 'hospital' ? 'hospital' :
-                          facility.type === 'tier1' ? 'tier1' : 'clinic';
       const isTier1 = facility.type === 'tier1';
+      const markerClass = facility.type === 'hospital' ? 'hospital' :
+                          isTier1 ? 'tier1' : 'clinic';
       const size = isTier1 ? 18 : 12;
 
       const icon = L.divIcon({
@@ -240,7 +241,11 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         className: 'facility-tooltip',
       });
 
-      clusterGroup.addLayer(marker);
+      if (isTier1) {
+        tier1Ref.current!.addLayer(marker);
+      } else {
+        clusterGroup.addLayer(marker);
+      }
     });
 
     markersRef.current.addLayer(clusterGroup);
