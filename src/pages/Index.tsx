@@ -32,6 +32,7 @@ const Index = () => {
     zones: true,
     tier1: true,
     radius: false,
+    gaps: false,
   });
 
   const filteredFacilities = useMemo(() => {

@@ -240,6 +240,38 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
     markersRef.current.addLayer(clusterGroup);
   }, [filteredFacilities, layers.hospitals, layers.clinics, layers.tier1, onFacilityClick]);
 
+  // Draw coverage gap overlays
+  useEffect(() => {
+    if (!gapsRef.current) return;
+    gapsRef.current.clearLayers();
+
+    if (!layers.gaps) return;
+
+    const hospitals = facilities.filter(f => f.type === 'hospital');
+
+    nevadaCounties.forEach(county => {
+      const [cLat, cLng] = county.center;
+      const covered = hospitals.some(h => haversineKm(cLat, cLng, h.lat, h.lng) <= radiusKm);
+
+      if (!covered) {
+        const polygon = L.polygon(county.boundaries, {
+          color: 'hsla(0, 84%, 60%, 0.5)',
+          weight: 2,
+          fillColor: 'hsla(0, 84%, 60%, 0.15)',
+          fillOpacity: 1,
+          dashArray: '6 4',
+        });
+
+        polygon.bindTooltip(
+          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">${county.name} County<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital within ${radiusKm} km</span></div>`,
+          { sticky: true, className: 'facility-tooltip' }
+        );
+
+        gapsRef.current!.addLayer(polygon);
+      }
+    });
+  }, [facilities, layers.gaps, radiusKm]);
+
   return <div ref={containerRef} className="w-full h-full" />;
 };
 
