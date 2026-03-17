@@ -12,6 +12,7 @@ interface MapViewProps {
     clinics: boolean;
     zones: boolean;
     tier1: boolean;
+    radius: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
