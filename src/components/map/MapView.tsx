@@ -12,6 +12,7 @@ interface MapViewProps {
     clinics: boolean;
     zones: boolean;
     tier1: boolean;
+    radius: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
@@ -38,6 +39,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery }: MapViewPr
   const countiesRef = useRef<L.LayerGroup | null>(null);
   const zonesRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
+  const radiusRef = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -72,6 +74,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery }: MapViewPr
     countiesRef.current = L.layerGroup().addTo(map);
     zonesRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
+    radiusRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
@@ -137,6 +140,30 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery }: MapViewPr
       zonesRef.current!.addLayer(polygon);
     });
   }, [layers.zones]);
+
+  // Draw hospital coverage radius circles
+  useEffect(() => {
+    if (!radiusRef.current) return;
+    radiusRef.current.clearLayers();
+
+    if (!layers.radius) return;
+
+    const RADIUS_METERS = 50000; // 50 km
+
+    filteredFacilities
+      .filter(f => f.type === 'hospital')
+      .forEach(facility => {
+        const circle = L.circle([facility.lat, facility.lng], {
+          radius: RADIUS_METERS,
+          color: 'hsla(217, 91%, 60%, 0.35)',
+          weight: 1.5,
+          fillColor: 'hsla(217, 91%, 60%, 0.06)',
+          fillOpacity: 1,
+          dashArray: '6 4',
+        });
+        radiusRef.current!.addLayer(circle);
+      });
+  }, [filteredFacilities, layers.radius]);
 
   // Draw facility markers
   useEffect(() => {

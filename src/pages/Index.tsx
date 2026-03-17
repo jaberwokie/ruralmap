@@ -10,6 +10,7 @@ interface LayerState {
   clinics: boolean;
   zones: boolean;
   tier1: boolean;
+  radius: boolean;
 }
 
 export interface Filters {
@@ -28,6 +29,7 @@ const Index = () => {
     clinics: true,
     zones: true,
     tier1: true,
+    radius: false,
   });
 
   const filteredFacilities = useMemo(() => {

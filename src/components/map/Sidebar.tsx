@@ -10,6 +10,7 @@ interface LayerState {
   clinics: boolean;
   zones: boolean;
   tier1: boolean;
+  radius: boolean;
 }
 
 interface SidebarProps {
@@ -31,6 +32,7 @@ const LAYER_CONFIG = [
   { key: 'clinics' as const, label: 'Clinics / FQHCs', color: 'bg-clinic' },
   { key: 'zones' as const, label: 'Operational Zones', color: 'bg-primary/30' },
   { key: 'tier1' as const, label: 'Tier 1 Providers', color: 'bg-green-500' },
+  { key: 'radius' as const, label: 'Coverage Radius (50 km)', color: 'bg-primary' },
 ];
 
 const Sidebar = ({
