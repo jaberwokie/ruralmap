@@ -92,6 +92,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
     zonesRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
     radiusRef.current = L.layerGroup().addTo(map);
+    gapsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
