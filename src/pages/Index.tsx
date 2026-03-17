@@ -12,6 +12,7 @@ interface LayerState {
   tier1: boolean;
   radius: boolean;
   gaps: boolean;
+  memberVolume: boolean;
 }
 
 export interface Filters {
