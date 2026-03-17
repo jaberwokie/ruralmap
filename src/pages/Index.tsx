@@ -66,6 +66,8 @@ const Index = () => {
         onFacilityClick={handleFacilityClick}
         filters={filters}
         onFiltersChange={setFilters}
+        radiusKm={radiusKm}
+        onRadiusChange={setRadiusKm}
       />
       <div className="flex-1 relative">
         <MapView
