@@ -12,6 +12,8 @@ export interface Facility {
   lng: number;
   notes?: string;
   tier?: FacilityTier;
+  service?: string;
+  volume?: number;
 }
 
 export const defaultFacilities: Facility[] = [
