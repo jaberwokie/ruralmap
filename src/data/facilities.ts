@@ -7,6 +7,7 @@ export interface Facility {
   type: FacilityType;
   city: string;
   county: string;
+  address?: string;
   lat: number;
   lng: number;
   notes?: string;
