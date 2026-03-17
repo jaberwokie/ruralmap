@@ -81,6 +81,10 @@ const Index = () => {
         onFiltersChange={setFilters}
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
+        coverageRadius={coverageRadius}
+        coverageGaps={coverageGaps}
+        onCoverageRadiusChange={handleCoverageRadiusChange}
+        onCoverageGapsChange={handleCoverageGapsChange}
       />
       <div className="flex-1 relative">
         <MapView
