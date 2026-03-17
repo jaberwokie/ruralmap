@@ -16,13 +16,13 @@ interface MapViewProps {
     clinics: boolean;
     zones: boolean;
     tier1: boolean;
-    radius: boolean;
-    gaps: boolean;
     memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
   radiusKm: number;
+  coverageRadius: boolean;
+  coverageGaps: boolean;
 }
 
 // Haversine distance in km
