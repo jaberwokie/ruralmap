@@ -11,6 +11,7 @@ interface LayerState {
   zones: boolean;
   tier1: boolean;
   radius: boolean;
+  gaps: boolean;
 }
 
 export interface Filters {
