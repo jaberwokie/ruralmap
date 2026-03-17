@@ -404,6 +404,7 @@ const Sidebar = ({
             </div>
             );
           })}
+        </div>
       </div>
 
       {/* Zone Legend */}
