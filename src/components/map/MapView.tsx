@@ -50,7 +50,7 @@ const ZONE_BORDER_COLORS = {
   none: 'hsla(240, 5%, 84%, 0.3)',
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
