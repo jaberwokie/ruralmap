@@ -243,8 +243,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
 
       if (isTier1) {
         tier1Ref.current!.addLayer(marker);
-      } else {
+      } else if (facility.county === 'Clark') {
         clusterGroup.addLayer(marker);
+      } else {
+        markersRef.current!.addLayer(marker);
       }
     });
 
