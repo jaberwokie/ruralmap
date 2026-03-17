@@ -41,6 +41,12 @@ const DetailPanel = ({ facility, onClose }: DetailPanelProps) => {
         </h3>
 
         <div className="mt-2 space-y-1.5">
+          {facility.address && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span>{facility.address}, {facility.city}, NV</span>
+            </div>
+          )}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="w-3 h-3 flex-shrink-0" />
             <span>{facility.city}, {facility.county} County</span>
