@@ -337,11 +337,17 @@ const Sidebar = ({
           Layers
         </div>
         <div className="space-y-1">
-          {LAYER_CONFIG.map(({ key, label, color }) => (
+          {LAYER_CONFIG.map(({ key, label, color }) => {
+            const isGaps = key === 'gaps';
+            const isDisabled = isGaps && !layers.radius;
+            return (
             <div key={key}>
               <button
                 onClick={() => onToggleLayer(key)}
-                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs hover:bg-secondary transition-colors duration-200"
+                className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 ${
+                  isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-secondary'
+                }`}
+                disabled={isDisabled}
               >
                 <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
                 <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
