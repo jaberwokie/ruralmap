@@ -24,6 +24,8 @@ interface SidebarProps {
   onFacilityClick: (facility: Facility) => void;
   filters: Filters;
   onFiltersChange: (filters: Filters) => void;
+  radiusKm: number;
+  onRadiusChange: (km: number) => void;
 }
 
 const LAYER_CONFIG = [
