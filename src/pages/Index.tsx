@@ -24,14 +24,14 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(50);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
+  const [coverageRadius, setCoverageRadius] = useState(true);
+  const [coverageGaps, setCoverageGaps] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     hospitals: true,
     clinics: true,
     zones: true,
     tier1: true,
-    radius: false,
-    gaps: false,
     memberVolume: false,
   });
 
