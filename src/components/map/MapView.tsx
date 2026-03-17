@@ -183,7 +183,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, layers.radius, radiusKm]);
+  }, [filteredFacilities, coverageRadius, radiusKm]);
 
   // Draw facility markers with clustering
   useEffect(() => {
