@@ -16,6 +16,7 @@ interface MapViewProps {
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
+  radiusKm: number;
 }
 
 const ZONE_COLORS = {
