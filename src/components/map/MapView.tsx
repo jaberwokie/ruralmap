@@ -37,16 +37,16 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 };
 
 const ZONE_COLORS = {
-  primary: 'hsla(217, 91%, 60%, 0.12)',
-  secondary: 'hsla(35, 92%, 50%, 0.08)',
-  frontier: 'hsla(240, 5%, 64%, 0.05)',
+  primary: 'hsla(217, 91%, 60%, 0.18)',
+  secondary: 'hsla(35, 92%, 50%, 0.14)',
+  frontier: 'hsla(240, 5%, 64%, 0.10)',
   none: 'transparent',
 };
 
 const ZONE_BORDER_COLORS = {
-  primary: 'hsla(217, 91%, 60%, 0.4)',
-  secondary: 'hsla(35, 92%, 50%, 0.3)',
-  frontier: 'hsla(240, 5%, 64%, 0.2)',
+  primary: 'hsla(217, 91%, 60%, 0.7)',
+  secondary: 'hsla(35, 92%, 50%, 0.55)',
+  frontier: 'hsla(240, 5%, 64%, 0.4)',
   none: 'hsla(240, 5%, 84%, 0.3)',
 };
 
