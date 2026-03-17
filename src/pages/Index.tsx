@@ -10,6 +10,7 @@ interface LayerState {
   clinics: boolean;
   zones: boolean;
   tier1: boolean;
+  radius: boolean;
 }
 
 export interface Filters {
