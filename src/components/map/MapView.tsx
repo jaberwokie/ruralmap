@@ -16,13 +16,13 @@ interface MapViewProps {
     clinics: boolean;
     zones: boolean;
     tier1: boolean;
-    radius: boolean;
-    gaps: boolean;
     memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
   radiusKm: number;
+  coverageRadius: boolean;
+  coverageGaps: boolean;
 }
 
 // Haversine distance in km
@@ -50,7 +50,7 @@ const ZONE_BORDER_COLORS = {
   none: 'hsla(240, 5%, 84%, 0.3)',
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -168,7 +168,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
     if (!radiusRef.current) return;
     radiusRef.current.clearLayers();
 
-    if (!layers.radius) return;
+    if (!coverageRadius) return;
 
     filteredFacilities
       .filter(f => f.type === 'hospital')
@@ -183,7 +183,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, layers.radius, radiusKm]);
+  }, [filteredFacilities, coverageRadius, radiusKm]);
 
   // Draw facility markers with clustering
   useEffect(() => {
@@ -249,7 +249,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
-    if (!layers.gaps) return;
+    if (!coverageGaps) return;
 
     const hospitals = facilities.filter(f => f.type === 'hospital');
 
@@ -274,7 +274,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
         gapsRef.current!.addLayer(polygon);
       }
     });
-  }, [facilities, layers.gaps, radiusKm]);
+  }, [facilities, coverageGaps, radiusKm]);
 
   // Draw member volume choropleth
   useEffect(() => {

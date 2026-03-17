@@ -10,8 +10,6 @@ interface LayerState {
   clinics: boolean;
   zones: boolean;
   tier1: boolean;
-  radius: boolean;
-  gaps: boolean;
   memberVolume: boolean;
 }
 
@@ -26,14 +24,14 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(50);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
+  const [coverageRadius, setCoverageRadius] = useState(true);
+  const [coverageGaps, setCoverageGaps] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     hospitals: true,
     clinics: true,
     zones: true,
     tier1: true,
-    radius: false,
-    gaps: false,
     memberVolume: false,
   });
 
@@ -46,18 +44,18 @@ const Index = () => {
   }, [facilities, filters]);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
-    setLayers(prev => {
-      const next = { ...prev, [layer]: !prev[layer] };
-      // If turning on gaps, ensure radius is also on
-      if (layer === 'gaps' && next.gaps) {
-        next.radius = true;
-      }
-      // If turning off radius, also turn off gaps
-      if (layer === 'radius' && !next.radius) {
-        next.gaps = false;
-      }
-      return next;
-    });
+    setLayers(prev => ({ ...prev, [layer]: !prev[layer] }));
+  }, []);
+
+  const handleCoverageRadiusChange = useCallback((checked: boolean) => {
+    setCoverageRadius(checked);
+    if (!checked) {
+      setCoverageGaps(false);
+    }
+  }, []);
+
+  const handleCoverageGapsChange = useCallback((checked: boolean) => {
+    setCoverageGaps(checked);
   }, []);
 
   const handleFacilityClick = useCallback((facility: Facility) => {
@@ -83,6 +81,10 @@ const Index = () => {
         onFiltersChange={setFilters}
         radiusKm={radiusKm}
         onRadiusChange={setRadiusKm}
+        coverageRadius={coverageRadius}
+        coverageGaps={coverageGaps}
+        onCoverageRadiusChange={handleCoverageRadiusChange}
+        onCoverageGapsChange={handleCoverageGapsChange}
       />
       <div className="flex-1 relative">
         <MapView
@@ -91,6 +93,8 @@ const Index = () => {
           onFacilityClick={handleFacilityClick}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
+          coverageRadius={coverageRadius}
+          coverageGaps={coverageGaps}
         />
         {selectedFacility && (
           <DetailPanel

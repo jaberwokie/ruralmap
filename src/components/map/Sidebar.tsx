@@ -10,8 +10,6 @@ interface LayerState {
   clinics: boolean;
   zones: boolean;
   tier1: boolean;
-  radius: boolean;
-  gaps: boolean;
   memberVolume: boolean;
 }
 
@@ -28,6 +26,10 @@ interface SidebarProps {
   onFiltersChange: (filters: Filters) => void;
   radiusKm: number;
   onRadiusChange: (km: number) => void;
+  coverageRadius: boolean;
+  coverageGaps: boolean;
+  onCoverageRadiusChange: (checked: boolean) => void;
+  onCoverageGapsChange: (checked: boolean) => void;
 }
 
 const LAYER_CONFIG = [
@@ -36,8 +38,6 @@ const LAYER_CONFIG = [
   { key: 'clinics' as const, label: 'Clinics / FQHCs', color: 'bg-clinic' },
   { key: 'zones' as const, label: 'Operational Zones', color: 'bg-primary/30' },
   { key: 'tier1' as const, label: 'Tier 1 Providers', color: 'bg-green-500' },
-  { key: 'radius' as const, label: 'Coverage Radius', color: 'bg-primary' },
-  { key: 'gaps' as const, label: 'Coverage Gaps', color: 'bg-destructive' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
 ];
 
@@ -54,6 +54,10 @@ const Sidebar = ({
   onFiltersChange,
   radiusKm,
   onRadiusChange,
+  coverageRadius,
+  coverageGaps,
+  onCoverageRadiusChange,
+  onCoverageGapsChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -337,53 +341,20 @@ const Sidebar = ({
           Layers
         </div>
         <div className="space-y-1">
-          {LAYER_CONFIG.map(({ key, label, color }) => {
-            const isGaps = key === 'gaps';
-            const isDisabled = isGaps && !layers.radius;
-            return (
+          {LAYER_CONFIG.map(({ key, label, color }) => (
             <div key={key}>
               <button
                 onClick={() => onToggleLayer(key)}
-                className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 ${
-                  isDisabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-secondary'
-                }`}
-                disabled={isDisabled}
+                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
               >
                 <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
                 <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {key === 'radius' ? `${label} (${radiusKm} km)` : label}
+                  {label}
                 </span>
                 <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
                   <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
                 </div>
               </button>
-              {key === 'radius' && layers.radius && (
-                <div className="px-2 pb-1 pt-0.5">
-                  <input
-                    type="range"
-                    min={10}
-                    max={150}
-                    step={5}
-                    value={radiusKm}
-                    onChange={(e) => onRadiusChange(Number(e.target.value))}
-                    className="w-full h-1 accent-primary cursor-pointer"
-                  />
-                  <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
-                    <span>10 km</span>
-                    <span>150 km</span>
-                  </div>
-                </div>
-              )}
-              {key === 'gaps' && layers.gaps && (
-                <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
-                  Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius. Adjust the radius slider to change the threshold.
-                </p>
-              )}
-              {isGaps && !layers.gaps && (
-                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
-                  Computed from the active coverage radius.
-                </p>
-              )}
               {key === 'memberVolume' && layers.memberVolume && (
                 <div className="px-2 pb-1 pt-1 space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -402,8 +373,67 @@ const Sidebar = ({
                 </div>
               )}
             </div>
-            );
-          })}
+          ))}
+
+          {/* Coverage Radius — standalone */}
+          <div>
+            <button
+              onClick={() => onCoverageRadiusChange(!coverageRadius)}
+              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+            >
+              <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
+              <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Coverage Radius ({radiusKm} km)
+              </span>
+              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
+              </div>
+            </button>
+            {coverageRadius && (
+              <div className="px-2 pb-1 pt-0.5">
+                <input
+                  type="range"
+                  min={10}
+                  max={150}
+                  step={5}
+                  value={radiusKm}
+                  onChange={(e) => onRadiusChange(Number(e.target.value))}
+                  className="w-full h-1 accent-primary cursor-pointer"
+                />
+                <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
+                  <span>10 km</span>
+                  <span>150 km</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Coverage Gaps — depends on radius */}
+          <div className={!coverageRadius ? 'opacity-40' : ''}>
+            <button
+              onClick={() => onCoverageGapsChange(!coverageGaps)}
+              className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 ${
+                !coverageRadius ? 'cursor-not-allowed' : 'hover:bg-secondary'
+              }`}
+              disabled={!coverageRadius}
+            >
+              <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
+              <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
+                Coverage Gaps
+              </span>
+              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
+                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
+              </div>
+            </button>
+            {coverageGaps && (
+              <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
+                Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius.
+              </p>
+            )}
+            <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
+              Coverage gaps are calculated from the active coverage radius.
+            </p>
+          </div>
         </div>
       </div>
 
