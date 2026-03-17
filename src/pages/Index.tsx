@@ -26,6 +26,7 @@ const Index = () => {
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
   const [coverageRadius, setCoverageRadius] = useState(true);
   const [coverageGaps, setCoverageGaps] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     hospitals: true,
