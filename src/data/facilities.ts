@@ -36,4 +36,10 @@ export const defaultFacilities: Facility[] = [
   { id: "c6", name: "Community Health Alliance Dayton", type: "clinic", city: "Dayton", county: "Lyon", address: "Dayton, NV", lat: 39.2374, lng: -119.5929, notes: "Primary care + BH" },
   { id: "c7", name: "Community Health Alliance Carson", type: "clinic", city: "Carson City", county: "Carson City", address: "Carson City, NV", lat: 39.1674, lng: -119.7683, notes: "BH + PCP" },
   { id: "c8", name: "First Med Fallon", type: "clinic", city: "Fallon", county: "Churchill", address: "560 E Williams Ave", lat: 39.4768, lng: -118.7690, notes: "Urgent care access" },
+
+  // Tier 1 Providers
+  { id: "t1", name: "Rural Counseling & Support – Elko", type: "tier1", city: "Elko", county: "Elko", address: "571 Idaho St", lat: 40.8328, lng: -115.7617, notes: "BH outpatient", tier: "tier1" },
+  { id: "t2", name: "New Frontier Treatment Center", type: "tier1", city: "Fallon", county: "Churchill", address: "1875 W Williams Ave", lat: 39.4745, lng: -118.7920, notes: "SUD residential", tier: "tier1" },
+  { id: "t3", name: "Vitality Behavioral Health – Pahrump", type: "tier1", city: "Pahrump", county: "Nye", address: "1840 Pahrump Valley Blvd", lat: 36.2060, lng: -115.9920, notes: "Crisis stabilization", tier: "tier1" },
+  { id: "t4", name: "Ridge House – Winnemucca", type: "tier1", city: "Winnemucca", county: "Humboldt", address: "85 Melarkey St", lat: 40.9730, lng: -117.7350, notes: "Transitional housing + BH", tier: "tier1" },
 ];
