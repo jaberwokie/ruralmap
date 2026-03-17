@@ -74,6 +74,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery }: MapViewPr
     countiesRef.current = L.layerGroup().addTo(map);
     zonesRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
+    radiusRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
