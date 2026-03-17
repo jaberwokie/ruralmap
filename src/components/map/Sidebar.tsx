@@ -54,6 +54,10 @@ const Sidebar = ({
   onFiltersChange,
   radiusKm,
   onRadiusChange,
+  coverageRadius,
+  coverageGaps,
+  onCoverageRadiusChange,
+  onCoverageGapsChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
