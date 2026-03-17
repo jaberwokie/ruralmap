@@ -367,6 +367,11 @@ const Sidebar = ({
                 </div>
               )}
             </div>
+              {key === 'gaps' && layers.gaps && (
+                <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
+                  Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius. Adjust the radius slider to change the threshold.
+                </p>
+              )}
           ))}
         </div>
       </div>
