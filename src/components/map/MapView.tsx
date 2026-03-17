@@ -168,7 +168,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     if (!radiusRef.current) return;
     radiusRef.current.clearLayers();
 
-    if (!layers.radius) return;
+    if (!coverageRadius) return;
 
     filteredFacilities
       .filter(f => f.type === 'hospital')
