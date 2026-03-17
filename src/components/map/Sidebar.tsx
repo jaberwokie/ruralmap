@@ -48,6 +48,8 @@ const Sidebar = ({
   onFacilityClick,
   filters,
   onFiltersChange,
+  radiusKm,
+  onRadiusChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
