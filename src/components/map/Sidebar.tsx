@@ -379,6 +379,11 @@ const Sidebar = ({
                   Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius. Adjust the radius slider to change the threshold.
                 </p>
               )}
+              {isGaps && !layers.gaps && (
+                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
+                  Computed from the active coverage radius.
+                </p>
+              )}
               {key === 'memberVolume' && layers.memberVolume && (
                 <div className="px-2 pb-1 pt-1 space-y-1.5">
                   <div className="flex items-center gap-1.5">
