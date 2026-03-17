@@ -274,7 +274,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         gapsRef.current!.addLayer(polygon);
       }
     });
-  }, [facilities, layers.gaps, radiusKm]);
+  }, [facilities, coverageGaps, radiusKm]);
 
   // Draw member volume choropleth
   useEffect(() => {
