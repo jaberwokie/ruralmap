@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import DetailPanel from '@/components/map/DetailPanel';
@@ -12,10 +12,16 @@ interface LayerState {
   tier1: boolean;
 }
 
+export interface Filters {
+  types: Set<string>;
+  counties: Set<string>;
+}
+
 const Index = () => {
   const [facilities, setFacilities] = useState<Facility[]>(defaultFacilities);
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     hospitals: true,
@@ -23,6 +29,14 @@ const Index = () => {
     zones: true,
     tier1: true,
   });
+
+  const filteredFacilities = useMemo(() => {
+    return facilities.filter(f => {
+      if (filters.types.size > 0 && !filters.types.has(f.type)) return false;
+      if (filters.counties.size > 0 && !filters.counties.has(f.county)) return false;
+      return true;
+    });
+  }, [facilities, filters]);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => ({ ...prev, [layer]: !prev[layer] }));
@@ -41,15 +55,18 @@ const Index = () => {
       <Sidebar
         layers={layers}
         onToggleLayer={handleToggleLayer}
-        facilities={facilities}
+        allFacilities={facilities}
+        facilities={filteredFacilities}
         onAddFacilities={handleAddFacilities}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onFacilityClick={handleFacilityClick}
+        filters={filters}
+        onFiltersChange={setFilters}
       />
       <div className="flex-1 relative">
         <MapView
-          facilities={facilities}
+          facilities={filteredFacilities}
           layers={layers}
           onFacilityClick={handleFacilityClick}
           searchQuery={searchQuery}
