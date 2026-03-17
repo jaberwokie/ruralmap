@@ -46,7 +46,18 @@ const Index = () => {
   }, [facilities, filters]);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
-    setLayers(prev => ({ ...prev, [layer]: !prev[layer] }));
+    setLayers(prev => {
+      const next = { ...prev, [layer]: !prev[layer] };
+      // If turning on gaps, ensure radius is also on
+      if (layer === 'gaps' && next.gaps) {
+        next.radius = true;
+      }
+      // If turning off radius, also turn off gaps
+      if (layer === 'radius' && !next.radius) {
+        next.gaps = false;
+      }
+      return next;
+    });
   }, []);
 
   const handleFacilityClick = useCallback((facility: Facility) => {
