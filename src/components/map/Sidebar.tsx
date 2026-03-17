@@ -212,7 +212,7 @@ const Sidebar = ({
     : facilities;
 
   return (
-    <div className="w-80 h-full bg-card flex flex-col" style={{ boxShadow: 'var(--shadow-panel)' }}>
+    <div className="w-full md:w-80 h-full bg-card flex flex-col overflow-hidden" style={{ boxShadow: 'var(--shadow-panel)' }}>
       {/* Header */}
       <div className="p-4 pb-3">
         <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
