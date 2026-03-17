@@ -157,7 +157,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       if (county.zone === 'none') return;
       const polygon = L.polygon(county.boundaries, {
         color: ZONE_BORDER_COLORS[county.zone],
-        weight: 1.5,
+        weight: 2,
         fillColor: ZONE_COLORS[county.zone],
         fillOpacity: 1,
       });
