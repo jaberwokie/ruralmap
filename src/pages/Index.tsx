@@ -10,8 +10,6 @@ interface LayerState {
   clinics: boolean;
   zones: boolean;
   tier1: boolean;
-  radius: boolean;
-  gaps: boolean;
   memberVolume: boolean;
 }
 
