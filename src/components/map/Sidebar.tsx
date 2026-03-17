@@ -26,6 +26,10 @@ interface SidebarProps {
   onFiltersChange: (filters: Filters) => void;
   radiusKm: number;
   onRadiusChange: (km: number) => void;
+  coverageRadius: boolean;
+  coverageGaps: boolean;
+  onCoverageRadiusChange: (checked: boolean) => void;
+  onCoverageGapsChange: (checked: boolean) => void;
 }
 
 const LAYER_CONFIG = [
