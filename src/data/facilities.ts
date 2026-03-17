@@ -1,4 +1,5 @@
 export type FacilityType = 'hospital' | 'clinic' | 'tier1';
+export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
 
 export interface Facility {
   id: string;
