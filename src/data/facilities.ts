@@ -40,8 +40,19 @@ export const defaultFacilities: Facility[] = [
   { id: "c8", name: "First Med Fallon", type: "clinic", city: "Fallon", county: "Churchill", address: "560 E Williams Ave", lat: 39.4768, lng: -118.7690, notes: "Urgent care access" },
 
   // Tier 1 Providers
-  { id: "t1", name: "Rural Counseling & Support – Elko", type: "tier1", city: "Elko", county: "Elko", address: "571 Idaho St", lat: 40.8328, lng: -115.7617, notes: "BH outpatient", tier: "tier1" },
-  { id: "t2", name: "New Frontier Treatment Center", type: "tier1", city: "Fallon", county: "Churchill", address: "1875 W Williams Ave", lat: 39.4745, lng: -118.7920, notes: "SUD residential", tier: "tier1" },
-  { id: "t3", name: "Vitality Behavioral Health – Pahrump", type: "tier1", city: "Pahrump", county: "Nye", address: "1840 Pahrump Valley Blvd", lat: 36.2060, lng: -115.9920, notes: "Crisis stabilization", tier: "tier1" },
-  { id: "t4", name: "Ridge House – Winnemucca", type: "tier1", city: "Winnemucca", county: "Humboldt", address: "85 Melarkey St", lat: 40.9730, lng: -117.7350, notes: "Transitional housing + BH", tier: "tier1" },
+  { id: "t1", name: "Beautiful Mind of Las Vegas LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 9533, tier: "tier1" },
+  { id: "t2", name: "Family Centers of Nevada LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 3305, tier: "tier1" },
+  { id: "t3", name: "Carson City Community Counseling Center", type: "tier1", city: "Carson City", county: "Carson City", lat: 39.1638, lng: -119.7674, service: "BH", volume: 2365, tier: "tier1" },
+  { id: "t4", name: "Mindspace, LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1765, tier: "tier1" },
+  { id: "t5", name: "Aspire Therapeutic Solutions LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1707, tier: "tier1" },
+  { id: "t6", name: "Behavioral Health and Psychotherapy Services, LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1415, tier: "tier1" },
+  { id: "t7", name: "Carson Tahoe Physician Clinics", type: "tier1", city: "Carson City", county: "Carson City", lat: 39.1638, lng: -119.7674, service: "PCP", volume: 1294, tier: "tier1" },
+  { id: "t8", name: "State of Nevada", type: "tier1", city: "Carson City", county: "Carson City", lat: 39.1638, lng: -119.7674, service: "BH", volume: 1276, tier: "tier1" },
+  { id: "t9", name: "Always Reach Out Behavioral Health LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1254, tier: "tier1" },
+  { id: "t10", name: "Janell Anderson, LCSW, PLLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1212, tier: "tier1" },
+  { id: "t11", name: "Battle Born Counseling Center", type: "tier1", city: "Carson City", county: "Carson City", lat: 39.1638, lng: -119.7674, service: "BH", volume: 1179, tier: "tier1" },
+  { id: "t12", name: "Oasis in the Desert Counseling, LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1131, tier: "tier1" },
+  { id: "t13", name: "Dynamic Medical Group LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "PCP", volume: 1096, tier: "tier1" },
+  { id: "t14", name: "Dr. Ronald Pak, PsyD LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1086, tier: "tier1" },
+  { id: "t15", name: "Serenity Counseling LLC", type: "tier1", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 991, tier: "tier1" },
 ];

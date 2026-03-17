@@ -41,6 +41,15 @@ const DetailPanel = ({ facility, onClose }: DetailPanelProps) => {
         </h3>
 
         <div className="mt-2 space-y-1.5">
+          {facility.service && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Stethoscope className="w-3 h-3 flex-shrink-0" />
+              <span>
+                {facility.service === 'BH' ? 'Behavioral Health' : 'Primary Care'}
+                {facility.volume ? ` · ${facility.volume.toLocaleString()} visits` : ''}
+              </span>
+            </div>
+          )}
           {facility.address && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MapPin className="w-3 h-3 flex-shrink-0" />
