@@ -149,13 +149,11 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
 
     if (!layers.radius) return;
 
-    const RADIUS_METERS = 50000; // 50 km
-
     filteredFacilities
       .filter(f => f.type === 'hospital')
       .forEach(facility => {
         const circle = L.circle([facility.lat, facility.lng], {
-          radius: RADIUS_METERS,
+          radius: radiusKm * 1000,
           color: 'hsla(217, 91%, 60%, 0.35)',
           weight: 1.5,
           fillColor: 'hsla(217, 91%, 60%, 0.06)',
@@ -164,7 +162,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, layers.radius]);
+  }, [filteredFacilities, layers.radius, radiusKm]);
 
   // Draw facility markers
   useEffect(() => {
