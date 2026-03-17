@@ -39,6 +39,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery }: MapViewPr
   const countiesRef = useRef<L.LayerGroup | null>(null);
   const zonesRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
+  const radiusRef = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
