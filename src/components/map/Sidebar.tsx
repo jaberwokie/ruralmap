@@ -11,6 +11,7 @@ interface LayerState {
   zones: boolean;
   tier1: boolean;
   radius: boolean;
+  gaps: boolean;
 }
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ const LAYER_CONFIG = [
   { key: 'zones' as const, label: 'Operational Zones', color: 'bg-primary/30' },
   { key: 'tier1' as const, label: 'Tier 1 Providers', color: 'bg-green-500' },
   { key: 'radius' as const, label: 'Coverage Radius', color: 'bg-primary' },
+  { key: 'gaps' as const, label: 'Coverage Gaps', color: 'bg-destructive' },
 ];
 
 const Sidebar = ({

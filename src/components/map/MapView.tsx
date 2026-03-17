@@ -16,11 +16,23 @@ interface MapViewProps {
     zones: boolean;
     tier1: boolean;
     radius: boolean;
+    gaps: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   searchQuery: string;
   radiusKm: number;
 }
+
+// Haversine distance in km
+const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
 
 const ZONE_COLORS = {
   primary: 'hsla(217, 91%, 60%, 0.12)',
@@ -44,6 +56,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
   const zonesRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
+  const gapsRef = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -79,6 +92,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
     zonesRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
     radiusRef.current = L.layerGroup().addTo(map);
+    gapsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
@@ -225,6 +239,38 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm }:
 
     markersRef.current.addLayer(clusterGroup);
   }, [filteredFacilities, layers.hospitals, layers.clinics, layers.tier1, onFacilityClick]);
+
+  // Draw coverage gap overlays
+  useEffect(() => {
+    if (!gapsRef.current) return;
+    gapsRef.current.clearLayers();
+
+    if (!layers.gaps) return;
+
+    const hospitals = facilities.filter(f => f.type === 'hospital');
+
+    nevadaCounties.forEach(county => {
+      const [cLat, cLng] = county.center;
+      const covered = hospitals.some(h => haversineKm(cLat, cLng, h.lat, h.lng) <= radiusKm);
+
+      if (!covered) {
+        const polygon = L.polygon(county.boundaries, {
+          color: 'hsla(0, 84%, 60%, 0.5)',
+          weight: 2,
+          fillColor: 'hsla(0, 84%, 60%, 0.15)',
+          fillOpacity: 1,
+          dashArray: '6 4',
+        });
+
+        polygon.bindTooltip(
+          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">${county.name} County<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital within ${radiusKm} km</span></div>`,
+          { sticky: true, className: 'facility-tooltip' }
+        );
+
+        gapsRef.current!.addLayer(polygon);
+      }
+    });
+  }, [facilities, layers.gaps, radiusKm]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
