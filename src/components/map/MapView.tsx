@@ -156,6 +156,9 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     areas.forEach(area => {
+      // Skip non-focused areas entirely when a focus is active
+      if (focusedArea && area !== focusedArea) return;
+
       const counties = nevadaCounties.filter(c => c.zone === area);
       const merged = mergePolygons(counties.map(c => c.boundaries));
       if (!merged) return;
@@ -165,22 +168,15 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       const baseColors = AREA_FILL[area];
 
-      // Compute opacity based on focus state
+      // When focused, emphasize; otherwise use base colors
       let fillColor = baseColors.fill;
       let borderColor = baseColors.border;
       let weight = baseColors.weight;
 
-      if (focusedArea) {
-        if (area === focusedArea) {
-          // Focused: full opacity, thicker border
-          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.55)');
-          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.85)');
-          weight = baseColors.weight + 1.5;
-        } else {
-          // De-emphasized
-          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.08)');
-          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.15)');
-        }
+      if (focusedArea && area === focusedArea) {
+        fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.55)');
+        borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.85)');
+        weight = baseColors.weight + 1.5;
       }
 
       const geoLayer = L.geoJSON(clipped, {
