@@ -555,7 +555,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         });
         const marker = L.marker([data.lat, data.lng], { icon });
         marker.bindTooltip(`<div style="padding:6px 10px;font-size:12px;"><div style="font-weight:600;">${county} County</div><div style="color:hsl(240,4%,46%);font-size:11px;">${data.count} rural services</div></div>`, { direction: 'top', offset: [0, -16], className: 'facility-tooltip' });
-        marker.on('click', () => onRuralCountyClickRef.current?.(county));
+        marker.on('click', () => {
+          const countyServices = ruralServicesData?.filter(s => s.county === county) ?? [];
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county, services: countyServices });
+        });
         ruralServicesRef.current!.addLayer(marker);
       });
     } else {
