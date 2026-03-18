@@ -495,7 +495,7 @@ const Sidebar = ({
                     const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
                     return (
                       <button
-                        onClick={() => onRemoteFteClick?.()}
+                        onClick={() => onFteCardClick?.(remote.id)}
                         className={`w-full text-left rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}
                       >
                         <div className="flex items-center gap-1.5 mb-1">
