@@ -115,12 +115,14 @@ const Index = () => {
           layers={layers}
           onFacilityClick={handleFacilityClick}
           onAreaHover={setHoveredArea}
+          onAreaClick={(area) => setFocusedArea(prev => prev === area ? null : area)}
+          focusedArea={focusedArea}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
         />
-        <CoverageDetailPanel hoveredArea={hoveredArea} />
+        <CoverageDetailPanel hoveredArea={hoveredArea} focusedArea={focusedArea} onClearFocus={() => setFocusedArea(null)} />
         {selectedFacility && (
           <DetailPanel
             facility={selectedFacility}
