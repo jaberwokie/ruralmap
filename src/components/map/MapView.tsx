@@ -516,7 +516,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!mapRef.current) return;
     const onZoom = () => {
       const newZoom = mapRef.current!.getZoom();
-      const crossed = (zoomRef.current < 8 && newZoom >= 8) || (zoomRef.current >= 8 && newZoom < 8);
+      const crossed = (zoomRef.current < 6 && newZoom >= 6) || (zoomRef.current >= 6 && newZoom < 6);
       zoomRef.current = newZoom;
       if (crossed && layers.ruralServices) {
         mapRef.current!.fire('rural-redraw');
@@ -534,7 +534,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
     const zoom = mapRef.current.getZoom();
 
-    if (zoom < 8) {
+    if (zoom < 6) {
       const countyCounts = new Map<string, { count: number; lat: number; lng: number }>();
       ruralServicesData.forEach(s => {
         const existing = countyCounts.get(s.county);
