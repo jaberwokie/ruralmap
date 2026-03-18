@@ -52,7 +52,9 @@ const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%
 // Find county name at a given lat/lng using simple point-in-polygon
 const findCountyAtPoint = (latlng: L.LatLng): string | null => {
   for (const county of nevadaCounties) {
-    for (const ring of county.boundaries) {
+    // boundaries is [number, number][][] — array of polygon rings
+    const flat = county.boundaries.flat ? county.boundaries : [county.boundaries];
+    for (const ring of flat as [number, number][][]) {
       if (isPointInPolygon(latlng.lat, latlng.lng, ring)) {
         return county.name;
       }
