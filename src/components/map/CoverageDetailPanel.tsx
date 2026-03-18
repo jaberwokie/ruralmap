@@ -1,11 +1,11 @@
 import { useMemo } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
-import { COUNTY_FTE_MAP, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
+import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -39,7 +39,8 @@ export type MapEntity =
   | { type: 'facility'; facility: Facility }
   | { type: 'coverageGap'; radiusKm: number }
   | { type: 'memberVolume'; county: string; memberCount: number }
-  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] };
+  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] }
+  | { type: 'remoteFte' };
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
@@ -200,8 +201,66 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    case 'remoteFte': return <RemoteFteContent />;
     default: return null;
   }
+};
+
+// ── Remote FTE ──
+const RemoteFteContent = () => {
+  const remote = fteCapacityData.find(f => f.id === 'remote');
+  if (!remote) return null;
+
+  const status = getLoadStatus(remote.currentLoad, remote.capacity);
+  const statusColors = LOAD_STATUS_COLORS[status];
+  const role = FTE_ROLE_COLORS[remote.id];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <Headphones className="w-4 h-4" style={{ color: role?.primary }} />
+        <span className="text-sm font-bold text-foreground">Remote Coordination Team</span>
+      </div>
+
+      <div className={`rounded-md border px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Coverage Type</div>
+        <div className="text-[11px] font-medium text-foreground">Remote Support Only</div>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
+        Statewide telephonic and virtual coordination (no in-person response)
+      </p>
+
+      <div className={`rounded-md border px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Capacity</div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
+          <span className={`text-[11px] font-medium ${statusColors.text}`}>
+            {remote.currentLoad} / {remote.capacity} interactions · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+          </span>
+        </div>
+        <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
+          {LOAD_STATUS_GUIDANCE[status]}
+        </div>
+      </div>
+
+      <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Role</div>
+        <p className="text-[11px] text-foreground leading-relaxed">
+          Intake, routing, telehealth coordination, and referral management
+        </p>
+      </div>
+
+      <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Counties Served</div>
+        <div className="flex flex-wrap gap-1 mt-0.5">
+          {remote.counties.map(c => (
+            <span key={c} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-foreground/80">{c}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // ── Coverage Area ──

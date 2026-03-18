@@ -33,6 +33,7 @@ interface SidebarProps {
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
   selectedFteId?: string | null;
+  onRemoteFteClick?: () => void;
 }
 
 const LAYER_CONFIG = [
@@ -62,6 +63,7 @@ const Sidebar = ({
   onCoverageRadiusChange,
   onCoverageGapsChange,
   selectedFteId,
+  onRemoteFteClick,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -489,7 +491,10 @@ const Sidebar = ({
                     const isRemoteSelected = selectedFteId === remote.id;
                     const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
                     return (
-                      <div className={`rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}>
+                      <button
+                        onClick={() => onRemoteFteClick?.()}
+                        className={`w-full text-left rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}
+                      >
                         <div className="flex items-center gap-1.5 mb-1">
                           <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
                           <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
@@ -507,7 +512,7 @@ const Sidebar = ({
                           {LOAD_STATUS_GUIDANCE[status]}
                         </div>
                         <div className="text-[9px] text-muted-foreground mt-1">Statewide telephonic and virtual coordination (no in-person response)</div>
-                      </div>
+                      </button>
                     );
                   })()}
                 </div>
