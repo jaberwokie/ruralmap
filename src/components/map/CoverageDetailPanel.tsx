@@ -310,6 +310,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
   const intensity = maxCount > 0 ? memberCount / maxCount : 0;
   const intensityLabel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
   const area = getCountyArea(county);
+  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   return (
     <>
@@ -317,6 +318,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
+      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="text-xs text-foreground/80 space-y-1">
         <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
         <div className="flex justify-between"><span>Intensity</span><span className="font-medium">{intensityLabel}</span></div>
