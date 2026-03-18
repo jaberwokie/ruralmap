@@ -433,23 +433,37 @@ const Sidebar = ({
         </div>
       </div>
 
-      {/* Zone Legend */}
+      {/* Legend */}
       <div className="px-4 pb-3">
         <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
-          Zone Legend
+          Legend
         </div>
-        <div className="space-y-1 text-xs">
-          <div className="flex items-center gap-2 px-2">
-            <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(217, 91%, 60%, 0.12)', border: '1px solid hsla(217, 91%, 60%, 0.4)' }} />
-            <span className="text-muted-foreground">Primary (Field-Based)</span>
+        <div className="space-y-2.5 text-xs">
+          {/* Locations */}
+          <div>
+            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Locations</div>
+            <div className="flex items-center gap-2 px-2">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#1F2937', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+              <span className="text-muted-foreground">Clinics / FQHCs</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2 px-2">
-            <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(35, 92%, 50%, 0.08)', border: '1px solid hsla(35, 92%, 50%, 0.3)' }} />
-            <span className="text-muted-foreground">Secondary (Virtual-First)</span>
-          </div>
-          <div className="flex items-center gap-2 px-2">
-            <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(240, 5%, 64%, 0.05)', border: '1px solid hsla(240, 5%, 64%, 0.2)' }} />
-            <span className="text-muted-foreground">Frontier (Low-Touch)</span>
+          {/* Coverage Areas */}
+          <div>
+            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Coverage Areas</div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(142, 71%, 45%, 0.20)', border: '1px solid hsla(142, 71%, 45%, 0.6)' }} />
+                <span className="text-muted-foreground">Area 1 — Western Hub</span>
+              </div>
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(35, 92%, 50%, 0.20)', border: '1px solid hsla(35, 92%, 50%, 0.6)' }} />
+                <span className="text-muted-foreground">Area 2 — Northern / Rural Hub</span>
+              </div>
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(217, 91%, 60%, 0.20)', border: '1px solid hsla(217, 91%, 60%, 0.6)' }} />
+                <span className="text-muted-foreground">Area 3 — Southern / Rural Hub</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
