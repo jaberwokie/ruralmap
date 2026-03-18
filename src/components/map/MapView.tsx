@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { mergePolygons } from '@/utils/mergePolygons';
+import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 
 interface MapViewProps {
@@ -171,13 +171,22 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
     const areas: CoverageArea[] = ['area1', 'area2', 'area3'];
 
+    const nevadaClip = {
+      type: "Feature" as const,
+      properties: {},
+      geometry: nevadaBoundaryGeoJSON,
+    };
+
     areas.forEach(area => {
       const counties = nevadaCounties.filter(c => c.zone === area);
       const merged = mergePolygons(counties.map(c => c.boundaries));
       if (!merged) return;
 
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
       const colors = AREA_FILL[area];
-      const geoLayer = L.geoJSON(merged, {
+      const geoLayer = L.geoJSON(clipped, {
         style: {
           color: colors.border,
           weight: colors.weight,

@@ -1,4 +1,5 @@
 import union from '@turf/union';
+import intersect from '@turf/intersect';
 import { polygon as turfPolygon, featureCollection } from '@turf/helpers';
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
 
@@ -29,5 +30,18 @@ export function mergePolygons(
   // @turf/union v7+ expects a FeatureCollection
   const fc = featureCollection(features);
   const result = union(fc as any);
+  return (result as unknown as Feature<Polygon | MultiPolygon>) ?? null;
+}
+
+/**
+ * Clip a merged polygon to a clipping boundary (e.g. Nevada state outline).
+ * Both input and clip must be GeoJSON Features with Polygon or MultiPolygon geometry.
+ */
+export function clipPolygon(
+  feature: Feature<Polygon | MultiPolygon>,
+  clipBoundary: Feature<Polygon>
+): Feature<Polygon | MultiPolygon> | null {
+  const fc = featureCollection([feature, clipBoundary]);
+  const result = intersect(fc as any);
   return (result as unknown as Feature<Polygon | MultiPolygon>) ?? null;
 }
