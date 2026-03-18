@@ -104,6 +104,21 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
     };
   }, []);
 
+  // Draw state boundary (always visible, non-interactive)
+  useEffect(() => {
+    if (!stateBoundaryRef.current) return;
+    stateBoundaryRef.current.clearLayers();
+
+    const polygon = L.polygon(nevadaBoundary, {
+      color: 'hsl(240, 5%, 70%)',
+      weight: 2,
+      fillColor: 'transparent',
+      fillOpacity: 0,
+      interactive: false,
+    });
+    stateBoundaryRef.current.addLayer(polygon);
+  }, []);
+
   // Draw county boundaries (neutral, reference-only)
   useEffect(() => {
     if (!countiesRef.current || !labelsRef.current) return;
