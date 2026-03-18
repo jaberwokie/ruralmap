@@ -102,8 +102,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     zonesRef.current = L.layerGroup().addTo(map);         // 2. Coverage areas
     countiesRef.current = L.layerGroup().addTo(map);      // 3. County boundaries
     labelsRef.current = L.layerGroup().addTo(map);        // 4. County labels
-    radiusRef.current = L.layerGroup().addTo(map);        // 5. Coverage radii
-    gapsRef.current = L.layerGroup().addTo(map);          // 6. Coverage gaps
+    gapsRef.current = L.layerGroup().addTo(map);          // 5. Coverage gaps
+    radiusRef.current = L.layerGroup().addTo(map);        // 6. Coverage radii (above gaps)
     markersRef.current = L.layerGroup().addTo(map);       // 7. Service points (top)
 
     mapRef.current = map;
