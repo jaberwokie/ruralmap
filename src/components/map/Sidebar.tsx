@@ -582,7 +582,7 @@ const Sidebar = ({
                 <p className="text-xs text-muted-foreground">No facilities match your search or filters.</p>
                 {(searchQuery || filters.types.size > 0 || filters.counties.size > 0) && (
                   <button
-                    onClick={() => { onSearchChange(''); onFiltersChange({ types: new Set(), counties: new Set() }); }}
+                    onClick={() => { onSearchChange(''); onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() }); }}
                     className="mt-2 text-[11px] text-primary hover:underline"
                   >
                     Clear all filters
