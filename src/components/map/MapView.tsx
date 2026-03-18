@@ -462,7 +462,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [facilities, coverageGaps, radiusKm, focusedArea]);
+  }, [facilities, coverageGaps, coverageRadius, radiusKm, focusedArea]);
 
   // Draw member volume choropleth
   useEffect(() => {
