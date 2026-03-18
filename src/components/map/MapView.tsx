@@ -551,8 +551,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       countyCounts.forEach((data, county) => {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="width:28px;height:28px;border-radius:50%;background:hsl(200,15%,46%);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid white;box-shadow:0 1px 4px hsla(0,0%,0%,0.3);cursor:pointer;">${data.count}</div>`,
-          iconSize: [28, 28], iconAnchor: [14, 14],
+          html: `<div style="width:24px;height:24px;border-radius:50%;background:hsla(200,15%,46%,0.75);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid white;box-shadow:0 1px 3px hsla(0,0%,0%,0.2);cursor:pointer;">${data.count}</div>`,
+          iconSize: [24, 24], iconAnchor: [12, 12],
         });
         const marker = L.marker([data.lat, data.lng], { icon });
         marker.bindTooltip(`<div style="padding:6px 10px;font-size:12px;"><div style="font-weight:600;">${county} County</div><div style="color:hsl(240,4%,46%);font-size:11px;">${data.count} rural services</div></div>`, { direction: 'top', offset: [0, -16], className: 'facility-tooltip' });
