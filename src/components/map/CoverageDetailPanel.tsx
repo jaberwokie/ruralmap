@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map, Phone } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility } from '@/data/facilities';
