@@ -40,6 +40,7 @@ const Index = () => {
   // ── Unified detail panel state ──
   const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
   const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
+  const [selectedFteId, setSelectedFteId] = useState<string | null>(null);
 
   // Derive selected county from locked entity for map highlight
   const selectedCounty = useMemo(() => {
