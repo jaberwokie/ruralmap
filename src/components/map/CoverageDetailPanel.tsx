@@ -200,7 +200,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
               <span>NRHP Member</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Map className="w-3 h-3 flex-shrink-0" />
+              <MapIcon className="w-3 h-3 flex-shrink-0" />
               <span>{COVERAGE_AREA_LABELS[coverageArea]}</span>
             </div>
             {countyData?.secondaryZone && (
