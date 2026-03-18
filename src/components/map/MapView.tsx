@@ -241,18 +241,33 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
 
       const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
 
+      const isHospital = facility.type === 'hospital';
+      const isDiamond = pin.shape === 'diamond';
+      const markerHtml = isDiamond
+        ? `<div style="
+            width: ${pin.size}px;
+            height: ${pin.size}px;
+            background: ${pin.bg};
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35);
+            transform: rotate(45deg);
+            cursor: pointer;
+            transition: background 150ms ease;
+          " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`
+        : `<div style="
+            width: ${pin.size}px;
+            height: ${pin.size}px;
+            border-radius: 50%;
+            background: ${pin.bg};
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${isHospital ? ', 0 0 6px hsla(0, 72%, 51%, 0.4)' : ''};
+            cursor: pointer;
+            transition: background 150ms ease;
+          " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`;
+
       const icon = L.divIcon({
         className: '',
-        html: `<div style="
-          width: ${pin.size}px;
-          height: ${pin.size}px;
-          border-radius: 50%;
-          background: ${pin.bg};
-          border: 2px solid white;
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.8), 0 1px 4px rgba(0,0,0,0.35);
-          cursor: pointer;
-          transition: background 150ms ease;
-        " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`,
+        html: markerHtml,
         iconSize: [pin.size, pin.size],
         iconAnchor: [pin.size / 2, pin.size / 2],
       });
