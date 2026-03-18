@@ -341,8 +341,6 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
       .sort((a, b) => b[1].length - a[1].length);
   }, [services]);
 
-  const isGap = GAP_COUNTIES.has(county);
-
   return (
     <>
       {/* Header */}
