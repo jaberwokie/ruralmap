@@ -217,10 +217,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
   }, [filteredFacilities, coverageRadius, radiusKm]);
 
   // Pin color by facility type (independent of coverage areas)
-  const PIN_COLORS: Record<string, { bg: string; hover: string; size: number }> = {
-    hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 12 },
-    clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10 },
-    tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 10 },
+  const PIN_COLORS: Record<string, { bg: string; hover: string; size: number; shape: 'circle' | 'diamond' }> = {
+    hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 15, shape: 'circle' },
+    clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10, shape: 'circle' },
+    tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 11, shape: 'diamond' },
   };
 
   // Draw service point markers (color-coded by facility type, NOT by coverage area)
