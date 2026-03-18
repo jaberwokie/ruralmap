@@ -503,7 +503,7 @@ const Sidebar = ({
                         <div className={`text-[10px] italic ${statusColors.text} opacity-70 mt-0.5`}>
                           {LOAD_STATUS_GUIDANCE[status]}
                         </div>
-                        <div className="text-[9px] text-muted-foreground mt-1">Telephonic / virtual only — no field presence</div>
+                        <div className="text-[9px] text-muted-foreground mt-1">Statewide telephonic and virtual coordination (no in-person response)</div>
                       </div>
                     );
                   })()}
