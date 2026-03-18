@@ -403,6 +403,47 @@ const Sidebar = ({
                   </p>
                 </div>
               )}
+              {key === 'operationalCoverage' && layers.operationalCoverage && (
+                <div className="px-2 pb-2 pt-1.5 space-y-2">
+                  {[
+                    {
+                      label: 'Active Field Coverage',
+                      description: 'Same-day, in-person response available from assigned staff. These areas reflect where field-based team members can realistically travel and engage within a standard workday.',
+                      color: 'hsl(190, 70%, 37%)',
+                      style: 'solid' as const,
+                    },
+                    {
+                      label: 'Scheduled Outreach',
+                      description: 'Planned, non-immediate field presence. These areas are served through scheduled visits and coordinated outreach, not real-time response.',
+                      color: 'hsl(190, 55%, 50%)',
+                      style: 'dashed' as const,
+                    },
+                    {
+                      label: 'Remote Support Only',
+                      description: 'No in-person coverage. Services are supported through telephonic or virtual coordination, resource navigation, and referral management.',
+                      color: 'hsl(240, 5%, 64%)',
+                      style: 'solid' as const,
+                    },
+                  ].map(({ label, description, color, style }) => (
+                    <div key={label} className="flex gap-2">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <div
+                          className="w-3 h-3 rounded-sm"
+                          style={{
+                            backgroundColor: color,
+                            opacity: 0.7,
+                            border: style === 'dashed' ? `1.5px dashed ${color}` : 'none',
+                          }}
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-[11px] font-medium text-foreground leading-tight">{label}</div>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
 
