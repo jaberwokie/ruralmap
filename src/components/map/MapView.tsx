@@ -132,15 +132,28 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
 
     if (!layers.counties) return;
 
+    const nevadaClip = {
+      type: "Feature" as const,
+      properties: {},
+      geometry: nevadaBoundaryGeoJSON,
+    };
+
     nevadaCounties.forEach(county => {
-      const polygon = L.polygon(county.boundaries, {
-        color: 'hsl(240, 5%, 75%)',
-        weight: 1,
-        fillColor: 'transparent',
-        fillOpacity: 0,
-        dashArray: '4 4',
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: 'hsl(240, 5%, 75%)',
+          weight: 1,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          dashArray: '4 4',
+        },
       });
-      countiesRef.current!.addLayer(polygon);
+      countiesRef.current!.addLayer(geoLayer);
 
       const label = L.divIcon({
         className: 'county-label',
