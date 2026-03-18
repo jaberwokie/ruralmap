@@ -510,101 +510,73 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     });
   }, [layers.memberVolume, coverageGaps]);
 
-  // Draw rural services pins
+  // Track zoom for rural services clustering
+  const zoomRef = useRef(7);
   useEffect(() => {
+    if (!mapRef.current) return;
+    const onZoom = () => {
+      const newZoom = mapRef.current!.getZoom();
+      const crossed = (zoomRef.current < 8 && newZoom >= 8) || (zoomRef.current >= 8 && newZoom < 8);
+      zoomRef.current = newZoom;
+      if (crossed && layers.ruralServices) {
+        mapRef.current!.fire('rural-redraw');
+      }
+    };
+    mapRef.current.on('zoomend', onZoom);
+    return () => { mapRef.current?.off('zoomend', onZoom); };
+  }, [layers.ruralServices]);
+
+  // Draw rural services pins
+  const drawRuralServices = () => {
     if (!ruralServicesRef.current || !mapRef.current) return;
     ruralServicesRef.current.clearLayers();
-
     if (!layers.ruralServices || !ruralServicesData?.length) return;
 
-    const map = mapRef.current;
-    const zoom = map.getZoom();
+    const zoom = mapRef.current.getZoom();
 
-    // County-level clustering when zoomed out
     if (zoom < 8) {
       const countyCounts = new Map<string, { count: number; lat: number; lng: number }>();
       ruralServicesData.forEach(s => {
         const existing = countyCounts.get(s.county);
-        if (existing) {
-          existing.count++;
-        } else {
-          const countyData = nevadaCounties.find(c => c.name === s.county);
-          countyCounts.set(s.county, {
-            count: 1,
-            lat: countyData?.center[0] ?? s.lat,
-            lng: countyData?.center[1] ?? s.lng,
-          });
+        if (existing) { existing.count++; } else {
+          const cd = nevadaCounties.find(c => c.name === s.county);
+          countyCounts.set(s.county, { count: 1, lat: cd?.center[0] ?? s.lat, lng: cd?.center[1] ?? s.lng });
         }
       });
-
       countyCounts.forEach((data, county) => {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="
-            width: 28px; height: 28px; border-radius: 50%;
-            background: hsl(200, 15%, 46%); color: white;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 700;
-            border: 2px solid white;
-            box-shadow: 0 1px 4px hsla(0,0%,0%,0.3);
-            cursor: pointer;
-          ">${data.count}</div>`,
-          iconSize: [28, 28],
-          iconAnchor: [14, 14],
+          html: `<div style="width:28px;height:28px;border-radius:50%;background:hsl(200,15%,46%);color:white;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid white;box-shadow:0 1px 4px hsla(0,0%,0%,0.3);cursor:pointer;">${data.count}</div>`,
+          iconSize: [28, 28], iconAnchor: [14, 14],
         });
         const marker = L.marker([data.lat, data.lng], { icon });
-        marker.bindTooltip(
-          `<div style="padding:6px 10px;font-size:12px;"><div style="font-weight:600;">${county} County</div><div style="color:hsl(240,4%,46%);font-size:11px;">${data.count} rural services</div></div>`,
-          { direction: 'top', offset: [0, -16], className: 'facility-tooltip' }
-        );
+        marker.bindTooltip(`<div style="padding:6px 10px;font-size:12px;"><div style="font-weight:600;">${county} County</div><div style="color:hsl(240,4%,46%);font-size:11px;">${data.count} rural services</div></div>`, { direction: 'top', offset: [0, -16], className: 'facility-tooltip' });
         marker.on('click', () => onRuralCountyClickRef.current?.(county));
         ruralServicesRef.current!.addLayer(marker);
       });
     } else {
-      // Individual pins when zoomed in
       ruralServicesData.forEach(service => {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="
-            width: 8px; height: 8px; border-radius: 50%;
-            background: hsl(200, 15%, 46%);
-            border: 1.5px solid white;
-            box-shadow: 0 0 0 1px hsla(0,0%,0%,0.15), 0 1px 3px hsla(0,0%,0%,0.25);
-            cursor: pointer;
-          "></div>`,
-          iconSize: [8, 8],
-          iconAnchor: [4, 4],
+          html: `<div style="width:8px;height:8px;border-radius:50%;background:hsl(200,15%,46%);border:1.5px solid white;box-shadow:0 0 0 1px hsla(0,0%,0%,0.15),0 1px 3px hsla(0,0%,0%,0.25);cursor:pointer;"></div>`,
+          iconSize: [8, 8], iconAnchor: [4, 4],
         });
-
         const marker = L.marker([service.lat, service.lng], { icon });
-        const phoneHtml = service.phone
-          ? `<div style="margin-top:2px;"><a href="tel:${service.phone.replace(/[^\d+]/g, '')}" style="color:hsl(217,91%,60%);font-size:10px;">${service.phone}</a></div>`
-          : '';
-        marker.bindTooltip(
-          `<div style="padding:8px 12px;font-size:13px;max-width:220px;">
-            <div style="font-weight:600;margin-bottom:2px;">${service.name}</div>
-            <div style="color:hsl(200,15%,46%);font-size:10px;margin-bottom:2px;">${service.category}</div>
-            <div style="color:hsl(240,4%,46%);font-size:11px;">${service.city}, ${service.county} Co.</div>
-            ${service.address ? `<div style="color:hsl(240,4%,46%);font-size:10px;margin-top:2px;">${service.address}</div>` : ''}
-            ${phoneHtml}
-          </div>`,
-          { direction: 'top', offset: [0, -6], className: 'facility-tooltip' }
-        );
+        const phoneHtml = service.phone ? `<div style="margin-top:2px;"><a href="tel:${service.phone.replace(/[^\d+]/g, '')}" style="color:hsl(217,91%,60%);font-size:10px;">${service.phone}</a></div>` : '';
+        marker.bindTooltip(`<div style="padding:8px 12px;font-size:13px;max-width:220px;"><div style="font-weight:600;margin-bottom:2px;">${service.name}</div><div style="color:hsl(200,15%,46%);font-size:10px;margin-bottom:2px;">${service.category}</div><div style="color:hsl(240,4%,46%);font-size:11px;">${service.city}, ${service.county} Co.</div>${service.address ? `<div style="color:hsl(240,4%,46%);font-size:10px;margin-top:2px;">${service.address}</div>` : ''}${phoneHtml}</div>`, { direction: 'top', offset: [0, -6], className: 'facility-tooltip' });
         marker.on('click', () => onRuralCountyClickRef.current?.(service.county));
         ruralServicesRef.current!.addLayer(marker);
       });
     }
+  };
 
-    // Re-render on zoom change
-    const onZoom = () => {
-      if (!ruralServicesRef.current || !layers.ruralServices) return;
-      // Trigger re-render by clearing and letting next effect cycle handle it
-      ruralServicesRef.current.clearLayers();
-      // We need to re-trigger — use a small timeout to batch
-      setTimeout(() => mapRef.current?.fire('rural-redraw'), 0);
-    };
-    map.on('zoomend', onZoom);
-    return () => { map.off('zoomend', onZoom); };
+  useEffect(() => {
+    drawRuralServices();
+    if (!mapRef.current) return;
+    const redraw = () => drawRuralServices();
+    mapRef.current.on('rural-redraw', redraw);
+    return () => { mapRef.current?.off('rural-redraw', redraw); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [layers.ruralServices, ruralServicesData]);
 
   // Coverage gaps "Limited Services" labels
