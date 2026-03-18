@@ -230,7 +230,7 @@ const Sidebar = ({
         </span>
         {tier1Count > 0 && (
           <span className="text-muted-foreground flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-tier1 inline-block" />
             <span className="font-mono font-medium text-foreground">{tier1Count}</span> Tier 1
           </span>
         )}
