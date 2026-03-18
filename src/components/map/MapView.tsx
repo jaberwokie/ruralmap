@@ -32,7 +32,8 @@ interface MapViewProps {
   coverageRadius: boolean;
   coverageGaps: boolean;
   ruralServices?: RuralService[];
-  onRuralCountyClick?: (county: string) => void;
+  onEntityClick?: (entity: MapEntity | null) => void;
+  onEntityHover?: (entity: MapEntity | null) => void;
 }
 
 // Haversine distance in km
