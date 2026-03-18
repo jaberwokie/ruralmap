@@ -49,31 +49,6 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
-// Find county name at a given lat/lng using simple point-in-polygon
-const findCountyAtPoint = (latlng: L.LatLng): string | null => {
-  for (const county of nevadaCounties) {
-    // boundaries is [number, number][][] — array of polygon rings
-    const flat = county.boundaries.flat ? county.boundaries : [county.boundaries];
-    for (const ring of flat as [number, number][][]) {
-      if (isPointInPolygon(latlng.lat, latlng.lng, ring)) {
-        return county.name;
-      }
-    }
-  }
-  return null;
-};
-
-const isPointInPolygon = (lat: number, lng: number, polygon: [number, number][]): boolean => {
-  let inside = false;
-  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
-    const [yi, xi] = polygon[i];
-    const [yj, xj] = polygon[j];
-    if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) {
-      inside = !inside;
-    }
-  }
-  return inside;
-};
 
 const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
