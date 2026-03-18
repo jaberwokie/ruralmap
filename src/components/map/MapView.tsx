@@ -148,6 +148,24 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     stateBoundaryRef.current.addLayer(geoLayer);
   }, []);
 
+  // Auto-zoom to focused area bounds
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (prevFocusedAreaRef.current === focusedArea) return;
+    prevFocusedAreaRef.current = focusedArea;
+
+    if (focusedArea) {
+      const counties = nevadaCounties.filter(c => c.zone === focusedArea);
+      const allCoords = counties.flatMap(c => c.boundaries);
+      if (allCoords.length > 0) {
+        const bounds = L.latLngBounds(allCoords.map(([lat, lng]) => [lat, lng] as [number, number]));
+        mapRef.current.fitBounds(bounds, { padding: [30, 30], maxZoom: 9 });
+      }
+    } else {
+      mapRef.current.setView([39.5, -117.0], 7);
+    }
+  }, [focusedArea]);
+
   // County drawing is handled by the focus-aware effect below
 
   // Draw merged coverage area overlays
