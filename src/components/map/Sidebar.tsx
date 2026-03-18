@@ -513,7 +513,7 @@ const Sidebar = ({
       </div>
 
       {/* Facilities List */}
-      <div className="flex-1 min-h-0 flex flex-col px-4 pt-2 pb-4">
+      <div className="flex flex-col px-4 pt-2 pb-4">
         <button
           onClick={() => setFacilitiesOpen(!facilitiesOpen)}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
@@ -522,7 +522,7 @@ const Sidebar = ({
           Facilities ({displayFacilities.length})
         </button>
         {facilitiesOpen && (
-          <div className="flex-1 overflow-y-auto space-y-0.5">
+          <div className="space-y-0.5">
             {displayFacilities.length === 0 ? (
               <div className="py-8 text-center">
                 <p className="text-xs text-muted-foreground">No facilities match your search or filters.</p>
