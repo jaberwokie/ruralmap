@@ -30,8 +30,6 @@ interface SidebarProps {
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
-  focusedArea: CoverageArea | null;
-  onFocusedAreaChange: (area: CoverageArea) => void;
 }
 
 const LAYER_CONFIG = [
