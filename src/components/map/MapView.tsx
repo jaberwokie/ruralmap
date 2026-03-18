@@ -251,17 +251,57 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
   // Update county boundary visibility based on focus
   useEffect(() => {
-    if (!countiesRef.current || !focusedArea) return;
-    countiesRef.current.eachLayer((layer: any) => {
-      // Keep all visible but reduce opacity for non-focused counties
-      if (layer.setStyle) {
-        layer.setStyle({
-          opacity: 0.3,
+    if (!countiesRef.current) return;
+    if (!layers.counties) return;
+
+    // Rebuild county lines with appropriate opacity
+    countiesRef.current.clearLayers();
+    labelsRef.current?.clearLayers();
+
+    const nevadaClip = {
+      type: "Feature" as const,
+      properties: {},
+      geometry: nevadaBoundaryGeoJSON,
+    };
+
+    nevadaCounties.forEach(county => {
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const isFocusedCounty = !focusedArea || county.zone === focusedArea;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
           color: 'hsl(240, 5%, 75%)',
-        });
-      }
+          weight: 1,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          dashArray: '4 4',
+          opacity: isFocusedCounty ? 1 : 0.2,
+        },
+      });
+      countiesRef.current!.addLayer(geoLayer);
+
+      const label = L.divIcon({
+        className: 'county-label',
+        html: `<span style="
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: hsl(240, 5%, 55%);
+          white-space: nowrap;
+          pointer-events: none;
+          text-shadow: 0 0 4px white, 0 0 4px white;
+          opacity: ${isFocusedCounty ? 1 : 0.25};
+        ">${county.name}</span>`,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+      });
+      L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
     });
-    // Re-render with focus will be handled by the zones effect
   }, [focusedArea, layers.counties]);
 
   // Draw coverage radii (dashed, area-colored)
