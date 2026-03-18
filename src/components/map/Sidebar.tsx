@@ -372,7 +372,7 @@ const Sidebar = ({
           ))}
 
           {/* Coverage Radius — standalone */}
-          <div>
+          <div className={!layers.serviceLocations ? 'opacity-50 pointer-events-none' : ''}>
             <button
               onClick={() => onCoverageRadiusChange(!coverageRadius)}
               className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"

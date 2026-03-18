@@ -47,7 +47,13 @@ const Index = () => {
   }, [facilities, filters]);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
-    setLayers(prev => ({ ...prev, [layer]: !prev[layer] }));
+    setLayers(prev => {
+      const next = { ...prev, [layer]: !prev[layer] };
+      if (layer === 'serviceLocations' && !next.serviceLocations) {
+        setCoverageRadius(false);
+      }
+      return next;
+    });
   }, []);
 
   const handleCoverageRadiusChange = useCallback((checked: boolean) => {
