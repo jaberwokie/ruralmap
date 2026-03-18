@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
@@ -212,6 +212,97 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
   );
 };
 
+// ── NBH Routing ──
+const NBHRoutingSection = ({ county }: { county: string }) => {
+  const zone = COUNTY_OPERATIONAL_MAP.get(county);
+  const serviceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const hasServices = serviceCount > 0;
+  const sparseThreshold = 3;
+
+  const engagementMethod = zone?.coverageType === 'active'
+    ? 'In-person field engagement'
+    : zone?.coverageType === 'scheduled'
+    ? 'Remote triage → scheduled field visit'
+    : 'Telephonic engagement';
+
+  return (
+    <div className="mb-3">
+      <div className="flex items-center gap-1.5 mb-2">
+        <Route className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+        <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">NBH Routing</span>
+      </div>
+
+      {/* Coverage-based routing info */}
+      {zone?.coverageType === 'active' && (
+        <div className="rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5 mb-2 space-y-0.5">
+          <div className="text-[11px] font-semibold text-teal-800">{zone.fte}</div>
+          <div className="text-[10px] text-teal-700">Same-day field response available</div>
+          <div className="text-[10px] text-teal-700 italic">Primary: in-person engagement + direct placement coordination</div>
+        </div>
+      )}
+      {zone?.coverageType === 'scheduled' && (
+        <div className="rounded-md border border-teal-100 bg-teal-50/60 px-2 py-1.5 mb-2 space-y-0.5">
+          <div className="text-[11px] font-semibold text-teal-700">{zone.fte}</div>
+          <div className="text-[10px] text-teal-600">Scheduled outreach only (not same-day)</div>
+          <div className="text-[10px] text-teal-600 italic">Primary: remote triage + scheduled field visit</div>
+        </div>
+      )}
+      {zone?.coverageType === 'remote' && (
+        <div className="rounded-md border border-border bg-muted px-2 py-1.5 mb-2 space-y-0.5">
+          <div className="text-[11px] font-semibold text-muted-foreground">Remote coordination team</div>
+          <div className="text-[10px] text-muted-foreground">No in-person response available</div>
+          <div className="text-[10px] text-muted-foreground italic">Primary: telephonic engagement + referral to local services</div>
+        </div>
+      )}
+
+      {/* Recommended Action Path */}
+      <div className="mt-2">
+        <div className="text-[10px] font-bold uppercase tracking-wide text-foreground mb-1">Recommended Action Path</div>
+        <div className="space-y-1">
+          <div className="flex items-start gap-1.5">
+            <span className="text-[10px] font-bold text-primary mt-px">1</span>
+            <span className="text-[10px] text-foreground/80">{engagementMethod}</span>
+          </div>
+          <div className="flex items-start gap-1.5">
+            <span className="text-[10px] font-bold text-primary mt-px">2</span>
+            <span className="text-[10px] text-foreground/80">
+              {hasServices
+                ? 'Immediate stabilization via local services'
+                : 'External resource coordination required'}
+            </span>
+          </div>
+          <div className="flex items-start gap-1.5">
+            <span className="text-[10px] font-bold text-primary mt-px">3</span>
+            <div className="text-[10px] text-foreground/80 space-y-0.5">
+              <div>Escalation path:</div>
+              <div className="pl-2 space-y-0.5 text-muted-foreground">
+                <div>• Transfer to higher level care (Las Vegas / Reno)</div>
+                <div>• Telehealth support</div>
+                <div>• Scheduled outreach if needed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Rural Services tie-in */}
+      <div className="mt-2 rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+        {hasServices && serviceCount > sparseThreshold ? (
+          <div className="flex items-center gap-1.5">
+            <Navigation className="w-3 h-3 text-primary flex-shrink-0" />
+            <span className="text-[10px] text-foreground/80">Local services available (see below)</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <AlertTriangle className="w-3 h-3 text-destructive flex-shrink-0" />
+            <span className="text-[10px] text-foreground/80">Limited local services — external coordination required</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── County ──
 const CountyContent = ({ county }: { county: string }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
@@ -223,6 +314,7 @@ const CountyContent = ({ county }: { county: string }) => {
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
+      <NBHRoutingSection county={county} />
       <OperationalCoverageBadge county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
