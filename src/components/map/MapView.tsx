@@ -17,6 +17,8 @@ interface MapViewProps {
   };
   onFacilityClick: (facility: Facility) => void;
   onAreaHover?: (area: CoverageArea | null) => void;
+  onAreaClick?: (area: CoverageArea) => void;
+  focusedArea?: CoverageArea | null;
   searchQuery: string;
   radiusKm: number;
   coverageRadius: boolean;
