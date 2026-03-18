@@ -15,6 +15,7 @@ interface MapViewProps {
     memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
+  onAreaHover?: (area: CoverageArea | null) => void;
   searchQuery: string;
   radiusKm: number;
   coverageRadius: boolean;
