@@ -532,7 +532,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000 });
       marker.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'fteHub', fte });
+        onFteHubClickRef.current?.(fte.id);
       });
       fteCapacityRef.current!.addLayer(marker);
     });
