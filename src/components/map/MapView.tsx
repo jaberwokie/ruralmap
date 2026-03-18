@@ -516,7 +516,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!mapRef.current) return;
     const onZoom = () => {
       const newZoom = mapRef.current!.getZoom();
-      const crossed = (zoomRef.current < 8 && newZoom >= 8) || (zoomRef.current >= 8 && newZoom < 8);
+      const crossed = (zoomRef.current < 6 && newZoom >= 6) || (zoomRef.current >= 6 && newZoom < 6);
       zoomRef.current = newZoom;
       if (crossed && layers.ruralServices) {
         mapRef.current!.fire('rural-redraw');
