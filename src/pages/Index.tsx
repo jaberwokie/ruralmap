@@ -181,6 +181,7 @@ const Index = () => {
           ruralServices={filteredRuralServices}
           onEntityClick={handleEntityClick}
           onEntityHover={handleEntityHover}
+          selectedCounty={selectedCounty}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
