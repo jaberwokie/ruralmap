@@ -4,12 +4,14 @@ import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 import { CoverageArea } from '@/data/nevada-counties';
+import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
   zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
+  ruralServices: boolean;
 }
 
 interface SidebarProps {
@@ -38,6 +40,7 @@ const LAYER_CONFIG = [
   { key: 'zones' as const, label: 'Coverage Areas', color: 'bg-primary/30' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
+  { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
 ];
 
 const Sidebar = ({
@@ -77,7 +80,7 @@ const Sidebar = ({
     return Array.from(set).sort();
   }, [allFacilities]);
 
-  const activeFilterCount = filters.types.size + filters.counties.size;
+  const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size;
 
   const toggleTypeFilter = (type: string) => {
     const next = new Set(filters.types);
@@ -91,8 +94,14 @@ const Sidebar = ({
     onFiltersChange({ ...filters, counties: next });
   };
 
+  const toggleServiceCategoryFilter = (cat: string) => {
+    const next = new Set(filters.serviceCategories);
+    if (next.has(cat)) next.delete(cat); else next.add(cat);
+    onFiltersChange({ ...filters, serviceCategories: next });
+  };
+
   const clearFilters = () => {
-    onFiltersChange({ types: new Set(), counties: new Set() });
+    onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
   };
 
   const normalizeHeader = (h: string) =>
@@ -328,7 +337,32 @@ const Sidebar = ({
                     </button>
                   );
                 })}
+            </div>
+
+            {/* Service Category Filter */}
+            {layers.ruralServices && (
+              <div>
+                <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">Service Category</div>
+                <div className="flex flex-wrap gap-1">
+                  {RURAL_SERVICE_CATEGORIES.map(cat => {
+                    const active = filters.serviceCategories.has(cat);
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => toggleServiceCategoryFilter(cat)}
+                        className={`px-2 py-0.5 rounded text-[10px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground text-background font-medium'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+            )}
             </div>
           </div>
         )}
@@ -574,7 +608,7 @@ const Sidebar = ({
                 <p className="text-xs text-muted-foreground">No facilities match your search or filters.</p>
                 {(searchQuery || filters.types.size > 0 || filters.counties.size > 0) && (
                   <button
-                    onClick={() => { onSearchChange(''); onFiltersChange({ types: new Set(), counties: new Set() }); }}
+                    onClick={() => { onSearchChange(''); onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() }); }}
                     className="mt-2 text-[11px] text-primary hover:underline"
                   >
                     Clear all filters

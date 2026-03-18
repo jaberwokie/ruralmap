@@ -3,19 +3,23 @@ import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import DetailPanel from '@/components/map/DetailPanel';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
+import RuralServicesPanel from '@/components/map/RuralServicesPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { CoverageArea } from '@/data/nevada-counties';
+import { ruralServices, RuralServiceCategory } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
   zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
+  ruralServices: boolean;
 }
 
 export interface Filters {
   types: Set<string>;
   counties: Set<string>;
+  serviceCategories: Set<string>;
 }
 
 const Index = () => {
@@ -23,17 +27,19 @@ const Index = () => {
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(50);
-  const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
+  const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
   const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [hoveredArea, setHoveredArea] = useState<CoverageArea | null>(null);
   const [focusedArea, setFocusedArea] = useState<CoverageArea | null>(null);
+  const [selectedRuralCounty, setSelectedRuralCounty] = useState<string | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     zones: true,
     serviceLocations: true,
     memberVolume: false,
+    ruralServices: false,
   });
 
   const filteredFacilities = useMemo(() => {
@@ -46,6 +52,19 @@ const Index = () => {
       });
   }, [facilities, filters]);
 
+  const filteredRuralServices = useMemo(() => {
+    return ruralServices.filter(s => {
+      if (filters.counties.size > 0 && !filters.counties.has(s.county)) return false;
+      if (filters.serviceCategories.size > 0 && !filters.serviceCategories.has(s.category)) return false;
+      return true;
+    });
+  }, [filters]);
+
+  const selectedCountyServices = useMemo(() => {
+    if (!selectedRuralCounty) return [];
+    return filteredRuralServices.filter(s => s.county === selectedRuralCounty);
+  }, [selectedRuralCounty, filteredRuralServices]);
+
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
       const next = { ...prev, [layer]: !prev[layer] };
@@ -54,6 +73,9 @@ const Index = () => {
       }
       if (layer === 'zones') {
         setFocusedArea(null);
+      }
+      if (layer === 'ruralServices' && !next.ruralServices) {
+        setSelectedRuralCounty(null);
       }
       return next;
     });
@@ -77,6 +99,10 @@ const Index = () => {
 
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
     setFacilities(prev => [...prev, ...newFacilities]);
+  }, []);
+
+  const handleRuralCountyClick = useCallback((county: string) => {
+    setSelectedRuralCounty(prev => prev === county ? null : county);
   }, []);
 
   return (
@@ -133,8 +159,17 @@ const Index = () => {
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
+          ruralServices={filteredRuralServices}
+          onRuralCountyClick={handleRuralCountyClick}
         />
         <CoverageDetailPanel hoveredArea={hoveredArea} focusedArea={focusedArea} onClearFocus={() => setFocusedArea(null)} />
+        {selectedRuralCounty && selectedCountyServices.length > 0 && (
+          <RuralServicesPanel
+            county={selectedRuralCounty}
+            services={selectedCountyServices}
+            onClose={() => setSelectedRuralCounty(null)}
+          />
+        )}
         {selectedFacility && (
           <DetailPanel
             facility={selectedFacility}
