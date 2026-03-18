@@ -34,6 +34,7 @@ interface MapViewProps {
   ruralServices?: RuralService[];
   onEntityClick?: (entity: MapEntity | null) => void;
   onEntityHover?: (entity: MapEntity | null) => void;
+  selectedCounty?: string | null;
 }
 
 // Haversine distance in km
