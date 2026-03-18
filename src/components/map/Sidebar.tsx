@@ -79,7 +79,7 @@ const Sidebar = ({
     return Array.from(set).sort();
   }, [allFacilities]);
 
-  const activeFilterCount = filters.types.size + filters.counties.size;
+  const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size;
 
   const toggleTypeFilter = (type: string) => {
     const next = new Set(filters.types);
