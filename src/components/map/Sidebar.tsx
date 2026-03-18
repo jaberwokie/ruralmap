@@ -63,7 +63,7 @@ const Sidebar = ({
   onCoverageRadiusChange,
   onCoverageGapsChange,
   selectedFteId,
-  onRemoteFteClick,
+  onFteCardClick,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);

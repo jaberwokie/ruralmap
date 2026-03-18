@@ -177,7 +177,7 @@ const Index = () => {
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
           selectedFteId={activeFteId}
-          onRemoteFteClick={handleRemoteFteClick}
+          onFteCardClick={handleFteCardClick}
         />
       </div>
 
