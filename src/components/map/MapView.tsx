@@ -33,15 +33,15 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 };
 
 const AREA_FILL: Record<CoverageArea, { fill: string; border: string }> = {
-  area1: { fill: 'hsla(142, 71%, 45%, 0.20)', border: 'hsla(142, 71%, 45%, 0.6)' },
-  area2: { fill: 'hsla(35, 92%, 50%, 0.20)', border: 'hsla(35, 92%, 50%, 0.6)' },
-  area3: { fill: 'hsla(217, 91%, 60%, 0.20)', border: 'hsla(217, 91%, 60%, 0.6)' },
+  area1: { fill: 'hsla(142, 71%, 45%, 0.30)', border: 'hsla(142, 71%, 45%, 0.55)' },
+  area2: { fill: 'hsla(35, 92%, 50%, 0.30)', border: 'hsla(35, 92%, 50%, 0.55)' },
+  area3: { fill: 'hsla(217, 91%, 60%, 0.30)', border: 'hsla(217, 91%, 60%, 0.55)' },
 };
 
 const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
-  area1: { stroke: 'hsla(142, 71%, 45%, 0.35)', fill: 'hsla(142, 71%, 45%, 0.06)' },
-  area2: { stroke: 'hsla(35, 92%, 50%, 0.35)', fill: 'hsla(35, 92%, 50%, 0.06)' },
-  area3: { stroke: 'hsla(217, 91%, 60%, 0.35)', fill: 'hsla(217, 91%, 60%, 0.06)' },
+  area1: { stroke: 'hsla(142, 71%, 45%, 0.18)', fill: 'hsla(142, 71%, 45%, 0.03)' },
+  area2: { stroke: 'hsla(35, 92%, 50%, 0.18)', fill: 'hsla(35, 92%, 50%, 0.03)' },
+  area3: { stroke: 'hsla(217, 91%, 60%, 0.18)', fill: 'hsla(217, 91%, 60%, 0.03)' },
 };
 
 const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
