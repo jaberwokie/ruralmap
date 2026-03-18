@@ -21,11 +21,11 @@ export function mergePolygons(
     return turfPolygon([ring]);
   });
 
-  let merged = features[0] as Feature<Polygon | MultiPolygon>;
+  let merged: Feature<Polygon | MultiPolygon> = features[0] as unknown as Feature<Polygon | MultiPolygon>;
   for (let i = 1; i < features.length; i++) {
-    const result = union(merged, features[i] as Feature<Polygon>);
+    const result = union(merged as any, features[i] as any);
     if (result) {
-      merged = result as Feature<Polygon | MultiPolygon>;
+      merged = result as unknown as Feature<Polygon | MultiPolygon>;
     }
   }
 

@@ -139,22 +139,36 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     });
   }, [layers.counties]);
 
-  // Draw zone overlays
+  // Draw merged coverage area overlays
   useEffect(() => {
     if (!zonesRef.current) return;
     zonesRef.current.clearLayers();
 
     if (!layers.zones) return;
 
-    nevadaCounties.forEach(county => {
-      if (county.zone === 'none') return;
-      const polygon = L.polygon(county.boundaries, {
-        color: ZONE_BORDER_COLORS[county.zone],
-        weight: 2,
-        fillColor: ZONE_COLORS[county.zone],
-        fillOpacity: 1,
+    const areas: CoverageArea[] = ['area1', 'area2', 'area3'];
+
+    areas.forEach(area => {
+      const counties = nevadaCounties.filter(c => c.zone === area);
+      const merged = mergePolygons(counties.map(c => c.boundaries));
+      if (!merged) return;
+
+      const colors = AREA_COLORS[area];
+      const geoLayer = L.geoJSON(merged, {
+        style: {
+          color: colors.border,
+          weight: 2,
+          fillColor: colors.fill,
+          fillOpacity: 1,
+        },
       });
-      zonesRef.current!.addLayer(polygon);
+
+      geoLayer.bindTooltip(COVERAGE_AREA_LABELS[area], {
+        sticky: true,
+        className: 'facility-tooltip',
+      });
+
+      zonesRef.current!.addLayer(geoLayer);
     });
   }, [layers.zones]);
 
