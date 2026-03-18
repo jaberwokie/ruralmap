@@ -48,9 +48,9 @@ const AREA_FILL: Record<CoverageArea, { fill: string; border: string; weight: nu
 };
 
 const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
-  area1: { stroke: 'hsla(142, 71%, 45%, 0.18)', fill: 'hsla(142, 71%, 45%, 0.03)' },
-  area2: { stroke: 'hsla(35, 92%, 50%, 0.18)', fill: 'hsla(35, 92%, 50%, 0.03)' },
-  area3: { stroke: 'hsla(217, 91%, 60%, 0.18)', fill: 'hsla(217, 91%, 60%, 0.03)' },
+  area1: { stroke: 'hsla(142, 71%, 45%, 0.6)', fill: 'hsla(142, 71%, 45%, 0.10)' },
+  area2: { stroke: 'hsla(35, 92%, 50%, 0.6)', fill: 'hsla(35, 92%, 50%, 0.10)' },
+  area3: { stroke: 'hsla(217, 91%, 60%, 0.6)', fill: 'hsla(217, 91%, 60%, 0.10)' },
 };
 
 const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
