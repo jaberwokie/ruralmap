@@ -476,22 +476,22 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
       switch (zone.coverageType) {
         case 'active':
-          fillColor = 'hsla(174, 50%, 45%, 0.25)';
-          borderColor = 'hsla(174, 50%, 40%, 0.6)';
-          weight = 2;
-          dashArray = undefined; // solid
+          fillColor = 'hsla(174, 50%, 45%, 0.14)';
+          borderColor = 'hsla(174, 50%, 40%, 0.30)';
+          weight = 1.5;
+          dashArray = undefined;
           fillOpacity = 1;
           break;
         case 'scheduled':
-          fillColor = 'hsla(174, 40%, 55%, 0.12)';
-          borderColor = 'hsla(174, 40%, 50%, 0.45)';
-          weight = 2;
+          fillColor = 'hsla(174, 40%, 55%, 0.07)';
+          borderColor = 'hsla(174, 40%, 50%, 0.22)';
+          weight = 1.5;
           dashArray = '8 5';
           fillOpacity = 1;
           break;
         case 'remote':
-          fillColor = 'hsla(220, 10%, 70%, 0.10)';
-          borderColor = 'hsla(220, 10%, 60%, 0.25)';
+          fillColor = 'hsla(220, 10%, 70%, 0.05)';
+          borderColor = 'hsla(220, 10%, 60%, 0.12)';
           weight = 1;
           dashArray = '3 4';
           fillOpacity = 1;
