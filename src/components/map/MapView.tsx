@@ -164,6 +164,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     zonesRef.current.clearLayers();
 
     
+    if (coverageGaps) return;
     if (!layers.zones && !focusedArea) return;
 
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
@@ -219,7 +220,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones, layers.memberVolume, onAreaHover, onAreaClick, focusedArea]);
+  }, [layers.zones, layers.memberVolume, onAreaHover, onAreaClick, focusedArea, coverageGaps]);
 
   // Update county boundary visibility based on focus
   useEffect(() => {
@@ -393,7 +394,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
-    if (!coverageGaps || !coverageRadius) return;
+    if (!coverageGaps) return;
 
     // Only hospitals and clinics count (exclude tier1)
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
@@ -469,7 +470,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!memberVolumeRef.current) return;
     memberVolumeRef.current.clearLayers();
 
-    if (!layers.memberVolume) return;
+    if (!layers.memberVolume || coverageGaps) return;
 
     const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
@@ -499,7 +500,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       memberVolumeRef.current!.addLayer(polygon);
     });
-  }, [layers.memberVolume]);
+  }, [layers.memberVolume, coverageGaps]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
