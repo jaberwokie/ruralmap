@@ -227,11 +227,8 @@ const NBHRoutingSection = ({ county }: { county: string }) => {
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
 
-  const engagementMethod = zone?.coverageType === 'active'
-    ? 'In-person field engagement'
-    : zone?.coverageType === 'scheduled'
-    ? 'Remote triage → scheduled field visit'
-    : 'Telephonic engagement';
+
+
 
   return (
     <div className="mb-3">
