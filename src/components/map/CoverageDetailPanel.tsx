@@ -430,6 +430,14 @@ const CountyContent = ({ county }: { county: string }) => {
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
+      {(() => {
+        const zone = COUNTY_OPERATIONAL_MAP.get(county);
+        if (!zone) return null;
+        const label = zone.coverageType === 'active' ? 'Field (Same-day)'
+          : zone.coverageType === 'scheduled' ? 'Scheduled Field'
+          : 'Remote Coordination';
+        return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
+      })()}
       <NBHRoutingSection county={county} />
       <OperationalCoverageBadge county={county} />
       <CapacityStatusSection county={county} />
