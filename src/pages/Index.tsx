@@ -7,7 +7,6 @@ import { ruralServices } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
-  zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
   ruralServices: boolean;
