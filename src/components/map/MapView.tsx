@@ -2,7 +2,7 @@ import { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
-import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, AREA_MARKER_COLORS, getCountyArea } from '@/data/nevada-counties';
+import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons } from '@/utils/mergePolygons';
 
