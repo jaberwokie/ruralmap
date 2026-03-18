@@ -404,14 +404,11 @@ const Sidebar = ({
             )}
           </div>
 
-          {/* Coverage Gaps — depends on radius */}
-          <div className={!coverageRadius ? 'opacity-40' : ''}>
+          {/* Coverage Gaps — independent toggle */}
+          <div>
             <button
               onClick={() => onCoverageGapsChange(!coverageGaps)}
-              className={`w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 ${
-                !coverageRadius ? 'cursor-not-allowed' : 'hover:bg-secondary'
-              }`}
-              disabled={!coverageRadius}
+              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
             >
               <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
               <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
@@ -423,11 +420,11 @@ const Sidebar = ({
             </button>
             {coverageGaps && (
               <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
-                Counties highlighted in red have no hospital within the current <span className="font-medium text-foreground">{radiusKm} km</span> coverage radius.
+                Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{radiusKm} km</span>.
               </p>
             )}
             <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
-              Coverage gaps are calculated from the active coverage radius.
+              Gaps use the radius setting ({radiusKm} km) independently of the radius overlay.
             </p>
           </div>
         </div>
