@@ -2,7 +2,9 @@ import { useState, useCallback, useMemo } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import DetailPanel from '@/components/map/DetailPanel';
+import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
+import { CoverageArea } from '@/data/nevada-counties';
 
 interface LayerState {
   counties: boolean;
