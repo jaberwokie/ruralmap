@@ -27,10 +27,8 @@ const Index = () => {
   const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [focusedArea, setFocusedArea] = useState<CoverageArea | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
-    zones: true,
     serviceLocations: true,
     memberVolume: false,
     ruralServices: false,
