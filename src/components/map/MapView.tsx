@@ -5,7 +5,7 @@ import { Facility } from '@/data/facilities';
 import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons } from '@/utils/mergePolygons';
-import { nevadaBoundary } from '@/data/nevada-boundary';
+import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 
 interface MapViewProps {
   facilities: Facility[];
