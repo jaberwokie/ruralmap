@@ -16,6 +16,12 @@ export const COVERAGE_AREA_LABELS: Record<CoverageArea, string> = {
   area3: 'Area 3 — Southern / Rural Hub',
 };
 
+export const RURAL_ACCESS_DEPENDENCE: Record<CoverageArea, string> = {
+  area1: 'Low',
+  area2: 'Moderate',
+  area3: 'High',
+};
+
 
 // Build a county→area lookup for quick facility coloring
 export function getCountyArea(countyName: string): CoverageArea {
