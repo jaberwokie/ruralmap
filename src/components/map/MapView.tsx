@@ -415,8 +415,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         fillOpacity: 0.75,
       });
 
-      polygon.on('mouseover', () => onEntityHoverRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count }));
-      polygon.on('mouseout', () => onEntityHoverRef.current?.(null));
       polygon.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
         onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count });
