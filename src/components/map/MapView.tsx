@@ -218,8 +218,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     filteredFacilities
       .filter(f => f.type === 'hospital')
       .forEach(facility => {
-        const area = getCountyArea(facility.county);
-        const colors = AREA_RADIUS_COLORS[area];
+        const colors = RADIUS_COLORS;
 
         const halo = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
