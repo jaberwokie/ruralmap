@@ -57,6 +57,8 @@ const Sidebar = ({
   coverageGaps,
   onCoverageRadiusChange,
   onCoverageGapsChange,
+  focusedArea,
+  onFocusedAreaChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
