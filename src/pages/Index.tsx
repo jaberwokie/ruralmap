@@ -52,6 +52,16 @@ const Index = () => {
     return null;
   }, [lockedEntity]);
 
+  // Derive active FTE from county selection OR direct hub click
+  const activeFteId = useMemo(() => {
+    if (selectedFteId) return selectedFteId;
+    if (selectedCounty) {
+      const fte = COUNTY_FTE_MAP.get(selectedCounty);
+      return fte?.id ?? null;
+    }
+    return null;
+  }, [selectedFteId, selectedCounty]);
+
   const filteredFacilities = useMemo(() => {
     return facilities
       .filter(f => {
