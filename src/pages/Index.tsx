@@ -6,10 +6,8 @@ import { Facility, defaultFacilities } from '@/data/facilities';
 
 interface LayerState {
   counties: boolean;
-  hospitals: boolean;
-  clinics: boolean;
   zones: boolean;
-  tier1: boolean;
+  serviceLocations: boolean;
   memberVolume: boolean;
 }
 
@@ -29,17 +27,14 @@ const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
-    hospitals: true,
-    clinics: true,
     zones: true,
-    tier1: true,
+    serviceLocations: true,
     memberVolume: false,
   });
 
   const filteredFacilities = useMemo(() => {
     return facilities
       .filter(f => {
-        // Skip facilities with missing/invalid coordinates
         if (!f.lat || !f.lng || isNaN(f.lat) || isNaN(f.lng)) return false;
         if (filters.types.size > 0 && !filters.types.has(f.type)) return false;
         if (filters.counties.size > 0 && !filters.counties.has(f.county)) return false;
@@ -86,7 +81,6 @@ const Index = () => {
         </button>
       </div>
 
-      {/* Sidebar: always visible on desktop, toggled on mobile */}
       <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 h-[calc(100vh-52px)] md:h-full`}>
         <Sidebar
           layers={layers}
@@ -111,7 +105,6 @@ const Index = () => {
         />
       </div>
 
-      {/* Map */}
       <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 relative h-[calc(100vh-52px)] md:h-full`}>
         <MapView
           facilities={filteredFacilities}
