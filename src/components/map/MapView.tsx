@@ -118,11 +118,11 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
 
     nevadaCounties.forEach(county => {
       const polygon = L.polygon(county.boundaries, {
-        color: county.isPrimary ? 'hsl(240, 5%, 60%)' : 'hsl(240, 5%, 78%)',
-        weight: county.isPrimary ? 2 : 1,
+        color: 'hsl(240, 5%, 75%)',
+        weight: 1,
         fillColor: 'transparent',
         fillOpacity: 0,
-        dashArray: county.isPrimary ? undefined : '4 4',
+        dashArray: '4 4',
       });
       countiesRef.current!.addLayer(polygon);
 
@@ -134,7 +134,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
           font-weight: 600;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: hsl(240, 5%, ${county.isPrimary ? '40%' : '60%'});
+          color: hsl(240, 5%, 55%);
           white-space: nowrap;
           pointer-events: none;
           text-shadow: 0 0 4px white, 0 0 4px white;
