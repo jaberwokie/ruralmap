@@ -552,48 +552,4 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
   );
 };
 
-// ── FTE Hub ──
-const FTEHubContent = ({ fte }: { fte: FTECapacity }) => {
-  const status = getLoadStatus(fte.currentLoad, fte.capacity);
-  const statusColors = LOAD_STATUS_COLORS[status];
-  const role = FTE_ROLE_COLORS[fte.id];
-  const pct = Math.round((fte.currentLoad / fte.capacity) * 100);
-
-  return (
-    <>
-      <div className="flex items-center gap-1.5 mb-1">
-        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary, border: '1.5px solid white', boxShadow: `0 0 0 1px ${role?.primary}` }} />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">FTE Hub</span>
-      </div>
-      <p className="text-sm font-semibold text-foreground mb-2">{fte.label}</p>
-
-      <div className={`rounded-md border-2 px-2 py-1.5 mb-3 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
-        <div className="flex items-center gap-1.5 mb-0.5">
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
-          <span className={`text-[11px] font-bold ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
-        </div>
-        <div className="text-[10px] text-foreground/70 mt-0.5">
-          {fte.currentLoad} / {fte.capacity} engagements ({pct}%)
-        </div>
-        <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
-          {LOAD_STATUS_GUIDANCE[status]}
-        </div>
-      </div>
-
-      <div className="border-t border-border pt-2">
-        <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1.5">
-          Counties Served
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {fte.counties.map(c => (
-            <span key={c} className="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-foreground font-medium">
-              {c}
-            </span>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-};
-
 export default CoverageDetailPanel;
