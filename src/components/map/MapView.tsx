@@ -241,9 +241,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         className: 'facility-tooltip',
       });
 
-      if (isTier1) {
-        tier1Ref.current!.addLayer(marker);
-      } else if (facility.county === 'Clark') {
+      if (isTier1 && facility.county === 'Clark') {
         clusterGroup.addLayer(marker);
       } else {
         markersRef.current!.addLayer(marker);
