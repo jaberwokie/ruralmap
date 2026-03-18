@@ -110,6 +110,16 @@ const OperationalCoverageBadge = ({ county }: { county: string }) => {
         <span className="text-[10px]">{zone.fte}</span>
       </div>
       <div className="text-[10px] italic mt-0.5 opacity-80">{COVERAGE_TYPE_DESCRIPTIONS[zone.coverageType]}</div>
+      <div className="flex items-center gap-1 mt-1">
+        <ArrowRight className="w-3 h-3 flex-shrink-0 opacity-70" />
+        <span className="text-[10px] font-medium">
+          {zone.coverageType === 'active'
+            ? 'Field response + placement coordination'
+            : zone.coverageType === 'scheduled'
+            ? 'Remote triage + scheduled field visit'
+            : 'Telephonic coordination + referral navigation'}
+        </span>
+      </div>
     </div>
   );
 };
