@@ -421,8 +421,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       if (gapGeometry) {
         const geoLayer = L.geoJSON(gapGeometry as any, {
           style: {
-            color: 'hsla(0, 84%, 60%, 0.45)',
-            weight: 1,
+            color: 'hsla(0, 84%, 60%, 0.13)',
+            weight: 0,
             fillColor: 'hsla(0, 84%, 60%, 0.13)',
             fillOpacity: 1,
           },
