@@ -227,11 +227,8 @@ const NBHRoutingSection = ({ county }: { county: string }) => {
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
 
-  const engagementMethod = zone?.coverageType === 'active'
-    ? 'In-person field engagement'
-    : zone?.coverageType === 'scheduled'
-    ? 'Remote triage → scheduled field visit'
-    : 'Telephonic engagement';
+
+
 
   return (
     <div className="mb-3">
@@ -269,24 +266,20 @@ const NBHRoutingSection = ({ county }: { county: string }) => {
         <div className="space-y-1">
           <div className="flex items-start gap-1.5">
             <span className="text-[10px] font-bold text-primary mt-px">1</span>
-            <span className="text-[10px] text-foreground/80">{engagementMethod}</span>
+            <span className="text-[10px] text-foreground/80">In-person engagement</span>
           </div>
           <div className="flex items-start gap-1.5">
             <span className="text-[10px] font-bold text-primary mt-px">2</span>
-            <span className="text-[10px] text-foreground/80">
-              {hasServices
-                ? 'Immediate stabilization via local services'
-                : 'External resource coordination required'}
-            </span>
+            <span className="text-[10px] text-foreground/80">Stabilize using local services</span>
           </div>
           <div className="flex items-start gap-1.5">
             <span className="text-[10px] font-bold text-primary mt-px">3</span>
             <div className="text-[10px] text-foreground/80 space-y-0.5">
-              <div>Escalation path:</div>
+              <div>Escalate if needed:</div>
               <div className="pl-2 space-y-0.5 text-muted-foreground">
-                <div>• Transfer to higher level care (Las Vegas / Reno)</div>
+                <div>• Transfer to Las Vegas or Reno</div>
                 <div>• Telehealth support</div>
-                <div>• Scheduled outreach if needed</div>
+                <div>• Schedule outreach</div>
               </div>
             </div>
           </div>
