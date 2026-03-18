@@ -504,13 +504,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         fillOpacity: 0.75,
       });
 
-      polygon.bindTooltip(
-        `<div style="padding: 6px 10px; font-size: 12px;">
-          <div style="font-weight: 600; margin-bottom: 2px;">${county.name} County</div>
-          <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${count.toLocaleString()} members</div>
-        </div>`,
-        { sticky: true, className: 'facility-tooltip' }
-      );
+      polygon.on('mouseover', () => onEntityHoverRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count }));
+      polygon.on('mouseout', () => onEntityHoverRef.current?.(null));
+      polygon.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count });
+      });
 
       memberVolumeRef.current!.addLayer(polygon);
     });
