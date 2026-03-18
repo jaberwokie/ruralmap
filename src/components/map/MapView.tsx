@@ -534,7 +534,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
     const zoom = mapRef.current.getZoom();
 
-    if (zoom < 8) {
+    if (zoom < 6) {
       const countyCounts = new Map<string, { count: number; lat: number; lng: number }>();
       ruralServicesData.forEach(s => {
         const existing = countyCounts.get(s.county);
