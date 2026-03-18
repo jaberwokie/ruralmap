@@ -98,12 +98,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
     // Create layers in visual stacking order (bottom to top)
     stateBoundaryRef.current = L.layerGroup().addTo(map); // 0. State boundary
-    zonesRef.current = L.layerGroup().addTo(map);         // 1. Coverage areas
-    countiesRef.current = L.layerGroup().addTo(map);      // 2. County boundaries
-    labelsRef.current = L.layerGroup().addTo(map);        // 3. County labels
-    radiusRef.current = L.layerGroup().addTo(map);        // 4. Coverage radii
-    gapsRef.current = L.layerGroup().addTo(map);          // 5. Coverage gaps
-    memberVolumeRef.current = L.layerGroup().addTo(map);  // 6. Member volume
+    memberVolumeRef.current = L.layerGroup().addTo(map);  // 1. Member volume (below zones)
+    zonesRef.current = L.layerGroup().addTo(map);         // 2. Coverage areas
+    countiesRef.current = L.layerGroup().addTo(map);      // 3. County boundaries
+    labelsRef.current = L.layerGroup().addTo(map);        // 4. County labels
+    radiusRef.current = L.layerGroup().addTo(map);        // 5. Coverage radii
+    gapsRef.current = L.layerGroup().addTo(map);          // 6. Coverage gaps
     markersRef.current = L.layerGroup().addTo(map);       // 7. Service points (top)
 
     mapRef.current = map;
