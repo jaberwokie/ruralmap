@@ -285,13 +285,27 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       .forEach(facility => {
         const area = getCountyArea(facility.county);
         const colors = AREA_RADIUS_COLORS[area];
+
+        // Halo ring for edge contrast against busy backgrounds
+        const halo = L.circle([facility.lat, facility.lng], {
+          radius: radiusKm * 1000,
+          color: 'hsla(0, 0%, 100%, 0.7)',
+          weight: 4,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          interactive: false,
+        });
+        radiusRef.current!.addLayer(halo);
+
+        // Main colored dashed ring
         const circle = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
           color: colors.stroke,
-          weight: 1,
+          weight: 2.5,
           fillColor: colors.fill,
           fillOpacity: 1,
-          dashArray: '8 6',
+          dashArray: '10 6',
+          interactive: false,
         });
         radiusRef.current!.addLayer(circle);
       });
