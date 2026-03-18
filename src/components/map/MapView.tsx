@@ -566,8 +566,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       ruralServicesData.forEach(service => {
         const icon = L.divIcon({
           className: '',
-          html: `<div style="width:8px;height:8px;border-radius:50%;background:hsl(200,15%,46%);border:1.5px solid white;box-shadow:0 0 0 1px hsla(0,0%,0%,0.15),0 1px 3px hsla(0,0%,0%,0.25);cursor:pointer;"></div>`,
-          iconSize: [8, 8], iconAnchor: [4, 4],
+          html: `<div style="width:6px;height:6px;border-radius:50%;background:hsla(200,15%,46%,0.7);border:1px solid white;box-shadow:0 0 0 1px hsla(0,0%,0%,0.1),0 1px 2px hsla(0,0%,0%,0.15);cursor:pointer;"></div>`,
+          iconSize: [6, 6], iconAnchor: [3, 3],
         });
         const marker = L.marker([service.lat, service.lng], { icon });
         const phoneHtml = service.phone ? `<div style="margin-top:2px;"><a href="tel:${service.phone.replace(/[^\d+]/g, '')}" style="color:hsl(217,91%,60%);font-size:10px;">${service.phone}</a></div>` : '';
