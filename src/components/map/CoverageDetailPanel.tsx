@@ -277,62 +277,68 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
 
 // ── Rural Service Group ──
 const RuralServiceGroupContent = ({ county, services }: { county: string; services: RuralService[] }) => {
-  const breakdown = useMemo(() => {
-    const counts = new Map<string, number>();
-    services.forEach(s => counts.set(s.category, (counts.get(s.category) ?? 0) + 1));
-    return RURAL_SERVICE_CATEGORIES
-      .filter(c => counts.has(c))
-      .map(c => ({ category: c, count: counts.get(c)! }));
+  const grouped = useMemo(() => {
+    const map = new Map<string, RuralService[]>();
+    services.forEach(s => {
+      const list = map.get(s.category) ?? [];
+      list.push(s);
+      map.set(s.category, list);
+    });
+    return Array.from(map.entries())
+      .sort((a, b) => b[1].length - a[1].length);
   }, [services]);
 
   return (
     <>
-      <div className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: 'hsl(200, 15%, 46%)' }}>
-        ● Rural Services
-      </div>
+      {/* Header */}
       <p className="text-sm font-semibold text-foreground">{county} County</p>
-      <p className="text-xs text-muted-foreground mb-2">
-        {services.length} service{services.length !== 1 ? 's' : ''} available
-      </p>
+      <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
+      <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
+      <p className="text-[10px] text-muted-foreground mb-3">total services</p>
 
       {/* Category breakdown */}
-      <div className="flex flex-wrap gap-1 mb-2">
-        {breakdown.map(({ category, count }) => (
-          <span
-            key={category}
-            className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}
-          >
-            {category} ({count})
-          </span>
-        ))}
-      </div>
-
-      {/* Service list */}
-      <div className="space-y-1 border-t border-border pt-2">
-        {services.map(service => (
-          <div key={service.id} className="px-1 py-1 rounded hover:bg-secondary/50 transition-colors">
-            <div className="text-xs font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${CATEGORY_COLORS[service.category] ?? 'bg-secondary text-foreground'}`}>
-                {service.category}
-              </span>
-              {service.city && (
-                <span className="text-[10px] text-muted-foreground">{service.city}</span>
-              )}
-            </div>
-            {service.phone && (
-              <a
-                href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
-                className="inline-flex items-center gap-1 mt-1 text-[10px] text-primary hover:underline"
-                onClick={e => e.stopPropagation()}
-              >
-                <Phone className="w-2.5 h-2.5" />
-                {service.phone}
-              </a>
-            )}
+      <div className="space-y-1 mb-3">
+        {grouped.map(([category, items]) => (
+          <div key={category} className="flex items-center justify-between text-xs">
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+              {category}
+            </span>
+            <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
           </div>
         ))}
       </div>
+
+      {/* Grouped service list */}
+      {grouped.map(([category, items]) => (
+        <div key={category} className="mb-3">
+          <div className="flex items-center gap-1.5 mb-1.5 border-b border-border pb-1">
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+              {category}
+            </span>
+            <span className="text-[10px] text-muted-foreground">({items.length})</span>
+          </div>
+          <div className="space-y-1.5">
+            {items.map(service => (
+              <div key={service.id} className="flex items-start justify-between gap-1 pl-1">
+                <div className="min-w-0">
+                  <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+                  {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
+                </div>
+                {service.phone && (
+                  <a
+                    href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
+                    className="flex-shrink-0 p-1 rounded hover:bg-secondary text-primary"
+                    title={service.phone}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <Phone className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
     </>
   );
 };
