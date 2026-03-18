@@ -191,7 +191,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones]);
+  }, [layers.zones, onAreaHover]);
 
   // Draw coverage radii (dashed, area-colored)
   useEffect(() => {

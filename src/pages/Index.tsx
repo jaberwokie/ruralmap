@@ -113,11 +113,13 @@ const Index = () => {
           facilities={filteredFacilities}
           layers={layers}
           onFacilityClick={handleFacilityClick}
+          onAreaHover={setHoveredArea}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
         />
+        <CoverageDetailPanel hoveredArea={hoveredArea} />
         {selectedFacility && (
           <DetailPanel
             facility={selectedFacility}
