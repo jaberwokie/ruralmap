@@ -343,6 +343,7 @@ const CountyContent = ({ county }: { county: string }) => {
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       <NBHRoutingSection county={county} />
       <OperationalCoverageBadge county={county} />
+      <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
