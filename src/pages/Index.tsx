@@ -129,7 +129,18 @@ const Index = () => {
 
   const handleFteHubClick = useCallback((fteId: string) => {
     setSelectedFteId(prev => prev === fteId ? null : fteId);
+    if (fteId === 'remote') {
+      setLockedEntity(prev => prev?.type === 'remoteFte' ? null : { type: 'remoteFte' });
+    } else {
+      setLockedEntity(null);
+    }
   }, []);
+
+  const handleRemoteFteClick = useCallback(() => {
+    const isAlreadySelected = selectedFteId === 'remote';
+    setSelectedFteId(isAlreadySelected ? null : 'remote');
+    setLockedEntity(isAlreadySelected ? null : { type: 'remoteFte' });
+  }, [selectedFteId]);
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
