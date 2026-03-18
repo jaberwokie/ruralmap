@@ -24,6 +24,7 @@ interface MapViewProps {
     memberVolume: boolean;
     ruralServices: boolean;
     operationalCoverage: boolean;
+    fteCapacity: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   onMapClick?: () => void;
