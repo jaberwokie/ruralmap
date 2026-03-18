@@ -1,9 +1,34 @@
 import { useMemo } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { Facility } from '@/data/facilities';
+import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+
+/** Counties with no hospital or clinic within ~50 km of their geographic center */
+const GAP_COUNTIES = (() => {
+  const R = 50; // km threshold
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  // Approximate county centers from boundary data
+  const countyCenters: Record<string, [number, number]> = {
+    Esmeralda: [37.78, -117.63], Mineral: [38.54, -118.43], Lincoln: [37.64, -114.87],
+    Eureka: [39.98, -116.00], Storey: [39.44, -119.53], Pershing: [40.56, -118.40],
+    Lander: [40.07, -117.04],
+  };
+  const coverageFacilities = defaultFacilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
+  const gaps = new Set<string>();
+  for (const [name, [lat, lng]] of Object.entries(countyCenters)) {
+    const nearest = Math.min(...coverageFacilities.map(f => haversine(lat, lng, f.lat, f.lng)));
+    if (nearest > R) gaps.add(name);
+  }
+  return gaps;
+})();
 
 // ── Unified entity types ──
 
