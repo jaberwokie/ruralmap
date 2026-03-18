@@ -6,6 +6,11 @@ import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } fro
 import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
+import buffer from '@turf/buffer';
+import difference from '@turf/difference';
+import union from '@turf/union';
+import { point as turfPoint, featureCollection, polygon as turfPolygon } from '@turf/helpers';
+import type { Feature, Polygon, MultiPolygon } from 'geojson';
 
 interface MapViewProps {
   facilities: Facility[];
