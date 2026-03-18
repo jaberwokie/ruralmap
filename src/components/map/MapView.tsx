@@ -362,37 +362,68 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     });
   }, [filteredFacilities, layers.serviceLocations, onFacilityClick]);
 
-  // Draw coverage gap overlays
+  // Draw coverage gap overlays using true geometric subtraction
   useEffect(() => {
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
     if (!coverageGaps) return;
 
-    // Only hospitals and clinics count toward closing coverage gaps (exclude tier1)
+    // Only hospitals and clinics count (exclude tier1)
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
 
-    nevadaCounties.forEach(county => {
-      const [cLat, cLng] = county.center;
-      const covered = eligibleFacilities.some(f => haversineKm(cLat, cLng, f.lat, f.lng) <= radiusKm);
-
-      if (!covered) {
-        const polygon = L.polygon(county.boundaries, {
+    if (eligibleFacilities.length === 0) {
+      // No eligible facilities — entire state is a gap
+      const stateFeature: Feature<Polygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const geoLayer = L.geoJSON(stateFeature, {
+        style: {
           color: 'hsla(0, 84%, 60%, 0.5)',
-          weight: 2,
+          weight: 1.5,
           fillColor: 'hsla(0, 84%, 60%, 0.15)',
           fillOpacity: 1,
-          dashArray: '6 4',
-        });
+        },
+      });
+      gapsRef.current.addLayer(geoLayer);
+      return;
+    }
 
-        polygon.bindTooltip(
-          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">${county.name} County<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital or clinic within ${radiusKm} km</span></div>`,
+    try {
+      // 1. Create radius buffers for each eligible facility and merge
+      const buffers = eligibleFacilities.map(f => {
+        const pt = turfPoint([f.lng, f.lat]);
+        return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
+      });
+
+      let mergedCoverage: Feature<Polygon | MultiPolygon> = buffers[0];
+      for (let i = 1; i < buffers.length; i++) {
+        const fc = featureCollection([mergedCoverage, buffers[i]]);
+        const u = union(fc as any);
+        if (u) mergedCoverage = u as Feature<Polygon | MultiPolygon>;
+      }
+
+      // 2. Subtract merged coverage from state boundary
+      const stateFeature: Feature<Polygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const fc = featureCollection([stateFeature, mergedCoverage]);
+      const gapGeometry = difference(fc as any);
+
+      if (gapGeometry) {
+        const geoLayer = L.geoJSON(gapGeometry as any, {
+          style: {
+            color: 'hsla(0, 84%, 60%, 0.45)',
+            weight: 1,
+            fillColor: 'hsla(0, 84%, 60%, 0.13)',
+            fillOpacity: 1,
+          },
+        });
+        geoLayer.bindTooltip(
+          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">Coverage Gap<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital or clinic within ${radiusKm} km</span></div>`,
           { sticky: true, className: 'facility-tooltip' }
         );
-
-        gapsRef.current!.addLayer(polygon);
+        gapsRef.current.addLayer(geoLayer);
       }
-    });
+    } catch (e) {
+      console.error('Coverage gap calculation error:', e);
+    }
   }, [facilities, coverageGaps, radiusKm]);
 
   // Draw member volume choropleth
