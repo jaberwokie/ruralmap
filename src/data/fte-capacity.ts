@@ -73,6 +73,13 @@ export const LOAD_STATUS_COLORS: Record<LoadStatus, { bg: string; text: string; 
   over: { bg: 'bg-red-50', text: 'text-red-700', dot: 'hsl(0, 72%, 51%)' },
 };
 
+/** Role colors — base identity per FTE */
+export const FTE_ROLE_COLORS: Record<string, { primary: string; light: string; border: string }> = {
+  carson:  { primary: 'hsl(174, 50%, 40%)', light: 'bg-teal-50',   border: 'border-teal-200' },
+  pahrump: { primary: 'hsl(217, 70%, 50%)', light: 'bg-blue-50',   border: 'border-blue-200' },
+  remote:  { primary: 'hsl(270, 30%, 55%)', light: 'bg-purple-50', border: 'border-purple-200' },
+};
+
 export const LOAD_STATUS_GUIDANCE: Record<LoadStatus, string> = {
   available: 'Can accept new engagements',
   near: 'Limited availability — prioritize critical cases',
