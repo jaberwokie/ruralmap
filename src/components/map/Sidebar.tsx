@@ -34,7 +34,6 @@ interface SidebarProps {
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
-  { key: 'zones' as const, label: 'Coverage Areas', color: 'bg-primary/30' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
