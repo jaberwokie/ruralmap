@@ -489,24 +489,6 @@ const Sidebar = ({
               </div>
             </div>
           </div>
-          {/* Coverage Areas */}
-          <div>
-            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Coverage Areas</div>
-            <div className="space-y-1">
-              {([
-                { key: 'area1' as CoverageArea, label: 'Area 1 — Western Hub', bg: 'hsla(142, 71%, 45%, 0.35)', border: '1px dashed hsla(142, 71%, 45%, 0.65)' },
-                { key: 'area2' as CoverageArea, label: 'Area 2 — Northern / Rural Hub', bg: 'hsla(35, 92%, 50%, 0.25)', border: '1px dashed hsla(35, 92%, 50%, 0.50)' },
-                { key: 'area3' as CoverageArea, label: 'Area 3 — Southern / Rural Hub', bg: 'hsla(217, 91%, 60%, 0.15)', border: '1px dashed hsla(217, 91%, 60%, 0.40)' },
-              ])
-                .filter(({ key }) => !focusedArea || key === focusedArea)
-                .map(({ key, label, bg, border }) => (
-                  <div key={key} className="flex items-center gap-2 px-2">
-                    <div className="w-3 h-3 rounded-sm" style={{ background: bg, border }} />
-                    <span className="text-muted-foreground">{label}</span>
-                  </div>
-                ))}
-            </div>
-          </div>
           {/* Operational Coverage */}
           {layers.operationalCoverage && (
             <div>

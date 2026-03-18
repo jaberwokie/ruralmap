@@ -157,9 +157,7 @@ const Index = () => {
           facilities={filteredFacilities}
           layers={layers}
           onFacilityClick={(facility) => handleEntityClick({ type: 'facility', facility })}
-          onAreaHover={handleAreaHover}
-          onAreaClick={handleAreaClick}
-          focusedArea={focusedArea}
+          onMapClick={handleMapClick}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
