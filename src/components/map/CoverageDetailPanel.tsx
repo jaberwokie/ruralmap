@@ -1,13 +1,14 @@
 import { useMemo } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
+import { OperationalZone, COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
-  const R = 50; // km threshold
+  const R = 50;
   const toRad = (d: number) => (d * Math.PI) / 180;
   const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
     const dLat = toRad(lat2 - lat1);
@@ -15,7 +16,6 @@ const GAP_COUNTIES = (() => {
     const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
     return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
-  // Approximate county centers from boundary data
   const countyCenters: Record<string, [number, number]> = {
     Esmeralda: [37.78, -117.63], Mineral: [38.54, -118.43], Lincoln: [37.64, -114.87],
     Eureka: [39.98, -116.00], Storey: [39.44, -119.53], Pershing: [40.56, -118.40],
@@ -38,7 +38,8 @@ export type MapEntity =
   | { type: 'facility'; facility: Facility }
   | { type: 'coverageGap'; radiusKm: number }
   | { type: 'memberVolume'; county: string; memberCount: number }
-  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] };
+  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] }
+  | { type: 'operationalZone'; zone: OperationalZone };
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
@@ -84,6 +85,33 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
         </div>
       )}
     </>
+  );
+};
+
+/** Operational Coverage badge for county-based entities */
+const OperationalCoverageBadge = ({ county }: { county: string }) => {
+  const zone = COUNTY_OPERATIONAL_MAP.get(county);
+  if (!zone) return null;
+
+  const typeColor = zone.coverageType === 'active'
+    ? 'bg-teal-100 text-teal-800 border-teal-200'
+    : zone.coverageType === 'scheduled'
+    ? 'bg-teal-50 text-teal-700 border-teal-100'
+    : 'bg-muted text-muted-foreground border-border';
+
+  return (
+    <div className={`rounded-md border px-2 py-1.5 mb-2 ${typeColor}`}>
+      <div className="flex items-center gap-1.5 mb-0.5">
+        <Radio className="w-3 h-3 flex-shrink-0" />
+        <span className="text-[10px] font-semibold uppercase tracking-wide">Operational Coverage</span>
+      </div>
+      <div className="text-[11px] font-medium">{COVERAGE_TYPE_LABELS[zone.coverageType]}</div>
+      <div className="flex items-center gap-1 mt-0.5">
+        <Users className="w-3 h-3 flex-shrink-0 opacity-70" />
+        <span className="text-[10px]">{zone.fte}</span>
+      </div>
+      <div className="text-[10px] italic mt-0.5 opacity-80">{COVERAGE_TYPE_DESCRIPTIONS[zone.coverageType]}</div>
+    </div>
   );
 };
 
@@ -133,6 +161,7 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    case 'operationalZone': return <OperationalZoneContent zone={entity.zone} />;
     default: return null;
   }
 };
@@ -194,6 +223,7 @@ const CountyContent = ({ county }: { county: string }) => {
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
+      <OperationalCoverageBadge county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
@@ -318,6 +348,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
+      <OperationalCoverageBadge county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="text-xs text-foreground/80 space-y-1">
         <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
@@ -343,16 +374,15 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
 
   return (
     <>
-      {/* Header */}
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
+      <OperationalCoverageBadge county={county} />
       <GapContextAlerts county={county} serviceCount={services.length} />
 
       <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
       <p className="text-[10px] text-muted-foreground mb-3">total services</p>
 
-      {/* Category breakdown */}
       <div className="space-y-1 mb-3">
         {grouped.map(([category, items]) => (
           <div key={category} className="flex items-center justify-between text-xs">
@@ -364,7 +394,6 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
         ))}
       </div>
 
-      {/* Grouped service list */}
       {grouped.map(([category, items]) => (
         <div key={category} className="mb-3">
           <div className="flex items-center gap-1.5 mb-1.5 border-b border-border pb-1">
@@ -395,6 +424,49 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
           </div>
         </div>
       ))}
+    </>
+  );
+};
+
+// ── Operational Zone ──
+const OperationalZoneContent = ({ zone }: { zone: OperationalZone }) => {
+  const typeColor = zone.coverageType === 'active'
+    ? 'hsl(174, 50%, 40%)'
+    : zone.coverageType === 'scheduled'
+    ? 'hsl(174, 40%, 50%)'
+    : 'hsl(220, 10%, 55%)';
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: typeColor }}>
+        ● {COVERAGE_TYPE_LABELS[zone.coverageType]}
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-1">{zone.label}</p>
+      <p className="text-[11px] italic text-muted-foreground mb-3">{zone.description}</p>
+
+      <div className="space-y-1 text-xs text-foreground/80 mb-3">
+        <div className="flex justify-between">
+          <span>Coverage Type</span>
+          <span className="font-medium">{COVERAGE_TYPE_LABELS[zone.coverageType]}</span>
+        </div>
+        <div className="flex justify-between">
+          <span>Assigned FTE</span>
+          <span className="font-medium">{zone.fte}</span>
+        </div>
+      </div>
+
+      <div className="border-t border-border pt-2">
+        <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1.5">
+          Counties in Zone
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {zone.counties.map(c => (
+            <span key={c} className="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-foreground font-medium">
+              {c}
+            </span>
+          ))}
+        </div>
+      </div>
     </>
   );
 };
