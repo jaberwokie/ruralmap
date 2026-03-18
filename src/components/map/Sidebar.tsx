@@ -12,6 +12,7 @@ interface LayerState {
   memberVolume: boolean;
   ruralServices: boolean;
   operationalCoverage: boolean;
+  fteCapacity: boolean;
 }
 
 interface SidebarProps {
