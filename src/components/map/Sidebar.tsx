@@ -460,8 +460,11 @@ const Sidebar = ({
                     const isSelected = selectedFteId === fte.id;
                     const isDimmed = selectedFteId != null && !isSelected;
                     return (
-                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}>
-
+                      <button
+                        key={fte.id}
+                        onClick={() => onFteCardClick?.(fte.id)}
+                        className={`w-full text-left rounded-md border-2 px-2 py-1.5 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}
+                      >
                         <div className="flex items-center justify-between mb-0.5">
                           <div className="flex items-center gap-1.5">
                             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
@@ -478,7 +481,7 @@ const Sidebar = ({
                         <div className={`text-[10px] italic ${statusColors.text} opacity-70 mt-0.5`}>
                           {LOAD_STATUS_GUIDANCE[status]}
                         </div>
-                      </div>
+                      </button>
                     );
                   })}
                   {/* Remote FTE — visually distinct */}
