@@ -162,7 +162,6 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
     default: return null;
-    default: return null;
   }
 };
 
