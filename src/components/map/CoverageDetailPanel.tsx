@@ -3,7 +3,7 @@ import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, Alert
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
-import { RuralService, RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { RuralService, ruralServices } from '@/data/rural-services';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -61,6 +61,30 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Physical Health': 'bg-red-100 text-red-700',
   'Substance Use': 'bg-pink-100 text-pink-700',
   'Mental Health': 'bg-violet-100 text-violet-700',
+};
+
+const COUNTY_SERVICE_COUNT = ruralServices.reduce((map, service) => {
+  map.set(service.county, (map.get(service.county) ?? 0) + 1);
+  return map;
+}, new Map<string, number>());
+
+const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCount: number }) => {
+  if (!GAP_COUNTIES.has(county)) return null;
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
+        <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+        <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
+      </div>
+      {serviceCount > 0 && (
+        <div className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1.5 mb-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
+          <span className="text-[11px] font-medium text-foreground">Services present but limited access</span>
+        </div>
+      )}
+    </>
+  );
 };
 
 const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPanelProps) => {
@@ -165,18 +189,12 @@ const CountyContent = ({ county }: { county: string }) => {
   const area = getCountyArea(county);
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
   const memberCount = volumeMap.get(county) ?? 0;
-
-  const isGap = GAP_COUNTIES.has(county);
+  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
-      {isGap && (
-        <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-          <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
-        </div>
-      )}
+      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         <div className="flex justify-between"><span>Member Volume</span><span className="font-medium tabular-nums">{memberCount.toLocaleString()}</span></div>
@@ -292,6 +310,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
   const intensity = maxCount > 0 ? memberCount / maxCount : 0;
   const intensityLabel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
   const area = getCountyArea(county);
+  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   return (
     <>
@@ -299,6 +318,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
+      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="text-xs text-foreground/80 space-y-1">
         <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
         <div className="flex justify-between"><span>Intensity</span><span className="font-medium">{intensityLabel}</span></div>
@@ -321,26 +341,13 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
       .sort((a, b) => b[1].length - a[1].length);
   }, [services]);
 
-  const isGap = GAP_COUNTIES.has(county);
-
   return (
     <>
       {/* Header */}
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
-      {isGap && (
-        <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-          <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
-        </div>
-      )}
-      {isGap && services.length > 0 && (
-        <div className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1.5 mb-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-          <span className="text-[11px] font-medium text-amber-700">Services present but limited access</span>
-        </div>
-      )}
+      <GapContextAlerts county={county} serviceCount={services.length} />
 
       <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
       <p className="text-[10px] text-muted-foreground mb-3">total services</p>
