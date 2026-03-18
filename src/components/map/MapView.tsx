@@ -32,10 +32,10 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const AREA_FILL: Record<CoverageArea, { fill: string; border: string }> = {
-  area1: { fill: 'hsla(142, 71%, 45%, 0.30)', border: 'hsla(142, 71%, 45%, 0.55)' },
-  area2: { fill: 'hsla(35, 92%, 50%, 0.30)', border: 'hsla(35, 92%, 50%, 0.55)' },
-  area3: { fill: 'hsla(217, 91%, 60%, 0.30)', border: 'hsla(217, 91%, 60%, 0.55)' },
+const AREA_FILL: Record<CoverageArea, { fill: string; border: string; weight: number }> = {
+  area1: { fill: 'hsla(142, 71%, 45%, 0.38)', border: 'hsla(142, 71%, 45%, 0.65)', weight: 2.5 },
+  area2: { fill: 'hsla(35, 92%, 50%, 0.28)', border: 'hsla(35, 92%, 50%, 0.50)', weight: 2 },
+  area3: { fill: 'hsla(217, 91%, 60%, 0.18)', border: 'hsla(217, 91%, 60%, 0.40)', weight: 2 },
 };
 
 const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
@@ -156,9 +156,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       const geoLayer = L.geoJSON(merged, {
         style: {
           color: colors.border,
-          weight: 2,
+          weight: colors.weight,
           fillColor: colors.fill,
           fillOpacity: 1,
+          dashArray: '6 4',
         },
       });
 
@@ -216,10 +217,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
   }, [filteredFacilities, coverageRadius, radiusKm]);
 
   // Pin color by facility type (independent of coverage areas)
-  const PIN_COLORS: Record<string, { bg: string; hover: string; size: number }> = {
-    hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 12 },
-    clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10 },
-    tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 10 },
+  const PIN_COLORS: Record<string, { bg: string; hover: string; size: number; shape: 'circle' | 'diamond' }> = {
+    hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 15, shape: 'circle' },
+    clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10, shape: 'circle' },
+    tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 11, shape: 'diamond' },
   };
 
   // Draw service point markers (color-coded by facility type, NOT by coverage area)
@@ -240,18 +241,33 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
 
       const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
 
+      const isHospital = facility.type === 'hospital';
+      const isDiamond = pin.shape === 'diamond';
+      const markerHtml = isDiamond
+        ? `<div style="
+            width: ${pin.size}px;
+            height: ${pin.size}px;
+            background: ${pin.bg};
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35);
+            transform: rotate(45deg);
+            cursor: pointer;
+            transition: background 150ms ease;
+          " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`
+        : `<div style="
+            width: ${pin.size}px;
+            height: ${pin.size}px;
+            border-radius: 50%;
+            background: ${pin.bg};
+            border: 2px solid white;
+            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${isHospital ? ', 0 0 6px hsla(0, 72%, 51%, 0.4)' : ''};
+            cursor: pointer;
+            transition: background 150ms ease;
+          " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`;
+
       const icon = L.divIcon({
         className: '',
-        html: `<div style="
-          width: ${pin.size}px;
-          height: ${pin.size}px;
-          border-radius: 50%;
-          background: ${pin.bg};
-          border: 2px solid white;
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.8), 0 1px 4px rgba(0,0,0,0.35);
-          cursor: pointer;
-          transition: background 150ms ease;
-        " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`,
+        html: markerHtml,
         iconSize: [pin.size, pin.size],
         iconAnchor: [pin.size / 2, pin.size / 2],
       });

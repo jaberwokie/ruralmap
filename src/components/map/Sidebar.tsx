@@ -444,7 +444,7 @@ const Sidebar = ({
             <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Facility Types</div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(0, 72%, 51%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+                <div className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ background: 'hsl(0, 72%, 51%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15), 0 0 5px hsla(0, 72%, 51%, 0.35)' }} />
                 <span className="text-muted-foreground">Hospital</span>
               </div>
               <div className="flex items-center gap-2 px-2">
@@ -452,7 +452,7 @@ const Sidebar = ({
                 <span className="text-muted-foreground">Clinic / Provider</span>
               </div>
               <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+                <div className="w-3 h-3 flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)', transform: 'rotate(45deg)' }} />
                 <span className="text-muted-foreground">Tier 1</span>
               </div>
             </div>
@@ -462,15 +462,15 @@ const Sidebar = ({
             <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Coverage Areas</div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(142, 71%, 45%, 0.20)', border: '1px solid hsla(142, 71%, 45%, 0.6)' }} />
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(142, 71%, 45%, 0.35)', border: '1px dashed hsla(142, 71%, 45%, 0.65)' }} />
                 <span className="text-muted-foreground">Area 1 — Western Hub</span>
               </div>
               <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(35, 92%, 50%, 0.20)', border: '1px solid hsla(35, 92%, 50%, 0.6)' }} />
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(35, 92%, 50%, 0.25)', border: '1px dashed hsla(35, 92%, 50%, 0.50)' }} />
                 <span className="text-muted-foreground">Area 2 — Northern / Rural Hub</span>
               </div>
               <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(217, 91%, 60%, 0.20)', border: '1px solid hsla(217, 91%, 60%, 0.6)' }} />
+                <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(217, 91%, 60%, 0.15)', border: '1px dashed hsla(217, 91%, 60%, 0.40)' }} />
                 <span className="text-muted-foreground">Area 3 — Southern / Rural Hub</span>
               </div>
             </div>
