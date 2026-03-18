@@ -4,7 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { mergePolygons } from '@/utils/mergePolygons';
+import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 
 interface MapViewProps {
