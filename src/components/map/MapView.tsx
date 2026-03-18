@@ -73,6 +73,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   onEntityClickRef.current = onEntityClick;
   const onEntityHoverRef = useRef(onEntityHover);
   onEntityHoverRef.current = onEntityHover;
+  const onFteHubClickRef = useRef(onFteHubClick);
+  onFteHubClickRef.current = onFteHubClick;
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
