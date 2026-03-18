@@ -93,8 +93,14 @@ const Sidebar = ({
     onFiltersChange({ ...filters, counties: next });
   };
 
+  const toggleServiceCategoryFilter = (cat: string) => {
+    const next = new Set(filters.serviceCategories);
+    if (next.has(cat)) next.delete(cat); else next.add(cat);
+    onFiltersChange({ ...filters, serviceCategories: next });
+  };
+
   const clearFilters = () => {
-    onFiltersChange({ types: new Set(), counties: new Set() });
+    onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
   };
 
   const normalizeHeader = (h: string) =>
