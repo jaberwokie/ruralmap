@@ -3,7 +3,7 @@ import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, Alert
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
-import { RuralService, RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { RuralService, ruralServices } from '@/data/rural-services';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
