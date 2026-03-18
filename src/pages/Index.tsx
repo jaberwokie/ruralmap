@@ -113,6 +113,11 @@ const Index = () => {
 
   const handleMapClick = useCallback(() => {
     setLockedEntity(null);
+    setSelectedFteId(null);
+  }, []);
+
+  const handleFteHubClick = useCallback((fteId: string) => {
+    setSelectedFteId(prev => prev === fteId ? null : fteId);
   }, []);
 
   return (
