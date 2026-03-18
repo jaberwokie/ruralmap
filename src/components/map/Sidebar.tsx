@@ -11,6 +11,7 @@ interface LayerState {
   zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
+  ruralServices: boolean;
 }
 
 interface SidebarProps {
