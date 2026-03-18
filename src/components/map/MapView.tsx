@@ -5,8 +5,9 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { Facility } from '@/data/facilities';
-import { nevadaCounties } from '@/data/nevada-counties';
+import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
+import { mergePolygons } from '@/utils/mergePolygons';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -36,18 +37,10 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const ZONE_COLORS = {
-  primary: 'hsla(217, 91%, 60%, 0.18)',
-  secondary: 'hsla(35, 92%, 50%, 0.14)',
-  frontier: 'hsla(240, 5%, 64%, 0.10)',
-  none: 'transparent',
-};
-
-const ZONE_BORDER_COLORS = {
-  primary: 'hsla(217, 91%, 60%, 0.7)',
-  secondary: 'hsla(35, 92%, 50%, 0.55)',
-  frontier: 'hsla(240, 5%, 64%, 0.4)',
-  none: 'hsla(240, 5%, 84%, 0.3)',
+const AREA_COLORS: Record<CoverageArea, { fill: string; border: string }> = {
+  area1: { fill: 'hsla(217, 91%, 60%, 0.18)', border: 'hsla(217, 91%, 60%, 0.7)' },
+  area2: { fill: 'hsla(35, 92%, 50%, 0.14)', border: 'hsla(35, 92%, 50%, 0.55)' },
+  area3: { fill: 'hsla(160, 60%, 45%, 0.16)', border: 'hsla(160, 60%, 45%, 0.6)' },
 };
 
 const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
@@ -146,22 +139,36 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     });
   }, [layers.counties]);
 
-  // Draw zone overlays
+  // Draw merged coverage area overlays
   useEffect(() => {
     if (!zonesRef.current) return;
     zonesRef.current.clearLayers();
 
     if (!layers.zones) return;
 
-    nevadaCounties.forEach(county => {
-      if (county.zone === 'none') return;
-      const polygon = L.polygon(county.boundaries, {
-        color: ZONE_BORDER_COLORS[county.zone],
-        weight: 2,
-        fillColor: ZONE_COLORS[county.zone],
-        fillOpacity: 1,
+    const areas: CoverageArea[] = ['area1', 'area2', 'area3'];
+
+    areas.forEach(area => {
+      const counties = nevadaCounties.filter(c => c.zone === area);
+      const merged = mergePolygons(counties.map(c => c.boundaries));
+      if (!merged) return;
+
+      const colors = AREA_COLORS[area];
+      const geoLayer = L.geoJSON(merged, {
+        style: {
+          color: colors.border,
+          weight: 2,
+          fillColor: colors.fill,
+          fillOpacity: 1,
+        },
       });
-      zonesRef.current!.addLayer(polygon);
+
+      geoLayer.bindTooltip(COVERAGE_AREA_LABELS[area], {
+        sticky: true,
+        className: 'facility-tooltip',
+      });
+
+      zonesRef.current!.addLayer(geoLayer);
     });
   }, [layers.zones]);
 

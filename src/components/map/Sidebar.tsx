@@ -36,7 +36,7 @@ const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
   { key: 'hospitals' as const, label: 'Hospitals', color: 'bg-hospital' },
   { key: 'clinics' as const, label: 'Clinics / FQHCs', color: 'bg-clinic' },
-  { key: 'zones' as const, label: 'Operational Zones', color: 'bg-primary/30' },
+  { key: 'zones' as const, label: 'Coverage Areas', color: 'bg-primary/30' },
   { key: 'tier1' as const, label: 'Tier 1 Providers', color: 'bg-green-500' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
 ];
