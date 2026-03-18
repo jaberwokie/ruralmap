@@ -349,18 +349,7 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
-      {isGap && (
-        <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-          <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
-        </div>
-      )}
-      {isGap && services.length > 0 && (
-        <div className="flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-1.5 mb-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-          <span className="text-[11px] font-medium text-amber-700">Services present but limited access</span>
-        </div>
-      )}
+      <GapContextAlerts county={county} serviceCount={services.length} />
 
       <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
       <p className="text-[10px] text-muted-foreground mb-3">total services</p>
