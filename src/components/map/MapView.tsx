@@ -48,9 +48,9 @@ const AREA_FILL: Record<CoverageArea, { fill: string; border: string; weight: nu
 };
 
 const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
-  area1: { stroke: 'hsla(142, 71%, 45%, 0.18)', fill: 'hsla(142, 71%, 45%, 0.03)' },
-  area2: { stroke: 'hsla(35, 92%, 50%, 0.18)', fill: 'hsla(35, 92%, 50%, 0.03)' },
-  area3: { stroke: 'hsla(217, 91%, 60%, 0.18)', fill: 'hsla(217, 91%, 60%, 0.03)' },
+  area1: { stroke: 'hsla(142, 71%, 45%, 0.6)', fill: 'hsla(142, 71%, 45%, 0.10)' },
+  area2: { stroke: 'hsla(35, 92%, 50%, 0.6)', fill: 'hsla(35, 92%, 50%, 0.10)' },
+  area3: { stroke: 'hsla(217, 91%, 60%, 0.6)', fill: 'hsla(217, 91%, 60%, 0.10)' },
 };
 
 const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
@@ -102,8 +102,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     zonesRef.current = L.layerGroup().addTo(map);         // 2. Coverage areas
     countiesRef.current = L.layerGroup().addTo(map);      // 3. County boundaries
     labelsRef.current = L.layerGroup().addTo(map);        // 4. County labels
-    radiusRef.current = L.layerGroup().addTo(map);        // 5. Coverage radii
-    gapsRef.current = L.layerGroup().addTo(map);          // 6. Coverage gaps
+    gapsRef.current = L.layerGroup().addTo(map);          // 5. Coverage gaps
+    radiusRef.current = L.layerGroup().addTo(map);        // 6. Coverage radii (above gaps)
     markersRef.current = L.layerGroup().addTo(map);       // 7. Service points (top)
 
     mapRef.current = map;
@@ -285,13 +285,27 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       .forEach(facility => {
         const area = getCountyArea(facility.county);
         const colors = AREA_RADIUS_COLORS[area];
+
+        // Halo ring for edge contrast against busy backgrounds
+        const halo = L.circle([facility.lat, facility.lng], {
+          radius: radiusKm * 1000,
+          color: 'hsla(0, 0%, 100%, 0.7)',
+          weight: 4,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          interactive: false,
+        });
+        radiusRef.current!.addLayer(halo);
+
+        // Main colored dashed ring
         const circle = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
           color: colors.stroke,
-          weight: 1,
+          weight: 2.5,
           fillColor: colors.fill,
           fillOpacity: 1,
-          dashArray: '8 6',
+          dashArray: '10 6',
+          interactive: false,
         });
         radiusRef.current!.addLayer(circle);
       });
