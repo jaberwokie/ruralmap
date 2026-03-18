@@ -505,11 +505,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     if (!layers.fteCapacity) return;
 
     fteCapacityData.forEach(fte => {
-      if (!fte.hubLocation) return; // Remote = sidebar only
+      if (!fte.hubLocation) return;
 
       const status = getLoadStatus(fte.currentLoad, fte.capacity);
       const statusDot = LOAD_STATUS_COLORS[status].dot;
       const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
+      const isSelected = selectedFteId === fte.id;
 
       const icon = L.divIcon({
         className: '',
@@ -517,10 +518,11 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
           display:flex; align-items:center; gap:5px;
           background:white; border:2px solid ${roleColor};
           border-radius:14px; padding:4px 10px 4px 6px;
-          box-shadow:0 1px 4px hsla(0,0%,0%,0.15);
+          box-shadow:${isSelected ? `0 0 0 3px ${roleColor}40, 0 1px 4px hsla(0,0%,0%,0.15)` : '0 1px 4px hsla(0,0%,0%,0.15)'};
           cursor:pointer; white-space:nowrap;
           min-width:44px; min-height:28px;
           position:relative;
+          ${isSelected ? 'animation: fte-pulse 1.5s ease-in-out infinite;' : ''}
         ">
           <div style="width:10px;height:10px;border-radius:50%;background:${roleColor};flex-shrink:0;border:1.5px solid white;box-shadow:0 0 0 1px ${roleColor};"></div>
           <span style="font-size:10px;font-weight:600;color:${roleColor};">${fte.label}</span>
@@ -538,7 +540,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       fteCapacityRef.current!.addLayer(marker);
     });
-  }, [layers.fteCapacity]);
+  }, [layers.fteCapacity, selectedFteId]);
 
 
   const zoomRef = useRef(7);
