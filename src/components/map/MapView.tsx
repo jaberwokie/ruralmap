@@ -163,7 +163,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!zonesRef.current) return;
     zonesRef.current.clearLayers();
 
-    if (!layers.zones) return;
+    if (!layers.zones && !focusedArea) return;
 
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
     const areas: CoverageArea[] = ['area1', 'area2', 'area3'];
@@ -175,7 +175,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     areas.forEach(area => {
-
+      // If zones toggle is off, only draw the focused area
+      if (!layers.zones && area !== focusedArea) return;
       const counties = nevadaCounties.filter(c => c.zone === area);
       const merged = mergePolygons(counties.map(c => c.boundaries));
       if (!merged) return;
