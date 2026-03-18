@@ -1,90 +1,339 @@
-import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties } from '@/data/nevada-counties';
-import { memberVolumeData } from '@/data/member-volume';
 import { useMemo } from 'react';
-import { X } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone } from 'lucide-react';
+import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
+import { memberVolumeData } from '@/data/member-volume';
+import { Facility } from '@/data/facilities';
+import { RuralService, RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+
+// ── Unified entity types ──
+
+export type MapEntity =
+  | { type: 'coverageArea'; area: CoverageArea }
+  | { type: 'county'; county: string }
+  | { type: 'facility'; facility: Facility }
+  | { type: 'coverageGap'; radiusKm: number }
+  | { type: 'memberVolume'; county: string; memberCount: number }
+  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] };
 
 interface CoverageDetailPanelProps {
-  hoveredArea: CoverageArea | null;
-  focusedArea?: CoverageArea | null;
-  onClearFocus?: () => void;
+  entity: MapEntity | null;
+  hoverEntity: MapEntity | null;
+  onClear: () => void;
 }
 
-const CoverageDetailPanel = ({ hoveredArea, focusedArea, onClearFocus }: CoverageDetailPanelProps) => {
-  // Focused area takes priority over hovered area
-  const displayArea = focusedArea ?? hoveredArea;
-  const isLocked = !!focusedArea;
+const CATEGORY_COLORS: Record<string, string> = {
+  'Coordinated Entry': 'bg-purple-100 text-purple-700',
+  'Shelter': 'bg-orange-100 text-orange-700',
+  'Supportive Housing': 'bg-amber-100 text-amber-700',
+  'Legal': 'bg-slate-100 text-slate-700',
+  'Housing (Low-Income)': 'bg-yellow-100 text-yellow-700',
+  'Recovery/Boarding': 'bg-rose-100 text-rose-700',
+  'Food': 'bg-green-100 text-green-700',
+  'Family Services': 'bg-blue-100 text-blue-700',
+  'Senior Services': 'bg-teal-100 text-teal-700',
+  'Employment': 'bg-indigo-100 text-indigo-700',
+  'Disability Services': 'bg-cyan-100 text-cyan-700',
+  'Physical Health': 'bg-red-100 text-red-700',
+  'Substance Use': 'bg-pink-100 text-pink-700',
+  'Mental Health': 'bg-violet-100 text-violet-700',
+};
 
-  const areaData = useMemo(() => {
-    if (!displayArea) return null;
-    const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
-    const counties = nevadaCounties.filter(c => c.zone === displayArea);
-    const rows = counties.map(c => ({
-      name: c.name,
-      count: volumeMap.get(c.name) ?? 0,
-      secondaryZone: c.secondaryZone,
-    }));
-    const total = rows.reduce((s, r) => s + r.count, 0);
-    return { label: COVERAGE_AREA_LABELS[displayArea], rows, total };
-  }, [displayArea]);
+const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPanelProps) => {
+  const display = entity ?? hoverEntity;
+  const isLocked = !!entity;
 
   return (
-    <div className={`absolute top-3 right-3 z-[1000] w-56 min-h-[120px] rounded-lg border border-border bg-white/90 backdrop-blur-sm shadow-md p-3 select-none transition-opacity duration-150 ${isLocked ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-      <div className="flex items-center justify-between mb-2">
+    <div className="absolute top-3 right-3 z-[1000] w-64 max-h-[calc(100vh-120px)] rounded-lg border border-border bg-white/95 backdrop-blur-sm shadow-md flex flex-col select-none">
+      {/* Header */}
+      <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Coverage Area Details
+          Details
         </h3>
         {isLocked && (
           <button
-            onClick={onClearFocus}
+            onClick={onClear}
             className="p-0.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-            title="Clear focus"
+            title="Clear selection"
           >
             <X className="w-3.5 h-3.5" />
           </button>
         )}
       </div>
 
-      {isLocked && displayArea && (
-        <div className="mb-2 text-[10px] font-medium uppercase tracking-wide" style={{
-          color: displayArea === 'area1' ? 'hsl(142, 71%, 45%)' : displayArea === 'area2' ? 'hsl(35, 92%, 50%)' : 'hsl(217, 91%, 60%)',
-        }}>
-          ● Focused
-        </div>
-      )}
-
-      {!areaData ? (
-        <p className="text-xs text-muted-foreground/70 italic">
-          Hover over a coverage area to view details
-        </p>
-      ) : (
-        <>
-          <p className="text-sm font-semibold text-foreground mb-2">{areaData.label}</p>
-          <div className="space-y-0.5">
-            {areaData.rows.map(r => (
-              <div key={r.name}>
-                <div className="flex justify-between text-xs text-foreground/80">
-                  <span>{r.name}</span>
-                  <span className="font-medium tabular-nums">{r.count.toLocaleString()}</span>
-                </div>
-                {r.secondaryZone && (
-                  <div className="text-[10px] text-muted-foreground italic ml-1">
-                    Routing: Primary Area {displayArea!.replace('area', '')}, Supported by Area {r.secondaryZone.replace('area', '')}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs font-semibold text-foreground">
-            <span>Total</span>
-            <span className="tabular-nums">{areaData.total.toLocaleString()}</span>
-          </div>
-          <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs text-foreground/80">
-            <span>Rural Access Dependence</span>
-            <span className="font-semibold">{RURAL_ACCESS_DEPENDENCE[displayArea!]}</span>
-          </div>
-        </>
-      )}
+      {/* Body */}
+      <div className="overflow-y-auto flex-1 px-3 pb-3">
+        {!display ? (
+          <p className="text-xs text-muted-foreground/70 italic">
+            Hover or select a map element to view details.
+          </p>
+        ) : (
+          <EntityContent entity={display} />
+        )}
+      </div>
     </div>
+  );
+};
+
+// ── Renderer per entity type ──
+
+const EntityContent = ({ entity }: { entity: MapEntity }) => {
+  switch (entity.type) {
+    case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
+    case 'county': return <CountyContent county={entity.county} />;
+    case 'facility': return <FacilityContent facility={entity.facility} />;
+    case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
+    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    default: return null;
+  }
+};
+
+// ── Coverage Area ──
+const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
+  const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
+  const counties = useMemo(() => nevadaCounties.filter(c => c.zone === area), [area]);
+  const rows = useMemo(() => counties.map(c => ({
+    name: c.name,
+    count: volumeMap.get(c.name) ?? 0,
+    secondaryZone: c.secondaryZone,
+  })), [counties, volumeMap]);
+  const total = rows.reduce((s, r) => s + r.count, 0);
+
+  const areaColor = area === 'area1' ? 'hsl(142, 71%, 45%)' : area === 'area2' ? 'hsl(35, 92%, 50%)' : 'hsl(217, 91%, 60%)';
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: areaColor }}>
+        ● Coverage Area
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-2">{COVERAGE_AREA_LABELS[area]}</p>
+      <div className="space-y-0.5">
+        {rows.map(r => (
+          <div key={r.name}>
+            <div className="flex justify-between text-xs text-foreground/80">
+              <span>{r.name}</span>
+              <span className="font-medium tabular-nums">{r.count.toLocaleString()}</span>
+            </div>
+            {r.secondaryZone && (
+              <div className="text-[10px] text-muted-foreground italic ml-1">
+                Routing: Primary Area {area.replace('area', '')}, Supported by Area {r.secondaryZone.replace('area', '')}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs font-semibold text-foreground">
+        <span>Total</span>
+        <span className="tabular-nums">{total.toLocaleString()}</span>
+      </div>
+      <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs text-foreground/80">
+        <span>Rural Access Dependence</span>
+        <span className="font-semibold">{RURAL_ACCESS_DEPENDENCE[area]}</span>
+      </div>
+    </>
+  );
+};
+
+// ── County ──
+const CountyContent = ({ county }: { county: string }) => {
+  const countyData = nevadaCounties.find(c => c.name === county);
+  const area = getCountyArea(county);
+  const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
+  const memberCount = volumeMap.get(county) ?? 0;
+
+  return (
+    <>
+      <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
+      <div className="space-y-1 text-xs text-foreground/80">
+        <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
+        <div className="flex justify-between"><span>Member Volume</span><span className="font-medium tabular-nums">{memberCount.toLocaleString()}</span></div>
+        <div className="flex justify-between"><span>Rural Access Dependence</span><span className="font-medium">{RURAL_ACCESS_DEPENDENCE[area]}</span></div>
+        {countyData?.secondaryZone && (
+          <div className="text-[10px] text-muted-foreground italic">
+            Secondary support from Area {countyData.secondaryZone.replace('area', '')}
+          </div>
+        )}
+      </div>
+    </>
+  );
+};
+
+// ── Facility ──
+const FacilityContent = ({ facility }: { facility: Facility }) => {
+  const typeLabel = facility.type === 'hospital' ? 'Hospital' :
+    facility.type === 'tier1' ? 'Tier 1 Provider' : 'Clinic / FQHC';
+  const typeColor = facility.type === 'hospital' ? 'bg-red-500' :
+    facility.type === 'tier1' ? 'bg-yellow-500' : 'bg-blue-500';
+  const coverageArea = getCountyArea(facility.county);
+  const countyData = nevadaCounties.find(c => c.name === facility.county);
+
+  return (
+    <>
+      <div className="flex items-center gap-2 mb-1">
+        <div className={`w-2.5 h-2.5 rounded-full ${typeColor}`} />
+        <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+          {typeLabel}
+        </span>
+      </div>
+      <h3 className="text-sm font-semibold text-foreground leading-tight mb-2" style={{ wordBreak: 'break-word' }}>
+        {facility.name}
+      </h3>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <MapPin className="w-3 h-3 flex-shrink-0" />
+          <span>{facility.city}, {facility.county} County</span>
+        </div>
+        {facility.address && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <span style={{ wordBreak: 'break-word' }}>{facility.address}, {facility.city}, NV</span>
+          </div>
+        )}
+        {facility.type === 'hospital' && (
+          <>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Building2 className="w-3 h-3 flex-shrink-0" />
+              <span>Critical Access Hospital (CAH)</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Shield className="w-3 h-3 flex-shrink-0" />
+              <span>NRHP Member</span>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <MapIcon className="w-3 h-3 flex-shrink-0" />
+              <span>{COVERAGE_AREA_LABELS[coverageArea]}</span>
+            </div>
+            {countyData?.secondaryZone && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⇄</span>
+                <span>Routing: Primary Area {coverageArea.replace('area', '')}, Supported by Area {countyData.secondaryZone.replace('area', '')}</span>
+              </div>
+            )}
+            {facility.accessType && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">◆</span>
+                <span>Access: {facility.accessType}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
+              <span>Rural Dependence: {RURAL_ACCESS_DEPENDENCE[coverageArea]}</span>
+            </div>
+          </>
+        )}
+        {facility.service && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Stethoscope className="w-3 h-3 flex-shrink-0" />
+            <span>
+              {facility.service === 'BH' ? 'Behavioral Health' : 'Primary Care'}
+              {facility.volume ? ` · ${facility.volume.toLocaleString()} visits` : ''}
+            </span>
+          </div>
+        )}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+          <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
+          <span>{facility.lat.toFixed(4)}, {facility.lng.toFixed(4)}</span>
+        </div>
+      </div>
+    </>
+  );
+};
+
+// ── Coverage Gap ──
+const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
+  <>
+    <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-destructive">
+      ● Coverage Gap
+    </div>
+    <p className="text-sm font-semibold text-foreground mb-2">Service Gap Detected</p>
+    <div className="text-xs text-muted-foreground space-y-1">
+      <p>No hospital or clinic within <strong>{radiusKm} km</strong> of this area.</p>
+      <p className="italic">This region may have limited access to emergency and primary care services.</p>
+    </div>
+  </>
+);
+
+// ── Member Volume ──
+const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCount: number }) => {
+  const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
+  const intensity = maxCount > 0 ? memberCount / maxCount : 0;
+  const intensityLabel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
+  const area = getCountyArea(county);
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: 'hsl(190, 60%, 40%)' }}>
+        ● Member Volume
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
+      <div className="text-xs text-foreground/80 space-y-1">
+        <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
+        <div className="flex justify-between"><span>Intensity</span><span className="font-medium">{intensityLabel}</span></div>
+        <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
+      </div>
+    </>
+  );
+};
+
+// ── Rural Service Group ──
+const RuralServiceGroupContent = ({ county, services }: { county: string; services: RuralService[] }) => {
+  const breakdown = useMemo(() => {
+    const counts = new Map<string, number>();
+    services.forEach(s => counts.set(s.category, (counts.get(s.category) ?? 0) + 1));
+    return RURAL_SERVICE_CATEGORIES
+      .filter(c => counts.has(c))
+      .map(c => ({ category: c, count: counts.get(c)! }));
+  }, [services]);
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: 'hsl(200, 15%, 46%)' }}>
+        ● Rural Services
+      </div>
+      <p className="text-sm font-semibold text-foreground">{county} County</p>
+      <p className="text-xs text-muted-foreground mb-2">
+        {services.length} service{services.length !== 1 ? 's' : ''} available
+      </p>
+
+      {/* Category breakdown */}
+      <div className="flex flex-wrap gap-1 mb-2">
+        {breakdown.map(({ category, count }) => (
+          <span
+            key={category}
+            className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}
+          >
+            {category} ({count})
+          </span>
+        ))}
+      </div>
+
+      {/* Service list */}
+      <div className="space-y-1 border-t border-border pt-2">
+        {services.map(service => (
+          <div key={service.id} className="px-1 py-1 rounded hover:bg-secondary/50 transition-colors">
+            <div className="text-xs font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+              <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-full ${CATEGORY_COLORS[service.category] ?? 'bg-secondary text-foreground'}`}>
+                {service.category}
+              </span>
+              {service.city && (
+                <span className="text-[10px] text-muted-foreground">{service.city}</span>
+              )}
+            </div>
+            {service.phone && (
+              <a
+                href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
+                className="inline-flex items-center gap-1 mt-1 text-[10px] text-primary hover:underline"
+                onClick={e => e.stopPropagation()}
+              >
+                <Phone className="w-2.5 h-2.5" />
+                {service.phone}
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
 

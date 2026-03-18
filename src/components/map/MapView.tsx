@@ -7,6 +7,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
+import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -31,7 +32,8 @@ interface MapViewProps {
   coverageRadius: boolean;
   coverageGaps: boolean;
   ruralServices?: RuralService[];
-  onRuralCountyClick?: (county: string) => void;
+  onEntityClick?: (entity: MapEntity | null) => void;
+  onEntityHover?: (entity: MapEntity | null) => void;
 }
 
 // Haversine distance in km
@@ -57,7 +59,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
   area3: { stroke: 'hsla(217, 91%, 60%, 0.6)', fill: 'hsla(217, 91%, 60%, 0.10)' },
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onRuralCountyClick }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover }: MapViewProps) => {
   const prevFocusedAreaRef = useRef<CoverageArea | null | undefined>(undefined);
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,8 +74,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const onAreaClickRef = useRef(onAreaClick);
   onAreaClickRef.current = onAreaClick;
-  const onRuralCountyClickRef = useRef(onRuralCountyClick);
-  onRuralCountyClickRef.current = onRuralCountyClick;
+  const onEntityClickRef = useRef(onEntityClick);
+  onEntityClickRef.current = onEntityClick;
+  const onEntityHoverRef = useRef(onEntityHover);
+  onEntityHoverRef.current = onEntityHover;
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -462,10 +466,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
             fillOpacity: 1,
           },
         });
-        geoLayer.bindTooltip(
-          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">Coverage Gap<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital or clinic within ${radiusKm} km</span></div>`,
-          { sticky: true, className: 'facility-tooltip' }
-        );
+        geoLayer.on('mouseover', () => onEntityHoverRef.current?.({ type: 'coverageGap', radiusKm }));
+        geoLayer.on('mouseout', () => onEntityHoverRef.current?.(null));
+        geoLayer.on('click', (e: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(e as any);
+          onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
+        });
         gapsRef.current.addLayer(geoLayer);
       }
     } catch (e) {
@@ -498,13 +504,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         fillOpacity: 0.75,
       });
 
-      polygon.bindTooltip(
-        `<div style="padding: 6px 10px; font-size: 12px;">
-          <div style="font-weight: 600; margin-bottom: 2px;">${county.name} County</div>
-          <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${count.toLocaleString()} members</div>
-        </div>`,
-        { sticky: true, className: 'facility-tooltip' }
-      );
+      polygon.on('mouseover', () => onEntityHoverRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count }));
+      polygon.on('mouseout', () => onEntityHoverRef.current?.(null));
+      polygon.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count });
+      });
 
       memberVolumeRef.current!.addLayer(polygon);
     });
@@ -551,7 +556,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         });
         const marker = L.marker([data.lat, data.lng], { icon });
         marker.bindTooltip(`<div style="padding:6px 10px;font-size:12px;"><div style="font-weight:600;">${county} County</div><div style="color:hsl(240,4%,46%);font-size:11px;">${data.count} rural services</div></div>`, { direction: 'top', offset: [0, -16], className: 'facility-tooltip' });
-        marker.on('click', () => onRuralCountyClickRef.current?.(county));
+        marker.on('click', () => {
+          const countyServices = ruralServicesData?.filter(s => s.county === county) ?? [];
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county, services: countyServices });
+        });
         ruralServicesRef.current!.addLayer(marker);
       });
     } else {
@@ -564,7 +572,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         const marker = L.marker([service.lat, service.lng], { icon });
         const phoneHtml = service.phone ? `<div style="margin-top:2px;"><a href="tel:${service.phone.replace(/[^\d+]/g, '')}" style="color:hsl(217,91%,60%);font-size:10px;">${service.phone}</a></div>` : '';
         marker.bindTooltip(`<div style="padding:8px 12px;font-size:13px;width:240px;white-space:normal;word-break:break-word;overflow-wrap:anywhere;"><div style="font-weight:600;margin-bottom:2px;">${service.name}</div><div style="color:hsl(200,15%,46%);font-size:10px;margin-bottom:2px;">${service.category}</div><div style="color:hsl(240,4%,46%);font-size:11px;">${service.city}, ${service.county} Co.</div>${service.address ? `<div style="color:hsl(240,4%,46%);font-size:10px;margin-top:2px;">${service.address}</div>` : ''}${phoneHtml}</div>`, { direction: 'top', offset: [0, -6], className: 'facility-tooltip' });
-        marker.on('click', () => onRuralCountyClickRef.current?.(service.county));
+        marker.on('click', () => {
+          const countyServices = ruralServicesData?.filter(s => s.county === service.county) ?? [];
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+        });
         ruralServicesRef.current!.addLayer(marker);
       });
     }
