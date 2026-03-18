@@ -204,45 +204,63 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       const clipped = clipPolygon(merged, nevadaClip as any);
       if (!clipped) return;
 
-      const colors = AREA_FILL[area];
+      const baseColors = AREA_FILL[area];
+
+      // Compute opacity based on focus state
+      let fillColor = baseColors.fill;
+      let borderColor = baseColors.border;
+      let weight = baseColors.weight;
+
+      if (focusedArea) {
+        if (area === focusedArea) {
+          // Focused: full opacity, thicker border
+          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.55)');
+          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.85)');
+          weight = baseColors.weight + 1.5;
+        } else {
+          // De-emphasized
+          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.08)');
+          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.15)');
+        }
+      }
+
       const geoLayer = L.geoJSON(clipped, {
         style: {
-          color: colors.border,
-          weight: colors.weight,
-          fillColor: colors.fill,
+          color: borderColor,
+          weight,
+          fillColor,
           fillOpacity: 1,
           dashArray: '6 4',
         },
       });
 
-      const totalMembers = counties.reduce((sum, c) => sum + (volumeMap.get(c.name) ?? 0), 0);
-      const countyLines = counties
-        .map(c => {
-          const count = volumeMap.get(c.name) ?? 0;
-          return `<div style="display:flex;justify-content:space-between;gap:12px;"><span>${c.name}</span><span style="font-weight:600;">${count.toLocaleString()}</span></div>`;
-        })
-        .join('');
-
-      const tooltipHtml = `
-        <div style="padding:8px 12px;font-size:12px;min-width:160px;">
-          <div style="font-weight:700;margin-bottom:6px;font-size:13px;">${COVERAGE_AREA_LABELS[area]}</div>
-          <div style="border-bottom:1px solid hsl(240,5%,88%);margin-bottom:4px;padding-bottom:4px;">
-            ${countyLines}
-          </div>
-          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:12px;">
-            <span>Total</span><span>${totalMembers.toLocaleString()}</span>
-          </div>
-        </div>
-      `;
-
       geoLayer.on({
         mouseover: () => onAreaHover?.(area),
         mouseout: () => onAreaHover?.(null),
+        click: (e: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(e as any);
+          onAreaClick?.(area);
+        },
       });
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones, onAreaHover]);
+  }, [layers.zones, onAreaHover, onAreaClick, focusedArea]);
+
+  // Update county boundary visibility based on focus
+  useEffect(() => {
+    if (!countiesRef.current || !focusedArea) return;
+    countiesRef.current.eachLayer((layer: any) => {
+      // Keep all visible but reduce opacity for non-focused counties
+      if (layer.setStyle) {
+        layer.setStyle({
+          opacity: 0.3,
+          color: 'hsl(240, 5%, 75%)',
+        });
+      }
+    });
+    // Re-render with focus will be handled by the zones effect
+  }, [focusedArea, layers.counties]);
 
   // Draw coverage radii (dashed, area-colored)
   useEffect(() => {
