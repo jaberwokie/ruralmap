@@ -163,6 +163,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!zonesRef.current) return;
     zonesRef.current.clearLayers();
 
+    if (layers.memberVolume) return;
     if (!layers.zones && !focusedArea) return;
 
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
@@ -218,7 +219,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones, onAreaHover, onAreaClick, focusedArea]);
+  }, [layers.zones, layers.memberVolume, onAreaHover, onAreaClick, focusedArea]);
 
   // Update county boundary visibility based on focus
   useEffect(() => {
