@@ -103,7 +103,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     mapRef.current = map;
 
     // Click on empty map space clears focus
-    map.on('click', () => onAreaClick?.(null as any));
+    map.on('click', () => onAreaClickRef.current?.(null as any));
 
     return () => {
       map.remove();
