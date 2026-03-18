@@ -50,6 +50,7 @@ const Index = () => {
     return null;
   }, [lockedEntity]);
 
+  const filteredFacilities = useMemo(() => {
     return facilities
       .filter(f => {
         if (!f.lat || !f.lng || isNaN(f.lat) || isNaN(f.lng)) return false;
