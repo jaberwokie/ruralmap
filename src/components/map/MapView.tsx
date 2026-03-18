@@ -216,12 +216,13 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     nevadaCounties.forEach(county => {
+      // Skip counties not in focused area
+      if (focusedArea && county.zone !== focusedArea) return;
+
       const merged = mergePolygons([county.boundaries]);
       if (!merged) return;
       const clipped = clipPolygon(merged, nevadaClip as any);
       if (!clipped) return;
-
-      const isFocusedCounty = !focusedArea || county.zone === focusedArea;
 
       const geoLayer = L.geoJSON(clipped, {
         style: {
@@ -230,7 +231,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
           fillColor: 'transparent',
           fillOpacity: 0,
           dashArray: '4 4',
-          opacity: isFocusedCounty ? 1 : 0.2,
         },
       });
       countiesRef.current!.addLayer(geoLayer);
@@ -246,7 +246,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
           white-space: nowrap;
           pointer-events: none;
           text-shadow: 0 0 4px white, 0 0 4px white;
-          opacity: ${isFocusedCounty ? 1 : 0.25};
         ">${county.name}</span>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
