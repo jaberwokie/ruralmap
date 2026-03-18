@@ -364,11 +364,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
     if (!coverageGaps) return;
 
-    const hospitals = facilities.filter(f => f.type === 'hospital');
+    // Only hospitals and clinics count toward closing coverage gaps (exclude tier1)
+    const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
 
     nevadaCounties.forEach(county => {
       const [cLat, cLng] = county.center;
-      const covered = hospitals.some(h => haversineKm(cLat, cLng, h.lat, h.lng) <= radiusKm);
+      const covered = eligibleFacilities.some(f => haversineKm(cLat, cLng, f.lat, f.lng) <= radiusKm);
 
       if (!covered) {
         const polygon = L.polygon(county.boundaries, {
@@ -380,7 +381,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         });
 
         polygon.bindTooltip(
-          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">${county.name} County<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital within ${radiusKm} km</span></div>`,
+          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">${county.name} County<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital or clinic within ${radiusKm} km</span></div>`,
           { sticky: true, className: 'facility-tooltip' }
         );
 
