@@ -187,7 +187,7 @@ const Index = () => {
           onEntityHover={handleEntityHover}
           selectedCounty={selectedCounty}
           onFteHubClick={handleFteHubClick}
-          selectedFteId={selectedFteId}
+          selectedFteId={activeFteId}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
