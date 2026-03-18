@@ -34,6 +34,7 @@ const Index = () => {
     memberVolume: false,
     ruralServices: false,
     operationalCoverage: false,
+    fteCapacity: false,
   });
 
   // ── Unified detail panel state ──

@@ -40,6 +40,7 @@ const LAYER_CONFIG = [
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
   { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
+  { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
 ];
 
 const Sidebar = ({
