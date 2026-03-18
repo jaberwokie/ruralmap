@@ -132,19 +132,23 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   if (!fte) return null;
 
   const status = getLoadStatus(fte.currentLoad, fte.capacity);
-  const colors = LOAD_STATUS_COLORS[status];
+  const statusColors = LOAD_STATUS_COLORS[status];
+  const role = FTE_ROLE_COLORS[fte.id];
 
   return (
-    <div className={`rounded-md border border-border px-2 py-1.5 mb-2 ${colors.bg}`}>
+    <div className={`rounded-md border-2 px-2 py-1.5 mb-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
       <div className="flex items-center gap-1.5 mb-0.5">
-        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} />
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
         <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Capacity Status</span>
       </div>
-      <div className={`text-[11px] font-medium ${colors.text}`}>{fte.label}</div>
-      <div className={`text-[10px] ${colors.text} mt-0.5`}>
-        {fte.currentLoad} / {fte.capacity} engagements · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+      <div className="text-[11px] font-medium text-foreground">{fte.label}</div>
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
+        <span className={`text-[10px] ${statusColors.text}`}>
+          {fte.currentLoad} / {fte.capacity} engagements · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+        </span>
       </div>
-      <div className={`text-[10px] italic ${colors.text} opacity-80 mt-0.5`}>
+      <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
         {LOAD_STATUS_GUIDANCE[status]}
       </div>
     </div>
