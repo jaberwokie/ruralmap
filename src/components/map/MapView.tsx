@@ -175,7 +175,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     areas.forEach(area => {
-
+      // If zones toggle is off, only draw the focused area
+      if (!layers.zones && area !== focusedArea) return;
       const counties = nevadaCounties.filter(c => c.zone === area);
       const merged = mergePolygons(counties.map(c => c.boundaries));
       if (!merged) return;
