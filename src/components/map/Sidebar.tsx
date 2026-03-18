@@ -337,7 +337,32 @@ const Sidebar = ({
                     </button>
                   );
                 })}
+            </div>
+
+            {/* Service Category Filter */}
+            {layers.ruralServices && (
+              <div>
+                <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">Service Category</div>
+                <div className="flex flex-wrap gap-1">
+                  {RURAL_SERVICE_CATEGORIES.map(cat => {
+                    const active = filters.serviceCategories.has(cat);
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => toggleServiceCategoryFilter(cat)}
+                        className={`px-2 py-0.5 rounded text-[10px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground text-background font-medium'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+            )}
             </div>
           </div>
         )}
