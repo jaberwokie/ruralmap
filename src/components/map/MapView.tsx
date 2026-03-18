@@ -329,19 +329,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
 
-    let analysisFeature: Feature<Polygon | MultiPolygon>;
-    if (focusedArea) {
-      const areaCounties = nevadaCounties.filter(c => c.zone === focusedArea);
-      const merged = mergePolygons(areaCounties.map(c => c.boundaries));
-      if (!merged) return;
-      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
-      const clipped = clipPolygon(merged, nevadaClip as any);
-      analysisFeature = clipped
-        ? (clipped as Feature<Polygon | MultiPolygon>)
-        : { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
-    } else {
-      analysisFeature = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
-    }
+    const analysisFeature: Feature<Polygon | MultiPolygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
 
     if (eligibleFacilities.length === 0) {
       const geoLayer = L.geoJSON(analysisFeature as any, {
