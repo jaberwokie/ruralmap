@@ -5,7 +5,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
-import { COUNTY_FTE_MAP, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
+import { FTECapacity, COUNTY_FTE_MAP, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -39,7 +39,8 @@ export type MapEntity =
   | { type: 'facility'; facility: Facility }
   | { type: 'coverageGap'; radiusKm: number }
   | { type: 'memberVolume'; county: string; memberCount: number }
-  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] };
+  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] }
+  | { type: 'fteHub'; fte: FTECapacity };
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
@@ -196,6 +197,7 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    case 'fteHub': return <FTEHubContent fte={entity.fte} />;
     default: return null;
   }
 };
@@ -548,5 +550,44 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
   );
 };
 
+// ── FTE Hub ──
+const FTEHubContent = ({ fte }: { fte: FTECapacity }) => {
+  const status = getLoadStatus(fte.currentLoad, fte.capacity);
+  const colors = LOAD_STATUS_COLORS[status];
+  const pct = Math.round((fte.currentLoad / fte.capacity) * 100);
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} />
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">FTE Hub</span>
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-2">{fte.label}</p>
+
+      <div className={`rounded-md border border-border px-2 py-1.5 mb-3 ${colors.bg}`}>
+        <div className={`text-[11px] font-bold ${colors.text}`}>{LOAD_STATUS_LABELS[status]}</div>
+        <div className={`text-[10px] ${colors.text} mt-0.5`}>
+          {fte.currentLoad} / {fte.capacity} engagements ({pct}%)
+        </div>
+        <div className={`text-[10px] italic ${colors.text} opacity-80 mt-0.5`}>
+          {LOAD_STATUS_GUIDANCE[status]}
+        </div>
+      </div>
+
+      <div className="border-t border-border pt-2">
+        <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1.5">
+          Counties Served
+        </div>
+        <div className="flex flex-wrap gap-1">
+          {fte.counties.map(c => (
+            <span key={c} className="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-foreground font-medium">
+              {c}
+            </span>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
 
 export default CoverageDetailPanel;

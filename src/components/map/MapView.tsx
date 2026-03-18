@@ -512,19 +512,24 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         html: `<div style="
           display:flex; align-items:center; gap:5px;
           background:white; border:1.5px solid ${dotColor};
-          border-radius:14px; padding:3px 8px 3px 5px;
+          border-radius:14px; padding:4px 10px 4px 6px;
           box-shadow:0 1px 4px hsla(0,0%,0%,0.15);
-          cursor:default; white-space:nowrap;
+          cursor:pointer; white-space:nowrap;
+          min-width:44px; min-height:28px;
         ">
           <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
           <span style="font-size:10px;font-weight:600;color:hsl(0,0%,25%);">${fte.label}</span>
           <span style="font-size:9px;color:hsl(0,0%,50%);">${fte.currentLoad}/${fte.capacity}</span>
         </div>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 12],
+        iconSize: [140, 28],
+        iconAnchor: [0, 14],
       });
 
-      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: false });
+      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000 });
+      marker.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        onEntityClickRef.current?.({ type: 'fteHub', fte });
+      });
       fteCapacityRef.current!.addLayer(marker);
     });
   }, [layers.fteCapacity]);
