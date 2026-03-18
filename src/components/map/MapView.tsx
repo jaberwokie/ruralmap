@@ -220,7 +220,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones, layers.memberVolume, onAreaHover, onAreaClick, focusedArea]);
+  }, [layers.zones, layers.memberVolume, onAreaHover, onAreaClick, focusedArea, coverageGaps]);
 
   // Update county boundary visibility based on focus
   useEffect(() => {
