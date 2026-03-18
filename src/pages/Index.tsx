@@ -3,12 +3,10 @@ import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
-import { CoverageArea } from '@/data/nevada-counties';
 import { ruralServices } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
-  zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
   ruralServices: boolean;
@@ -29,10 +27,8 @@ const Index = () => {
   const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [focusedArea, setFocusedArea] = useState<CoverageArea | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
-    zones: true,
     serviceLocations: true,
     memberVolume: false,
     ruralServices: false,
@@ -76,9 +72,6 @@ const Index = () => {
       if (layer === 'serviceLocations' && !next.serviceLocations) {
         setCoverageRadius(false);
       }
-      if (layer === 'zones') {
-        setFocusedArea(null);
-      }
       if (layer === 'ruralServices' && !next.ruralServices) {
         setLockedEntity(prev => prev?.type === 'ruralServiceGroup' ? null : prev);
       }
@@ -115,23 +108,8 @@ const Index = () => {
     setLockedEntity(null);
   }, []);
 
-  // Bridge: area hover/click still controls focusedArea for zoom behavior
-  const handleAreaHover = useCallback((area: CoverageArea | null) => {
-    if (area) {
-      setHoverEntity({ type: 'coverageArea', area });
-    } else {
-      setHoverEntity(null);
-    }
-  }, []);
-
-  const handleAreaClick = useCallback((area: CoverageArea | null) => {
-    if (area) {
-      setFocusedArea(prev => prev === area ? null : area);
-      setLockedEntity({ type: 'coverageArea', area });
-    } else {
-      setFocusedArea(null);
-      setLockedEntity(null);
-    }
+  const handleMapClick = useCallback(() => {
+    setLockedEntity(null);
   }, []);
 
   return (
@@ -171,8 +149,6 @@ const Index = () => {
           coverageGaps={coverageGaps}
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
-          focusedArea={focusedArea}
-          onFocusedAreaChange={(area) => setFocusedArea(prev => prev === area ? null : area)}
         />
       </div>
 
@@ -181,9 +157,7 @@ const Index = () => {
           facilities={filteredFacilities}
           layers={layers}
           onFacilityClick={(facility) => handleEntityClick({ type: 'facility', facility })}
-          onAreaHover={handleAreaHover}
-          onAreaClick={handleAreaClick}
-          focusedArea={focusedArea}
+          onMapClick={handleMapClick}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}

@@ -3,12 +3,10 @@ import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-rea
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
-import { CoverageArea } from '@/data/nevada-counties';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
-  zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
   ruralServices: boolean;
@@ -32,13 +30,10 @@ interface SidebarProps {
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
-  focusedArea: CoverageArea | null;
-  onFocusedAreaChange: (area: CoverageArea) => void;
 }
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
-  { key: 'zones' as const, label: 'Coverage Areas', color: 'bg-primary/30' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
@@ -62,8 +57,6 @@ const Sidebar = ({
   coverageGaps,
   onCoverageRadiusChange,
   onCoverageGapsChange,
-  focusedArea,
-  onFocusedAreaChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -372,49 +365,6 @@ const Sidebar = ({
 
       <div className="border-t border-border mx-4" />
 
-      {/* Coverage Area Selector */}
-      <div className="px-4 py-3">
-        <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
-          Focus Area
-        </div>
-        <div className="flex gap-1.5">
-          {([
-            { key: 'area1' as CoverageArea, label: 'Area 1', color: 'hsla(142, 71%, 45%', solid: 'hsl(142, 71%, 45%)' },
-            { key: 'area2' as CoverageArea, label: 'Area 2', color: 'hsla(35, 92%, 50%', solid: 'hsl(35, 92%, 50%)' },
-            { key: 'area3' as CoverageArea, label: 'Area 3', color: 'hsla(217, 91%, 60%', solid: 'hsl(217, 91%, 60%)' },
-          ]).map(({ key, label, color, solid }) => {
-            const active = focusedArea === key;
-            return (
-              <button
-                key={key}
-                onClick={() => onFocusedAreaChange(key)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] transition-all duration-150 ${
-                  active
-                    ? 'font-medium shadow-sm'
-                    : 'bg-secondary text-muted-foreground hover:text-foreground'
-                }`}
-                style={active ? { background: `${color}, 0.18)`, color: solid, borderWidth: 1, borderColor: `${color}, 0.5)` } : {}}
-              >
-                <span
-                  className="w-2 h-2 rounded-full flex-shrink-0"
-                  style={{ background: solid, opacity: active ? 1 : 0.5 }}
-                />
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        {focusedArea && (
-          <button
-            onClick={() => onFocusedAreaChange(focusedArea)}
-            className="mt-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ✕ Clear focus
-          </button>
-        )}
-      </div>
-
-      <div className="border-t border-border mx-4" />
 
       {/* Layer Manager */}
       <div className="px-4 py-3">
@@ -537,24 +487,6 @@ const Sidebar = ({
                 <div className="w-3 h-3 flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)', transform: 'rotate(45deg)' }} />
                 <span className="text-muted-foreground">Tier 1</span>
               </div>
-            </div>
-          </div>
-          {/* Coverage Areas */}
-          <div>
-            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Coverage Areas</div>
-            <div className="space-y-1">
-              {([
-                { key: 'area1' as CoverageArea, label: 'Area 1 — Western Hub', bg: 'hsla(142, 71%, 45%, 0.35)', border: '1px dashed hsla(142, 71%, 45%, 0.65)' },
-                { key: 'area2' as CoverageArea, label: 'Area 2 — Northern / Rural Hub', bg: 'hsla(35, 92%, 50%, 0.25)', border: '1px dashed hsla(35, 92%, 50%, 0.50)' },
-                { key: 'area3' as CoverageArea, label: 'Area 3 — Southern / Rural Hub', bg: 'hsla(217, 91%, 60%, 0.15)', border: '1px dashed hsla(217, 91%, 60%, 0.40)' },
-              ])
-                .filter(({ key }) => !focusedArea || key === focusedArea)
-                .map(({ key, label, bg, border }) => (
-                  <div key={key} className="flex items-center gap-2 px-2">
-                    <div className="w-3 h-3 rounded-sm" style={{ background: bg, border }} />
-                    <span className="text-muted-foreground">{label}</span>
-                  </div>
-                ))}
             </div>
           </div>
           {/* Operational Coverage */}
