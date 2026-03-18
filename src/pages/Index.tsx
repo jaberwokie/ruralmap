@@ -41,7 +41,15 @@ const Index = () => {
   const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
   const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
 
-  const filteredFacilities = useMemo(() => {
+  // Derive selected county from locked entity for map highlight
+  const selectedCounty = useMemo(() => {
+    if (!lockedEntity) return null;
+    if (lockedEntity.type === 'ruralServiceGroup' || lockedEntity.type === 'county' || lockedEntity.type === 'memberVolume') {
+      return lockedEntity.county;
+    }
+    return null;
+  }, [lockedEntity]);
+
     return facilities
       .filter(f => {
         if (!f.lat || !f.lng || isNaN(f.lat) || isNaN(f.lng)) return false;
