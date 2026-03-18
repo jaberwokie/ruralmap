@@ -184,9 +184,9 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
         </div>
       `;
 
-      geoLayer.bindTooltip(tooltipHtml, {
-        sticky: true,
-        className: 'facility-tooltip',
+      geoLayer.on({
+        mouseover: () => onAreaHover?.(area),
+        mouseout: () => onAreaHover?.(null),
       });
 
       zonesRef.current!.addLayer(geoLayer);
