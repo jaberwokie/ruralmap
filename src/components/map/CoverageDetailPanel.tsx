@@ -519,47 +519,5 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
   );
 };
 
-// ── Operational Zone ──
-const OperationalZoneContent = ({ zone }: { zone: OperationalZone }) => {
-  const typeColor = zone.coverageType === 'active'
-    ? 'hsl(174, 50%, 40%)'
-    : zone.coverageType === 'scheduled'
-    ? 'hsl(174, 40%, 50%)'
-    : 'hsl(220, 10%, 55%)';
-
-  return (
-    <>
-      <div className="text-[10px] font-medium uppercase tracking-wide mb-1" style={{ color: typeColor }}>
-        ● {COVERAGE_TYPE_LABELS[zone.coverageType]}
-      </div>
-      <p className="text-sm font-semibold text-foreground mb-1">{zone.label}</p>
-      <p className="text-[11px] italic text-muted-foreground mb-3">{zone.description}</p>
-
-      <div className="space-y-1 text-xs text-foreground/80 mb-3">
-        <div className="flex justify-between">
-          <span>Coverage Type</span>
-          <span className="font-medium">{COVERAGE_TYPE_LABELS[zone.coverageType]}</span>
-        </div>
-        <div className="flex justify-between">
-          <span>Assigned FTE</span>
-          <span className="font-medium">{zone.fte}</span>
-        </div>
-      </div>
-
-      <div className="border-t border-border pt-2">
-        <div className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground mb-1.5">
-          Counties in Zone
-        </div>
-        <div className="flex flex-wrap gap-1">
-          {zone.counties.map(c => (
-            <span key={c} className="px-1.5 py-0.5 rounded text-[10px] bg-secondary text-foreground font-medium">
-              {c}
-            </span>
-          ))}
-        </div>
-      </div>
-    </>
-  );
-};
 
 export default CoverageDetailPanel;
