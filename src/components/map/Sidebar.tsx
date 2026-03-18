@@ -230,7 +230,7 @@ const Sidebar = ({
         </span>
         {tier1Count > 0 && (
           <span className="text-muted-foreground flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+            <span className="w-1.5 h-1.5 rounded-full bg-tier1 inline-block" />
             <span className="font-mono font-medium text-foreground">{tier1Count}</span> Tier 1
           </span>
         )}
@@ -282,7 +282,7 @@ const Sidebar = ({
                 {[
                   { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
                   { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
-                  { value: 'tier1', label: 'Tier 1', color: 'bg-green-500' },
+                  { value: 'tier1', label: 'Tier 1', color: 'bg-tier1' },
                 ].map(({ value, label, color }) => {
                   const active = filters.types.has(value);
                   return (
@@ -545,7 +545,7 @@ const Sidebar = ({
                   <div className="flex items-start gap-2">
                     <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
                       facility.type === 'hospital' ? 'bg-hospital' :
-                      facility.type === 'tier1' ? 'bg-green-500' : 'bg-clinic'
+                      facility.type === 'tier1' ? 'bg-tier1' : 'bg-clinic'
                     }`} />
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-foreground truncate">
