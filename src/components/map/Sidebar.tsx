@@ -32,6 +32,7 @@ interface SidebarProps {
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
+  selectedFteId?: string | null;
 }
 
 const LAYER_CONFIG = [
