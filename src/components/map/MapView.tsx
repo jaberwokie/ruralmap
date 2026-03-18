@@ -394,7 +394,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
-    if (!coverageGaps || !coverageRadius) return;
+    if (!coverageGaps) return;
 
     // Only hospitals and clinics count (exclude tier1)
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
