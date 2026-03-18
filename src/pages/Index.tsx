@@ -168,7 +168,7 @@ const Index = () => {
           coverageGaps={coverageGaps}
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
-          selectedFteId={selectedFteId}
+          selectedFteId={activeFteId}
         />
       </div>
 
