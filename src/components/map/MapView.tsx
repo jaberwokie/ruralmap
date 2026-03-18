@@ -132,55 +132,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     stateBoundaryRef.current.addLayer(geoLayer);
   }, []);
 
-  // Draw county boundaries (neutral, reference-only)
-  useEffect(() => {
-    if (!countiesRef.current || !labelsRef.current) return;
-    countiesRef.current.clearLayers();
-    labelsRef.current.clearLayers();
-
-    if (!layers.counties) return;
-
-    const nevadaClip = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: nevadaBoundaryGeoJSON,
-    };
-
-    nevadaCounties.forEach(county => {
-      const merged = mergePolygons([county.boundaries]);
-      if (!merged) return;
-      const clipped = clipPolygon(merged, nevadaClip as any);
-      if (!clipped) return;
-
-      const geoLayer = L.geoJSON(clipped, {
-        style: {
-          color: 'hsl(240, 5%, 75%)',
-          weight: 1,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          dashArray: '4 4',
-        },
-      });
-      countiesRef.current!.addLayer(geoLayer);
-
-      const label = L.divIcon({
-        className: 'county-label',
-        html: `<span style="
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: hsl(240, 5%, 55%);
-          white-space: nowrap;
-          pointer-events: none;
-          text-shadow: 0 0 4px white, 0 0 4px white;
-        ">${county.name}</span>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      });
-      L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
-    });
-  }, [layers.counties]);
+  // County drawing is handled by the focus-aware effect below
 
   // Draw merged coverage area overlays
   useEffect(() => {
