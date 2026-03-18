@@ -4,6 +4,7 @@ import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { ruralServices } from '@/data/rural-services';
+import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 
 interface LayerState {
   counties: boolean;
@@ -50,6 +51,16 @@ const Index = () => {
     }
     return null;
   }, [lockedEntity]);
+
+  // Derive active FTE from county selection OR direct hub click
+  const activeFteId = useMemo(() => {
+    if (selectedFteId) return selectedFteId;
+    if (selectedCounty) {
+      const fte = COUNTY_FTE_MAP.get(selectedCounty);
+      return fte?.id ?? null;
+    }
+    return null;
+  }, [selectedFteId, selectedCounty]);
 
   const filteredFacilities = useMemo(() => {
     return facilities
@@ -157,7 +168,7 @@ const Index = () => {
           coverageGaps={coverageGaps}
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
-          selectedFteId={selectedFteId}
+          selectedFteId={activeFteId}
         />
       </div>
 
@@ -176,7 +187,7 @@ const Index = () => {
           onEntityHover={handleEntityHover}
           selectedCounty={selectedCounty}
           onFteHubClick={handleFteHubClick}
-          selectedFteId={selectedFteId}
+          selectedFteId={activeFteId}
         />
         <CoverageDetailPanel
           entity={lockedEntity}

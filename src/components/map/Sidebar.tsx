@@ -456,8 +456,9 @@ const Sidebar = ({
                     const statusColors = LOAD_STATUS_COLORS[status];
                     const role = FTE_ROLE_COLORS[fte.id];
                     const isSelected = selectedFteId === fte.id;
+                    const isDimmed = selectedFteId != null && !isSelected;
                     return (
-                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''}`}>
+                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}>
 
                         <div className="flex items-center justify-between mb-0.5">
                           <div className="flex items-center gap-1.5">
@@ -485,8 +486,10 @@ const Sidebar = ({
                     const status = getLoadStatus(remote.currentLoad, remote.capacity);
                     const statusColors = LOAD_STATUS_COLORS[status];
                     const role = FTE_ROLE_COLORS[remote.id];
+                    const isRemoteSelected = selectedFteId === remote.id;
+                    const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
                     return (
-                      <div className={`rounded-md border-2 border-dashed px-2 py-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'}`}>
+                      <div className={`rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}>
                         <div className="flex items-center gap-1.5 mb-1">
                           <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
                           <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
