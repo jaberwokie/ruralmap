@@ -128,18 +128,15 @@ const Index = () => {
   }, []);
 
   const handleFteHubClick = useCallback((fteId: string) => {
-    setSelectedFteId(prev => prev === fteId ? null : fteId);
-    if (fteId === 'remote') {
-      setLockedEntity(prev => prev?.type === 'remoteFte' ? null : { type: 'remoteFte' });
-    } else {
-      setLockedEntity(null);
-    }
-  }, []);
+    const isAlready = selectedFteId === fteId;
+    setSelectedFteId(isAlready ? null : fteId);
+    setLockedEntity(isAlready ? null : { type: 'fteDetail', fteId });
+  }, [selectedFteId]);
 
-  const handleRemoteFteClick = useCallback(() => {
-    const isAlreadySelected = selectedFteId === 'remote';
-    setSelectedFteId(isAlreadySelected ? null : 'remote');
-    setLockedEntity(isAlreadySelected ? null : { type: 'remoteFte' });
+  const handleFteCardClick = useCallback((fteId: string) => {
+    const isAlready = selectedFteId === fteId;
+    setSelectedFteId(isAlready ? null : fteId);
+    setLockedEntity(isAlready ? null : { type: 'fteDetail', fteId });
   }, [selectedFteId]);
 
   return (
@@ -180,7 +177,7 @@ const Index = () => {
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
           selectedFteId={activeFteId}
-          onRemoteFteClick={handleRemoteFteClick}
+          onFteCardClick={handleFteCardClick}
         />
       </div>
 
