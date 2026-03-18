@@ -372,10 +372,23 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     // Only hospitals and clinics count (exclude tier1)
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
 
+    // Build analysis boundary: focused area polygon or full state
+    let analysisFeature: Feature<Polygon | MultiPolygon>;
+    if (focusedArea) {
+      const areaCounties = nevadaCounties.filter(c => c.zone === focusedArea);
+      const merged = mergePolygons(areaCounties.map(c => c.boundaries));
+      if (!merged) return;
+      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      analysisFeature = clipped
+        ? (clipped as Feature<Polygon | MultiPolygon>)
+        : { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
+    } else {
+      analysisFeature = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
+    }
+
     if (eligibleFacilities.length === 0) {
-      // No eligible facilities — entire state is a gap
-      const stateFeature: Feature<Polygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
-      const geoLayer = L.geoJSON(stateFeature, {
+      const geoLayer = L.geoJSON(analysisFeature as any, {
         style: {
           color: 'hsla(0, 84%, 60%, 0.5)',
           weight: 1.5,
@@ -401,9 +414,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         if (u) mergedCoverage = u as Feature<Polygon | MultiPolygon>;
       }
 
-      // 2. Subtract merged coverage from state boundary
-      const stateFeature: Feature<Polygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
-      const fc = featureCollection([stateFeature, mergedCoverage]);
+      // 2. Subtract merged coverage from analysis boundary
+      const fc = featureCollection([analysisFeature, mergedCoverage]);
       const gapGeometry = difference(fc as any);
 
       if (gapGeometry) {
@@ -424,7 +436,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [facilities, coverageGaps, radiusKm]);
+  }, [facilities, coverageGaps, radiusKm, focusedArea]);
 
   // Draw member volume choropleth
   useEffect(() => {
