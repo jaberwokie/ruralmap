@@ -209,11 +209,9 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   // Update county boundary visibility based on focus
   useEffect(() => {
     if (!countiesRef.current) return;
-    if (!layers.counties) return;
-
-    // Rebuild county lines with appropriate opacity
     countiesRef.current.clearLayers();
     labelsRef.current?.clearLayers();
+    if (!layers.counties) return;
 
     const nevadaClip = {
       type: "Feature" as const,
