@@ -32,6 +32,7 @@ interface SidebarProps {
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
+  selectedFteId?: string | null;
 }
 
 const LAYER_CONFIG = [
@@ -60,6 +61,7 @@ const Sidebar = ({
   coverageGaps,
   onCoverageRadiusChange,
   onCoverageGapsChange,
+  selectedFteId,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -453,8 +455,10 @@ const Sidebar = ({
                     const status = getLoadStatus(fte.currentLoad, fte.capacity);
                     const statusColors = LOAD_STATUS_COLORS[status];
                     const role = FTE_ROLE_COLORS[fte.id];
+                    const isSelected = selectedFteId === fte.id;
                     return (
-                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''}`}>
+
                         <div className="flex items-center justify-between mb-0.5">
                           <div className="flex items-center gap-1.5">
                             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />

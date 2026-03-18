@@ -36,6 +36,8 @@ interface MapViewProps {
   onEntityClick?: (entity: MapEntity | null) => void;
   onEntityHover?: (entity: MapEntity | null) => void;
   selectedCounty?: string | null;
+  onFteHubClick?: (fteId: string) => void;
+  selectedFteId?: string | null;
 }
 
 // Haversine distance in km
@@ -52,7 +54,7 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
 
-const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -71,6 +73,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   onEntityClickRef.current = onEntityClick;
   const onEntityHoverRef = useRef(onEntityHover);
   onEntityHoverRef.current = onEntityHover;
+  const onFteHubClickRef = useRef(onFteHubClick);
+  onFteHubClickRef.current = onFteHubClick;
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -501,11 +505,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     if (!layers.fteCapacity) return;
 
     fteCapacityData.forEach(fte => {
-      if (!fte.hubLocation) return; // Remote = sidebar only
+      if (!fte.hubLocation) return;
 
       const status = getLoadStatus(fte.currentLoad, fte.capacity);
       const statusDot = LOAD_STATUS_COLORS[status].dot;
       const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
+      const isSelected = selectedFteId === fte.id;
 
       const icon = L.divIcon({
         className: '',
@@ -513,10 +518,11 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
           display:flex; align-items:center; gap:5px;
           background:white; border:2px solid ${roleColor};
           border-radius:14px; padding:4px 10px 4px 6px;
-          box-shadow:0 1px 4px hsla(0,0%,0%,0.15);
+          box-shadow:${isSelected ? `0 0 0 3px ${roleColor}40, 0 1px 4px hsla(0,0%,0%,0.15)` : '0 1px 4px hsla(0,0%,0%,0.15)'};
           cursor:pointer; white-space:nowrap;
           min-width:44px; min-height:28px;
           position:relative;
+          ${isSelected ? 'animation: fte-pulse 1.5s ease-in-out infinite;' : ''}
         ">
           <div style="width:10px;height:10px;border-radius:50%;background:${roleColor};flex-shrink:0;border:1.5px solid white;box-shadow:0 0 0 1px ${roleColor};"></div>
           <span style="font-size:10px;font-weight:600;color:${roleColor};">${fte.label}</span>
@@ -530,11 +536,11 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000 });
       marker.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'fteHub', fte });
+        onFteHubClickRef.current?.(fte.id);
       });
       fteCapacityRef.current!.addLayer(marker);
     });
-  }, [layers.fteCapacity]);
+  }, [layers.fteCapacity, selectedFteId]);
 
 
   const zoomRef = useRef(7);

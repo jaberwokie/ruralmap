@@ -40,6 +40,7 @@ const Index = () => {
   // ── Unified detail panel state ──
   const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
   const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
+  const [selectedFteId, setSelectedFteId] = useState<string | null>(null);
 
   // Derive selected county from locked entity for map highlight
   const selectedCounty = useMemo(() => {
@@ -112,6 +113,11 @@ const Index = () => {
 
   const handleMapClick = useCallback(() => {
     setLockedEntity(null);
+    setSelectedFteId(null);
+  }, []);
+
+  const handleFteHubClick = useCallback((fteId: string) => {
+    setSelectedFteId(prev => prev === fteId ? null : fteId);
   }, []);
 
   return (
@@ -151,6 +157,7 @@ const Index = () => {
           coverageGaps={coverageGaps}
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
+          selectedFteId={selectedFteId}
         />
       </div>
 
@@ -168,6 +175,8 @@ const Index = () => {
           onEntityClick={handleEntityClick}
           onEntityHover={handleEntityHover}
           selectedCounty={selectedCounty}
+          onFteHubClick={handleFteHubClick}
+          selectedFteId={selectedFteId}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
