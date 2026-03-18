@@ -7,6 +7,7 @@ export interface CountyData {
   center: [number, number]; // [lat, lng]
   isPrimary: boolean;
   zone: CoverageArea;
+  secondaryZone?: CoverageArea; // flexible support from another area
   boundaries: [number, number][]; // simplified polygon coordinates [lat, lng]
 }
 
