@@ -7,6 +7,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
+import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
