@@ -4,7 +4,7 @@ import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCoun
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
-import { OperationalZone, COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
+import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
