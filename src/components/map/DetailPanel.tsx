@@ -1,6 +1,6 @@
 import { X, MapPin, Building2, Stethoscope, Shield, Map } from 'lucide-react';
 import { Facility } from '@/data/facilities';
-import { getCountyArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE } from '@/data/nevada-counties';
+import { getCountyArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties } from '@/data/nevada-counties';
 
 interface DetailPanelProps {
   facility: Facility;
