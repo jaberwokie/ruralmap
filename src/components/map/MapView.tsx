@@ -45,7 +45,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
   area3: { stroke: 'hsla(217, 91%, 60%, 0.18)', fill: 'hsla(217, 91%, 60%, 0.03)' },
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
