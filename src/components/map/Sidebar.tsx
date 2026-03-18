@@ -522,7 +522,7 @@ const Sidebar = ({
           Facilities ({displayFacilities.length})
         </button>
         {facilitiesOpen && (
-          <div className="flex-1 overflow-y-auto space-y-0.5">
+          <div className="space-y-0.5">
             {displayFacilities.length === 0 ? (
               <div className="py-8 text-center">
                 <p className="text-xs text-muted-foreground">No facilities match your search or filters.</p>
