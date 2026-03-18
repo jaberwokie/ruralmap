@@ -5,6 +5,7 @@ import { Facility } from '@/data/facilities';
 import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons } from '@/utils/mergePolygons';
+import { nevadaBoundary } from '@/data/nevada-boundary';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -55,6 +56,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const memberVolumeRef = useRef<L.LayerGroup | null>(null);
+  const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -85,7 +87,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
     }).addTo(map);
 
     // Create layers in visual stacking order (bottom to top)
-    zonesRef.current = L.layerGroup().addTo(map);        // 1. Coverage areas
+    stateBoundaryRef.current = L.layerGroup().addTo(map); // 0. State boundary
+    zonesRef.current = L.layerGroup().addTo(map);         // 1. Coverage areas
     countiesRef.current = L.layerGroup().addTo(map);      // 2. County boundaries
     labelsRef.current = L.layerGroup().addTo(map);        // 3. County labels
     radiusRef.current = L.layerGroup().addTo(map);        // 4. Coverage radii
@@ -99,6 +102,21 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
       map.remove();
       mapRef.current = null;
     };
+  }, []);
+
+  // Draw state boundary (always visible, non-interactive)
+  useEffect(() => {
+    if (!stateBoundaryRef.current) return;
+    stateBoundaryRef.current.clearLayers();
+
+    const polygon = L.polygon(nevadaBoundary, {
+      color: 'hsl(240, 5%, 70%)',
+      weight: 2,
+      fillColor: 'transparent',
+      fillOpacity: 0,
+      interactive: false,
+    });
+    stateBoundaryRef.current.addLayer(polygon);
   }, []);
 
   // Draw county boundaries (neutral, reference-only)
