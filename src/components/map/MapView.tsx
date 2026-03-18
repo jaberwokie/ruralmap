@@ -482,15 +482,32 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         },
       });
 
-      geoLayer.on('mouseover', () => {
-        onEntityHoverRef.current?.({ type: 'operationalZone', zone });
+      // Zone hover resolves to county
+      geoLayer.on('mouseover', (e: L.LeafletEvent) => {
+        const latlng = (e as any).latlng as L.LatLng;
+        if (!latlng) return;
+        const county = findCountyAtPoint(latlng);
+        if (county) {
+          onEntityHoverRef.current?.({ type: 'county', county });
+        }
       });
       geoLayer.on('mouseout', () => {
         onEntityHoverRef.current?.(null);
       });
+      // Zone click resolves to county
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'operationalZone', zone });
+        const latlng = (e as any).latlng as L.LatLng;
+        if (!latlng) return;
+        const county = findCountyAtPoint(latlng);
+        if (county) {
+          const countyServices = ruralServicesData?.filter(s => s.county === county) ?? [];
+          if (countyServices.length > 0) {
+            onEntityClickRef.current?.({ type: 'ruralServiceGroup', county, services: countyServices });
+          } else {
+            onEntityClickRef.current?.({ type: 'county', county });
+          }
+        }
       });
 
       operationalCoverageRef.current!.addLayer(geoLayer);
