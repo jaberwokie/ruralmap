@@ -14,6 +14,7 @@ const CoverageDetailPanel = ({ hoveredArea }: CoverageDetailPanelProps) => {
     const rows = counties.map(c => ({
       name: c.name,
       count: volumeMap.get(c.name) ?? 0,
+      secondaryZone: c.secondaryZone,
     }));
     const total = rows.reduce((s, r) => s + r.count, 0);
     return { label: COVERAGE_AREA_LABELS[hoveredArea], rows, total };
