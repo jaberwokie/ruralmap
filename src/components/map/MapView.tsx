@@ -6,6 +6,7 @@ import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, getCountyArea } fro
 import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
+import { RuralService } from '@/data/rural-services';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -19,6 +20,7 @@ interface MapViewProps {
     zones: boolean;
     serviceLocations: boolean;
     memberVolume: boolean;
+    ruralServices: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   onAreaHover?: (area: CoverageArea | null) => void;
@@ -28,6 +30,8 @@ interface MapViewProps {
   radiusKm: number;
   coverageRadius: boolean;
   coverageGaps: boolean;
+  ruralServices?: RuralService[];
+  onRuralCountyClick?: (county: string) => void;
 }
 
 // Haversine distance in km
