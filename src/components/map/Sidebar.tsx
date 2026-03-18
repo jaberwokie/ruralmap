@@ -3,12 +3,10 @@ import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-rea
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
-import { CoverageArea } from '@/data/nevada-counties';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
-  zones: boolean;
   serviceLocations: boolean;
   memberVolume: boolean;
   ruralServices: boolean;
