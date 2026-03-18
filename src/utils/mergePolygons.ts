@@ -1,5 +1,5 @@
 import union from '@turf/union';
-import { polygon as turfPolygon } from '@turf/helpers';
+import { polygon as turfPolygon, featureCollection } from '@turf/helpers';
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
 
 /**
@@ -21,13 +21,13 @@ export function mergePolygons(
     return turfPolygon([ring]);
   });
 
-  let merged: Feature<Polygon | MultiPolygon> = features[0] as unknown as Feature<Polygon | MultiPolygon>;
-  for (let i = 1; i < features.length; i++) {
-    const result = union(merged as any, features[i] as any);
-    if (result) {
-      merged = result as unknown as Feature<Polygon | MultiPolygon>;
-    }
+  // Single polygon — no union needed
+  if (features.length === 1) {
+    return features[0] as unknown as Feature<Polygon | MultiPolygon>;
   }
 
-  return merged;
+  // @turf/union v7+ expects a FeatureCollection
+  const fc = featureCollection(features);
+  const result = union(fc as any);
+  return (result as unknown as Feature<Polygon | MultiPolygon>) ?? null;
 }
