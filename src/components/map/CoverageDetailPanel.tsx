@@ -44,8 +44,10 @@ const CoverageDetailPanel = ({ hoveredArea, focusedArea, onClearFocus }: Coverag
         )}
       </div>
 
-      {isLocked && (
-        <div className="mb-2 text-[10px] text-primary font-medium uppercase tracking-wide">
+      {isLocked && displayArea && (
+        <div className="mb-2 text-[10px] font-medium uppercase tracking-wide" style={{
+          color: displayArea === 'area1' ? 'hsl(142, 71%, 45%)' : displayArea === 'area2' ? 'hsl(35, 92%, 50%)' : 'hsl(217, 91%, 60%)',
+        }}>
           ● Focused
         </div>
       )}
