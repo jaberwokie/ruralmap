@@ -34,6 +34,7 @@ interface MapViewProps {
   ruralServices?: RuralService[];
   onEntityClick?: (entity: MapEntity | null) => void;
   onEntityHover?: (entity: MapEntity | null) => void;
+  selectedCounty?: string | null;
 }
 
 // Haversine distance in km
@@ -59,7 +60,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
   area3: { stroke: 'hsla(217, 91%, 60%, 0.6)', fill: 'hsla(217, 91%, 60%, 0.10)' },
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty }: MapViewProps) => {
   const prevFocusedAreaRef = useRef<CoverageArea | null | undefined>(undefined);
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -256,15 +257,34 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       const clipped = clipPolygon(merged, nevadaClip as any);
       if (!clipped) return;
 
+      const isSelected = selectedCounty === county.name;
+
       const geoLayer = L.geoJSON(clipped, {
         style: {
-          color: 'hsl(240, 5%, 75%)',
-          weight: 1,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          dashArray: '4 4',
+          color: isSelected ? 'hsl(200, 60%, 50%)' : 'hsl(240, 5%, 75%)',
+          weight: isSelected ? 2.5 : 1,
+          fillColor: isSelected ? 'hsla(200, 60%, 50%, 0.08)' : 'transparent',
+          fillOpacity: isSelected ? 1 : 0,
+          dashArray: isSelected ? undefined : '4 4',
         },
       });
+
+      geoLayer.on('mouseover', () => {
+        onEntityHoverRef.current?.({ type: 'county', county: county.name });
+      });
+      geoLayer.on('mouseout', () => {
+        onEntityHoverRef.current?.(null);
+      });
+      geoLayer.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        const countyServices = ruralServicesData?.filter(s => s.county === county.name) ?? [];
+        if (countyServices.length > 0) {
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: county.name, services: countyServices });
+        } else {
+          onEntityClickRef.current?.({ type: 'county', county: county.name });
+        }
+      });
+
       countiesRef.current!.addLayer(geoLayer);
 
       const label = L.divIcon({
@@ -284,7 +304,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       });
       L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
     });
-  }, [focusedArea, layers.counties]);
+  }, [focusedArea, layers.counties, selectedCounty, ruralServicesData]);
 
   // Draw coverage radii (dashed, area-colored)
   useEffect(() => {

@@ -41,6 +41,15 @@ const Index = () => {
   const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
   const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
 
+  // Derive selected county from locked entity for map highlight
+  const selectedCounty = useMemo(() => {
+    if (!lockedEntity) return null;
+    if (lockedEntity.type === 'ruralServiceGroup' || lockedEntity.type === 'county' || lockedEntity.type === 'memberVolume') {
+      return lockedEntity.county;
+    }
+    return null;
+  }, [lockedEntity]);
+
   const filteredFacilities = useMemo(() => {
     return facilities
       .filter(f => {
@@ -181,6 +190,7 @@ const Index = () => {
           ruralServices={filteredRuralServices}
           onEntityClick={handleEntityClick}
           onEntityHover={handleEntityHover}
+          selectedCounty={selectedCounty}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
