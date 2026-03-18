@@ -63,6 +63,30 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Mental Health': 'bg-violet-100 text-violet-700',
 };
 
+const COUNTY_SERVICE_COUNT = ruralServices.reduce((map, service) => {
+  map.set(service.county, (map.get(service.county) ?? 0) + 1);
+  return map;
+}, new Map<string, number>());
+
+const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCount: number }) => {
+  if (!GAP_COUNTIES.has(county)) return null;
+
+  return (
+    <>
+      <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
+        <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
+        <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
+      </div>
+      {serviceCount > 0 && (
+        <div className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1.5 mb-2">
+          <AlertTriangle className="w-3.5 h-3.5 text-foreground flex-shrink-0" />
+          <span className="text-[11px] font-medium text-foreground">Services present but limited access</span>
+        </div>
+      )}
+    </>
+  );
+};
+
 const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPanelProps) => {
   const display = entity ?? hoverEntity;
   const isLocked = !!entity;
