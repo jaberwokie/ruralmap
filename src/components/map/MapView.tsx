@@ -485,11 +485,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       memberVolumeRef.current!.addLayer(polygon);
     });
-
-    // Keep dashed coverage-area outlines visible above member volume polygons
-    zonesRef.current?.eachLayer((layer) => {
-      (layer as L.Layer & { bringToFront?: () => void }).bringToFront?.();
-    });
   }, [layers.memberVolume]);
 
   return <div ref={containerRef} className="w-full h-full" />;
