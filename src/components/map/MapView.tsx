@@ -176,11 +176,16 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         },
       });
 
+      // Subtle hover cue only — no informational output
       geoLayer.on('mouseover', () => {
-        onEntityHoverRef.current?.({ type: 'county', county: county.name });
+        if (!isSelected) {
+          geoLayer.setStyle({ color: 'hsl(200, 40%, 65%)', weight: 1.5 });
+        }
       });
       geoLayer.on('mouseout', () => {
-        onEntityHoverRef.current?.(null);
+        if (!isSelected) {
+          geoLayer.setStyle({ color: 'hsl(240, 5%, 75%)', weight: 1 });
+        }
       });
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
