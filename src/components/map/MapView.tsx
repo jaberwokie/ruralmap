@@ -64,6 +64,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
   const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
+  const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
