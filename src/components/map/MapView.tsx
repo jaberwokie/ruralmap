@@ -109,7 +109,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     mapRef.current = map;
 
-    map.on('click', () => onAreaClickRef.current?.(null as any));
+    map.on('click', () => onMapClickRef.current?.());
 
     return () => {
       map.remove();
