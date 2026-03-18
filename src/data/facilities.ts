@@ -1,5 +1,6 @@
 export type FacilityType = 'hospital' | 'clinic' | 'tier1';
 export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
+export type AccessType = 'Frontier' | 'Rural' | 'Near-Urban';
 
 export interface Facility {
   id: string;
@@ -14,6 +15,7 @@ export interface Facility {
   tier?: FacilityTier;
   service?: string;
   volume?: number;
+  accessType?: AccessType;
 }
 
 export const defaultFacilities: Facility[] = [
