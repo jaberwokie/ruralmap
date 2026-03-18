@@ -109,14 +109,19 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
     if (!stateBoundaryRef.current) return;
     stateBoundaryRef.current.clearLayers();
 
-    const polygon = L.polygon(nevadaBoundary, {
-      color: 'hsl(240, 5%, 70%)',
-      weight: 2,
-      fillColor: 'transparent',
-      fillOpacity: 0,
-      interactive: false,
-    });
-    stateBoundaryRef.current.addLayer(polygon);
+    const geoLayer = L.geoJSON(
+      { type: "Feature", geometry: nevadaBoundaryGeoJSON, properties: {} } as GeoJSON.Feature,
+      {
+        style: {
+          color: 'hsl(240, 5%, 55%)',
+          weight: 2,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          interactive: false,
+        },
+      }
+    );
+    stateBoundaryRef.current.addLayer(geoLayer);
   }, []);
 
   // Draw county boundaries (neutral, reference-only)
