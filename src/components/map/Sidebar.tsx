@@ -3,6 +3,7 @@ import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-rea
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
+import { CoverageArea } from '@/data/nevada-counties';
 
 interface LayerState {
   counties: boolean;
@@ -28,6 +29,8 @@ interface SidebarProps {
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
+  focusedArea: CoverageArea | null;
+  onFocusedAreaChange: (area: CoverageArea) => void;
 }
 
 const LAYER_CONFIG = [
