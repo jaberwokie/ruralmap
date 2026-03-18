@@ -53,18 +53,12 @@ const AREA_FILL: Record<CoverageArea, { fill: string; border: string; weight: nu
   area3: { fill: 'hsla(217, 91%, 60%, 0.18)', border: 'hsla(217, 91%, 60%, 0.40)', weight: 2 },
 };
 
-const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
-  area1: { stroke: 'hsla(142, 71%, 45%, 0.6)', fill: 'hsla(142, 71%, 45%, 0.10)' },
-  area2: { stroke: 'hsla(35, 92%, 50%, 0.6)', fill: 'hsla(35, 92%, 50%, 0.10)' },
-  area3: { stroke: 'hsla(217, 91%, 60%, 0.6)', fill: 'hsla(217, 91%, 60%, 0.10)' },
-};
-
-const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty }: MapViewProps) => {
-  const prevFocusedAreaRef = useRef<CoverageArea | null | undefined>(undefined);
+const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const countiesRef = useRef<L.LayerGroup | null>(null);
+  const labelsRef = useRef<L.LayerGroup | null>(null);
   const zonesRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
