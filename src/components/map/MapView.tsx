@@ -47,11 +47,7 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const AREA_FILL: Record<CoverageArea, { fill: string; border: string; weight: number }> = {
-  area1: { fill: 'hsla(142, 71%, 45%, 0.38)', border: 'hsla(142, 71%, 45%, 0.65)', weight: 2.5 },
-  area2: { fill: 'hsla(35, 92%, 50%, 0.28)', border: 'hsla(35, 92%, 50%, 0.50)', weight: 2 },
-  area3: { fill: 'hsla(217, 91%, 60%, 0.18)', border: 'hsla(217, 91%, 60%, 0.40)', weight: 2 },
-};
+const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
 const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
