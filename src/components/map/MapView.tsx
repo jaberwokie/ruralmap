@@ -379,8 +379,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
             fillOpacity: 1,
           },
         });
-        geoLayer.on('mouseover', () => onEntityHoverRef.current?.({ type: 'coverageGap', radiusKm }));
-        geoLayer.on('mouseout', () => onEntityHoverRef.current?.(null));
         geoLayer.on('click', (e: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(e as any);
           onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
