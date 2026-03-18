@@ -156,9 +156,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       const geoLayer = L.geoJSON(merged, {
         style: {
           color: colors.border,
-          weight: 2,
+          weight: colors.weight,
           fillColor: colors.fill,
           fillOpacity: 1,
+          dashArray: '6 4',
         },
       });
 
