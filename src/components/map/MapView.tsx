@@ -19,16 +19,13 @@ interface MapViewProps {
   facilities: Facility[];
   layers: {
     counties: boolean;
-    zones: boolean;
     serviceLocations: boolean;
     memberVolume: boolean;
     ruralServices: boolean;
     operationalCoverage: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
-  onAreaHover?: (area: CoverageArea | null) => void;
-  onAreaClick?: (area: CoverageArea) => void;
-  focusedArea?: CoverageArea | null;
+  onMapClick?: () => void;
   searchQuery: string;
   radiusKm: number;
   coverageRadius: boolean;
