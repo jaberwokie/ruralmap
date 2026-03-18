@@ -68,8 +68,18 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   const onAreaClickRef = useRef(onAreaClick);
   onAreaClickRef.current = onAreaClick;
 
-  const filteredFacilities = useMemo(() => {
+  // Filter facilities by focused area
+  const areaFilteredFacilities = useMemo(() => {
     let result = facilities;
+    if (focusedArea) {
+      const areaCountyNames = new Set(nevadaCounties.filter(c => c.zone === focusedArea).map(c => c.name));
+      result = result.filter(f => areaCountyNames.has(f.county));
+    }
+    return result;
+  }, [facilities, focusedArea]);
+
+  const filteredFacilities = useMemo(() => {
+    let result = areaFilteredFacilities;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(f =>
@@ -79,7 +89,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       );
     }
     return result;
-  }, [facilities, searchQuery]);
+  }, [areaFilteredFacilities, searchQuery]);
 
   // Initialize map — layer order: base → zones → counties → radii → gaps → volume → markers
   useEffect(() => {
