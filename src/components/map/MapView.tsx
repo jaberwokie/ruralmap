@@ -8,7 +8,7 @@ import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
-import { operationalZones, OperationalZone } from '@/data/operational-coverage';
+import { operationalZones } from '@/data/operational-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
