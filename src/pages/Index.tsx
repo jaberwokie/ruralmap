@@ -52,6 +52,9 @@ const Index = () => {
       if (layer === 'serviceLocations' && !next.serviceLocations) {
         setCoverageRadius(false);
       }
+      if (layer === 'zones') {
+        setFocusedArea(null);
+      }
       return next;
     });
   }, []);
