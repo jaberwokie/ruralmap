@@ -17,6 +17,8 @@ const DetailPanel = ({ facility, onClose }: DetailPanelProps) => {
   const coverageArea = getCountyArea(facility.county);
   const areaLabel = COVERAGE_AREA_LABELS[coverageArea];
   const ruralDependence = RURAL_ACCESS_DEPENDENCE[coverageArea];
+  const countyData = nevadaCounties.find(c => c.name === facility.county);
+  const secondaryZone = countyData?.secondaryZone;
 
   return (
     <div
