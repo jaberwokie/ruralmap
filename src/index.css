@@ -232,3 +232,8 @@
 .marker-cluster div {
   background: none !important;
 }
+
+@keyframes fte-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 hsla(0, 0%, 0%, 0.1); }
+  50% { box-shadow: 0 0 0 6px hsla(0, 0%, 0%, 0.05); }
+}
