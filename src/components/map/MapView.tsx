@@ -215,48 +215,56 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       });
   }, [filteredFacilities, coverageRadius, radiusKm]);
 
-  // Draw service point markers (uniform circles, color-coded by area)
+  // Pin color by facility type (independent of coverage areas)
+  const PIN_COLORS: Record<string, { bg: string; hover: string; size: number }> = {
+    hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 12 },
+    clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10 },
+    tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 10 },
+  };
+
+  // Draw service point markers (color-coded by facility type, NOT by coverage area)
   useEffect(() => {
     if (!markersRef.current || !mapRef.current) return;
     markersRef.current.clearLayers();
 
     if (!layers.serviceLocations) return;
 
-    // Detect co-located markers and offset them
     const locationCounts = new Map<string, number>();
 
     filteredFacilities.forEach(facility => {
-      // Compute slight offset for co-located markers
       const key = `${facility.lat.toFixed(4)},${facility.lng.toFixed(4)}`;
       const count = locationCounts.get(key) ?? 0;
       locationCounts.set(key, count + 1);
       const offsetLat = count * 0.003;
       const offsetLng = count * 0.003;
 
+      const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
+
       const icon = L.divIcon({
         className: '',
         html: `<div style="
-          width: 10px;
-          height: 10px;
+          width: ${pin.size}px;
+          height: ${pin.size}px;
           border-radius: 50%;
-          background: #1F2937;
+          background: ${pin.bg};
           border: 2px solid white;
-          box-shadow: 0 0 0 1px rgba(255,255,255,0.8), 0 1px 3px rgba(0,0,0,0.3);
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.8), 0 1px 4px rgba(0,0,0,0.35);
           cursor: pointer;
           transition: background 150ms ease;
-        " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1F2937'"></div>`,
-        iconSize: [10, 10],
-        iconAnchor: [5, 5],
+        " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`,
+        iconSize: [pin.size, pin.size],
+        iconAnchor: [pin.size / 2, pin.size / 2],
       });
 
       const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], { icon });
       marker.on('click', () => onFacilityClick(facility));
 
+      const typeLabel = facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type === 'hospital' ? 'Hospital' : 'Clinic';
       const tooltipContent = `
         <div style="padding: 8px 12px; font-size: 13px;">
           <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
-          <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px; text-transform: capitalize;">${facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type}</div>
+          <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
         </div>
       `;
       marker.bindTooltip(tooltipContent, {
