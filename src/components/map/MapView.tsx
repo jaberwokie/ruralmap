@@ -100,10 +100,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
     mapRef.current = map;
 
+    // Click on empty map space clears focus
+    map.on('click', () => onAreaClick?.(null as any));
+
     return () => {
       map.remove();
       mapRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Draw state boundary (always visible, non-interactive)
