@@ -67,6 +67,12 @@ const DetailPanel = ({ facility, onClose }: DetailPanelProps) => {
                 <Map className="w-3 h-3 flex-shrink-0" />
                 <span>{areaLabel}</span>
               </div>
+              {secondaryZone && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                  <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⇄</span>
+                  <span>Routing: Primary Area {coverageArea.replace('area', '')}, Supported by Area {secondaryZone.replace('area', '')}</span>
+                </div>
+              )}
               {facility.accessType && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">◆</span>
