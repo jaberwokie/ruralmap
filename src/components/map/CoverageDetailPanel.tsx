@@ -201,6 +201,7 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    case 'remoteFte': return <RemoteFteContent />;
     default: return null;
   }
 };
