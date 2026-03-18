@@ -393,7 +393,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
-    if (!coverageGaps) return;
+    if (!coverageGaps || !coverageRadius) return;
 
     // Only hospitals and clinics count (exclude tier1)
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
@@ -462,7 +462,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [facilities, coverageGaps, radiusKm, focusedArea]);
+  }, [facilities, coverageGaps, coverageRadius, radiusKm, focusedArea]);
 
   // Draw member volume choropleth
   useEffect(() => {
