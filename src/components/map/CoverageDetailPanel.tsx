@@ -14,6 +14,7 @@ const CoverageDetailPanel = ({ hoveredArea }: CoverageDetailPanelProps) => {
     const rows = counties.map(c => ({
       name: c.name,
       count: volumeMap.get(c.name) ?? 0,
+      secondaryZone: c.secondaryZone,
     }));
     const total = rows.reduce((s, r) => s + r.count, 0);
     return { label: COVERAGE_AREA_LABELS[hoveredArea], rows, total };
@@ -34,9 +35,16 @@ const CoverageDetailPanel = ({ hoveredArea }: CoverageDetailPanelProps) => {
           <p className="text-sm font-semibold text-foreground mb-2">{areaData.label}</p>
           <div className="space-y-0.5">
             {areaData.rows.map(r => (
-              <div key={r.name} className="flex justify-between text-xs text-foreground/80">
-                <span>{r.name}</span>
-                <span className="font-medium tabular-nums">{r.count.toLocaleString()}</span>
+              <div key={r.name}>
+                <div className="flex justify-between text-xs text-foreground/80">
+                  <span>{r.name}</span>
+                  <span className="font-medium tabular-nums">{r.count.toLocaleString()}</span>
+                </div>
+                {r.secondaryZone && (
+                  <div className="text-[10px] text-muted-foreground italic ml-1">
+                    Routing: Primary Area {hoveredArea!.replace('area', '')}, Supported by Area {r.secondaryZone.replace('area', '')}
+                  </div>
+                )}
               </div>
             ))}
           </div>

@@ -1,6 +1,6 @@
 import { X, MapPin, Building2, Stethoscope, Shield, Map } from 'lucide-react';
 import { Facility } from '@/data/facilities';
-import { getCountyArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE } from '@/data/nevada-counties';
+import { getCountyArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties } from '@/data/nevada-counties';
 
 interface DetailPanelProps {
   facility: Facility;
@@ -17,6 +17,8 @@ const DetailPanel = ({ facility, onClose }: DetailPanelProps) => {
   const coverageArea = getCountyArea(facility.county);
   const areaLabel = COVERAGE_AREA_LABELS[coverageArea];
   const ruralDependence = RURAL_ACCESS_DEPENDENCE[coverageArea];
+  const countyData = nevadaCounties.find(c => c.name === facility.county);
+  const secondaryZone = countyData?.secondaryZone;
 
   return (
     <div
@@ -65,6 +67,12 @@ const DetailPanel = ({ facility, onClose }: DetailPanelProps) => {
                 <Map className="w-3 h-3 flex-shrink-0" />
                 <span>{areaLabel}</span>
               </div>
+              {secondaryZone && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground italic">
+                  <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⇄</span>
+                  <span>Routing: Primary Area {coverageArea.replace('area', '')}, Supported by Area {secondaryZone.replace('area', '')}</span>
+                </div>
+              )}
               {facility.accessType && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">◆</span>

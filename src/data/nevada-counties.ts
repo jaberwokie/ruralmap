@@ -7,6 +7,7 @@ export interface CountyData {
   center: [number, number]; // [lat, lng]
   isPrimary: boolean;
   zone: CoverageArea;
+  secondaryZone?: CoverageArea; // flexible support from another area
   boundaries: [number, number][]; // simplified polygon coordinates [lat, lng]
 }
 
@@ -194,6 +195,7 @@ export const nevadaCounties: CountyData[] = [
     center: [39.02, -119.19],
     isPrimary: true,
     zone: 'area2',
+    secondaryZone: 'area1',
     boundaries: [
       [39.34, -119.33], [39.34, -119.0], [38.72, -119.0],
       [38.72, -119.33], [39.34, -119.33]
