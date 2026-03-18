@@ -181,7 +181,7 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPan
       <div className="overflow-y-auto flex-1 px-3 pb-3">
         {!display ? (
           <p className="text-xs text-muted-foreground/70 italic">
-            Hover or select a map element to view details.
+            Select a map element to view details.
           </p>
         ) : (
           <EntityContent entity={display} />
