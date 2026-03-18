@@ -12,6 +12,7 @@ interface LayerState {
   serviceLocations: boolean;
   memberVolume: boolean;
   ruralServices: boolean;
+  operationalCoverage: boolean;
 }
 
 export interface Filters {
@@ -35,6 +36,7 @@ const Index = () => {
     serviceLocations: true,
     memberVolume: false,
     ruralServices: false,
+    operationalCoverage: false,
   });
 
   // ── Unified detail panel state ──
@@ -78,7 +80,6 @@ const Index = () => {
         setFocusedArea(null);
       }
       if (layer === 'ruralServices' && !next.ruralServices) {
-        // Clear rural-related entity if layer turned off
         setLockedEntity(prev => prev?.type === 'ruralServiceGroup' ? null : prev);
       }
       return next;

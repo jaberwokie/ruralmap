@@ -12,6 +12,7 @@ interface LayerState {
   serviceLocations: boolean;
   memberVolume: boolean;
   ruralServices: boolean;
+  operationalCoverage: boolean;
 }
 
 interface SidebarProps {
@@ -41,6 +42,7 @@ const LAYER_CONFIG = [
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
+  { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
 ];
 
 const Sidebar = ({
@@ -555,6 +557,26 @@ const Sidebar = ({
                 ))}
             </div>
           </div>
+          {/* Operational Coverage */}
+          {layers.operationalCoverage && (
+            <div>
+              <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Operational Coverage</div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(174, 50%, 45%, 0.25)', border: '1.5px solid hsla(174, 50%, 40%, 0.6)' }} />
+                  <span className="text-muted-foreground">Active Field Coverage</span>
+                </div>
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(174, 40%, 55%, 0.12)', border: '1.5px dashed hsla(174, 40%, 50%, 0.45)' }} />
+                  <span className="text-muted-foreground">Scheduled Outreach</span>
+                </div>
+                <div className="flex items-center gap-2 px-2">
+                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(220, 10%, 70%, 0.10)', border: '1.5px dashed hsla(220, 10%, 60%, 0.25)' }} />
+                  <span className="text-muted-foreground">Remote Support Only</span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

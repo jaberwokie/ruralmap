@@ -8,6 +8,7 @@ import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
+import { operationalZones, OperationalZone } from '@/data/operational-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -22,6 +23,7 @@ interface MapViewProps {
     serviceLocations: boolean;
     memberVolume: boolean;
     ruralServices: boolean;
+    operationalCoverage: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   onAreaHover?: (area: CoverageArea | null) => void;
@@ -73,6 +75,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   const memberVolumeRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
   const ruralServicesRef = useRef<L.LayerGroup | null>(null);
+  const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
   const onAreaClickRef = useRef(onAreaClick);
   onAreaClickRef.current = onAreaClick;
   const onEntityClickRef = useRef(onEntityClick);
@@ -93,7 +96,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     return result;
   }, [facilities, searchQuery]);
 
-  // Initialize map — layer order: base → zones → counties → radii → gaps → volume → markers
+  // Initialize map
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -109,19 +112,19 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     }).addTo(map);
 
     // Create layers in visual stacking order (bottom to top)
-    stateBoundaryRef.current = L.layerGroup().addTo(map); // 0. State boundary
-    memberVolumeRef.current = L.layerGroup().addTo(map);  // 1. Member volume (below zones)
-    zonesRef.current = L.layerGroup().addTo(map);         // 2. Coverage areas
-    countiesRef.current = L.layerGroup().addTo(map);      // 3. County boundaries
-    labelsRef.current = L.layerGroup().addTo(map);        // 4. County labels
-    gapsRef.current = L.layerGroup().addTo(map);          // 5. Coverage gaps
-    radiusRef.current = L.layerGroup().addTo(map);        // 6. Coverage radii (above gaps)
-    ruralServicesRef.current = L.layerGroup().addTo(map); // 7. Rural service pins
-    markersRef.current = L.layerGroup().addTo(map);       // 8. Facility markers (top)
+    stateBoundaryRef.current = L.layerGroup().addTo(map);       // 0. State boundary
+    memberVolumeRef.current = L.layerGroup().addTo(map);        // 1. Member volume
+    operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
+    zonesRef.current = L.layerGroup().addTo(map);               // 2. Coverage areas
+    countiesRef.current = L.layerGroup().addTo(map);            // 3. County boundaries
+    labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
+    gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
+    radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
+    ruralServicesRef.current = L.layerGroup().addTo(map);       // 7. Rural service pins
+    markersRef.current = L.layerGroup().addTo(map);             // 8. Facility markers (top)
 
     mapRef.current = map;
 
-    // Click on empty map space clears focus
     map.on('click', () => onAreaClickRef.current?.(null as any));
 
     return () => {
@@ -131,7 +134,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Draw state boundary (always visible, non-interactive)
+  // Draw state boundary
   useEffect(() => {
     if (!stateBoundaryRef.current) return;
     stateBoundaryRef.current.clearLayers();
@@ -169,14 +172,11 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     }
   }, [focusedArea]);
 
-  // County drawing is handled by the focus-aware effect below
-
   // Draw merged coverage area overlays
   useEffect(() => {
     if (!zonesRef.current) return;
     zonesRef.current.clearLayers();
 
-    
     if (coverageGaps) return;
     if (!layers.zones && !focusedArea) return;
 
@@ -190,7 +190,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     areas.forEach(area => {
-      // If zones toggle is off, only draw the focused area
       if (!layers.zones && area !== focusedArea) return;
       const counties = nevadaCounties.filter(c => c.zone === area);
       const merged = mergePolygons(counties.map(c => c.boundaries));
@@ -201,7 +200,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       const baseColors = AREA_FILL[area];
 
-      // When focused, emphasize; otherwise use base colors
       let fillColor = baseColors.fill;
       let borderColor = baseColors.border;
       let weight = baseColors.weight;
@@ -235,7 +233,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     });
   }, [layers.zones, layers.memberVolume, onAreaHover, onAreaClick, focusedArea, coverageGaps]);
 
-  // Update county boundary visibility based on focus
+  // Update county boundary visibility
   useEffect(() => {
     if (!countiesRef.current) return;
     countiesRef.current.clearLayers();
@@ -249,7 +247,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     nevadaCounties.forEach(county => {
-      // Skip counties not in focused area
       if (focusedArea && county.zone !== focusedArea) return;
 
       const merged = mergePolygons([county.boundaries]);
@@ -306,7 +303,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     });
   }, [focusedArea, layers.counties, selectedCounty, ruralServicesData]);
 
-  // Draw coverage radii (dashed, area-colored)
+  // Draw coverage radii
   useEffect(() => {
     if (!radiusRef.current) return;
     radiusRef.current.clearLayers();
@@ -319,7 +316,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         const area = getCountyArea(facility.county);
         const colors = AREA_RADIUS_COLORS[area];
 
-        // Halo ring for edge contrast against busy backgrounds
         const halo = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
           color: 'hsla(0, 0%, 100%, 0.7)',
@@ -330,7 +326,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         });
         radiusRef.current!.addLayer(halo);
 
-        // Main colored dashed ring
         const circle = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
           color: colors.stroke,
@@ -344,14 +339,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       });
   }, [filteredFacilities, coverageRadius, radiusKm]);
 
-  // Pin color by facility type (independent of coverage areas)
+  // Pin color by facility type
   const PIN_COLORS: Record<string, { bg: string; hover: string; size: number; shape: 'circle' | 'diamond' }> = {
     hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 15, shape: 'circle' },
     clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10, shape: 'circle' },
     tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 11, shape: 'diamond' },
   };
 
-  // Draw service point markers (color-coded by facility type, NOT by coverage area)
+  // Draw service point markers
   useEffect(() => {
     if (!markersRef.current || !mapRef.current) return;
     markersRef.current.clearLayers();
@@ -421,17 +416,15 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     });
   }, [filteredFacilities, layers.serviceLocations, onFacilityClick]);
 
-  // Draw coverage gap overlays using true geometric subtraction
+  // Draw coverage gap overlays
   useEffect(() => {
     if (!gapsRef.current) return;
     gapsRef.current.clearLayers();
 
     if (!coverageGaps) return;
 
-    // Only hospitals and clinics count (exclude tier1)
     const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
 
-    // Build analysis boundary: focused area polygon or full state
     let analysisFeature: Feature<Polygon | MultiPolygon>;
     if (focusedArea) {
       const areaCounties = nevadaCounties.filter(c => c.zone === focusedArea);
@@ -460,7 +453,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     }
 
     try {
-      // 1. Create radius buffers for each eligible facility and merge
       const buffers = eligibleFacilities.map(f => {
         const pt = turfPoint([f.lng, f.lat]);
         return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
@@ -473,7 +465,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         if (u) mergedCoverage = u as Feature<Polygon | MultiPolygon>;
       }
 
-      // 2. Subtract merged coverage from analysis boundary
       const fc = featureCollection([analysisFeature, mergedCoverage]);
       const gapGeometry = difference(fc as any);
 
@@ -534,6 +525,85 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       memberVolumeRef.current!.addLayer(polygon);
     });
   }, [layers.memberVolume, coverageGaps]);
+
+  // ── Operational Coverage Model layer ──
+  useEffect(() => {
+    if (!operationalCoverageRef.current) return;
+    operationalCoverageRef.current.clearLayers();
+
+    if (!layers.operationalCoverage) return;
+
+    const nevadaClip = {
+      type: "Feature" as const,
+      properties: {},
+      geometry: nevadaBoundaryGeoJSON,
+    };
+
+    operationalZones.forEach(zone => {
+      const zoneCounties = nevadaCounties.filter(c => zone.counties.includes(c.name));
+      if (zoneCounties.length === 0) return;
+
+      const merged = mergePolygons(zoneCounties.map(c => c.boundaries));
+      if (!merged) return;
+
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      // Visual styles per coverage type
+      let fillColor: string;
+      let borderColor: string;
+      let weight: number;
+      let dashArray: string | undefined;
+      let fillOpacity: number;
+
+      switch (zone.coverageType) {
+        case 'active':
+          fillColor = 'hsla(174, 50%, 45%, 0.25)';
+          borderColor = 'hsla(174, 50%, 40%, 0.6)';
+          weight = 2;
+          dashArray = undefined; // solid
+          fillOpacity = 1;
+          break;
+        case 'scheduled':
+          fillColor = 'hsla(174, 40%, 55%, 0.12)';
+          borderColor = 'hsla(174, 40%, 50%, 0.45)';
+          weight = 2;
+          dashArray = '8 5';
+          fillOpacity = 1;
+          break;
+        case 'remote':
+          fillColor = 'hsla(220, 10%, 70%, 0.10)';
+          borderColor = 'hsla(220, 10%, 60%, 0.25)';
+          weight = 1;
+          dashArray = '3 4';
+          fillOpacity = 1;
+          break;
+      }
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: borderColor,
+          weight,
+          fillColor,
+          fillOpacity,
+          dashArray,
+        },
+      });
+
+      geoLayer.on('mouseover', () => {
+        onEntityHoverRef.current?.({ type: 'operationalZone', zone });
+      });
+      geoLayer.on('mouseout', () => {
+        onEntityHoverRef.current?.(null);
+      });
+      geoLayer.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        onEntityClickRef.current?.({ type: 'operationalZone', zone });
+      });
+
+      operationalCoverageRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.operationalCoverage]);
 
   // Track zoom for rural services clustering
   const zoomRef = useRef(7);
