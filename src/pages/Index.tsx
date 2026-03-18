@@ -2,7 +2,9 @@ import { useState, useCallback, useMemo } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import DetailPanel from '@/components/map/DetailPanel';
+import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
+import { CoverageArea } from '@/data/nevada-counties';
 
 interface LayerState {
   counties: boolean;
@@ -25,6 +27,7 @@ const Index = () => {
   const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [hoveredArea, setHoveredArea] = useState<CoverageArea | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     zones: true,
@@ -110,11 +113,13 @@ const Index = () => {
           facilities={filteredFacilities}
           layers={layers}
           onFacilityClick={handleFacilityClick}
+          onAreaHover={setHoveredArea}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
         />
+        <CoverageDetailPanel hoveredArea={hoveredArea} />
         {selectedFacility && (
           <DetailPanel
             facility={selectedFacility}

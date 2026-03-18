@@ -15,6 +15,7 @@ interface MapViewProps {
     memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
+  onAreaHover?: (area: CoverageArea | null) => void;
   searchQuery: string;
   radiusKm: number;
   coverageRadius: boolean;
@@ -44,7 +45,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
   area3: { stroke: 'hsla(217, 91%, 60%, 0.18)', fill: 'hsla(217, 91%, 60%, 0.03)' },
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -183,14 +184,14 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         </div>
       `;
 
-      geoLayer.bindTooltip(tooltipHtml, {
-        sticky: true,
-        className: 'facility-tooltip',
+      geoLayer.on({
+        mouseover: () => onAreaHover?.(area),
+        mouseout: () => onAreaHover?.(null),
       });
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones]);
+  }, [layers.zones, onAreaHover]);
 
   // Draw coverage radii (dashed, area-colored)
   useEffect(() => {
