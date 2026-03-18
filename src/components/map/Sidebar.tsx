@@ -457,7 +457,7 @@ const Sidebar = ({
                     const role = FTE_ROLE_COLORS[fte.id];
                     const isSelected = selectedFteId === fte.id;
                     return (
-                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-offset-1 shadow-md' : ''}`} style={isSelected ? { ringColor: role?.primary } : undefined}>
+                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 transition-all duration-200 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''}`}>
 
                         <div className="flex items-center justify-between mb-0.5">
                           <div className="flex items-center gap-1.5">
