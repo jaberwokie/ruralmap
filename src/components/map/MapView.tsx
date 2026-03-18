@@ -57,7 +57,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
   area3: { stroke: 'hsla(217, 91%, 60%, 0.6)', fill: 'hsla(217, 91%, 60%, 0.10)' },
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onRuralCountyClick }: MapViewProps) => {
   const prevFocusedAreaRef = useRef<CoverageArea | null | undefined>(undefined);
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -69,8 +69,11 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const memberVolumeRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
+  const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const onAreaClickRef = useRef(onAreaClick);
   onAreaClickRef.current = onAreaClick;
+  const onRuralCountyClickRef = useRef(onRuralCountyClick);
+  onRuralCountyClickRef.current = onRuralCountyClick;
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
