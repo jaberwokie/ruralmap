@@ -28,6 +28,7 @@ const Index = () => {
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [hoveredArea, setHoveredArea] = useState<CoverageArea | null>(null);
+  const [focusedArea, setFocusedArea] = useState<CoverageArea | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     zones: true,
@@ -114,12 +115,14 @@ const Index = () => {
           layers={layers}
           onFacilityClick={handleFacilityClick}
           onAreaHover={setHoveredArea}
+          onAreaClick={(area) => setFocusedArea(prev => prev === area ? null : area)}
+          focusedArea={focusedArea}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
         />
-        <CoverageDetailPanel hoveredArea={hoveredArea} />
+        <CoverageDetailPanel hoveredArea={hoveredArea} focusedArea={focusedArea} onClearFocus={() => setFocusedArea(null)} />
         {selectedFacility && (
           <DetailPanel
             facility={selectedFacility}

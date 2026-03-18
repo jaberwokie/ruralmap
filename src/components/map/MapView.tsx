@@ -17,6 +17,8 @@ interface MapViewProps {
   };
   onFacilityClick: (facility: Facility) => void;
   onAreaHover?: (area: CoverageArea | null) => void;
+  onAreaClick?: (area: CoverageArea) => void;
+  focusedArea?: CoverageArea | null;
   searchQuery: string;
   radiusKm: number;
   coverageRadius: boolean;
@@ -46,7 +48,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
   area3: { stroke: 'hsla(217, 91%, 60%, 0.18)', fill: 'hsla(217, 91%, 60%, 0.03)' },
 };
 
-const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -57,6 +59,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const memberVolumeRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
+  const onAreaClickRef = useRef(onAreaClick);
+  onAreaClickRef.current = onAreaClick;
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -98,10 +102,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
 
     mapRef.current = map;
 
+    // Click on empty map space clears focus
+    map.on('click', () => onAreaClickRef.current?.(null as any));
+
     return () => {
       map.remove();
       mapRef.current = null;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Draw state boundary (always visible, non-interactive)
@@ -124,55 +132,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
     stateBoundaryRef.current.addLayer(geoLayer);
   }, []);
 
-  // Draw county boundaries (neutral, reference-only)
-  useEffect(() => {
-    if (!countiesRef.current || !labelsRef.current) return;
-    countiesRef.current.clearLayers();
-    labelsRef.current.clearLayers();
-
-    if (!layers.counties) return;
-
-    const nevadaClip = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: nevadaBoundaryGeoJSON,
-    };
-
-    nevadaCounties.forEach(county => {
-      const merged = mergePolygons([county.boundaries]);
-      if (!merged) return;
-      const clipped = clipPolygon(merged, nevadaClip as any);
-      if (!clipped) return;
-
-      const geoLayer = L.geoJSON(clipped, {
-        style: {
-          color: 'hsl(240, 5%, 75%)',
-          weight: 1,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          dashArray: '4 4',
-        },
-      });
-      countiesRef.current!.addLayer(geoLayer);
-
-      const label = L.divIcon({
-        className: 'county-label',
-        html: `<span style="
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: hsl(240, 5%, 55%);
-          white-space: nowrap;
-          pointer-events: none;
-          text-shadow: 0 0 4px white, 0 0 4px white;
-        ">${county.name}</span>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      });
-      L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
-    });
-  }, [layers.counties]);
+  // County drawing is handled by the focus-aware effect below
 
   // Draw merged coverage area overlays
   useEffect(() => {
@@ -198,45 +158,103 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, searchQuery
       const clipped = clipPolygon(merged, nevadaClip as any);
       if (!clipped) return;
 
-      const colors = AREA_FILL[area];
+      const baseColors = AREA_FILL[area];
+
+      // Compute opacity based on focus state
+      let fillColor = baseColors.fill;
+      let borderColor = baseColors.border;
+      let weight = baseColors.weight;
+
+      if (focusedArea) {
+        if (area === focusedArea) {
+          // Focused: full opacity, thicker border
+          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.55)');
+          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.85)');
+          weight = baseColors.weight + 1.5;
+        } else {
+          // De-emphasized
+          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.08)');
+          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.15)');
+        }
+      }
+
       const geoLayer = L.geoJSON(clipped, {
         style: {
-          color: colors.border,
-          weight: colors.weight,
-          fillColor: colors.fill,
+          color: borderColor,
+          weight,
+          fillColor,
           fillOpacity: 1,
           dashArray: '6 4',
         },
       });
 
-      const totalMembers = counties.reduce((sum, c) => sum + (volumeMap.get(c.name) ?? 0), 0);
-      const countyLines = counties
-        .map(c => {
-          const count = volumeMap.get(c.name) ?? 0;
-          return `<div style="display:flex;justify-content:space-between;gap:12px;"><span>${c.name}</span><span style="font-weight:600;">${count.toLocaleString()}</span></div>`;
-        })
-        .join('');
-
-      const tooltipHtml = `
-        <div style="padding:8px 12px;font-size:12px;min-width:160px;">
-          <div style="font-weight:700;margin-bottom:6px;font-size:13px;">${COVERAGE_AREA_LABELS[area]}</div>
-          <div style="border-bottom:1px solid hsl(240,5%,88%);margin-bottom:4px;padding-bottom:4px;">
-            ${countyLines}
-          </div>
-          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:12px;">
-            <span>Total</span><span>${totalMembers.toLocaleString()}</span>
-          </div>
-        </div>
-      `;
-
       geoLayer.on({
         mouseover: () => onAreaHover?.(area),
         mouseout: () => onAreaHover?.(null),
+        click: (e: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(e as any);
+          onAreaClick?.(area);
+        },
       });
 
       zonesRef.current!.addLayer(geoLayer);
     });
-  }, [layers.zones, onAreaHover]);
+  }, [layers.zones, onAreaHover, onAreaClick, focusedArea]);
+
+  // Update county boundary visibility based on focus
+  useEffect(() => {
+    if (!countiesRef.current) return;
+    if (!layers.counties) return;
+
+    // Rebuild county lines with appropriate opacity
+    countiesRef.current.clearLayers();
+    labelsRef.current?.clearLayers();
+
+    const nevadaClip = {
+      type: "Feature" as const,
+      properties: {},
+      geometry: nevadaBoundaryGeoJSON,
+    };
+
+    nevadaCounties.forEach(county => {
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const isFocusedCounty = !focusedArea || county.zone === focusedArea;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: 'hsl(240, 5%, 75%)',
+          weight: 1,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          dashArray: '4 4',
+          opacity: isFocusedCounty ? 1 : 0.2,
+        },
+      });
+      countiesRef.current!.addLayer(geoLayer);
+
+      const label = L.divIcon({
+        className: 'county-label',
+        html: `<span style="
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.1em;
+          text-transform: uppercase;
+          color: hsl(240, 5%, 55%);
+          white-space: nowrap;
+          pointer-events: none;
+          text-shadow: 0 0 4px white, 0 0 4px white;
+          opacity: ${isFocusedCounty ? 1 : 0.25};
+        ">${county.name}</span>`,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+      });
+      L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
+    });
+  }, [focusedArea, layers.counties]);
 
   // Draw coverage radii (dashed, area-colored)
   useEffect(() => {
