@@ -1,12 +1,10 @@
 import { useState, useCallback, useMemo } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
-import DetailPanel from '@/components/map/DetailPanel';
-import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
-import RuralServicesPanel from '@/components/map/RuralServicesPanel';
+import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { CoverageArea } from '@/data/nevada-counties';
-import { ruralServices, RuralServiceCategory } from '@/data/rural-services';
+import { ruralServices } from '@/data/rural-services';
 
 interface LayerState {
   counties: boolean;
@@ -24,16 +22,13 @@ export interface Filters {
 
 const Index = () => {
   const [facilities, setFacilities] = useState<Facility[]>(defaultFacilities);
-  const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(50);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
   const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [hoveredArea, setHoveredArea] = useState<CoverageArea | null>(null);
   const [focusedArea, setFocusedArea] = useState<CoverageArea | null>(null);
-  const [selectedRuralCounty, setSelectedRuralCounty] = useState<string | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     zones: true,
@@ -41,6 +36,10 @@ const Index = () => {
     memberVolume: false,
     ruralServices: false,
   });
+
+  // ── Unified detail panel state ──
+  const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
+  const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
 
   const filteredFacilities = useMemo(() => {
     return facilities
@@ -60,11 +59,6 @@ const Index = () => {
     });
   }, [filters]);
 
-  const selectedCountyServices = useMemo(() => {
-    if (!selectedRuralCounty) return [];
-    return filteredRuralServices.filter(s => s.county === selectedRuralCounty);
-  }, [selectedRuralCounty, filteredRuralServices]);
-
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
       const next = { ...prev, [layer]: !prev[layer] };
@@ -75,7 +69,8 @@ const Index = () => {
         setFocusedArea(null);
       }
       if (layer === 'ruralServices' && !next.ruralServices) {
-        setSelectedRuralCounty(null);
+        // Clear rural-related entity if layer turned off
+        setLockedEntity(prev => prev?.type === 'ruralServiceGroup' ? null : prev);
       }
       return next;
     });
@@ -93,16 +88,40 @@ const Index = () => {
     }
   }, []);
 
-  const handleFacilityClick = useCallback((facility: Facility) => {
-    setSelectedFacility(facility);
-  }, []);
-
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
     setFacilities(prev => [...prev, ...newFacilities]);
   }, []);
 
-  const handleRuralCountyClick = useCallback((county: string) => {
-    setSelectedRuralCounty(prev => prev === county ? null : county);
+  // ── Unified entity selection handlers ──
+  const handleEntityClick = useCallback((entity: MapEntity | null) => {
+    setLockedEntity(entity);
+  }, []);
+
+  const handleEntityHover = useCallback((entity: MapEntity | null) => {
+    setHoverEntity(entity);
+  }, []);
+
+  const handleClearEntity = useCallback(() => {
+    setLockedEntity(null);
+  }, []);
+
+  // Bridge: area hover/click still controls focusedArea for zoom behavior
+  const handleAreaHover = useCallback((area: CoverageArea | null) => {
+    if (area) {
+      setHoverEntity({ type: 'coverageArea', area });
+    } else {
+      setHoverEntity(null);
+    }
+  }, []);
+
+  const handleAreaClick = useCallback((area: CoverageArea | null) => {
+    if (area) {
+      setFocusedArea(prev => prev === area ? null : area);
+      setLockedEntity({ type: 'coverageArea', area });
+    } else {
+      setFocusedArea(null);
+      setLockedEntity(null);
+    }
   }, []);
 
   return (
@@ -131,7 +150,7 @@ const Index = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onFacilityClick={(facility) => {
-            handleFacilityClick(facility);
+            handleEntityClick({ type: 'facility', facility });
             setMobileSidebarOpen(false);
           }}
           filters={filters}
@@ -151,31 +170,23 @@ const Index = () => {
         <MapView
           facilities={filteredFacilities}
           layers={layers}
-          onFacilityClick={handleFacilityClick}
-          onAreaHover={setHoveredArea}
-          onAreaClick={(area) => setFocusedArea(prev => prev === area ? null : area)}
+          onFacilityClick={(facility) => handleEntityClick({ type: 'facility', facility })}
+          onAreaHover={handleAreaHover}
+          onAreaClick={handleAreaClick}
           focusedArea={focusedArea}
           searchQuery={searchQuery}
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
           ruralServices={filteredRuralServices}
-          onRuralCountyClick={handleRuralCountyClick}
+          onEntityClick={handleEntityClick}
+          onEntityHover={handleEntityHover}
         />
-        <CoverageDetailPanel hoveredArea={hoveredArea} focusedArea={focusedArea} onClearFocus={() => setFocusedArea(null)} />
-        {selectedRuralCounty && selectedCountyServices.length > 0 && (
-          <RuralServicesPanel
-            county={selectedRuralCounty}
-            services={selectedCountyServices}
-            onClose={() => setSelectedRuralCounty(null)}
-          />
-        )}
-        {selectedFacility && (
-          <DetailPanel
-            facility={selectedFacility}
-            onClose={() => setSelectedFacility(null)}
-          />
-        )}
+        <CoverageDetailPanel
+          entity={lockedEntity}
+          hoverEntity={hoverEntity}
+          onClear={handleClearEntity}
+        />
       </div>
     </div>
   );
