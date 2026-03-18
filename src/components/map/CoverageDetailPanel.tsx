@@ -1,4 +1,4 @@
-import { CoverageArea, COVERAGE_AREA_LABELS, nevadaCounties } from '@/data/nevada-counties';
+import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { useMemo } from 'react';
 
