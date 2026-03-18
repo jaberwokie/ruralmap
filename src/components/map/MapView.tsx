@@ -466,10 +466,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
             fillOpacity: 1,
           },
         });
-        geoLayer.bindTooltip(
-          `<div style="padding: 6px 10px; font-size: 12px; font-weight: 600;">Coverage Gap<br/><span style="font-weight: 400; color: hsl(240, 4%, 46%);">No hospital or clinic within ${radiusKm} km</span></div>`,
-          { sticky: true, className: 'facility-tooltip' }
-        );
+        geoLayer.on('mouseover', () => onEntityHoverRef.current?.({ type: 'coverageGap', radiusKm }));
+        geoLayer.on('mouseout', () => onEntityHoverRef.current?.(null));
+        geoLayer.on('click', (e: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(e as any);
+          onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
+        });
         gapsRef.current.addLayer(geoLayer);
       }
     } catch (e) {
