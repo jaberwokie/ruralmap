@@ -143,6 +143,28 @@
   box-shadow: none !important;
 }
 
+/* Tooltip card styles — auto-resize, no clipping */
+.facility-tooltip {
+  padding: 0 !important;
+  border: none !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-panel) !important;
+}
+
+.facility-tooltip .leaflet-tooltip-content,
+.facility-tooltip {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  white-space: normal !important;
+  word-break: break-word !important;
+  overflow-wrap: anywhere !important;
+}
+
+.leaflet-tooltip.facility-tooltip::before {
+  border-top-color: white;
+}
+
 /* Custom facility marker */
 .facility-marker {
   width: 12px;

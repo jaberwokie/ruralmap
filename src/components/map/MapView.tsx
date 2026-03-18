@@ -381,7 +381,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       const typeLabel = facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type === 'hospital' ? 'Hospital' : 'Clinic';
       const tooltipContent = `
-        <div style="padding: 8px 12px; font-size: 13px;">
+        <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
           <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
