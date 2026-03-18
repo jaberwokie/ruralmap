@@ -16,12 +16,6 @@ export const COVERAGE_AREA_LABELS: Record<CoverageArea, string> = {
   area3: 'Area 3 — Southern / Rural Hub',
 };
 
-// Marker colors per area (used for service-point markers and radii)
-export const AREA_MARKER_COLORS: Record<CoverageArea, string> = {
-  area1: 'hsl(142, 71%, 45%)',   // green
-  area2: 'hsl(35, 92%, 50%)',    // orange
-  area3: 'hsl(217, 91%, 60%)',   // blue
-};
 
 // Build a county→area lookup for quick facility coloring
 export function getCountyArea(countyName: string): CoverageArea {

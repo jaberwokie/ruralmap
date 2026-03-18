@@ -226,9 +226,6 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     const locationCounts = new Map<string, number>();
 
     filteredFacilities.forEach(facility => {
-      const area = getCountyArea(facility.county);
-      const markerColor = AREA_MARKER_COLORS[area];
-
       // Compute slight offset for co-located markers
       const key = `${facility.lat.toFixed(4)},${facility.lng.toFixed(4)}`;
       const count = locationCounts.get(key) ?? 0;
@@ -242,12 +239,12 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
           width: 10px;
           height: 10px;
           border-radius: 50%;
-          background: ${markerColor};
+          background: #1F2937;
           border: 2px solid white;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          box-shadow: 0 0 0 1px rgba(255,255,255,0.8), 0 1px 3px rgba(0,0,0,0.3);
           cursor: pointer;
-          transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
-        "></div>`,
+          transition: background 150ms ease;
+        " onmouseover="this.style.background='#374151'" onmouseout="this.style.background='#1F2937'"></div>`,
         iconSize: [10, 10],
         iconAnchor: [5, 5],
       });
