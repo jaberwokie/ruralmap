@@ -206,6 +206,63 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
   }
 };
 
+// ── Remote FTE ──
+const RemoteFteContent = () => {
+  const remote = fteCapacityData.find(f => f.id === 'remote');
+  if (!remote) return null;
+
+  const status = getLoadStatus(remote.currentLoad, remote.capacity);
+  const statusColors = LOAD_STATUS_COLORS[status];
+  const role = FTE_ROLE_COLORS[remote.id];
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <Headphones className="w-4 h-4" style={{ color: role?.primary }} />
+        <span className="text-sm font-bold text-foreground">Remote Coordination Team</span>
+      </div>
+
+      <div className={`rounded-md border px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Coverage Type</div>
+        <div className="text-[11px] font-medium text-foreground">Remote Support Only</div>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground leading-relaxed">
+        Statewide telephonic and virtual coordination (no in-person response)
+      </p>
+
+      <div className={`rounded-md border px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Capacity</div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
+          <span className={`text-[11px] font-medium ${statusColors.text}`}>
+            {remote.currentLoad} / {remote.capacity} interactions · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+          </span>
+        </div>
+        <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
+          {LOAD_STATUS_GUIDANCE[status]}
+        </div>
+      </div>
+
+      <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Role</div>
+        <p className="text-[11px] text-foreground leading-relaxed">
+          Intake, routing, telehealth coordination, and referral management
+        </p>
+      </div>
+
+      <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Counties Served</div>
+        <div className="flex flex-wrap gap-1 mt-0.5">
+          {remote.counties.map(c => (
+            <span key={c} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-foreground/80">{c}</span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Coverage Area ──
 const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
