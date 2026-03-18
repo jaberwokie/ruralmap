@@ -163,7 +163,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!zonesRef.current) return;
     zonesRef.current.clearLayers();
 
-    if (!layers.zones) return;
+    if (!layers.zones && !focusedArea) return;
 
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
     const areas: CoverageArea[] = ['area1', 'area2', 'area3'];
