@@ -62,6 +62,10 @@ const Index = () => {
 
   const handleCoverageGapsChange = useCallback((checked: boolean) => {
     setCoverageGaps(checked);
+    if (checked) {
+      setLayers(prev => ({ ...prev, serviceLocations: true }));
+      setCoverageRadius(true);
+    }
   }, []);
 
   const handleFacilityClick = useCallback((facility: Facility) => {
