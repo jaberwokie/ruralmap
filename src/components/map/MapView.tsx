@@ -470,7 +470,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     if (!memberVolumeRef.current) return;
     memberVolumeRef.current.clearLayers();
 
-    if (!layers.memberVolume) return;
+    if (!layers.memberVolume || coverageGaps) return;
 
     const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
     const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
@@ -500,7 +500,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       memberVolumeRef.current!.addLayer(polygon);
     });
-  }, [layers.memberVolume]);
+  }, [layers.memberVolume, coverageGaps]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };
