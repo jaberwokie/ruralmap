@@ -571,7 +571,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
         const marker = L.marker([service.lat, service.lng], { icon });
         const phoneHtml = service.phone ? `<div style="margin-top:2px;"><a href="tel:${service.phone.replace(/[^\d+]/g, '')}" style="color:hsl(217,91%,60%);font-size:10px;">${service.phone}</a></div>` : '';
         marker.bindTooltip(`<div style="padding:8px 12px;font-size:13px;width:240px;white-space:normal;word-break:break-word;overflow-wrap:anywhere;"><div style="font-weight:600;margin-bottom:2px;">${service.name}</div><div style="color:hsl(200,15%,46%);font-size:10px;margin-bottom:2px;">${service.category}</div><div style="color:hsl(240,4%,46%);font-size:11px;">${service.city}, ${service.county} Co.</div>${service.address ? `<div style="color:hsl(240,4%,46%);font-size:10px;margin-top:2px;">${service.address}</div>` : ''}${phoneHtml}</div>`, { direction: 'top', offset: [0, -6], className: 'facility-tooltip' });
-        marker.on('click', () => onRuralCountyClickRef.current?.(service.county));
+        marker.on('click', () => {
+          const countyServices = ruralServicesData?.filter(s => s.county === service.county) ?? [];
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+        });
         ruralServicesRef.current!.addLayer(marker);
       });
     }
