@@ -32,10 +32,10 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const AREA_FILL: Record<CoverageArea, { fill: string; border: string }> = {
-  area1: { fill: 'hsla(142, 71%, 45%, 0.30)', border: 'hsla(142, 71%, 45%, 0.55)' },
-  area2: { fill: 'hsla(35, 92%, 50%, 0.30)', border: 'hsla(35, 92%, 50%, 0.55)' },
-  area3: { fill: 'hsla(217, 91%, 60%, 0.30)', border: 'hsla(217, 91%, 60%, 0.55)' },
+const AREA_FILL: Record<CoverageArea, { fill: string; border: string; weight: number }> = {
+  area1: { fill: 'hsla(142, 71%, 45%, 0.38)', border: 'hsla(142, 71%, 45%, 0.65)', weight: 2.5 },
+  area2: { fill: 'hsla(35, 92%, 50%, 0.28)', border: 'hsla(35, 92%, 50%, 0.50)', weight: 2 },
+  area3: { fill: 'hsla(217, 91%, 60%, 0.18)', border: 'hsla(217, 91%, 60%, 0.40)', weight: 2 },
 };
 
 const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
