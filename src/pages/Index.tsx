@@ -22,7 +22,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(50);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set() });
-  const [coverageRadius, setCoverageRadius] = useState(true);
+  const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [layers, setLayers] = useState<LayerState>({

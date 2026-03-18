@@ -206,10 +206,10 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         const circle = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
           color: colors.stroke,
-          weight: 1.5,
+          weight: 1,
           fillColor: colors.fill,
           fillOpacity: 1,
-          dashArray: '6 4',
+          dashArray: '8 6',
         });
         radiusRef.current!.addLayer(circle);
       });

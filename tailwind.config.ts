@@ -49,6 +49,7 @@ export default {
         },
         hospital: "hsl(var(--hospital))",
         clinic: "hsl(var(--clinic))",
+        tier1: "hsl(var(--tier1))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
