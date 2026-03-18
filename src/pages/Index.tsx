@@ -108,23 +108,8 @@ const Index = () => {
     setLockedEntity(null);
   }, []);
 
-  // Bridge: area hover/click still controls focusedArea for zoom behavior
-  const handleAreaHover = useCallback((area: CoverageArea | null) => {
-    if (area) {
-      setHoverEntity({ type: 'coverageArea', area });
-    } else {
-      setHoverEntity(null);
-    }
-  }, []);
-
-  const handleAreaClick = useCallback((area: CoverageArea | null) => {
-    if (area) {
-      setFocusedArea(prev => prev === area ? null : area);
-      setLockedEntity({ type: 'coverageArea', area });
-    } else {
-      setFocusedArea(null);
-      setLockedEntity(null);
-    }
+  const handleMapClick = useCallback(() => {
+    setLockedEntity(null);
   }, []);
 
   return (
