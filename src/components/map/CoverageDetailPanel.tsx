@@ -189,18 +189,12 @@ const CountyContent = ({ county }: { county: string }) => {
   const area = getCountyArea(county);
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
   const memberCount = volumeMap.get(county) ?? 0;
-
-  const isGap = GAP_COUNTIES.has(county);
+  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
-      {isGap && (
-        <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
-          <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-          <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
-        </div>
-      )}
+      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         <div className="flex justify-between"><span>Member Volume</span><span className="font-medium tabular-nums">{memberCount.toLocaleString()}</span></div>
