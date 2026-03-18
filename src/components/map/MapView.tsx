@@ -146,6 +146,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
 
     if (!layers.zones) return;
 
+    const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
     const areas: CoverageArea[] = ['area1', 'area2', 'area3'];
 
     areas.forEach(area => {
@@ -163,7 +164,27 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         },
       });
 
-      geoLayer.bindTooltip(COVERAGE_AREA_LABELS[area], {
+      const totalMembers = counties.reduce((sum, c) => sum + (volumeMap.get(c.name) ?? 0), 0);
+      const countyLines = counties
+        .map(c => {
+          const count = volumeMap.get(c.name) ?? 0;
+          return `<div style="display:flex;justify-content:space-between;gap:12px;"><span>${c.name}</span><span style="font-weight:600;">${count.toLocaleString()}</span></div>`;
+        })
+        .join('');
+
+      const tooltipHtml = `
+        <div style="padding:8px 12px;font-size:12px;min-width:160px;">
+          <div style="font-weight:700;margin-bottom:6px;font-size:13px;">${COVERAGE_AREA_LABELS[area]}</div>
+          <div style="border-bottom:1px solid hsl(240,5%,88%);margin-bottom:4px;padding-bottom:4px;">
+            ${countyLines}
+          </div>
+          <div style="display:flex;justify-content:space-between;font-weight:700;font-size:12px;">
+            <span>Total</span><span>${totalMembers.toLocaleString()}</span>
+          </div>
+        </div>
+      `;
+
+      geoLayer.bindTooltip(tooltipHtml, {
         sticky: true,
         className: 'facility-tooltip',
       });
