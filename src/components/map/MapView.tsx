@@ -152,7 +152,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     };
 
     nevadaCounties.forEach(county => {
-      if (focusedArea && county.zone !== focusedArea) return;
+      
 
       const merged = mergePolygons([county.boundaries]);
       if (!merged) return;
