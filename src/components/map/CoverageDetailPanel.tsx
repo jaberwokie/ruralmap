@@ -44,6 +44,10 @@ const CoverageDetailPanel = ({ hoveredArea }: CoverageDetailPanelProps) => {
             <span>Total</span>
             <span className="tabular-nums">{areaData.total.toLocaleString()}</span>
           </div>
+          <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs text-foreground/80">
+            <span>Rural Access Dependence</span>
+            <span className="font-semibold">{RURAL_ACCESS_DEPENDENCE[hoveredArea!]}</span>
+          </div>
         </>
       )}
     </div>
