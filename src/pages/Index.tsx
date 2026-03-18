@@ -52,9 +52,6 @@ const Index = () => {
 
   const handleCoverageRadiusChange = useCallback((checked: boolean) => {
     setCoverageRadius(checked);
-    if (!checked) {
-      setCoverageGaps(false);
-    }
   }, []);
 
   const handleCoverageGapsChange = useCallback((checked: boolean) => {
