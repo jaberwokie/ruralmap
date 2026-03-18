@@ -4,6 +4,7 @@ import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { ruralServices } from '@/data/rural-services';
+import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 
 interface LayerState {
   counties: boolean;
