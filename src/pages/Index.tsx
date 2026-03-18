@@ -11,6 +11,7 @@ interface LayerState {
   memberVolume: boolean;
   ruralServices: boolean;
   operationalCoverage: boolean;
+  fteCapacity: boolean;
 }
 
 export interface Filters {
@@ -33,6 +34,7 @@ const Index = () => {
     memberVolume: false,
     ruralServices: false,
     operationalCoverage: false,
+    fteCapacity: false,
   });
 
   // ── Unified detail panel state ──

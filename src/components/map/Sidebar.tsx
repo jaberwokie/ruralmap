@@ -1,9 +1,10 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity } from 'lucide-react';
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
 
 interface LayerState {
   counties: boolean;
@@ -11,6 +12,7 @@ interface LayerState {
   memberVolume: boolean;
   ruralServices: boolean;
   operationalCoverage: boolean;
+  fteCapacity: boolean;
 }
 
 interface SidebarProps {
@@ -38,6 +40,7 @@ const LAYER_CONFIG = [
   { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
   { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
+  { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
 ];
 
 const Sidebar = ({
@@ -442,6 +445,31 @@ const Sidebar = ({
                       </div>
                     </div>
                   ))}
+                </div>
+               )}
+              {key === 'fteCapacity' && layers.fteCapacity && (
+                <div className="px-2 pb-2 pt-1.5 space-y-2">
+                  {fteCapacityData.map(fte => {
+                    const status = getLoadStatus(fte.currentLoad, fte.capacity);
+                    const colors = LOAD_STATUS_COLORS[status];
+                    return (
+                      <div key={fte.id} className={`rounded-md border px-2 py-1.5 ${colors.bg} border-border`}>
+                        <div className="flex items-center justify-between mb-0.5">
+                          <span className={`text-[11px] font-semibold ${colors.text}`}>{fte.label}</span>
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.dot }} />
+                            <span className={`text-[10px] font-medium ${colors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
+                          </div>
+                        </div>
+                        <div className={`text-[10px] ${colors.text} opacity-80`}>
+                          {fte.currentLoad} / {fte.capacity} engagements
+                        </div>
+                        <div className={`text-[10px] italic ${colors.text} opacity-70 mt-0.5`}>
+                          {LOAD_STATUS_GUIDANCE[status]}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

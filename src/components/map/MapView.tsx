@@ -9,6 +9,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { operationalZones } from '@/data/operational-coverage';
+import { fteCapacityData, getLoadStatus, LOAD_STATUS_COLORS } from '@/data/fte-capacity';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -23,6 +24,7 @@ interface MapViewProps {
     memberVolume: boolean;
     ruralServices: boolean;
     operationalCoverage: boolean;
+    fteCapacity: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   onMapClick?: () => void;
@@ -62,6 +64,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
   const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
+  const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
@@ -106,7 +109,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
     ruralServicesRef.current = L.layerGroup().addTo(map);       // 7. Rural service pins
-    markersRef.current = L.layerGroup().addTo(map);             // 8. Facility markers (top)
+    markersRef.current = L.layerGroup().addTo(map);             // 8. Facility markers
+    fteCapacityRef.current = L.layerGroup().addTo(map);          // 9. FTE hub indicators (top)
 
     mapRef.current = map;
 
@@ -488,7 +492,43 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.operationalCoverage]);
 
-  // Track zoom for rural services clustering
+  // ── FTE Capacity hub indicators ──
+  useEffect(() => {
+    if (!fteCapacityRef.current) return;
+    fteCapacityRef.current.clearLayers();
+
+    if (!layers.fteCapacity) return;
+
+    fteCapacityData.forEach(fte => {
+      if (!fte.hubLocation) return; // Remote = sidebar only
+
+      const status = getLoadStatus(fte.currentLoad, fte.capacity);
+      const dotColor = LOAD_STATUS_COLORS[status].dot;
+      const statusLabel = status === 'available' ? 'Available' : status === 'near' ? 'Near Capacity' : 'Over Capacity';
+
+      const icon = L.divIcon({
+        className: '',
+        html: `<div style="
+          display:flex; align-items:center; gap:5px;
+          background:white; border:1.5px solid ${dotColor};
+          border-radius:14px; padding:3px 8px 3px 5px;
+          box-shadow:0 1px 4px hsla(0,0%,0%,0.15);
+          cursor:default; white-space:nowrap;
+        ">
+          <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
+          <span style="font-size:10px;font-weight:600;color:hsl(0,0%,25%);">${fte.label}</span>
+          <span style="font-size:9px;color:hsl(0,0%,50%);">${fte.currentLoad}/${fte.capacity}</span>
+        </div>`,
+        iconSize: [0, 0],
+        iconAnchor: [0, 12],
+      });
+
+      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: false });
+      fteCapacityRef.current!.addLayer(marker);
+    });
+  }, [layers.fteCapacity]);
+
+
   const zoomRef = useRef(7);
   useEffect(() => {
     if (!mapRef.current) return;

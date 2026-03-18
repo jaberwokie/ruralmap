@@ -5,6 +5,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
+import { COUNTY_FTE_MAP, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -119,6 +120,31 @@ const OperationalCoverageBadge = ({ county }: { county: string }) => {
             ? 'Remote triage + scheduled field visit'
             : 'Telephonic coordination + referral navigation'}
         </span>
+      </div>
+    </div>
+  );
+};
+
+/** Capacity Status section for county panel */
+const CapacityStatusSection = ({ county }: { county: string }) => {
+  const fte = COUNTY_FTE_MAP.get(county);
+  if (!fte) return null;
+
+  const status = getLoadStatus(fte.currentLoad, fte.capacity);
+  const colors = LOAD_STATUS_COLORS[status];
+
+  return (
+    <div className={`rounded-md border border-border px-2 py-1.5 mb-2 ${colors.bg}`}>
+      <div className="flex items-center gap-1.5 mb-0.5">
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} />
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Capacity Status</span>
+      </div>
+      <div className={`text-[11px] font-medium ${colors.text}`}>{fte.label}</div>
+      <div className={`text-[10px] ${colors.text} mt-0.5`}>
+        {fte.currentLoad} / {fte.capacity} engagements · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+      </div>
+      <div className={`text-[10px] italic ${colors.text} opacity-80 mt-0.5`}>
+        {LOAD_STATUS_GUIDANCE[status]}
       </div>
     </div>
   );
@@ -317,6 +343,7 @@ const CountyContent = ({ county }: { county: string }) => {
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       <NBHRoutingSection county={county} />
       <OperationalCoverageBadge county={county} />
+      <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
