@@ -54,6 +54,7 @@ const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }>
 };
 
 const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick, focusedArea, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
+  const prevFocusedAreaRef = useRef<CoverageArea | null | undefined>(undefined);
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -67,8 +68,18 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
   const onAreaClickRef = useRef(onAreaClick);
   onAreaClickRef.current = onAreaClick;
 
-  const filteredFacilities = useMemo(() => {
+  // Filter facilities by focused area
+  const areaFilteredFacilities = useMemo(() => {
     let result = facilities;
+    if (focusedArea) {
+      const areaCountyNames = new Set(nevadaCounties.filter(c => c.zone === focusedArea).map(c => c.name));
+      result = result.filter(f => areaCountyNames.has(f.county));
+    }
+    return result;
+  }, [facilities, focusedArea]);
+
+  const filteredFacilities = useMemo(() => {
+    let result = areaFilteredFacilities;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(f =>
@@ -78,7 +89,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
       );
     }
     return result;
-  }, [facilities, searchQuery]);
+  }, [areaFilteredFacilities, searchQuery]);
 
   // Initialize map — layer order: base → zones → counties → radii → gaps → volume → markers
   useEffect(() => {
@@ -137,6 +148,24 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     stateBoundaryRef.current.addLayer(geoLayer);
   }, []);
 
+  // Auto-zoom to focused area bounds
+  useEffect(() => {
+    if (!mapRef.current) return;
+    if (prevFocusedAreaRef.current === focusedArea) return;
+    prevFocusedAreaRef.current = focusedArea;
+
+    if (focusedArea) {
+      const counties = nevadaCounties.filter(c => c.zone === focusedArea);
+      const allCoords = counties.flatMap(c => c.boundaries);
+      if (allCoords.length > 0) {
+        const bounds = L.latLngBounds(allCoords.map(([lat, lng]) => [lat, lng] as [number, number]));
+        mapRef.current.fitBounds(bounds, { padding: [30, 30], maxZoom: 9 });
+      }
+    } else {
+      mapRef.current.setView([39.5, -117.0], 7);
+    }
+  }, [focusedArea]);
+
   // County drawing is handled by the focus-aware effect below
 
   // Draw merged coverage area overlays
@@ -156,6 +185,9 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     areas.forEach(area => {
+      // Skip non-focused areas entirely when a focus is active
+      if (focusedArea && area !== focusedArea) return;
+
       const counties = nevadaCounties.filter(c => c.zone === area);
       const merged = mergePolygons(counties.map(c => c.boundaries));
       if (!merged) return;
@@ -165,22 +197,15 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
 
       const baseColors = AREA_FILL[area];
 
-      // Compute opacity based on focus state
+      // When focused, emphasize; otherwise use base colors
       let fillColor = baseColors.fill;
       let borderColor = baseColors.border;
       let weight = baseColors.weight;
 
-      if (focusedArea) {
-        if (area === focusedArea) {
-          // Focused: full opacity, thicker border
-          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.55)');
-          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.85)');
-          weight = baseColors.weight + 1.5;
-        } else {
-          // De-emphasized
-          fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.08)');
-          borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.15)');
-        }
+      if (focusedArea && area === focusedArea) {
+        fillColor = baseColors.fill.replace(/[\d.]+\)$/, '0.55)');
+        borderColor = baseColors.border.replace(/[\d.]+\)$/, '0.85)');
+        weight = baseColors.weight + 1.5;
       }
 
       const geoLayer = L.geoJSON(clipped, {
@@ -220,12 +245,13 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
     };
 
     nevadaCounties.forEach(county => {
+      // Skip counties not in focused area
+      if (focusedArea && county.zone !== focusedArea) return;
+
       const merged = mergePolygons([county.boundaries]);
       if (!merged) return;
       const clipped = clipPolygon(merged, nevadaClip as any);
       if (!clipped) return;
-
-      const isFocusedCounty = !focusedArea || county.zone === focusedArea;
 
       const geoLayer = L.geoJSON(clipped, {
         style: {
@@ -234,7 +260,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
           fillColor: 'transparent',
           fillOpacity: 0,
           dashArray: '4 4',
-          opacity: isFocusedCounty ? 1 : 0.2,
         },
       });
       countiesRef.current!.addLayer(geoLayer);
@@ -250,7 +275,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onAreaHover, onAreaClick
           white-space: nowrap;
           pointer-events: none;
           text-shadow: 0 0 4px white, 0 0 4px white;
-          opacity: ${isFocusedCounty ? 1 : 0.25};
         ">${county.name}</span>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],

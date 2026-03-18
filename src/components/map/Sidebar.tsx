@@ -3,6 +3,7 @@ import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-rea
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
+import { CoverageArea } from '@/data/nevada-counties';
 
 interface LayerState {
   counties: boolean;
@@ -28,6 +29,8 @@ interface SidebarProps {
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
+  focusedArea: CoverageArea | null;
+  onFocusedAreaChange: (area: CoverageArea) => void;
 }
 
 const LAYER_CONFIG = [
@@ -54,6 +57,8 @@ const Sidebar = ({
   coverageGaps,
   onCoverageRadiusChange,
   onCoverageGapsChange,
+  focusedArea,
+  onFocusedAreaChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -326,6 +331,50 @@ const Sidebar = ({
               </div>
             </div>
           </div>
+        )}
+      </div>
+
+      <div className="border-t border-border mx-4" />
+
+      {/* Coverage Area Selector */}
+      <div className="px-4 py-3">
+        <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
+          Focus Area
+        </div>
+        <div className="flex gap-1.5">
+          {([
+            { key: 'area1' as CoverageArea, label: 'Area 1', color: 'hsla(142, 71%, 45%', solid: 'hsl(142, 71%, 45%)' },
+            { key: 'area2' as CoverageArea, label: 'Area 2', color: 'hsla(35, 92%, 50%', solid: 'hsl(35, 92%, 50%)' },
+            { key: 'area3' as CoverageArea, label: 'Area 3', color: 'hsla(217, 91%, 60%', solid: 'hsl(217, 91%, 60%)' },
+          ]).map(({ key, label, color, solid }) => {
+            const active = focusedArea === key;
+            return (
+              <button
+                key={key}
+                onClick={() => onFocusedAreaChange(key)}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] transition-all duration-150 ${
+                  active
+                    ? 'font-medium shadow-sm'
+                    : 'bg-secondary text-muted-foreground hover:text-foreground'
+                }`}
+                style={active ? { background: `${color}, 0.18)`, color: solid, borderWidth: 1, borderColor: `${color}, 0.5)` } : {}}
+              >
+                <span
+                  className="w-2 h-2 rounded-full flex-shrink-0"
+                  style={{ background: solid, opacity: active ? 1 : 0.5 }}
+                />
+                {label}
+              </button>
+            );
+          })}
+        </div>
+        {focusedArea && (
+          <button
+            onClick={() => onFocusedAreaChange(focusedArea)}
+            className="mt-1.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+          >
+            ✕ Clear focus
+          </button>
         )}
       </div>
 

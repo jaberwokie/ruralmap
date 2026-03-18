@@ -113,6 +113,8 @@ const Index = () => {
           coverageGaps={coverageGaps}
           onCoverageRadiusChange={handleCoverageRadiusChange}
           onCoverageGapsChange={handleCoverageGapsChange}
+          focusedArea={focusedArea}
+          onFocusedAreaChange={(area) => setFocusedArea(prev => prev === area ? null : area)}
         />
       </div>
 
