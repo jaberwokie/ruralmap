@@ -1,9 +1,10 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, Filter, X } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity } from 'lucide-react';
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
 
 interface LayerState {
   counties: boolean;
