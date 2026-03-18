@@ -5,7 +5,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, COUNTY_OPERATIONAL_MAP } from '@/data/operational-coverage';
-import { FTECapacity, COUNTY_FTE_MAP, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
+import { FTECapacity, COUNTY_FTE_MAP, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -132,19 +132,23 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   if (!fte) return null;
 
   const status = getLoadStatus(fte.currentLoad, fte.capacity);
-  const colors = LOAD_STATUS_COLORS[status];
+  const statusColors = LOAD_STATUS_COLORS[status];
+  const role = FTE_ROLE_COLORS[fte.id];
 
   return (
-    <div className={`rounded-md border border-border px-2 py-1.5 mb-2 ${colors.bg}`}>
+    <div className={`rounded-md border-2 px-2 py-1.5 mb-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
       <div className="flex items-center gap-1.5 mb-0.5">
-        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} />
+        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
         <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Capacity Status</span>
       </div>
-      <div className={`text-[11px] font-medium ${colors.text}`}>{fte.label}</div>
-      <div className={`text-[10px] ${colors.text} mt-0.5`}>
-        {fte.currentLoad} / {fte.capacity} engagements · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+      <div className="text-[11px] font-medium text-foreground">{fte.label}</div>
+      <div className="flex items-center gap-1.5 mt-0.5">
+        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
+        <span className={`text-[10px] ${statusColors.text}`}>
+          {fte.currentLoad} / {fte.capacity} engagements · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+        </span>
       </div>
-      <div className={`text-[10px] italic ${colors.text} opacity-80 mt-0.5`}>
+      <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
         {LOAD_STATUS_GUIDANCE[status]}
       </div>
     </div>
@@ -553,23 +557,27 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
 // ── FTE Hub ──
 const FTEHubContent = ({ fte }: { fte: FTECapacity }) => {
   const status = getLoadStatus(fte.currentLoad, fte.capacity);
-  const colors = LOAD_STATUS_COLORS[status];
+  const statusColors = LOAD_STATUS_COLORS[status];
+  const role = FTE_ROLE_COLORS[fte.id];
   const pct = Math.round((fte.currentLoad / fte.capacity) * 100);
 
   return (
     <>
       <div className="flex items-center gap-1.5 mb-1">
-        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors.dot }} />
+        <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary, border: '1.5px solid white', boxShadow: `0 0 0 1px ${role?.primary}` }} />
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">FTE Hub</span>
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{fte.label}</p>
 
-      <div className={`rounded-md border border-border px-2 py-1.5 mb-3 ${colors.bg}`}>
-        <div className={`text-[11px] font-bold ${colors.text}`}>{LOAD_STATUS_LABELS[status]}</div>
-        <div className={`text-[10px] ${colors.text} mt-0.5`}>
+      <div className={`rounded-md border-2 px-2 py-1.5 mb-3 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+        <div className="flex items-center gap-1.5 mb-0.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
+          <span className={`text-[11px] font-bold ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
+        </div>
+        <div className="text-[10px] text-foreground/70 mt-0.5">
           {fte.currentLoad} / {fte.capacity} engagements ({pct}%)
         </div>
-        <div className={`text-[10px] italic ${colors.text} opacity-80 mt-0.5`}>
+        <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
           {LOAD_STATUS_GUIDANCE[status]}
         </div>
       </div>

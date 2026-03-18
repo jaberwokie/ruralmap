@@ -9,7 +9,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { operationalZones } from '@/data/operational-coverage';
-import { fteCapacityData, getLoadStatus, LOAD_STATUS_COLORS } from '@/data/fte-capacity';
+import { fteCapacityData, getLoadStatus, LOAD_STATUS_COLORS, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -504,24 +504,26 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       if (!fte.hubLocation) return; // Remote = sidebar only
 
       const status = getLoadStatus(fte.currentLoad, fte.capacity);
-      const dotColor = LOAD_STATUS_COLORS[status].dot;
-      const statusLabel = status === 'available' ? 'Available' : status === 'near' ? 'Near Capacity' : 'Over Capacity';
+      const statusDot = LOAD_STATUS_COLORS[status].dot;
+      const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
 
       const icon = L.divIcon({
         className: '',
         html: `<div style="
           display:flex; align-items:center; gap:5px;
-          background:white; border:1.5px solid ${dotColor};
+          background:white; border:2px solid ${roleColor};
           border-radius:14px; padding:4px 10px 4px 6px;
           box-shadow:0 1px 4px hsla(0,0%,0%,0.15);
           cursor:pointer; white-space:nowrap;
           min-width:44px; min-height:28px;
+          position:relative;
         ">
-          <div style="width:8px;height:8px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
-          <span style="font-size:10px;font-weight:600;color:hsl(0,0%,25%);">${fte.label}</span>
+          <div style="width:10px;height:10px;border-radius:50%;background:${roleColor};flex-shrink:0;border:1.5px solid white;box-shadow:0 0 0 1px ${roleColor};"></div>
+          <span style="font-size:10px;font-weight:600;color:${roleColor};">${fte.label}</span>
           <span style="font-size:9px;color:hsl(0,0%,50%);">${fte.currentLoad}/${fte.capacity}</span>
+          <div style="position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:${statusDot};border:1.5px solid white;"></div>
         </div>`,
-        iconSize: [140, 28],
+        iconSize: [150, 28],
         iconAnchor: [0, 14],
       });
 

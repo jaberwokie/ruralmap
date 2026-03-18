@@ -4,7 +4,7 @@ import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
-import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE } from '@/data/fte-capacity';
+import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 
 interface LayerState {
   counties: boolean;
@@ -451,20 +451,24 @@ const Sidebar = ({
                 <div className="px-2 pb-2 pt-1.5 space-y-2">
                   {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
                     const status = getLoadStatus(fte.currentLoad, fte.capacity);
-                    const colors = LOAD_STATUS_COLORS[status];
+                    const statusColors = LOAD_STATUS_COLORS[status];
+                    const role = FTE_ROLE_COLORS[fte.id];
                     return (
-                      <div key={fte.id} className={`rounded-md border px-2 py-1.5 ${colors.bg} border-border`}>
+                      <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
                         <div className="flex items-center justify-between mb-0.5">
-                          <span className={`text-[11px] font-semibold ${colors.text}`}>{fte.label}</span>
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
+                            <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
+                          </div>
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.dot }} />
-                            <span className={`text-[10px] font-medium ${colors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors.dot }} />
+                            <span className={`text-[10px] font-medium ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
                           </div>
                         </div>
-                        <div className={`text-[10px] ${colors.text} opacity-80`}>
+                        <div className="text-[10px] text-foreground/70">
                           {fte.currentLoad} / {fte.capacity} engagements
                         </div>
-                        <div className={`text-[10px] italic ${colors.text} opacity-70 mt-0.5`}>
+                        <div className={`text-[10px] italic ${statusColors.text} opacity-70 mt-0.5`}>
                           {LOAD_STATUS_GUIDANCE[status]}
                         </div>
                       </div>
@@ -475,23 +479,24 @@ const Sidebar = ({
                     const remote = fteCapacityData.find(f => f.hubLocation === null);
                     if (!remote) return null;
                     const status = getLoadStatus(remote.currentLoad, remote.capacity);
-                    const colors = LOAD_STATUS_COLORS[status];
+                    const statusColors = LOAD_STATUS_COLORS[status];
+                    const role = FTE_ROLE_COLORS[remote.id];
                     return (
-                      <div className={`rounded-md border-2 border-dashed px-2 py-2 ${colors.bg} border-muted-foreground/30`}>
+                      <div className={`rounded-md border-2 border-dashed px-2 py-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'}`}>
                         <div className="flex items-center gap-1.5 mb-1">
-                          <Headphones className="w-3.5 h-3.5 text-muted-foreground" />
+                          <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
                           <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className={`text-[10px] font-medium ${colors.text}`}>
+                          <span className="text-[10px] font-medium text-foreground/70">
                             {remote.currentLoad} / {remote.capacity} interactions
                           </span>
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: colors.dot }} />
-                            <span className={`text-[10px] font-semibold ${colors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors.dot }} />
+                            <span className={`text-[10px] font-semibold ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
                           </div>
                         </div>
-                        <div className={`text-[10px] italic ${colors.text} opacity-70 mt-0.5`}>
+                        <div className={`text-[10px] italic ${statusColors.text} opacity-70 mt-0.5`}>
                           {LOAD_STATUS_GUIDANCE[status]}
                         </div>
                         <div className="text-[9px] text-muted-foreground mt-1">Telephonic / virtual only — no field presence</div>
