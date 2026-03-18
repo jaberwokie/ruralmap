@@ -1,11 +1,8 @@
 import { useEffect, useRef, useMemo } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet.markercluster';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import { Facility } from '@/data/facilities';
-import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS } from '@/data/nevada-counties';
+import { nevadaCounties, CoverageArea, COVERAGE_AREA_LABELS, AREA_MARKER_COLORS, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons } from '@/utils/mergePolygons';
 
@@ -13,10 +10,8 @@ interface MapViewProps {
   facilities: Facility[];
   layers: {
     counties: boolean;
-    hospitals: boolean;
-    clinics: boolean;
     zones: boolean;
-    tier1: boolean;
+    serviceLocations: boolean;
     memberVolume: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
@@ -37,10 +32,16 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const AREA_COLORS: Record<CoverageArea, { fill: string; border: string }> = {
-  area1: { fill: 'hsla(217, 91%, 60%, 0.18)', border: 'hsla(217, 91%, 60%, 0.7)' },
-  area2: { fill: 'hsla(35, 92%, 50%, 0.14)', border: 'hsla(35, 92%, 50%, 0.55)' },
-  area3: { fill: 'hsla(160, 60%, 45%, 0.16)', border: 'hsla(160, 60%, 45%, 0.6)' },
+const AREA_FILL: Record<CoverageArea, { fill: string; border: string }> = {
+  area1: { fill: 'hsla(142, 71%, 45%, 0.20)', border: 'hsla(142, 71%, 45%, 0.6)' },
+  area2: { fill: 'hsla(35, 92%, 50%, 0.20)', border: 'hsla(35, 92%, 50%, 0.6)' },
+  area3: { fill: 'hsla(217, 91%, 60%, 0.20)', border: 'hsla(217, 91%, 60%, 0.6)' },
+};
+
+const AREA_RADIUS_COLORS: Record<CoverageArea, { stroke: string; fill: string }> = {
+  area1: { stroke: 'hsla(142, 71%, 45%, 0.35)', fill: 'hsla(142, 71%, 45%, 0.06)' },
+  area2: { stroke: 'hsla(35, 92%, 50%, 0.35)', fill: 'hsla(35, 92%, 50%, 0.06)' },
+  area3: { stroke: 'hsla(217, 91%, 60%, 0.35)', fill: 'hsla(217, 91%, 60%, 0.06)' },
 };
 
 const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, coverageRadius, coverageGaps }: MapViewProps) => {
@@ -53,7 +54,6 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const memberVolumeRef = useRef<L.LayerGroup | null>(null);
-  const tier1Ref = useRef<L.LayerGroup | null>(null);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -68,7 +68,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     return result;
   }, [facilities, searchQuery]);
 
-  // Initialize map
+  // Initialize map — layer order: base → zones → counties → radii → gaps → volume → markers
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
@@ -79,19 +79,18 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       attributionControl: false,
     });
 
-    // Use CartoDB Positron for a clean muted base
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
     }).addTo(map);
 
-    markersRef.current = L.layerGroup().addTo(map);
-    countiesRef.current = L.layerGroup().addTo(map);
-    zonesRef.current = L.layerGroup().addTo(map);
-    labelsRef.current = L.layerGroup().addTo(map);
-    radiusRef.current = L.layerGroup().addTo(map);
-    gapsRef.current = L.layerGroup().addTo(map);
-    memberVolumeRef.current = L.layerGroup().addTo(map);
-    tier1Ref.current = L.layerGroup().addTo(map);
+    // Create layers in visual stacking order (bottom to top)
+    zonesRef.current = L.layerGroup().addTo(map);        // 1. Coverage areas
+    countiesRef.current = L.layerGroup().addTo(map);      // 2. County boundaries
+    labelsRef.current = L.layerGroup().addTo(map);        // 3. County labels
+    radiusRef.current = L.layerGroup().addTo(map);        // 4. Coverage radii
+    gapsRef.current = L.layerGroup().addTo(map);          // 5. Coverage gaps
+    memberVolumeRef.current = L.layerGroup().addTo(map);  // 6. Member volume
+    markersRef.current = L.layerGroup().addTo(map);       // 7. Service points (top)
 
     mapRef.current = map;
 
@@ -101,7 +100,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     };
   }, []);
 
-  // Draw county boundaries
+  // Draw county boundaries (neutral, reference-only)
   useEffect(() => {
     if (!countiesRef.current || !labelsRef.current) return;
     countiesRef.current.clearLayers();
@@ -119,7 +118,6 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       });
       countiesRef.current!.addLayer(polygon);
 
-      // County label
       const label = L.divIcon({
         className: 'county-label',
         html: `<span style="
@@ -154,7 +152,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       const merged = mergePolygons(counties.map(c => c.boundaries));
       if (!merged) return;
 
-      const colors = AREA_COLORS[area];
+      const colors = AREA_FILL[area];
       const geoLayer = L.geoJSON(merged, {
         style: {
           color: colors.border,
@@ -193,7 +191,7 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     });
   }, [layers.zones]);
 
-  // Draw hospital coverage radius circles
+  // Draw coverage radii (dashed, area-colored)
   useEffect(() => {
     if (!radiusRef.current) return;
     radiusRef.current.clearLayers();
@@ -203,11 +201,13 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     filteredFacilities
       .filter(f => f.type === 'hospital')
       .forEach(facility => {
+        const area = getCountyArea(facility.county);
+        const colors = AREA_RADIUS_COLORS[area];
         const circle = L.circle([facility.lat, facility.lng], {
           radius: radiusKm * 1000,
-          color: 'hsla(217, 91%, 60%, 0.35)',
+          color: colors.stroke,
           weight: 1.5,
-          fillColor: 'hsla(217, 91%, 60%, 0.06)',
+          fillColor: colors.fill,
           fillOpacity: 1,
           dashArray: '6 4',
         });
@@ -215,52 +215,51 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
       });
   }, [filteredFacilities, coverageRadius, radiusKm]);
 
-  // Draw facility markers with clustering
+  // Draw service point markers (uniform circles, color-coded by area)
   useEffect(() => {
-    if (!markersRef.current || !mapRef.current || !tier1Ref.current) return;
+    if (!markersRef.current || !mapRef.current) return;
     markersRef.current.clearLayers();
-    tier1Ref.current.clearLayers();
 
-    const clusterGroup = (L as any).markerClusterGroup({
-      maxClusterRadius: 40,
-      spiderfyOnMaxZoom: true,
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      iconCreateFunction: (cluster: any) => {
-        const count = cluster.getChildCount();
-        return L.divIcon({
-          className: '',
-          html: `<div class="cluster-marker">${count}</div>`,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16],
-        });
-      },
-    });
+    if (!layers.serviceLocations) return;
+
+    // Detect co-located markers and offset them
+    const locationCounts = new Map<string, number>();
 
     filteredFacilities.forEach(facility => {
-      if (facility.type === 'hospital' && !layers.hospitals) return;
-      if (facility.type === 'clinic' && !layers.clinics) return;
-      if (facility.type === 'tier1' && !layers.tier1) return;
+      const area = getCountyArea(facility.county);
+      const markerColor = AREA_MARKER_COLORS[area];
 
-      const isTier1 = facility.type === 'tier1';
-      const markerClass = facility.type === 'hospital' ? 'hospital' :
-                          isTier1 ? 'tier1' : 'clinic';
-      const size = isTier1 ? 18 : 12;
+      // Compute slight offset for co-located markers
+      const key = `${facility.lat.toFixed(4)},${facility.lng.toFixed(4)}`;
+      const count = locationCounts.get(key) ?? 0;
+      locationCounts.set(key, count + 1);
+      const offsetLat = count * 0.003;
+      const offsetLng = count * 0.003;
 
       const icon = L.divIcon({
         className: '',
-        html: `<div class="facility-marker ${markerClass}"></div>`,
-        iconSize: [size, size],
-        iconAnchor: [size / 2, size / 2],
+        html: `<div style="
+          width: 10px;
+          height: 10px;
+          border-radius: 50%;
+          background: ${markerColor};
+          border: 2px solid white;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          cursor: pointer;
+          transition: transform 200ms cubic-bezier(0.2, 0, 0, 1);
+        "></div>`,
+        iconSize: [10, 10],
+        iconAnchor: [5, 5],
       });
 
-      const marker = L.marker([facility.lat, facility.lng], { icon });
+      const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], { icon });
       marker.on('click', () => onFacilityClick(facility));
 
       const tooltipContent = `
         <div style="padding: 8px 12px; font-size: 13px;">
           <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
+          <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px; text-transform: capitalize;">${facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type}</div>
         </div>
       `;
       marker.bindTooltip(tooltipContent, {
@@ -269,15 +268,9 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
         className: 'facility-tooltip',
       });
 
-      if (isTier1 && facility.county === 'Clark') {
-        clusterGroup.addLayer(marker);
-      } else {
-        markersRef.current!.addLayer(marker);
-      }
+      markersRef.current!.addLayer(marker);
     });
-
-    markersRef.current.addLayer(clusterGroup);
-  }, [filteredFacilities, layers.hospitals, layers.clinics, layers.tier1, onFacilityClick]);
+  }, [filteredFacilities, layers.serviceLocations, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
@@ -324,9 +317,8 @@ const MapView = ({ facilities, layers, onFacilityClick, searchQuery, radiusKm, c
     nevadaCounties.forEach(county => {
       const count = volumeMap.get(county.name) ?? 0;
       const intensity = maxCount > 0 ? count / maxCount : 0;
-      // Interpolate from light teal to deep teal
-      const lightness = 92 - intensity * 55; // 92% (light) → 37% (dark)
-      const saturation = 40 + intensity * 30; // 40% → 70%
+      const lightness = 92 - intensity * 55;
+      const saturation = 40 + intensity * 30;
       const fillColor = `hsl(190, ${saturation}%, ${lightness}%)`;
       const borderColor = `hsl(190, ${saturation + 10}%, ${Math.max(lightness - 15, 20)}%)`;
 
