@@ -206,37 +206,63 @@ const EntityContent = ({ entity }: { entity: MapEntity }) => {
   }
 };
 
-// ── Remote FTE ──
-const RemoteFteContent = () => {
-  const remote = fteCapacityData.find(f => f.id === 'remote');
-  if (!remote) return null;
+// ── FTE Detail (unified for all FTEs) ──
+const FTE_META: Record<string, { icon: typeof MapPin; coverageType: string; description: string; role: string }> = {
+  carson: {
+    icon: MapPin,
+    coverageType: 'Active Field Coverage',
+    description: 'Same-day in-person response available',
+    role: 'Field response, engagement, and placement coordination',
+  },
+  pahrump: {
+    icon: MapPin,
+    coverageType: 'Active Field Coverage',
+    description: 'Same-day in-person response available',
+    role: 'Field response, engagement, and placement coordination',
+  },
+  remote: {
+    icon: Headphones,
+    coverageType: 'Remote Support Only',
+    description: 'Statewide telephonic and virtual coordination (no in-person response)',
+    role: 'Intake, routing, telehealth coordination, and referral management',
+  },
+};
 
-  const status = getLoadStatus(remote.currentLoad, remote.capacity);
+const FteDetailContent = ({ fteId }: { fteId: string }) => {
+  const fte = fteCapacityData.find(f => f.id === fteId);
+  if (!fte) return null;
+
+  const meta = FTE_META[fteId];
+  if (!meta) return null;
+
+  const status = getLoadStatus(fte.currentLoad, fte.capacity);
   const statusColors = LOAD_STATUS_COLORS[status];
-  const role = FTE_ROLE_COLORS[remote.id];
+  const roleColors = FTE_ROLE_COLORS[fte.id];
+  const Icon = meta.icon;
+  const unit = fteId === 'remote' ? 'interactions' : 'engagements';
 
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-1.5">
-        <Headphones className="w-4 h-4" style={{ color: role?.primary }} />
-        <span className="text-sm font-bold text-foreground">Remote Coordination Team</span>
+        <Icon className="w-4 h-4" style={{ color: roleColors?.primary }} />
+        <span className="text-sm font-bold text-foreground">{fte.label}</span>
       </div>
 
-      <div className={`rounded-md border px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+      <div className={`rounded-md border px-2 py-1.5 ${roleColors?.light ?? 'bg-secondary'} ${roleColors?.border ?? 'border-border'}`}>
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Coverage Type</div>
-        <div className="text-[11px] font-medium text-foreground">Remote Support Only</div>
+        <div className="text-[11px] font-medium text-foreground">{meta.coverageType}</div>
       </div>
 
       <p className="text-[11px] text-muted-foreground leading-relaxed">
-        Statewide telephonic and virtual coordination (no in-person response)
+        {meta.description}
       </p>
 
-      <div className={`rounded-md border px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+      <div className={`rounded-md border px-2 py-1.5 ${roleColors?.light ?? 'bg-secondary'} ${roleColors?.border ?? 'border-border'}`}>
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Capacity</div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
           <span className={`text-[11px] font-medium ${statusColors.text}`}>
-            {remote.currentLoad} / {remote.capacity} interactions · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
+            {fte.currentLoad} / {fte.capacity} {unit} · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
           </span>
         </div>
         <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
@@ -247,14 +273,14 @@ const RemoteFteContent = () => {
       <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Role</div>
         <p className="text-[11px] text-foreground leading-relaxed">
-          Intake, routing, telehealth coordination, and referral management
+          {meta.role}
         </p>
       </div>
 
       <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Counties Served</div>
         <div className="flex flex-wrap gap-1 mt-0.5">
-          {remote.counties.map(c => (
+          {fte.counties.map(c => (
             <span key={c} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-foreground/80">{c}</span>
           ))}
         </div>
