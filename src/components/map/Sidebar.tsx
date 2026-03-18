@@ -439,12 +439,22 @@ const Sidebar = ({
           Legend
         </div>
         <div className="space-y-2.5 text-xs">
-          {/* Locations */}
+          {/* Facility Types */}
           <div>
-            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Locations</div>
-            <div className="flex items-center gap-2 px-2">
-              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: '#1F2937', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
-              <span className="text-muted-foreground">Clinics / FQHCs</span>
+            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Facility Types</div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(0, 72%, 51%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+                <span className="text-muted-foreground">Hospital</span>
+              </div>
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(217, 91%, 60%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+                <span className="text-muted-foreground">Clinic / Provider</span>
+              </div>
+              <div className="flex items-center gap-2 px-2">
+                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+                <span className="text-muted-foreground">Tier 1</span>
+              </div>
             </div>
           </div>
           {/* Coverage Areas */}
