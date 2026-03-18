@@ -176,11 +176,16 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         },
       });
 
+      // Subtle hover cue only — no informational output
       geoLayer.on('mouseover', () => {
-        onEntityHoverRef.current?.({ type: 'county', county: county.name });
+        if (!isSelected) {
+          geoLayer.setStyle({ color: 'hsl(200, 40%, 65%)', weight: 1.5 });
+        }
       });
       geoLayer.on('mouseout', () => {
-        onEntityHoverRef.current?.(null);
+        if (!isSelected) {
+          geoLayer.setStyle({ color: 'hsl(240, 5%, 75%)', weight: 1 });
+        }
       });
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
@@ -374,8 +379,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
             fillOpacity: 1,
           },
         });
-        geoLayer.on('mouseover', () => onEntityHoverRef.current?.({ type: 'coverageGap', radiusKm }));
-        geoLayer.on('mouseout', () => onEntityHoverRef.current?.(null));
         geoLayer.on('click', (e: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(e as any);
           onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
@@ -412,8 +415,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         fillOpacity: 0.75,
       });
 
-      polygon.on('mouseover', () => onEntityHoverRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count }));
-      polygon.on('mouseout', () => onEntityHoverRef.current?.(null));
       polygon.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
         onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count });
