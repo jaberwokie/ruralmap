@@ -80,6 +80,8 @@ const Sidebar = ({
   onCoverageRadiusKmChange,
   topProvidersOnly,
   onTopProvidersOnlyChange,
+  onHelpEnter,
+  onHelpLeave,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(() => {
     try { const v = localStorage.getItem('sidebar_facilities'); return v === 'true'; } catch { return false; }
