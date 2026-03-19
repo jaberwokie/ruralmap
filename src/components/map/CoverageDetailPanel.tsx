@@ -507,8 +507,84 @@ const FacilityUtilizationSection = ({ facility }: { facility: Facility }) => {
   );
 };
 
+// ── Rich Member Volume Section (conditional on layer) ──
+const MemberVolumeSection = ({ county }: { county: string }) => {
+  const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
+  const memberCount = volumeMap.get(county) ?? 0;
+  const totalMembers = memberVolumeData.reduce((s, d) => s + d.memberCount, 0);
+  const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
+  const medianCount = (() => {
+    const sorted = [...memberVolumeData].sort((a, b) => a.memberCount - b.memberCount);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[mid].memberCount : Math.round((sorted[mid - 1].memberCount + sorted[mid].memberCount) / 2);
+  })();
+  const intensity = maxCount > 0 ? memberCount / maxCount : 0;
+  const volumeLevel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
+  const sharePercent = totalMembers > 0 ? ((memberCount / totalMembers) * 100).toFixed(1) : '0';
+  const ranked = [...memberVolumeData].sort((a, b) => b.memberCount - a.memberCount);
+  const rank = ranked.findIndex(d => d.county === county) + 1;
+  const diffFromMax = maxCount - memberCount;
+
+  if (memberCount === 0) {
+    return (
+      <div className="mt-2 mb-2 rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+        <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground mb-0.5">Member Volume</div>
+        <p className="text-[11px] text-muted-foreground italic">No member volume data available</p>
+      </div>
+    );
+  }
+
+  const interpretation = intensity > 0.66
+    ? 'This county has one of the highest member concentrations in the rural market.'
+    : intensity > 0.33
+    ? 'This county has a moderate member concentration relative to the rural market.'
+    : 'This county has low member volume relative to the rest of the rural market.';
+
+  const levelColor = volumeLevel === 'High' ? 'text-teal-800' : volumeLevel === 'Moderate' ? 'text-teal-700' : 'text-teal-600';
+
+  return (
+    <div className="mt-2 mb-2">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Users className="w-3 h-3 flex-shrink-0" style={{ color: 'hsl(190, 60%, 40%)' }} />
+        <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'hsl(190, 60%, 40%)' }}>Member Volume</span>
+      </div>
+      <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 space-y-0.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-teal-700">Total Members</span>
+          <span className="font-bold text-teal-800 tabular-nums">{memberCount.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-teal-700">Volume Level</span>
+          <span className={`font-bold ${levelColor}`}>{volumeLevel}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-teal-700">County Share</span>
+          <span className="font-bold text-teal-800 tabular-nums">{sharePercent}%</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-teal-700">Volume Rank</span>
+          <span className="font-bold text-teal-800">#{rank} of {memberVolumeData.length}</span>
+        </div>
+        <div className="pt-1 border-t border-teal-100 mt-1 space-y-0.5">
+          <div className="flex justify-between text-[10px]">
+            <span className="text-teal-600">vs. Median ({medianCount.toLocaleString()})</span>
+            <span className="font-medium text-teal-700 tabular-nums">{memberCount >= medianCount ? '+' : ''}{(memberCount - medianCount).toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-[10px]">
+            <span className="text-teal-600">vs. Highest ({maxCount.toLocaleString()})</span>
+            <span className="font-medium text-teal-700 tabular-nums">-{diffFromMax.toLocaleString()}</span>
+          </div>
+        </div>
+        <p className="text-[10px] text-teal-600 italic leading-relaxed pt-1 border-t border-teal-100 mt-1">
+          {interpretation}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
@@ -531,6 +607,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
       <UtilizationEngagementSection county={county} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
