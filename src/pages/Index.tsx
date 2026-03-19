@@ -207,6 +207,7 @@ const Index = () => {
           onFteHubClick={handleFteHubClick}
           selectedFteId={activeFteId}
           coverageRadiusKm={coverageRadiusKm}
+          topProvidersOnly={topProvidersOnly}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
