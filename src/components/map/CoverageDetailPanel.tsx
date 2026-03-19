@@ -981,10 +981,10 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
 
 // ── Facility ──
 const FacilityContent = ({ facility }: { facility: Facility }) => {
+  const isHighUtilClinic = facility.tier === 'tier1';
   const typeLabel = facility.type === 'hospital' ? 'Hospital' :
-    facility.type === 'tier1' ? 'Tier 1 Provider' : 'Clinic / FQHC';
-  const typeColor = facility.type === 'hospital' ? 'bg-red-500' :
-    facility.type === 'tier1' ? 'bg-yellow-500' : 'bg-blue-500';
+    isHighUtilClinic ? 'Clinic / Provider (High Utilization)' : 'Clinic / FQHC';
+  const typeColor = facility.type === 'hospital' ? 'bg-red-500' : 'bg-blue-500';
   const coverageArea = getCountyArea(facility.county);
   const countyData = nevadaCounties.find(c => c.name === facility.county);
 

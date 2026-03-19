@@ -99,7 +99,6 @@ const Sidebar = ({
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
   const clinicCount = facilities.filter(f => f.type === 'clinic').length;
-  const tier1Count = facilities.filter(f => f.type === 'tier1').length;
   const totalCount = facilities.length;
 
   // Unique counties from all facilities
@@ -214,8 +213,7 @@ const Sidebar = ({
         if (isNaN(lat) || isNaN(lng)) continue;
 
         const rawType = (typeIdx !== -1 ? cols[typeIdx] || '' : '').toLowerCase();
-        const type: FacilityType = rawType.includes('hospital') ? 'hospital' :
-                                    rawType.includes('tier') ? 'tier1' : 'clinic';
+        const type: FacilityType = rawType.includes('hospital') ? 'hospital' : 'clinic';
 
         newFacilities.push({
           id: `csv-${Date.now()}-${i}`,
@@ -270,12 +268,6 @@ const Sidebar = ({
           <span className="w-1.5 h-1.5 rounded-full bg-clinic inline-block" />
           <span className="font-mono font-medium text-foreground">{clinicCount}</span> Clinics
         </span>
-        {tier1Count > 0 && (
-          <span className="text-muted-foreground flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-tier1 inline-block" />
-            <span className="font-mono font-medium text-foreground">{tier1Count}</span> Tier 1
-          </span>
-        )}
       </div>
 
       {/* Search */}
@@ -324,7 +316,6 @@ const Sidebar = ({
                 {[
                   { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
                   { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
-                  { value: 'tier1', label: 'Tier 1', color: 'bg-tier1' },
                 ].map(({ value, label, color }) => {
                   const active = filters.types.has(value);
                   return (
@@ -633,18 +624,6 @@ const Sidebar = ({
                 <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(217, 91%, 60%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
                 <span className="text-muted-foreground">Clinic / Provider</span>
               </div>
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)', transform: 'rotate(45deg)' }} />
-                <span className="text-muted-foreground flex-1">Tier 1</span>
-                <span
-                  className="p-0.5 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                  onMouseEnter={() => onHelpEnter?.('tier1Legend')}
-                  onMouseLeave={() => onHelpLeave?.()}
-                  onTouchStart={() => onHelpEnter?.('tier1Legend')}
-                >
-                  <HelpCircle className="w-3 h-3" />
-                </span>
-              </div>
             </div>
           </div>
           {/* Operational Coverage */}
@@ -736,8 +715,7 @@ const Sidebar = ({
                 >
                   <div className="flex items-start gap-2">
                     <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                      facility.type === 'hospital' ? 'bg-hospital' :
-                      facility.type === 'tier1' ? 'bg-tier1' : 'bg-clinic'
+                      facility.type === 'hospital' ? 'bg-hospital' : 'bg-clinic'
                     }`} />
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-foreground truncate">
