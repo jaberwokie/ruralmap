@@ -745,7 +745,7 @@ const Sidebar = ({
       {/* Facilities List */}
       <div className="flex flex-col px-4 pt-2 pb-4">
         <button
-          onClick={() => setFacilitiesOpen(!facilitiesOpen)}
+          onClick={toggleFacilities}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
         >
           {facilitiesOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
