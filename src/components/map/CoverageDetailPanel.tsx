@@ -647,6 +647,7 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <UtilizationEngagementSection county={county} />
       <FieldCapacitySection county={county} />
+      <LocalResourcesSection county={county} />
       <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
