@@ -115,6 +115,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
     countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
     engagementGapRef.current = L.layerGroup().addTo(map);       // 3. Engagement gap outlines
+    fteServiceAreaRef.current = L.layerGroup().addTo(map);     // 3.5 FTE service area highlight
     labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
