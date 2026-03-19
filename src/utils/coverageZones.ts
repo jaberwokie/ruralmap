@@ -148,3 +148,8 @@ export function driveMinutesToKm(minutes: number): number {
 export function kmToDriveMinutes(km: number): number {
   return Math.round((km / 80) * 60);
 }
+
+/** Convert km to miles for display (1 km ≈ 0.621371 mi) */
+export function kmToMiles(km: number): number {
+  return Math.round(km * 0.621371);
+}

@@ -20,7 +20,7 @@ export const COVERAGE_TYPE_LABELS: Record<CoverageType, string> = {
 };
 
 export const COVERAGE_TYPE_DESCRIPTIONS: Record<CoverageType, string> = {
-  active: 'Within 75–90 min drive from FTE base — same-day in-person response',
+  active: 'Within 75–90 min drive (~60–85 mi) from FTE base — same-day in-person response',
   scheduled: 'Outside active coverage — planned outreach, not immediate response',
   remote: 'Telephonic/virtual coordination available statewide',
 };

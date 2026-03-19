@@ -542,7 +542,7 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
     </div>
     <p className="text-sm font-semibold text-foreground mb-2">Service Gap Detected</p>
     <div className="text-xs text-muted-foreground space-y-1">
-      <p>No hospital or clinic within <strong>{radiusKm} km</strong> of this area.</p>
+      <p>No hospital or clinic within <strong>{kmToMiles(radiusKm)} mi</strong> of this area.</p>
       <p className="italic">This region may have limited access to emergency and primary care services.</p>
     </div>
   </>
