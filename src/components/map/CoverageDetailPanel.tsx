@@ -79,7 +79,7 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
     <>
       <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
         <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-        <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
+        <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 31 mi</span>
       </div>
       {serviceCount > 0 && (
         <div className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1.5 mb-2">
