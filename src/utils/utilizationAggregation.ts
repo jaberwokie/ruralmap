@@ -1,0 +1,158 @@
+import { providerUtilizationData, getProviderUtilization, ProviderUtilization } from '@/data/provider-utilization';
+import { defaultFacilities, Facility } from '@/data/facilities';
+import { fteCapacityData } from '@/data/fte-capacity';
+
+// ── Provider-level utilization for facility pins ──
+
+export interface FacilityUtilization {
+  totalMembers: number;
+  totalVisits: number;
+  visitsPerMember: number;
+  rank: number;
+}
+
+const _facilityUtilCache = new Map<string, FacilityUtilization | null>();
+
+export function getFacilityUtilization(facility: Facility): FacilityUtilization | null {
+  if (_facilityUtilCache.has(facility.id)) return _facilityUtilCache.get(facility.id)!;
+  const match = getProviderUtilization(facility.name);
+  if (!match) { _facilityUtilCache.set(facility.id, null); return null; }
+  const result: FacilityUtilization = {
+    totalMembers: match.totalMembers,
+    totalVisits: match.totalVisits,
+    visitsPerMember: match.visitsPerMember,
+    rank: match.rank,
+  };
+  _facilityUtilCache.set(facility.id, result);
+  return result;
+}
+
+// ── County-level aggregation ──
+
+export interface CountyUtilization {
+  totalMembers: number;
+  totalVisits: number;
+  avgVisitsPerMember: number;
+  activeProviderCount: number;
+  topProviders: { name: string; visits: number }[];
+  /** Whether CCC / CHW / field engagement is present */
+  hasEngagementSupport: boolean;
+  operationalRead: 'Stable' | 'Strained' | 'Under-engaged' | 'Low-access';
+  engagementGap: boolean;
+}
+
+// Counties with CCC/CHW/field engagement presence (based on FTE field assignments)
+function countyHasEngagementSupport(county: string): boolean {
+  return fteCapacityData
+    .filter(f => f.hubLocation !== null) // field FTEs only
+    .some(f => f.counties.includes(county));
+}
+
+function computeOperationalRead(
+  avgVpm: number,
+  providerCount: number,
+  hasEngagement: boolean,
+): CountyUtilization['operationalRead'] {
+  const highUtil = avgVpm > 18;
+  const modUtil = avgVpm >= 10;
+  const lowUtil = avgVpm < 10;
+
+  // Priority order: Under-engaged → Strained → Low-access → Stable
+  if (avgVpm > 15 && !hasEngagement) return 'Under-engaged';
+  if (highUtil && providerCount <= 3) return 'Strained';
+  if (providerCount < 2 && lowUtil) return 'Low-access';
+  if ((modUtil || highUtil) && hasEngagement) return 'Stable';
+  return 'Stable';
+}
+
+const _countyUtilCache = new Map<string, CountyUtilization>();
+
+export function getCountyUtilization(county: string): CountyUtilization {
+  if (_countyUtilCache.has(county)) return _countyUtilCache.get(county)!;
+
+  // Find all facilities in this county that have utilization data
+  const countyFacilities = defaultFacilities.filter(f => f.county === county);
+  let totalMembers = 0;
+  let totalVisits = 0;
+  let activeProviderCount = 0;
+  const providerList: { name: string; visits: number }[] = [];
+
+  countyFacilities.forEach(f => {
+    const util = getFacilityUtilization(f);
+    if (util) {
+      totalMembers += util.totalMembers;
+      totalVisits += util.totalVisits;
+      activeProviderCount++;
+      providerList.push({ name: f.name, visits: util.totalVisits });
+    }
+  });
+
+  const avgVisitsPerMember = totalMembers > 0 ? Math.round((totalVisits / totalMembers) * 100) / 100 : 0;
+  const topProviders = providerList.sort((a, b) => b.visits - a.visits).slice(0, 3);
+  const hasEngagement = countyHasEngagementSupport(county);
+  const engagementGap = avgVisitsPerMember > 15 && !hasEngagement;
+  const operationalRead = computeOperationalRead(avgVisitsPerMember, activeProviderCount, hasEngagement);
+
+  const result: CountyUtilization = {
+    totalMembers,
+    totalVisits,
+    avgVisitsPerMember,
+    activeProviderCount,
+    topProviders,
+    hasEngagementSupport: hasEngagement,
+    operationalRead,
+    engagementGap,
+  };
+  _countyUtilCache.set(county, result);
+  return result;
+}
+
+// ── Utilization intensity tier ──
+export type UtilizationTier = 'low' | 'moderate' | 'high';
+
+export function getUtilizationTier(avgVpm: number): UtilizationTier {
+  if (avgVpm > 18) return 'high';
+  if (avgVpm >= 10) return 'moderate';
+  return 'low';
+}
+
+export const UTILIZATION_COLORS: Record<UtilizationTier, { fill: string; border: string; label: string }> = {
+  low:      { fill: 'hsla(270, 30%, 75%, 0.20)', border: 'hsla(270, 30%, 60%, 0.40)', label: 'Low (<10 visits/member)' },
+  moderate: { fill: 'hsla(270, 45%, 55%, 0.30)', border: 'hsla(270, 45%, 45%, 0.50)', label: 'Moderate (10–18 visits/member)' },
+  high:     { fill: 'hsla(270, 60%, 40%, 0.40)', border: 'hsla(270, 60%, 35%, 0.60)', label: 'High (>18 visits/member)' },
+};
+
+export const OPERATIONAL_READ_COLORS: Record<string, string> = {
+  'Stable': 'text-emerald-700',
+  'Strained': 'text-amber-700',
+  'Under-engaged': 'text-orange-700',
+  'Low-access': 'text-red-700',
+};
+
+// ── Top 20 providers statewide ──
+export const TOP_20_PROVIDERS = new Set(
+  providerUtilizationData.slice(0, 20).map(p => p.name.toUpperCase())
+);
+
+export function isTopProvider(name: string): boolean {
+  const upper = name.toUpperCase().trim();
+  if (TOP_20_PROVIDERS.has(upper)) return true;
+  for (const top of TOP_20_PROVIDERS) {
+    if (top.includes(upper) || upper.includes(top)) return true;
+  }
+  return false;
+}
+
+// ── Engagement gap counties ──
+export function getEngagementGapCounties(): string[] {
+  const allCounties = new Set(defaultFacilities.map(f => f.county));
+  return Array.from(allCounties).filter(c => getCountyUtilization(c).engagementGap);
+}
+
+// ── Pin size scaling ──
+export function getScaledPinSize(baseSize: number, totalVisits: number): number {
+  // Scale from base to max 2x base, capped
+  const maxVisits = 10000;
+  const scale = 1 + Math.min(totalVisits / maxVisits, 1) * 0.8;
+  return Math.round(baseSize * scale);
+}
