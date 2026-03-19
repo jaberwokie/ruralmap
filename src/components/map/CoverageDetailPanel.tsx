@@ -668,14 +668,14 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
   );
 };
 
-/** Local Resources section — rural services for a county */
+/** Local Resource Network section — rural services for a county */
 const LocalResourcesSection = ({ county }: { county: string }) => {
   const services = useMemo(() => ruralServices.filter(s => s.county === county), [county]);
 
   if (services.length === 0) {
     return (
       <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Local Resources</div>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Local Resource Network</div>
         <p className="text-[11px] text-muted-foreground italic">No known community resources mapped for this county.</p>
       </div>
     );
@@ -691,44 +691,71 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [services]);
 
+  const categoryCount = grouped.length;
+  const total = services.length;
+
+  // Resource Strength rating
+  const strength = total >= 13 && categoryCount >= 4 ? 'Strong'
+    : total >= 6 ? 'Moderate'
+    : 'Minimal';
+
+  const strengthColor = strength === 'Strong' ? 'text-emerald-700' : strength === 'Moderate' ? 'text-amber-700' : 'text-orange-700';
+  const strengthBg = strength === 'Strong' ? 'bg-emerald-50 border-emerald-200' : strength === 'Moderate' ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200';
+  const strengthDesc = strength === 'Strong'
+    ? 'Multiple services and categories available to support local stabilization.'
+    : strength === 'Moderate'
+    ? 'Core services are present with some local stabilization capability.'
+    : 'Basic services exist but are limited in capacity and scope.';
+
   return (
     <div className="rounded-md border border-border bg-secondary/30 px-2 py-1.5 mb-2">
+      {/* Header with counts */}
       <div className="flex items-center justify-between mb-1">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Local Resources</span>
-        <span className="text-[10px] font-semibold text-foreground tabular-nums">{services.length}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Local Resource Network</span>
+        <span className="text-[10px] text-muted-foreground tabular-nums">{total} resources · {categoryCount} categories</span>
       </div>
-      <div className="space-y-0.5 mb-1.5">
+
+      {/* Resource Strength */}
+      <div className={`rounded-md border px-2 py-1.5 mb-1.5 ${strengthBg}`}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Resource Strength</span>
+          <span className={`text-[11px] font-bold ${strengthColor}`}>{strength}</span>
+        </div>
+        <p className={`text-[10px] mt-0.5 leading-relaxed ${strengthColor} opacity-80`}>{strengthDesc}</p>
+      </div>
+
+      {/* Category groups */}
+      <div className="space-y-1.5 max-h-48 overflow-y-auto">
         {grouped.map(([category, items]) => (
-          <div key={category} className="flex items-center justify-between text-[11px]">
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
-              {category}
-            </span>
-            <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
-          </div>
-        ))}
-      </div>
-      <div className="space-y-1 max-h-32 overflow-y-auto">
-        {services.slice(0, 10).map(service => (
-          <div key={service.id} className="flex items-start justify-between gap-1">
-            <div className="min-w-0">
-              <div className="text-[10px] font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
-              {service.city && <div className="text-[9px] text-muted-foreground">{service.city}</div>}
+          <div key={category}>
+            <div className="flex items-center justify-between mb-0.5">
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+                {category}
+              </span>
+              <span className="text-[10px] font-semibold tabular-nums text-foreground">{items.length}</span>
             </div>
-            {service.phone && (
-              <a
-                href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
-                className="flex-shrink-0 p-0.5 rounded hover:bg-secondary text-primary"
-                title={service.phone}
-                onClick={e => e.stopPropagation()}
-              >
-                <Phone className="w-2.5 h-2.5" />
-              </a>
-            )}
+            <div className="space-y-0.5 pl-1">
+              {items.map(service => (
+                <div key={service.id} className="flex items-start justify-between gap-1">
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+                    {service.city && <div className="text-[9px] text-muted-foreground">{service.city}</div>}
+                  </div>
+                  {service.phone && (
+                    <a
+                      href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
+                      className="flex-shrink-0 p-0.5 rounded hover:bg-secondary text-primary"
+                      title={service.phone}
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <Phone className="w-2.5 h-2.5" />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         ))}
-        {services.length > 10 && (
-          <p className="text-[9px] text-muted-foreground italic">+ {services.length - 10} more resources</p>
-        )}
       </div>
     </div>
   );
