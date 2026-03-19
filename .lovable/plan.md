@@ -1,32 +1,25 @@
 
 
-## Fix: White seams in Coverage Gaps layer
+## Fix: Utilization Metrics card missing from most county detail views
 
-### Root Cause
+### Problem
 
-The Coverage Gaps layer (lines 350–413 in `MapView.tsx`) unions all hospital/clinic radius buffers, then computes `difference(nevada, mergedCoverage)` to show uncovered areas. The Turf.js `union` operation produces micro-gaps at buffer intersection edges — these become thin white slivers in the rendered gap polygon.
+The `UtilizationMetricsCard` component exists and works, but it's only rendered inside `CountyContent` — the view triggered by clicking a county polygon directly. The two more common county-level views are missing it:
 
-### Solution
+- **MemberVolumeContent** (triggered by clicking the member volume choropleth)
+- **RuralServiceGroupContent** (triggered by clicking a rural service cluster)
 
-Apply a small **buffer-then-debuffer** (morphological close) to the merged coverage geometry before computing the difference. This fills micro-gaps between adjacent circles:
+Since most users interact with the map via the choropleth or service markers rather than raw county boundaries, the card effectively never appears.
 
-1. After unioning all buffers, apply `buffer(merged, 0.5, 'kilometers')` to expand slightly
-2. Then `buffer(result, -0.5, 'kilometers')` to shrink back — this closes internal seams without changing the overall shape
-3. Then compute `difference(nevada, cleaned)` as before
+### Fix
+
+Add `<UtilizationMetricsCard county={county} />` to both `MemberVolumeContent` and `RuralServiceGroupContent`, placed after their existing `UtilizationEngagementSection` (or after the coverage/engagement content if that section isn't present).
 
 ### File Changes
 
-**`src/components/map/MapView.tsx`** (lines ~374–393):
-- After the `union(featureCollection(buffers))` call, add a morphological close pass:
-  ```
-  const expanded = buffer(mergedCoverage, 0.5, { units: 'kilometers' });
-  const cleaned = buffer(expanded, -0.5, { units: 'kilometers' });
-  ```
-- Use `cleaned` instead of `mergedCoverage` in the `difference()` call
+**`src/components/map/CoverageDetailPanel.tsx`**:
+1. **MemberVolumeContent** (~line 1164): Add `<UtilizationMetricsCard county={county} />` after the `<UtilizationEngagementSection>` call
+2. **RuralServiceGroupContent** (~line 1189): Add `<UtilizationEngagementSection county={county} />` and `<UtilizationMetricsCard county={county} />` after the `MemberVolumeSection` block (before the service count display)
 
-This is a 3-line change in one file. Performance impact is negligible — two buffer operations on a single pre-merged polygon.
-
-### Validation
-- Storey County area (north): seams between Carson and Pahrump radius overlap should disappear
-- Nye/Clark border: gap between Pahrump-centered buffers and Clark clinic buffers should render as continuous red fill with no white lines
+Two single-line additions. No new dependencies, no changes to existing logic.
 
