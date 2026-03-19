@@ -622,6 +622,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
           <span>{facility.lat.toFixed(4)}, {facility.lng.toFixed(4)}</span>
         </div>
       </div>
+      <FacilityUtilizationSection facility={facility} />
     </>
   );
 };
