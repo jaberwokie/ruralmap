@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity, Headphones } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity, Headphones, HelpCircle } from 'lucide-react';
+import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
@@ -41,6 +42,8 @@ interface SidebarProps {
   onCoverageRadiusKmChange?: (km: number) => void;
   topProvidersOnly: boolean;
   onTopProvidersOnlyChange: (checked: boolean) => void;
+  onHelpEnter?: (key: string) => void;
+  onHelpLeave?: () => void;
 }
 
 const LAYER_CONFIG = [
@@ -77,6 +80,8 @@ const Sidebar = ({
   onCoverageRadiusKmChange,
   topProvidersOnly,
   onTopProvidersOnlyChange,
+  onHelpEnter,
+  onHelpLeave,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(() => {
     try { const v = localStorage.getItem('sidebar_facilities'); return v === 'true'; } catch { return false; }
@@ -402,18 +407,28 @@ const Sidebar = ({
         <div className="space-y-1">
           {LAYER_CONFIG.map(({ key, label, color }) => (
             <div key={key}>
-              <button
-                onClick={() => onToggleLayer(key)}
-                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-              >
-                <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {label}
+              <div className="flex items-center">
+                <button
+                  onClick={() => onToggleLayer(key)}
+                  className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+                >
+                  <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                  <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {label}
+                  </span>
+                  <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
+                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+                  </div>
+                </button>
+                <span
+                  className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                  onMouseEnter={() => onHelpEnter?.(key)}
+                  onMouseLeave={() => onHelpLeave?.()}
+                  onTouchStart={() => onHelpEnter?.(key)}
+                >
+                  <HelpCircle className="w-3 h-3" />
                 </span>
-                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
-                </div>
-              </button>
+              </div>
               {key === 'memberVolume' && layers.memberVolume && (
                 <div className="px-2 pb-1 pt-1 space-y-1.5">
                   <div className="flex items-center gap-1.5">
@@ -604,18 +619,28 @@ const Sidebar = ({
 
           {/* Coverage Radius — standalone */}
           <div className={!layers.serviceLocations ? 'opacity-50 pointer-events-none' : ''}>
-            <button
-              onClick={() => onCoverageRadiusChange(!coverageRadius)}
-              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-            >
-              <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
-              <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Coverage Radius ({kmToMiles(radiusKm)} mi)
+            <div className="flex items-center">
+              <button
+                onClick={() => onCoverageRadiusChange(!coverageRadius)}
+                className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+              >
+                <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  Coverage Radius ({kmToMiles(radiusKm)} mi)
+                </span>
+                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
+                </div>
+              </button>
+              <span
+                className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                onMouseEnter={() => onHelpEnter?.('coverageRadius')}
+                onMouseLeave={() => onHelpLeave?.()}
+                onTouchStart={() => onHelpEnter?.('coverageRadius')}
+              >
+                <HelpCircle className="w-3 h-3" />
               </span>
-              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
-              </div>
-            </button>
+            </div>
             {coverageRadius && (
               <div className="px-2 pb-1 pt-0.5">
                 <input
@@ -637,18 +662,28 @@ const Sidebar = ({
 
           {/* Coverage Gaps — independent toggle */}
           <div>
-            <button
-              onClick={() => onCoverageGapsChange(!coverageGaps)}
-              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-            >
-              <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
-              <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Coverage Gaps
+            <div className="flex items-center">
+              <button
+                onClick={() => onCoverageGapsChange(!coverageGaps)}
+                className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+              >
+                <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  Coverage Gaps
+                </span>
+                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
+                </div>
+              </button>
+              <span
+                className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                onMouseEnter={() => onHelpEnter?.('coverageGaps')}
+                onMouseLeave={() => onHelpLeave?.()}
+                onTouchStart={() => onHelpEnter?.('coverageGaps')}
+              >
+                <HelpCircle className="w-3 h-3" />
               </span>
-              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
-              </div>
-            </button>
+            </div>
             {coverageGaps && (
               <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
                 Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
@@ -681,7 +716,15 @@ const Sidebar = ({
               </div>
               <div className="flex items-center gap-2 px-2">
                 <div className="w-3 h-3 flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)', transform: 'rotate(45deg)' }} />
-                <span className="text-muted-foreground">Tier 1</span>
+                <span className="text-muted-foreground flex-1">Tier 1</span>
+                <span
+                  className="p-0.5 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                  onMouseEnter={() => onHelpEnter?.('tier1Legend')}
+                  onMouseLeave={() => onHelpLeave?.()}
+                  onTouchStart={() => onHelpEnter?.('tier1Legend')}
+                >
+                  <HelpCircle className="w-3 h-3" />
+                </span>
               </div>
             </div>
           </div>
