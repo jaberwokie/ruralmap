@@ -48,6 +48,17 @@ const Index = () => {
   // ── Unified detail panel state ──
   const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
   const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
+
+  // ── Contextual help tooltip state ──
+  const [activeHelp, setActiveHelp] = useState<string | null>(null);
+  const helpTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleHelpEnter = useCallback((key: string) => {
+    if (helpTimeoutRef.current) clearTimeout(helpTimeoutRef.current);
+    setActiveHelp(key);
+  }, []);
+  const handleHelpLeave = useCallback(() => {
+    helpTimeoutRef.current = setTimeout(() => setActiveHelp(null), 120);
+  }, []);
   const [selectedFteId, setSelectedFteId] = useState<string | null>(null);
 
   // Derive selected county from locked entity for map highlight
