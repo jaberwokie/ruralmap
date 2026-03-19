@@ -227,7 +227,7 @@ const Index = () => {
           hoverEntity={hoverEntity}
           onClear={handleClearEntity}
           coverageRadiusKm={coverageRadiusKm}
-          memberVolumeLayerOn={layers.memberVolume}
+          memberVolumeLayerOn={true}
           activeHelp={activeHelp}
         />
       </div>

@@ -415,40 +415,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     }
   }, [facilities, coverageGaps, coverageRadius, radiusKm]);
 
-  // Draw member volume choropleth
-  useEffect(() => {
-    if (!memberVolumeRef.current) return;
-    memberVolumeRef.current.clearLayers();
-
-    if (!layers.memberVolume || coverageGaps) return;
-
-    const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
-    const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
-
-    nevadaCounties.forEach(county => {
-      const count = volumeMap.get(county.name) ?? 0;
-      const intensity = maxCount > 0 ? count / maxCount : 0;
-      const lightness = 92 - intensity * 55;
-      const saturation = 40 + intensity * 30;
-      const fillColor = `hsl(190, ${saturation}%, ${lightness}%)`;
-      const borderColor = `hsl(190, ${saturation + 10}%, ${Math.max(lightness - 15, 20)}%)`;
-
-      const polygon = L.polygon(county.boundaries, {
-        color: borderColor,
-        weight: 1.5,
-        fillColor,
-        fillOpacity: 0.75,
-      });
-
-      polygon.on('click', (e: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count });
-      });
-
-      memberVolumeRef.current!.addLayer(polygon);
-    });
-  }, [layers.memberVolume, coverageGaps]);
-
   // ── Operational Coverage Model layer (FTE-centered drive-time zones) ──
   useEffect(() => {
     if (!operationalCoverageRef.current) return;
