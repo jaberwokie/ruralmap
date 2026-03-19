@@ -93,9 +93,6 @@ const Index = () => {
       if (layer === 'serviceLocations' && !next.serviceLocations) {
         setCoverageRadius(false);
       }
-      if (layer === 'ruralServices' && !next.ruralServices) {
-        setLockedEntity(prev => prev?.type === 'ruralServiceGroup' ? null : prev);
-      }
       return next;
     });
   }, []);
