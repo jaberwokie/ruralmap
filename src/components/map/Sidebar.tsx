@@ -440,7 +440,7 @@ const Sidebar = ({
                   {[
                     {
                       label: 'Active Field Coverage',
-                      description: 'Within 75–90 min drive from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.',
+                      description: 'Within 75–90 min drive (~60–85 mi) from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.',
                       color: 'hsl(190, 70%, 37%)',
                       style: 'solid' as const,
                     },
