@@ -416,7 +416,7 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
 };
 
 // ── County ──
-const CountyContent = ({ county }: { county: string }) => {
+const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
@@ -427,7 +427,7 @@ const CountyContent = ({ county }: { county: string }) => {
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       {(() => {
-        const breakdown = getCountyCoverageBreakdown(county);
+        const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
         const label = breakdown.primaryType === 'active'
           ? PRIMARY_RESPONSE_LABELS.active
           : breakdown.activePercent > 0
@@ -435,8 +435,8 @@ const CountyContent = ({ county }: { county: string }) => {
           : PRIMARY_RESPONSE_LABELS.remote;
         return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
       })()}
-      <NBHRoutingSection county={county} />
-      <CoverageBreakdownBadge county={county} />
+      <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
