@@ -75,6 +75,8 @@ const Sidebar = ({
   onFteCardClick,
   coverageRadiusKm = 120,
   onCoverageRadiusKmChange,
+  topProvidersOnly,
+  onTopProvidersOnlyChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
