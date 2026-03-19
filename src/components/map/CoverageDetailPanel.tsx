@@ -627,24 +627,23 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
 /** Field Capacity section — aggregates all FTEs serving a county */
 const FieldCapacitySection = ({ county }: { county: string }) => {
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
-  if (serving.length === 0) {
-    return (
-      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Field Capacity</div>
-        <p className="text-[11px] text-muted-foreground italic">No field-based engagement coverage assigned to this county.</p>
-      </div>
-    );
-  }
+
+  // No FTEs at all — hide section
+  if (serving.length === 0) return null;
 
   const hasField = serving.some(f => f.hubLocation !== null);
   const hasRemote = serving.some(f => f.hubLocation === null);
+  const isRemoteOnly = !hasField;
   const coverageType = hasField && hasRemote ? 'Mixed' : hasField ? 'In-person available' : 'Remote only';
+
+  // Remote-only counties: show as "Regional FTE Support" instead of "Field Capacity"
+  const sectionTitle = isRemoteOnly ? 'Regional FTE Support' : 'Field Capacity';
 
   return (
     <div className="rounded-md border px-2 py-1.5 mb-2 bg-secondary/50 border-border">
       <div className="flex items-center gap-1.5 mb-1">
         <Users className="w-3 h-3 flex-shrink-0 text-foreground/70" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Capacity</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">{sectionTitle}</span>
       </div>
       <div className="space-y-0.5 text-[11px]">
         <div className="flex justify-between">
@@ -657,7 +656,9 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
         </div>
       </div>
       <p className="text-[10px] text-muted-foreground italic mt-1">
-        Detailed engagement capacity counts are not currently available for this county.
+        {isRemoteOnly
+          ? 'No locally assigned field staff. Support is coordinated remotely or from regional hubs.'
+          : 'Detailed engagement capacity counts are not currently available for this county.'}
       </p>
       <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-border/50">
         {serving.map(f => {
