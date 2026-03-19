@@ -78,9 +78,17 @@ const Sidebar = ({
   topProvidersOnly,
   onTopProvidersOnlyChange,
 }: SidebarProps) => {
-  const [facilitiesOpen, setFacilitiesOpen] = useState(true);
+  const [facilitiesOpen, setFacilitiesOpen] = useState(() => {
+    try { const v = localStorage.getItem('sidebar_facilities'); return v === 'true'; } catch { return false; }
+  });
   const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(() => {
+    try { const v = localStorage.getItem('sidebar_filters'); return v === 'true'; } catch { return false; }
+  });
+
+  // Persist collapse state
+  const toggleFilters = () => setFiltersOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_filters', String(next)); } catch {} return next; });
+  const toggleFacilities = () => setFacilitiesOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_facilities', String(next)); } catch {} return next; });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Counts from filtered set
@@ -282,7 +290,7 @@ const Sidebar = ({
       {/* Filter Panel */}
       <div className="px-4 pb-3">
         <button
-          onClick={() => setFiltersOpen(!filtersOpen)}
+          onClick={toggleFilters}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors w-full"
         >
           {filtersOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
@@ -737,7 +745,7 @@ const Sidebar = ({
       {/* Facilities List */}
       <div className="flex flex-col px-4 pt-2 pb-4">
         <button
-          onClick={() => setFacilitiesOpen(!facilitiesOpen)}
+          onClick={toggleFacilities}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
         >
           {facilitiesOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
