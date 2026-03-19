@@ -942,6 +942,62 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
   );
 };
 
+// ── Utilization Metrics Card (additive, county-level) ──
+const UtilizationMetricsCard = ({ county }: { county: string }) => {
+  const util = getCountyUtilization(county);
+  if (util.activeProviderCount === 0 && util.totalVisits === 0) return null;
+
+  const totalVisits = util.totalVisits;
+  const totalMembers = util.totalMembers;
+  const vpm = totalMembers > 0 ? Math.round((totalVisits / totalMembers) * 100) / 100 : 0;
+  const uniqueProviders = util.activeProviderCount;
+
+  const topVisits = util.topProviders.length > 0 ? util.topProviders[0].visits : 0;
+  const topProviderShare = totalVisits > 0 ? (topVisits / totalVisits) * 100 : 0;
+
+  const top3Visits = util.topProviders.slice(0, 3).reduce((s, p) => s + p.visits, 0);
+  const top3Share = totalVisits > 0 ? (top3Visits / totalVisits) * 100 : 0;
+
+  const shareColor = (pct: number) =>
+    pct > 60 ? 'text-red-700' : pct >= 40 ? 'text-amber-600' : 'text-emerald-700';
+
+  return (
+    <div className="mt-2 mb-2">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-purple-700">Utilization Metrics</span>
+      </div>
+      <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Total Visits</span>
+          <span className="font-bold text-purple-800 tabular-nums">{totalVisits.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Total Members</span>
+          <span className="font-bold text-purple-800 tabular-nums">{totalMembers.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Visits per Member</span>
+          <span className="font-bold text-purple-800 tabular-nums">{vpm.toFixed(2)}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Unique Providers</span>
+          <span className="font-bold text-purple-800 tabular-nums">{uniqueProviders}</span>
+        </div>
+        <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
+          <div className="flex justify-between text-[11px]">
+            <span className="text-purple-700">Top Provider Share</span>
+            <span className={`font-bold tabular-nums ${shareColor(topProviderShare)}`}>{topProviderShare.toFixed(1)}%</span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="text-purple-700">Top 3 Provider Share</span>
+            <span className={`font-bold tabular-nums ${shareColor(top3Share)}`}>{top3Share.toFixed(1)}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
