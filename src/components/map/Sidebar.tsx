@@ -576,8 +576,8 @@ const Sidebar = ({
                   className="w-full h-1 accent-primary cursor-pointer"
                 />
                 <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
-                  <span>10 km</span>
-                  <span>150 km</span>
+                  <span>6 mi</span>
+                  <span>93 mi</span>
                 </div>
               </div>
             )}
