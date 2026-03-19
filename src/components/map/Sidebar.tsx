@@ -213,8 +213,7 @@ const Sidebar = ({
         if (isNaN(lat) || isNaN(lng)) continue;
 
         const rawType = (typeIdx !== -1 ? cols[typeIdx] || '' : '').toLowerCase();
-        const type: FacilityType = rawType.includes('hospital') ? 'hospital' :
-                                    rawType.includes('tier') ? 'tier1' : 'clinic';
+        const type: FacilityType = rawType.includes('hospital') ? 'hospital' : 'clinic';
 
         newFacilities.push({
           id: `csv-${Date.now()}-${i}`,
