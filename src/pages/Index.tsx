@@ -200,6 +200,8 @@ const Index = () => {
           onCoverageRadiusKmChange={setCoverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
           onTopProvidersOnlyChange={setTopProvidersOnly}
+          onHelpEnter={handleHelpEnter}
+          onHelpLeave={handleHelpLeave}
         />
       </div>
 
