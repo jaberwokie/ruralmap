@@ -719,11 +719,8 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
   </>
 );
 
-// ── Member Volume ──
+// ── Member Volume (clicked from choropleth) ──
 const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
-  const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
-  const intensity = maxCount > 0 ? memberCount / maxCount : 0;
-  const intensityLabel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
@@ -735,9 +732,8 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      <MemberVolumeSection county={county} />
       <div className="text-xs text-foreground/80 space-y-1">
-        <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
-        <div className="flex justify-between"><span>Intensity</span><span className="font-medium">{intensityLabel}</span></div>
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
       </div>
       <UtilizationEngagementSection county={county} />
