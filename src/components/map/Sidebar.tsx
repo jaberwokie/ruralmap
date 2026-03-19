@@ -34,6 +34,8 @@ interface SidebarProps {
   onCoverageGapsChange: (checked: boolean) => void;
   selectedFteId?: string | null;
   onFteCardClick?: (fteId: string) => void;
+  coverageRadiusKm?: number;
+  onCoverageRadiusKmChange?: (km: number) => void;
 }
 
 const LAYER_CONFIG = [
