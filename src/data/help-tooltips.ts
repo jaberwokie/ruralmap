@@ -16,11 +16,6 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'Shows mapped hospitals, clinics, and provider locations across the rural network. These pins represent known service access points, not necessarily active field engagement coverage.',
   },
-  memberVolume: {
-    label: 'Member Volume',
-    explanation:
-      'Shades counties based on member concentration. Darker shading means a higher share of rural members are associated with that county.',
-  },
   ruralServices: {
     label: 'Rural Services (Resource Guide)',
     explanation:

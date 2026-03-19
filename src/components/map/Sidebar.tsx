@@ -11,7 +11,6 @@ import { kmToMiles } from '@/utils/coverageZones';
 interface LayerState {
   counties: boolean;
   serviceLocations: boolean;
-  memberVolume: boolean;
   ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
@@ -49,7 +48,6 @@ interface SidebarProps {
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
-  { key: 'memberVolume' as const, label: 'Member Volume', color: 'bg-teal-500' },
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
   { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
   { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
@@ -429,23 +427,6 @@ const Sidebar = ({
                   <HelpCircle className="w-3 h-3" />
                 </span>
               </div>
-              {key === 'memberVolume' && layers.memberVolume && (
-                <div className="px-2 pb-1 pt-1 space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex-1 h-2.5 rounded-sm" style={{
-                      background: 'linear-gradient(to right, hsl(190, 40%, 92%), hsl(190, 55%, 64%), hsl(190, 70%, 37%))'
-                    }} />
-                  </div>
-                  <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
-                    <span>0</span>
-                    <span>5,000</span>
-                    <span>10,764</span>
-                  </div>
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Member count by county. Darker = higher volume.
-                  </p>
-                </div>
-              )}
               {key === 'operationalCoverage' && layers.operationalCoverage && (
                 <div className="px-2 pb-2 pt-1.5 space-y-2">
                   {/* Drive-time radius slider */}

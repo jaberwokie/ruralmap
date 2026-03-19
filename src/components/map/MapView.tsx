@@ -3,7 +3,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
-import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
@@ -22,7 +21,6 @@ interface MapViewProps {
   layers: {
     counties: boolean;
     serviceLocations: boolean;
-    memberVolume: boolean;
     ruralServices: boolean;
     operationalCoverage: boolean;
     fteCapacity: boolean;
@@ -67,7 +65,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
-  const memberVolumeRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
   const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
@@ -113,7 +110,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     // Create layers in visual stacking order (bottom to top)
     stateBoundaryRef.current = L.layerGroup().addTo(map);       // 0. State boundary
-    memberVolumeRef.current = L.layerGroup().addTo(map);        // 1. Member volume
     utilizationRef.current = L.layerGroup().addTo(map);         // 1.3 Utilization intensity
     operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
     countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
@@ -416,40 +412,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       console.error('Coverage gap calculation error:', e);
     }
   }, [facilities, coverageGaps, coverageRadius, radiusKm]);
-
-  // Draw member volume choropleth
-  useEffect(() => {
-    if (!memberVolumeRef.current) return;
-    memberVolumeRef.current.clearLayers();
-
-    if (!layers.memberVolume || coverageGaps) return;
-
-    const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
-    const volumeMap = new Map(memberVolumeData.map(d => [d.county, d.memberCount]));
-
-    nevadaCounties.forEach(county => {
-      const count = volumeMap.get(county.name) ?? 0;
-      const intensity = maxCount > 0 ? count / maxCount : 0;
-      const lightness = 92 - intensity * 55;
-      const saturation = 40 + intensity * 30;
-      const fillColor = `hsl(190, ${saturation}%, ${lightness}%)`;
-      const borderColor = `hsl(190, ${saturation + 10}%, ${Math.max(lightness - 15, 20)}%)`;
-
-      const polygon = L.polygon(county.boundaries, {
-        color: borderColor,
-        weight: 1.5,
-        fillColor,
-        fillOpacity: 0.75,
-      });
-
-      polygon.on('click', (e: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount: count });
-      });
-
-      memberVolumeRef.current!.addLayer(polygon);
-    });
-  }, [layers.memberVolume, coverageGaps]);
 
   // ── Operational Coverage Model layer (FTE-centered drive-time zones) ──
   useEffect(() => {

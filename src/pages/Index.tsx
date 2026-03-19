@@ -10,7 +10,6 @@ import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 interface LayerState {
   counties: boolean;
   serviceLocations: boolean;
-  memberVolume: boolean;
   ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
@@ -37,7 +36,6 @@ const Index = () => {
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     serviceLocations: true,
-    memberVolume: false,
     ruralServices: false,
     operationalCoverage: false,
     fteCapacity: false,
@@ -229,7 +227,7 @@ const Index = () => {
           hoverEntity={hoverEntity}
           onClear={handleClearEntity}
           coverageRadiusKm={coverageRadiusKm}
-          memberVolumeLayerOn={layers.memberVolume}
+          memberVolumeLayerOn={true}
           activeHelp={activeHelp}
         />
       </div>
