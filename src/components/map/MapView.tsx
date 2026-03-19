@@ -8,7 +8,7 @@ import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
-import { operationalZones } from '@/data/operational-coverage';
+import { getActiveCoverageZone } from '@/utils/coverageZones';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_COLORS, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
