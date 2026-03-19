@@ -197,12 +197,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        const countyServices = ruralServicesData?.filter(s => s.county === county.name) ?? [];
-        if (countyServices.length > 0) {
-          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: county.name, services: countyServices });
-        } else {
-          onEntityClickRef.current?.({ type: 'county', county: county.name });
-        }
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
       });
 
       countiesRef.current!.addLayer(geoLayer);
