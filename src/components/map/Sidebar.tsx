@@ -558,7 +558,7 @@ const Sidebar = ({
             >
               <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
               <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Coverage Radius ({radiusKm} km)
+                Coverage Radius ({kmToMiles(radiusKm)} mi)
               </span>
               <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
                 <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
