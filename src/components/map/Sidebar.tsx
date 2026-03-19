@@ -49,7 +49,7 @@ interface SidebarProps {
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
-  { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
+  { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-teal-600' },
   { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
   { key: 'utilizationIntensity' as const, label: 'Utilization Intensity', color: 'bg-purple-500' },
   { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-orange-500' },
