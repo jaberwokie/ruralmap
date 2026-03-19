@@ -207,6 +207,7 @@ const Index = () => {
           entity={lockedEntity}
           hoverEntity={hoverEntity}
           onClear={handleClearEntity}
+          coverageRadiusKm={coverageRadiusKm}
         />
       </div>
     </div>
