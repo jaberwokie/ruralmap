@@ -415,19 +415,19 @@ const Sidebar = ({
                   {[
                     {
                       label: 'Active Field Coverage',
-                      description: 'Same-day, in-person response available from assigned staff. These areas reflect where field-based team members can realistically travel and engage within a standard workday.',
+                      description: 'Within 75–90 min drive from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.',
                       color: 'hsl(190, 70%, 37%)',
                       style: 'solid' as const,
                     },
                     {
                       label: 'Scheduled Outreach',
-                      description: 'Planned, non-immediate field presence. These areas are served through scheduled visits and coordinated outreach, not real-time response.',
+                      description: 'Outside active coverage zone. Planned outreach through scheduled field visits and coordinated engagement.',
                       color: 'hsl(190, 55%, 50%)',
                       style: 'dashed' as const,
                     },
                     {
-                      label: 'Remote Support Only',
-                      description: 'No in-person coverage. Services are supported through telephonic or virtual coordination, resource navigation, and referral management.',
+                      label: 'Telehealth (Universal)',
+                      description: 'Telephonic/virtual coordination available statewide regardless of geography.',
                       color: 'hsl(240, 5%, 64%)',
                       style: 'solid' as const,
                     },
