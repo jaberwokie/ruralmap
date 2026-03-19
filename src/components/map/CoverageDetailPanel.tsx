@@ -416,6 +416,96 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
   );
 };
 
+// ── Utilization & Engagement Section (county-level) ──
+const UtilizationEngagementSection = ({ county }: { county: string }) => {
+  const util = getCountyUtilization(county);
+  if (util.activeProviderCount === 0 && util.totalVisits === 0) return null;
+
+  const tier = getUtilizationTier(util.avgVisitsPerMember);
+  const readColor = OPERATIONAL_READ_COLORS[util.operationalRead] ?? 'text-foreground';
+
+  return (
+    <div className="mt-2 mb-2">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-purple-700">Utilization & Engagement</span>
+      </div>
+      <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Total Members</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Total Visits</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Avg Visits/Member</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.avgVisitsPerMember}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Active Providers</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.activeProviderCount}</span>
+        </div>
+        {util.topProviders.length > 0 && (
+          <div className="pt-1 border-t border-purple-100 mt-1">
+            <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Top Providers</div>
+            {util.topProviders.map((p, i) => (
+              <div key={i} className="flex justify-between text-[10px]">
+                <span className="text-purple-700 truncate mr-1">{i + 1}. {p.name}</span>
+                <span className="text-purple-800 tabular-nums flex-shrink-0">{p.visits.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
+          <div className="flex justify-between text-[11px]">
+            <span className="text-purple-700">Engagement Support</span>
+            <span className={`font-bold ${util.hasEngagementSupport ? 'text-emerald-700' : 'text-orange-700'}`}>
+              {util.hasEngagementSupport ? 'Yes' : 'No'}
+            </span>
+          </div>
+          <div className="flex justify-between text-[11px]">
+            <span className="text-purple-700">Operational Read</span>
+            <span className={`font-bold ${readColor}`}>{util.operationalRead}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Facility Utilization Section ──
+const FacilityUtilizationSection = ({ facility }: { facility: Facility }) => {
+  const util = getFacilityUtilization(facility);
+  if (!util) return null;
+
+  return (
+    <div className="mt-2">
+      <div className="flex items-center gap-1.5 mb-1">
+        <span className="text-[10px] font-bold uppercase tracking-wide text-purple-700">Utilization Metrics</span>
+      </div>
+      <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Provider Rank</span>
+          <span className="font-bold text-purple-800">#{util.rank}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Total Members</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Total Visits</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-purple-700">Visits per Member</span>
+          <span className="font-bold text-purple-800 tabular-nums">{util.visitsPerMember}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
@@ -440,6 +530,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      <UtilizationEngagementSection county={county} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         <div className="flex justify-between"><span>Member Volume</span><span className="font-medium tabular-nums">{memberCount.toLocaleString()}</span></div>
