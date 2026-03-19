@@ -494,7 +494,13 @@ const Sidebar = ({
                   )}
                   {key === 'engagementGap' && layers.engagementGap && (
                     <div className="px-2 pb-2 pt-1 space-y-1">
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">Orange outline on counties with avg visits/member &gt;15 and no field engagement support.</p>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (avg visits/member &gt;15, no field support).{' '}
+                        <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15 visits/member, no field support).
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/70 italic leading-relaxed">
+                        Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.
+                      </p>
                     </div>
                   )}
                 </div>
