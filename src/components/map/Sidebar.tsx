@@ -79,17 +79,21 @@ const Sidebar = ({
   onHelpEnter,
   onHelpLeave,
 }: SidebarProps) => {
-  const [facilitiesOpen, setFacilitiesOpen] = useState(() => {
-    try { const v = localStorage.getItem('sidebar_facilities'); return v === 'true'; } catch { return false; }
-  });
-  const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(() => {
-    try { const v = localStorage.getItem('sidebar_filters'); return v === 'true'; } catch { return false; }
-  });
+  const usePersistToggle = (key: string, defaultOpen = false) => {
+    const [open, setOpen] = useState(() => {
+      try { const v = localStorage.getItem(key); return v === null ? defaultOpen : v === 'true'; } catch { return defaultOpen; }
+    });
+    const toggle = () => setOpen(prev => { const next = !prev; try { localStorage.setItem(key, String(next)); } catch {} return next; });
+    return [open, toggle] as const;
+  };
 
-  // Persist collapse state
-  const toggleFilters = () => setFiltersOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_filters', String(next)); } catch {} return next; });
-  const toggleFacilities = () => setFacilitiesOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_facilities', String(next)); } catch {} return next; });
+  const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [filtersOpen, toggleFilters] = usePersistToggle('sidebar_filters');
+  const [coreMapOpen, toggleCoreMap] = usePersistToggle('sidebar_layer_core');
+  const [operationsOpen, toggleOperations] = usePersistToggle('sidebar_layer_ops');
+  const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
+  const [accessOpen, toggleAccess] = usePersistToggle('sidebar_layer_access');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Counts from filtered set
