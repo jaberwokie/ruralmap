@@ -42,6 +42,8 @@ interface SidebarProps {
   onCoverageRadiusKmChange?: (km: number) => void;
   topProvidersOnly: boolean;
   onTopProvidersOnlyChange: (checked: boolean) => void;
+  onHelpEnter?: (key: string) => void;
+  onHelpLeave?: () => void;
 }
 
 const LAYER_CONFIG = [
