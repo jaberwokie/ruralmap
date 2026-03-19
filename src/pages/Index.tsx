@@ -35,7 +35,6 @@ const Index = () => {
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     serviceLocations: true,
-    ruralServices: false,
     operationalCoverage: false,
     fteCapacity: false,
     utilizationIntensity: false,
