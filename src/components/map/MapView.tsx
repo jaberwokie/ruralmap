@@ -505,6 +505,31 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.fteCapacity, selectedFteId]);
 
+  // ── FTE service-area highlight ──
+  useEffect(() => {
+    if (!fteServiceAreaRef.current) return;
+    fteServiceAreaRef.current.clearLayers();
+
+    if (!selectedFteId) return;
+    const fte = fteCapacityData.find(f => f.id === selectedFteId);
+    if (!fte) return;
+
+    const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
+    const servedSet = new Set(fte.counties);
+
+    nevadaCounties.forEach(county => {
+      if (!servedSet.has(county.name)) return;
+      const polygon = L.polygon(county.boundaries, {
+        color: roleColor,
+        weight: 2,
+        dashArray: '6 4',
+        fillColor: roleColor,
+        fillOpacity: 0.08,
+        interactive: false,
+      });
+      fteServiceAreaRef.current!.addLayer(polygon);
+    });
+  }, [selectedFteId]);
 
   // ── Utilization Intensity choropleth (purple ramp) ──
   useEffect(() => {
