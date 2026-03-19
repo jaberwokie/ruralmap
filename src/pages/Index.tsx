@@ -5,6 +5,7 @@ import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailP
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { ruralServices } from '@/data/rural-services';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
+import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 interface LayerState {
   counties: boolean;
