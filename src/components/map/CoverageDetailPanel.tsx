@@ -1162,6 +1162,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
       </div>
       <UtilizationEngagementSection county={county} />
+      <UtilizationMetricsCard county={county} />
     </>
   );
 };
