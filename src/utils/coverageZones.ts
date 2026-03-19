@@ -42,12 +42,15 @@ function computeActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPol
     return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
   });
 
-  let merged: Feature<Polygon | MultiPolygon> = buffers[0];
-  for (let i = 1; i < buffers.length; i++) {
-    const fc = featureCollection([merged, buffers[i]]);
-    const u = union(fc as any);
-    if (u) merged = u as Feature<Polygon | MultiPolygon>;
-  }
+  const merged = (union(featureCollection(buffers) as any) as Feature<Polygon | MultiPolygon> | null)
+    ?? ({
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'MultiPolygon',
+        coordinates: buffers.map(b => b.geometry.coordinates),
+      },
+    } as Feature<MultiPolygon>);
 
   // Clip to Nevada
   const fc = featureCollection([merged, nevadaFeature]);

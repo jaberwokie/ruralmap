@@ -495,7 +495,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     } catch (e) {
       console.error('Scheduled zone computation error:', e);
     }
-  }, [layers.operationalCoverage, coverageRadiusKm]);
+  }, [layers.operationalCoverage, coverageRadiusKm, coverageGaps]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {
