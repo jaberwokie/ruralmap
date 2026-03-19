@@ -92,8 +92,8 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
 };
 
 /** Coverage Breakdown badge for county-based entities (FTE drive-time model) */
-const CoverageBreakdownBadge = ({ county }: { county: string }) => {
-  const breakdown = getCountyCoverageBreakdown(county);
+const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
 
   return (
     <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 mb-2">
