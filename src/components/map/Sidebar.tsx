@@ -493,11 +493,10 @@ const Sidebar = ({
               {key === 'fteCapacity' && layers.fteCapacity && (
                 <div className="px-2 pb-2 pt-1.5 space-y-2">
                   {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
-                    const status = getLoadStatus(fte.currentLoad, fte.capacity);
-                    const statusColors = LOAD_STATUS_COLORS[status];
                     const role = FTE_ROLE_COLORS[fte.id];
                     const isSelected = selectedFteId === fte.id;
                     const isDimmed = selectedFteId != null && !isSelected;
+                    const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
                     return (
                       <button
                         key={fte.id}
@@ -509,16 +508,12 @@ const Sidebar = ({
                             <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
                             <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
                           </div>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors.dot }} />
-                            <span className={`text-[10px] font-medium ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
-                          </div>
                         </div>
                         <div className="text-[10px] text-foreground/70">
-                          {fte.currentLoad} / {fte.capacity} engagements
+                          {coverageLabel}
                         </div>
-                        <div className={`text-[10px] italic ${statusColors.text} opacity-70 mt-0.5`}>
-                          {LOAD_STATUS_GUIDANCE[status]}
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          {fte.counties.length} counties served
                         </div>
                       </button>
                     );
