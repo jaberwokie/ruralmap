@@ -108,6 +108,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     // Create layers in visual stacking order (bottom to top)
     stateBoundaryRef.current = L.layerGroup().addTo(map);       // 0. State boundary
+    coverageGreyRef.current = L.layerGroup().addTo(map);        // 0.5 Grey overlay (no same-day)
     utilizationRef.current = L.layerGroup().addTo(map);         // 1.3 Utilization intensity
     operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
     countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
