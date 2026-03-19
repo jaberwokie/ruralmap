@@ -127,6 +127,7 @@ export function getCountyUtilization(county: string): CountyUtilization {
     operationalRead,
     engagementGap,
     engagementWatchlist,
+    engagementEarlySignal,
   };
   _countyUtilCache.set(county, result);
   return result;
