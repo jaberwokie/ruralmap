@@ -38,6 +38,7 @@ interface MapViewProps {
   selectedCounty?: string | null;
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
+  coverageRadiusKm?: number;
 }
 
 // Haversine distance in km
