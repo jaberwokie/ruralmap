@@ -603,7 +603,7 @@ const Sidebar = ({
               </p>
             )}
             <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
-              Gaps use the radius setting ({radiusKm} km) independently of the radius overlay.
+              Gaps use the radius setting ({kmToMiles(radiusKm)} mi) independently of the radius overlay.
             </p>
           </div>
         </div>
