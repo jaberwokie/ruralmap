@@ -154,7 +154,7 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 120 }: CoverageDetailPanelProps) => {
   const display = entity ?? hoverEntity;
   const isLocked = !!entity;
 
