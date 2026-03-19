@@ -562,7 +562,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
-      <CoverageBreakdownBadge county={county} />
+      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="text-xs text-foreground/80 space-y-1">
         <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
