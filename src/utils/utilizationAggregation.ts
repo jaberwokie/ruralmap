@@ -27,6 +27,22 @@ export function getFacilityUtilization(facility: Facility): FacilityUtilization 
   return result;
 }
 
+// ── Sub-county Washoe zone split ──
+// Latitude threshold: facilities north of this are "Northern Washoe" (rural).
+// Reno/Sparks core sits at ~39.50–39.55; 39.60 cleanly separates.
+const WASHOE_URBAN_RURAL_LAT = 39.60;
+
+/** Excluded from all engagement gap logic */
+const ENGAGEMENT_GAP_EXCLUDED_COUNTIES = new Set(['Carson City']);
+
+export function isUrbanWashoe(facility: Facility): boolean {
+  return facility.county === 'Washoe' && facility.lat <= WASHOE_URBAN_RURAL_LAT;
+}
+
+export function isNorthernWashoe(facility: Facility): boolean {
+  return facility.county === 'Washoe' && facility.lat > WASHOE_URBAN_RURAL_LAT;
+}
+
 // ── County-level aggregation ──
 
 export interface CountyUtilization {
@@ -39,6 +55,8 @@ export interface CountyUtilization {
   hasEngagementSupport: boolean;
   operationalRead: 'Stable' | 'Strained' | 'Under-engaged' | 'Low-access';
   engagementGap: boolean;
+  /** Watchlist: moderate utilization without engagement support */
+  engagementWatchlist: boolean;
 }
 
 // Counties with CCC/CHW/field engagement presence (based on FTE field assignments)
@@ -90,7 +108,12 @@ export function getCountyUtilization(county: string): CountyUtilization {
   const avgVisitsPerMember = totalMembers > 0 ? Math.round((totalVisits / totalMembers) * 100) / 100 : 0;
   const topProviders = providerList.sort((a, b) => b.visits - a.visits).slice(0, 3);
   const hasEngagement = countyHasEngagementSupport(county);
-  const engagementGap = avgVisitsPerMember > 15 && !hasEngagement;
+
+  // Engagement gap / watchlist (county-level; Washoe sub-county handled separately)
+  const isExcluded = ENGAGEMENT_GAP_EXCLUDED_COUNTIES.has(county);
+  const engagementGap = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 15 && !hasEngagement;
+  const engagementWatchlist = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 10 && avgVisitsPerMember <= 15 && !hasEngagement;
+
   const operationalRead = computeOperationalRead(avgVisitsPerMember, activeProviderCount, hasEngagement);
 
   const result: CountyUtilization = {
@@ -102,6 +125,7 @@ export function getCountyUtilization(county: string): CountyUtilization {
     hasEngagementSupport: hasEngagement,
     operationalRead,
     engagementGap,
+    engagementWatchlist,
   };
   _countyUtilCache.set(county, result);
   return result;
