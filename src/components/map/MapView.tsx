@@ -71,6 +71,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
+  const fteServiceAreaRef = useRef<L.LayerGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
@@ -114,6 +115,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
     countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
     engagementGapRef.current = L.layerGroup().addTo(map);       // 3. Engagement gap outlines
+    fteServiceAreaRef.current = L.layerGroup().addTo(map);     // 3.5 FTE service area highlight
     labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
@@ -503,6 +505,31 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.fteCapacity, selectedFteId]);
 
+  // ── FTE service-area highlight ──
+  useEffect(() => {
+    if (!fteServiceAreaRef.current) return;
+    fteServiceAreaRef.current.clearLayers();
+
+    if (!selectedFteId) return;
+    const fte = fteCapacityData.find(f => f.id === selectedFteId);
+    if (!fte) return;
+
+    const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
+    const servedSet = new Set(fte.counties);
+
+    nevadaCounties.forEach(county => {
+      if (!servedSet.has(county.name)) return;
+      const polygon = L.polygon(county.boundaries, {
+        color: roleColor,
+        weight: 2,
+        dashArray: '6 4',
+        fillColor: roleColor,
+        fillOpacity: 0.08,
+        interactive: false,
+      });
+      fteServiceAreaRef.current!.addLayer(polygon);
+    });
+  }, [selectedFteId]);
 
   // ── Utilization Intensity choropleth (purple ramp) ──
   useEffect(() => {

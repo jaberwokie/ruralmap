@@ -7,7 +7,7 @@ import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
-import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
+import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS } from '@/utils/utilizationAggregation';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
@@ -591,6 +591,68 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
   );
 };
 
+/** Field Capacity section — aggregates all FTEs serving a county */
+const FieldCapacitySection = ({ county }: { county: string }) => {
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  if (serving.length === 0) {
+    return (
+      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Field Capacity</div>
+        <p className="text-[11px] text-muted-foreground italic">No field-based engagement coverage assigned to this county.</p>
+      </div>
+    );
+  }
+
+  const totalLoad = serving.reduce((s, f) => s + f.currentLoad, 0);
+  const totalCapacity = serving.reduce((s, f) => s + f.capacity, 0);
+  const ratio = totalCapacity > 0 ? totalLoad / totalCapacity : 0;
+  const status: LoadStatus = ratio >= 1 ? 'over' : ratio >= 0.7 ? 'near' : 'available';
+  const statusColors = LOAD_STATUS_COLORS[status];
+  const hasField = serving.some(f => f.hubLocation !== null);
+  const hasRemote = serving.some(f => f.hubLocation === null);
+  const coverageType = hasField && hasRemote ? 'Mixed' : hasField ? 'In-person available' : 'Remote only';
+
+  return (
+    <div className={`rounded-md border px-2 py-1.5 mb-2 ${statusColors.bg} border-border`}>
+      <div className="flex items-center gap-1.5 mb-1">
+        <Users className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Capacity</span>
+      </div>
+      <div className="space-y-0.5 text-[11px]">
+        <div className="flex justify-between">
+          <span className="text-foreground/80">FTEs Serving</span>
+          <span className="font-semibold text-foreground">{serving.length}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-foreground/80">Combined Capacity</span>
+          <span className="font-semibold text-foreground tabular-nums">{totalLoad} / {totalCapacity} engagements</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-foreground/80">Status</span>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors.dot }} />
+            <span className={`font-semibold ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
+          </div>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-foreground/80">Coverage Type</span>
+          <span className="font-medium text-foreground">{coverageType}</span>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-border/50">
+        {serving.map(f => {
+          const rc = FTE_ROLE_COLORS[f.id];
+          return (
+            <span key={f.id} className="text-[10px] px-1.5 py-0.5 rounded" style={{ backgroundColor: rc?.primary + '22', color: rc?.primary }}>
+              {f.label}
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
@@ -611,12 +673,13 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
           : PRIMARY_RESPONSE_LABELS.remote;
         return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
       })()}
+      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
       <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+      <UtilizationEngagementSection county={county} />
+      <FieldCapacitySection county={county} />
       <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
-      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
-      <UtilizationEngagementSection county={county} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         <div className="flex justify-between"><span>Member Volume</span><span className="font-medium tabular-nums">{memberCount.toLocaleString()}</span></div>
