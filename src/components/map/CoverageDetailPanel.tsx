@@ -134,26 +134,17 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   const fte = COUNTY_FTE_MAP.get(county);
   if (!fte) return null;
 
-  const status = getLoadStatus(fte.currentLoad, fte.capacity);
-  const statusColors = LOAD_STATUS_COLORS[status];
   const role = FTE_ROLE_COLORS[fte.id];
+  const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
 
   return (
     <div className={`rounded-md border-2 px-2 py-1.5 mb-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
       <div className="flex items-center gap-1.5 mb-0.5">
         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Capacity Status</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Assigned FTE</span>
       </div>
       <div className="text-[11px] font-medium text-foreground">{fte.label}</div>
-      <div className="flex items-center gap-1.5 mt-0.5">
-        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
-        <span className={`text-[10px] ${statusColors.text}`}>
-          {fte.currentLoad} / {fte.capacity} engagements · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
-        </span>
-      </div>
-      <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
-        {LOAD_STATUS_GUIDANCE[status]}
-      </div>
+      <div className="text-[10px] text-muted-foreground mt-0.5">{coverageLabel}</div>
     </div>
   );
 };
