@@ -47,6 +47,7 @@ interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   hoverEntity: MapEntity | null;
   onClear: () => void;
+  coverageRadiusKm?: number;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -91,8 +92,8 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
 };
 
 /** Coverage Breakdown badge for county-based entities (FTE drive-time model) */
-const CoverageBreakdownBadge = ({ county }: { county: string }) => {
-  const breakdown = getCountyCoverageBreakdown(county);
+const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
 
   return (
     <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 mb-2">
@@ -153,7 +154,7 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 120 }: CoverageDetailPanelProps) => {
   const display = entity ?? hoverEntity;
   const isLocked = !!entity;
 
@@ -182,7 +183,7 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPan
             Select a map element to view details.
           </p>
         ) : (
-          <EntityContent entity={display} />
+          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
         )}
       </div>
     </div>
@@ -191,14 +192,14 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear }: CoverageDetailPan
 
 // ── Renderer per entity type ──
 
-const EntityContent = ({ entity }: { entity: MapEntity }) => {
+const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; coverageRadiusKm: number }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
     case 'facility': return <FacilityContent facility={entity.facility} />;
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
-    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
-    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     default: return null;
   }
@@ -334,8 +335,8 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
 };
 
 // ── NBH Routing ──
-const NBHRoutingSection = ({ county }: { county: string }) => {
-  const breakdown = getCountyCoverageBreakdown(county);
+const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
   const serviceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
@@ -415,7 +416,7 @@ const NBHRoutingSection = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county }: { county: string }) => {
+const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
@@ -426,7 +427,7 @@ const CountyContent = ({ county }: { county: string }) => {
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       {(() => {
-        const breakdown = getCountyCoverageBreakdown(county);
+        const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
         const label = breakdown.primaryType === 'active'
           ? PRIMARY_RESPONSE_LABELS.active
           : breakdown.activePercent > 0
@@ -434,8 +435,8 @@ const CountyContent = ({ county }: { county: string }) => {
           : PRIMARY_RESPONSE_LABELS.remote;
         return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
       })()}
-      <NBHRoutingSection county={county} />
-      <CoverageBreakdownBadge county={county} />
+      <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="space-y-1 text-xs text-foreground/80">
@@ -548,7 +549,7 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
 );
 
 // ── Member Volume ──
-const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCount: number }) => {
+const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
   const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
   const intensity = maxCount > 0 ? memberCount / maxCount : 0;
   const intensityLabel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
@@ -561,7 +562,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
-      <CoverageBreakdownBadge county={county} />
+      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <div className="text-xs text-foreground/80 space-y-1">
         <div className="flex justify-between"><span>Members</span><span className="font-semibold tabular-nums">{memberCount.toLocaleString()}</span></div>
@@ -573,7 +574,7 @@ const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCo
 };
 
 // ── Rural Service Group ──
-const RuralServiceGroupContent = ({ county, services }: { county: string; services: RuralService[] }) => {
+const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
@@ -590,7 +591,7 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
-      <CoverageBreakdownBadge county={county} />
+      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={services.length} />
 
       <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>

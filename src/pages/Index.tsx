@@ -5,6 +5,7 @@ import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailP
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { ruralServices } from '@/data/rural-services';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
+import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 interface LayerState {
   counties: boolean;
@@ -27,6 +28,7 @@ const Index = () => {
   const [radiusKm, setRadiusKm] = useState(50);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
   const [coverageRadius, setCoverageRadius] = useState(false);
+  const [coverageRadiusKm, setCoverageRadiusKm] = useState(ACTIVE_COVERAGE_RADIUS_KM);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
@@ -178,6 +180,8 @@ const Index = () => {
           onCoverageGapsChange={handleCoverageGapsChange}
           selectedFteId={activeFteId}
           onFteCardClick={handleFteCardClick}
+          coverageRadiusKm={coverageRadiusKm}
+          onCoverageRadiusKmChange={setCoverageRadiusKm}
         />
       </div>
 
@@ -197,11 +201,13 @@ const Index = () => {
           selectedCounty={selectedCounty}
           onFteHubClick={handleFteHubClick}
           selectedFteId={activeFteId}
+          coverageRadiusKm={coverageRadiusKm}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
           hoverEntity={hoverEntity}
           onClear={handleClearEntity}
+          coverageRadiusKm={coverageRadiusKm}
         />
       </div>
     </div>

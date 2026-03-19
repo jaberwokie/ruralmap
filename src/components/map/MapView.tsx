@@ -38,6 +38,7 @@ interface MapViewProps {
   selectedCounty?: string | null;
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
+  coverageRadiusKm?: number;
 }
 
 // Haversine distance in km
@@ -54,7 +55,7 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
 
-const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120 }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -435,7 +436,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     if (!layers.operationalCoverage) return;
 
-    const activeZone = getActiveCoverageZone();
+    const activeZone = getActiveCoverageZone(coverageRadiusKm);
     if (!activeZone) return;
 
     // Active field coverage — continuous merged zone from all field FTEs
@@ -471,7 +472,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     } catch (e) {
       console.error('Scheduled zone computation error:', e);
     }
-  }, [layers.operationalCoverage]);
+  }, [layers.operationalCoverage, coverageRadiusKm]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {

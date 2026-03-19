@@ -34,6 +34,8 @@ interface SidebarProps {
   onCoverageGapsChange: (checked: boolean) => void;
   selectedFteId?: string | null;
   onFteCardClick?: (fteId: string) => void;
+  coverageRadiusKm?: number;
+  onCoverageRadiusKmChange?: (km: number) => void;
 }
 
 const LAYER_CONFIG = [
@@ -64,6 +66,8 @@ const Sidebar = ({
   onCoverageGapsChange,
   selectedFteId,
   onFteCardClick,
+  coverageRadiusKm = 120,
+  onCoverageRadiusKmChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -412,6 +416,26 @@ const Sidebar = ({
               )}
               {key === 'operationalCoverage' && layers.operationalCoverage && (
                 <div className="px-2 pb-2 pt-1.5 space-y-2">
+                  {/* Drive-time radius slider */}
+                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Drive-Time Threshold</span>
+                      <span className="text-[11px] font-bold text-foreground tabular-nums">~{Math.round((coverageRadiusKm / 80) * 60)} min</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={40}
+                      max={200}
+                      step={10}
+                      value={coverageRadiusKm}
+                      onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))}
+                      className="w-full h-1.5 accent-teal-600 cursor-pointer"
+                    />
+                    <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+                      <span>~30 min</span>
+                      <span>~150 min</span>
+                    </div>
+                  </div>
                   {[
                     {
                       label: 'Active Field Coverage',
