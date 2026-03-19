@@ -418,7 +418,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     operationalCoverageRef.current.clearLayers();
     coverageGreyRef.current.clearLayers();
 
-    if (!layers.operationalCoverage) return;
+    if (!layers.operationalCoverage || coverageGaps) return;
 
     const activeZone = getActiveCoverageZone(coverageRadiusKm);
     const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
