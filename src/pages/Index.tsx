@@ -33,6 +33,7 @@ const Index = () => {
   const [coverageRadiusKm, setCoverageRadiusKm] = useState(ACTIVE_COVERAGE_RADIUS_KM);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [topProvidersOnly, setTopProvidersOnly] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     serviceLocations: true,
@@ -40,6 +41,8 @@ const Index = () => {
     ruralServices: false,
     operationalCoverage: false,
     fteCapacity: false,
+    utilizationIntensity: false,
+    engagementGap: false,
   });
 
   // ── Unified detail panel state ──
