@@ -493,14 +493,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.fteCapacity, selectedFteId]);
 
-  // ── FTE service-area highlight ──
+  // ── FTE service-area highlight (field FTEs only — remote has no geographic footprint) ──
   useEffect(() => {
     if (!fteServiceAreaRef.current) return;
     fteServiceAreaRef.current.clearLayers();
 
     if (!selectedFteId) return;
     const fte = fteCapacityData.find(f => f.id === selectedFteId);
-    if (!fte) return;
+    if (!fte || !fte.hubLocation) return; // skip remote FTE — no territorial polygon
 
     const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
     const servedSet = new Set(fte.counties);

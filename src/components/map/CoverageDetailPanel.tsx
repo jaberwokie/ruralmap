@@ -253,6 +253,7 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
 
   const roleColors = FTE_ROLE_COLORS[fte.id];
   const Icon = meta.icon;
+  const isRemote = !fte.hubLocation;
 
   return (
     <div className="space-y-2">
@@ -270,6 +271,14 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
         {meta.description}
       </p>
 
+      {/* Geographic Footprint — always shown */}
+      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Geographic Footprint</div>
+        <p className="text-[11px] text-foreground leading-relaxed">
+          {isRemote ? 'None – remote coordination only.' : `Field-based coverage from ${fte.label.replace(' FTE', '')} hub.`}
+        </p>
+      </div>
+
       <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Operational Status</div>
         <p className="text-[11px] text-muted-foreground italic">
@@ -285,7 +294,9 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
       </div>
 
       <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Counties Served</div>
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">
+          {isRemote ? 'Supported Counties' : 'Counties Served'}
+        </div>
         <div className="flex flex-wrap gap-1 mt-0.5">
           {fte.counties.map(c => (
             <span key={c} className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-foreground/80">{c}</span>
