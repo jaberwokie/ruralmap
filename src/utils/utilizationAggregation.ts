@@ -57,6 +57,8 @@ export interface CountyUtilization {
   engagementGap: boolean;
   /** Watchlist: moderate utilization without engagement support */
   engagementWatchlist: boolean;
+  /** Early Signal: emerging utilization without engagement support */
+  engagementEarlySignal: boolean;
 }
 
 // Counties with CCC/CHW/field engagement presence (based on FTE field assignments)
