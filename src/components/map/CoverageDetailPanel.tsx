@@ -549,7 +549,7 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
 );
 
 // ── Member Volume ──
-const MemberVolumeContent = ({ county, memberCount }: { county: string; memberCount: number }) => {
+const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
   const maxCount = Math.max(...memberVolumeData.map(d => d.memberCount));
   const intensity = maxCount > 0 ? memberCount / maxCount : 0;
   const intensityLabel = intensity > 0.66 ? 'High' : intensity > 0.33 ? 'Moderate' : 'Low';
