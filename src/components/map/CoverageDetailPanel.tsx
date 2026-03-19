@@ -326,6 +326,13 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
   );
 };
 
+const ActionStep = ({ n, children }: { n: number; children: React.ReactNode }) => (
+  <div className="flex items-start gap-1.5">
+    <span className="text-[10px] font-bold text-primary mt-px">{n}</span>
+    <div className="text-[10px] text-foreground/80 space-y-0.5">{children}</div>
+  </div>
+);
+
 // ── NBH Routing ──
 const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
@@ -363,29 +370,68 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
         </div>
       )}
 
-      {/* Recommended Action Path */}
+      {/* Recommended Action Path — dynamic by coverage type */}
       <div className="mt-2">
         <div className="text-[10px] font-bold uppercase tracking-wide text-foreground mb-1">Recommended Action Path</div>
         <div className="space-y-1">
-          <div className="flex items-start gap-1.5">
-            <span className="text-[10px] font-bold text-primary mt-px">1</span>
-            <span className="text-[10px] text-foreground/80">In-person engagement</span>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <span className="text-[10px] font-bold text-primary mt-px">2</span>
-            <span className="text-[10px] text-foreground/80">Stabilize using local services</span>
-          </div>
-          <div className="flex items-start gap-1.5">
-            <span className="text-[10px] font-bold text-primary mt-px">3</span>
-            <div className="text-[10px] text-foreground/80 space-y-0.5">
-              <div>Escalate if needed:</div>
-              <div className="pl-2 space-y-0.5 text-muted-foreground">
-                <div>• Transfer to Las Vegas or Reno</div>
-                <div>• Telehealth support</div>
-                <div>• Schedule outreach</div>
-              </div>
-            </div>
-          </div>
+          {(() => {
+            const serving = fteCapacityData.filter(f => f.counties.includes(county));
+            const hasField = serving.some(f => f.hubLocation !== null);
+            const hasRemote = serving.some(f => f.hubLocation === null);
+            const coverageType = hasField && hasRemote ? 'mixed' : hasField ? 'active' : 'remote';
+
+            if (coverageType === 'active') {
+              return (
+                <>
+                  <ActionStep n={1}>In-person engagement</ActionStep>
+                  <ActionStep n={2}>Stabilize using local services</ActionStep>
+                  <ActionStep n={3}>
+                    <div>Escalate if needed:</div>
+                    <div className="pl-2 space-y-0.5 text-muted-foreground">
+                      <div>• Transfer to Las Vegas or Reno</div>
+                      <div>• Telehealth support</div>
+                      <div>• Schedule outreach</div>
+                    </div>
+                  </ActionStep>
+                </>
+              );
+            }
+
+            if (coverageType === 'mixed') {
+              return (
+                <>
+                  <ActionStep n={1}>Attempt in-person engagement when feasible</ActionStep>
+                  <ActionStep n={2}>Use remote support to bridge gaps</ActionStep>
+                  <ActionStep n={3}>Stabilize using local services</ActionStep>
+                  <ActionStep n={4}>
+                    <div>Escalate if needed:</div>
+                    <div className="pl-2 space-y-0.5 text-muted-foreground">
+                      <div>• Transfer to Las Vegas or Reno</div>
+                      <div>• Telehealth support</div>
+                      <div>• Schedule outreach</div>
+                    </div>
+                  </ActionStep>
+                </>
+              );
+            }
+
+            // remote only
+            return (
+              <>
+                <ActionStep n={1}>Remote engagement (primary)</ActionStep>
+                <ActionStep n={2}>Stabilize using local services</ActionStep>
+                <ActionStep n={3}>Schedule outreach when field support becomes available</ActionStep>
+                <ActionStep n={4}>
+                  <div>Escalate if needed:</div>
+                  <div className="pl-2 space-y-0.5 text-muted-foreground">
+                    <div>• Transfer to Las Vegas or Reno</div>
+                    <div>• Telehealth support</div>
+                    <div>• Coordinate transport if appropriate</div>
+                  </div>
+                </ActionStep>
+              </>
+            );
+          })()}
         </div>
       </div>
 
