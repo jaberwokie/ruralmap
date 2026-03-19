@@ -354,7 +354,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     if (!coverageGaps) return;
 
-    const eligibleFacilities = facilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
+    // Coverage gaps should only subtract true fixed-service hospital footprints (exclude clinic/provider radii)
+    const eligibleFacilities = facilities.filter(f => f.type === 'hospital');
 
     const analysisFeature: Feature<Polygon | MultiPolygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
 
