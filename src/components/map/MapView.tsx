@@ -280,9 +280,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     if (!layers.serviceLocations) return;
 
+    const showUtilization = layers.utilizationIntensity;
     const locationCounts = new Map<string, number>();
 
-    filteredFacilities.forEach(facility => {
+    const visibleFacilities = topProvidersOnly
+      ? filteredFacilities.filter(f => isTopProvider(f.name))
+      : filteredFacilities;
+
+    visibleFacilities.forEach(facility => {
       const key = `${facility.lat.toFixed(4)},${facility.lng.toFixed(4)}`;
       const count = locationCounts.get(key) ?? 0;
       locationCounts.set(key, count + 1);
@@ -290,13 +295,15 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const offsetLng = count * 0.003;
 
       const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
+      const util = getFacilityUtilization(facility);
+      const scaledSize = showUtilization && util ? getScaledPinSize(pin.size, util.totalVisits) : pin.size;
 
       const isHospital = facility.type === 'hospital';
       const isDiamond = pin.shape === 'diamond';
       const markerHtml = isDiamond
         ? `<div style="
-            width: ${pin.size}px;
-            height: ${pin.size}px;
+            width: ${scaledSize}px;
+            height: ${scaledSize}px;
             background: ${pin.bg};
             border: 2px solid white;
             box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35);
@@ -305,8 +312,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
             transition: background 150ms ease;
           " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`
         : `<div style="
-            width: ${pin.size}px;
-            height: ${pin.size}px;
+            width: ${scaledSize}px;
+            height: ${scaledSize}px;
             border-radius: 50%;
             background: ${pin.bg};
             border: 2px solid white;
@@ -318,19 +325,26 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const icon = L.divIcon({
         className: '',
         html: markerHtml,
-        iconSize: [pin.size, pin.size],
-        iconAnchor: [pin.size / 2, pin.size / 2],
+        iconSize: [scaledSize, scaledSize],
+        iconAnchor: [scaledSize / 2, scaledSize / 2],
       });
 
       const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], { icon });
       marker.on('click', () => onFacilityClick(facility));
 
       const typeLabel = facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type === 'hospital' ? 'Hospital' : 'Clinic';
+      const utilHtml = showUtilization && util
+        ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
+            <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
+            <div>Visits/Member: ${util.visitsPerMember} · Rank #${util.rank}</div>
+          </div>`
+        : '';
       const tooltipContent = `
         <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
           <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
+          ${utilHtml}
         </div>
       `;
       marker.bindTooltip(tooltipContent, {
@@ -341,7 +355,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
       markersRef.current!.addLayer(marker);
     });
-  }, [filteredFacilities, layers.serviceLocations, onFacilityClick]);
+  }, [filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
