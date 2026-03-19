@@ -692,8 +692,6 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
 const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
-  const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
-  const memberCount = volumeMap.get(county) ?? 0;
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   return (
@@ -708,17 +706,23 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
           : PRIMARY_RESPONSE_LABELS.remote;
         return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
       })()}
-      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
-      <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      <UtilizationEngagementSection county={county} />
-      <FieldCapacitySection county={county} />
-      <LocalResourcesSection county={county} />
-      <CapacityStatusSection county={county} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      {/* 1. Member Volume */}
+      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+      {/* 2. Coverage Breakdown */}
+      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+      {/* 3. Field Capacity */}
+      <FieldCapacitySection county={county} />
+      {/* 4. Utilization & Engagement */}
+      <UtilizationEngagementSection county={county} />
+      {/* 5. Assigned FTE */}
+      <CapacityStatusSection county={county} />
+      {/* 6. Recommended Action Path */}
+      <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+      {/* 7. Local Resources */}
+      <LocalResourcesSection county={county} />
       <div className="space-y-1 text-xs text-foreground/80">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
-        <div className="flex justify-between"><span>Member Volume</span><span className="font-medium tabular-nums">{memberCount.toLocaleString()}</span></div>
         <div className="flex justify-between"><span>Rural Access Dependence</span><span className="font-medium">{RURAL_ACCESS_DEPENDENCE[area]}</span></div>
         {countyData?.secondaryZone && (
           <div className="text-[10px] text-muted-foreground italic">
