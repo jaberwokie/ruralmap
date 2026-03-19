@@ -218,7 +218,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
     });
-  }, [layers.counties, selectedCounty, ruralServicesData]);
+  }, [layers.counties, selectedCounty]);
 
   // Draw coverage radii
   useEffect(() => {
