@@ -435,8 +435,8 @@ const Sidebar = ({
                       className="w-full h-1.5 accent-teal-600 cursor-pointer"
                     />
                     <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                      <span>~30 min</span>
-                      <span>~150 min</span>
+                      <span>~30 min (~25 mi)</span>
+                      <span>~150 min (~124 mi)</span>
                     </div>
                   </div>
                   {[
