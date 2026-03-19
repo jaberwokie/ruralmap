@@ -421,7 +421,9 @@ const Sidebar = ({
                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Drive-Time Threshold</span>
-                      <span className="text-[11px] font-bold text-foreground tabular-nums">~{Math.round((coverageRadiusKm / 80) * 60)} min</span>
+                      <span className="text-[11px] font-bold text-foreground tabular-nums">
+                        ~{Math.round((coverageRadiusKm / 80) * 60)} min (~{kmToMiles(coverageRadiusKm)} mi)
+                      </span>
                     </div>
                     <input
                       type="range"
