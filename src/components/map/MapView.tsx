@@ -5,10 +5,9 @@ import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
-import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone } from '@/utils/coverageZones';
-import { fteCapacityData, getLoadStatus, LOAD_STATUS_COLORS, FTE_ROLE_COLORS } from '@/data/fte-capacity';
+import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties } from '@/utils/utilizationAggregation';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
@@ -21,7 +20,6 @@ interface MapViewProps {
   layers: {
     counties: boolean;
     serviceLocations: boolean;
-    ruralServices: boolean;
     operationalCoverage: boolean;
     fteCapacity: boolean;
     utilizationIntensity: boolean;
@@ -33,7 +31,6 @@ interface MapViewProps {
   radiusKm: number;
   coverageRadius: boolean;
   coverageGaps: boolean;
-  ruralServices?: RuralService[];
   onEntityClick?: (entity: MapEntity | null) => void;
   onEntityHover?: (entity: MapEntity | null) => void;
   selectedCounty?: string | null;
@@ -57,7 +54,7 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
 
-const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -66,7 +63,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
-  const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
@@ -119,8 +115,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
-    ruralServicesRef.current = L.layerGroup().addTo(map);       // 7. Rural service pins
-    markersRef.current = L.layerGroup().addTo(map);             // 8. Facility markers
+    markersRef.current = L.layerGroup().addTo(map);             // 7. Facility markers
     fteCapacityRef.current = L.layerGroup().addTo(map);          // 9. FTE hub indicators (top)
 
     mapRef.current = map;
@@ -200,12 +195,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        const countyServices = ruralServicesData?.filter(s => s.county === county.name) ?? [];
-        if (countyServices.length > 0) {
-          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: county.name, services: countyServices });
-        } else {
-          onEntityClickRef.current?.({ type: 'county', county: county.name });
-        }
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
       });
 
       countiesRef.current!.addLayer(geoLayer);
@@ -227,7 +217,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
     });
-  }, [layers.counties, selectedCounty, ruralServicesData]);
+  }, [layers.counties, selectedCounty]);
 
   // Draw coverage radii
   useEffect(() => {
@@ -602,105 +592,6 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.engagementGap]);
 
-  const zoomRef = useRef(7);
-  useEffect(() => {
-    if (!mapRef.current) return;
-    const onZoom = () => {
-      const newZoom = mapRef.current!.getZoom();
-      const crossed = (zoomRef.current < 6 && newZoom >= 6) || (zoomRef.current >= 6 && newZoom < 6);
-      zoomRef.current = newZoom;
-      if (crossed && layers.ruralServices) {
-        mapRef.current!.fire('rural-redraw');
-      }
-    };
-    mapRef.current.on('zoomend', onZoom);
-    return () => { mapRef.current?.off('zoomend', onZoom); };
-  }, [layers.ruralServices]);
-
-  // Draw rural services pins
-  const drawRuralServices = () => {
-    if (!ruralServicesRef.current || !mapRef.current) return;
-    ruralServicesRef.current.clearLayers();
-    if (!layers.ruralServices || !ruralServicesData?.length) return;
-
-    const zoom = mapRef.current.getZoom();
-
-    if (zoom < 6) {
-      const countyCounts = new Map<string, { count: number; lat: number; lng: number }>();
-      ruralServicesData.forEach(s => {
-        const existing = countyCounts.get(s.county);
-        if (existing) { existing.count++; } else {
-          const cd = nevadaCounties.find(c => c.name === s.county);
-          countyCounts.set(s.county, { count: 1, lat: cd?.center[0] ?? s.lat, lng: cd?.center[1] ?? s.lng });
-        }
-      });
-      countyCounts.forEach((data, county) => {
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="width:24px;height:24px;border-radius:50%;background:hsla(200,15%,46%,0.75);color:white;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:1.5px solid white;box-shadow:0 1px 3px hsla(0,0%,0%,0.2);cursor:pointer;">${data.count}</div>`,
-          iconSize: [24, 24], iconAnchor: [12, 12],
-        });
-        const marker = L.marker([data.lat, data.lng], { icon });
-        marker.bindTooltip(`<div style="padding:6px 10px;font-size:12px;"><div style="font-weight:600;">${county} County</div><div style="color:hsl(240,4%,46%);font-size:11px;">${data.count} rural services</div></div>`, { direction: 'top', offset: [0, -16], className: 'facility-tooltip' });
-        marker.on('click', () => {
-          const countyServices = ruralServicesData?.filter(s => s.county === county) ?? [];
-          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county, services: countyServices });
-        });
-        ruralServicesRef.current!.addLayer(marker);
-      });
-    } else {
-      ruralServicesData.forEach(service => {
-        const icon = L.divIcon({
-          className: '',
-          html: `<div style="width:6px;height:6px;border-radius:50%;background:hsla(200,15%,46%,0.7);border:1px solid white;box-shadow:0 0 0 1px hsla(0,0%,0%,0.1),0 1px 2px hsla(0,0%,0%,0.15);cursor:pointer;"></div>`,
-          iconSize: [6, 6], iconAnchor: [3, 3],
-        });
-        const marker = L.marker([service.lat, service.lng], { icon });
-        const phoneHtml = service.phone ? `<div style="margin-top:2px;"><a href="tel:${service.phone.replace(/[^\d+]/g, '')}" style="color:hsl(217,91%,60%);font-size:10px;">${service.phone}</a></div>` : '';
-        marker.bindTooltip(`<div style="padding:8px 12px;font-size:13px;width:240px;white-space:normal;word-break:break-word;overflow-wrap:anywhere;"><div style="font-weight:600;margin-bottom:2px;">${service.name}</div><div style="color:hsl(200,15%,46%);font-size:10px;margin-bottom:2px;">${service.category}</div><div style="color:hsl(240,4%,46%);font-size:11px;">${service.city}, ${service.county} Co.</div>${service.address ? `<div style="color:hsl(240,4%,46%);font-size:10px;margin-top:2px;">${service.address}</div>` : ''}${phoneHtml}</div>`, { direction: 'top', offset: [0, -6], className: 'facility-tooltip' });
-        marker.on('click', () => {
-          const countyServices = ruralServicesData?.filter(s => s.county === service.county) ?? [];
-          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
-        });
-        ruralServicesRef.current!.addLayer(marker);
-      });
-    }
-  };
-
-  useEffect(() => {
-    drawRuralServices();
-    if (!mapRef.current) return;
-    const redraw = () => drawRuralServices();
-    mapRef.current.on('rural-redraw', redraw);
-    return () => { mapRef.current?.off('rural-redraw', redraw); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layers.ruralServices, ruralServicesData]);
-
-  // Coverage gaps "Limited Services" labels
-  useEffect(() => {
-    if (!coverageGaps || !layers.ruralServices || !ruralServicesData?.length || !gapsRef.current) return;
-
-    const serviceCounts = new Map<string, number>();
-    ruralServicesData.forEach(s => serviceCounts.set(s.county, (serviceCounts.get(s.county) ?? 0) + 1));
-
-    nevadaCounties.forEach(county => {
-      const count = serviceCounts.get(county.name) ?? 0;
-      if (count <= 3) {
-        const label = L.divIcon({
-          className: '',
-          html: `<span style="
-            font-size:9px; font-weight:600; color:hsla(0,72%,45%,0.7);
-            white-space:nowrap; pointer-events:none;
-            text-shadow:0 0 3px white,0 0 3px white;
-            font-style:italic;
-          ">Limited Services</span>`,
-          iconSize: [0, 0],
-          iconAnchor: [0, -8],
-        });
-        L.marker([county.center[0] - 0.15, county.center[1]], { icon: label, interactive: false }).addTo(gapsRef.current!);
-      }
-    });
-  }, [coverageGaps, layers.ruralServices, ruralServicesData]);
 
   return <div ref={containerRef} className="w-full h-full" />;
 };

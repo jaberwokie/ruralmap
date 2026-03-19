@@ -11,7 +11,6 @@ import { kmToMiles } from '@/utils/coverageZones';
 interface LayerState {
   counties: boolean;
   serviceLocations: boolean;
-  ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
   utilizationIntensity: boolean;
@@ -48,7 +47,6 @@ interface SidebarProps {
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
-  { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
   { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
   { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
   { key: 'utilizationIntensity' as const, label: 'Utilization Intensity', color: 'bg-purple-500' },
@@ -365,30 +363,6 @@ const Sidebar = ({
                 })}
             </div>
 
-            {/* Service Category Filter */}
-            {layers.ruralServices && (
-              <div>
-                <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">Service Category</div>
-                <div className="flex flex-wrap gap-1">
-                  {RURAL_SERVICE_CATEGORIES.map(cat => {
-                    const active = filters.serviceCategories.has(cat);
-                    return (
-                      <button
-                        key={cat}
-                        onClick={() => toggleServiceCategoryFilter(cat)}
-                        className={`px-2 py-0.5 rounded text-[10px] transition-all duration-150 ${
-                          active
-                            ? 'bg-foreground text-background font-medium'
-                            : 'bg-secondary text-muted-foreground hover:text-foreground'
-                        }`}
-                      >
-                        {cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
             </div>
           </div>
         )}

@@ -16,11 +16,6 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'Shows mapped hospitals, clinics, and provider locations across the rural network. These pins represent known service access points, not necessarily active field engagement coverage.',
   },
-  ruralServices: {
-    label: 'Rural Services (Resource Guide)',
-    explanation:
-      'Shows community service resources and practical support access points that may help meet non-clinical needs in rural areas.',
-  },
   operationalCoverage: {
     label: 'Operational Coverage Model',
     explanation:
