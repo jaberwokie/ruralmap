@@ -688,18 +688,20 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
   const categoryCount = grouped.length;
   const total = services.length;
 
-  // Resource Strength rating
-  const strength = total >= 13 && categoryCount >= 4 ? 'Strong'
-    : total >= 6 ? 'Moderate'
+  // Resource Strength rating — based on total count + redundancy
+  const categoriesWithRedundancy = grouped.filter(([, items]) => items.length > 1).length;
+  const strength: 'Strong' | 'Moderate' | 'Minimal' =
+    total > 20 && categoriesWithRedundancy >= 3 ? 'Strong'
+    : total >= 10 && categoriesWithRedundancy >= 2 ? 'Moderate'
     : 'Minimal';
 
   const strengthColor = strength === 'Strong' ? 'text-emerald-700' : strength === 'Moderate' ? 'text-amber-700' : 'text-orange-700';
   const strengthBg = strength === 'Strong' ? 'bg-emerald-50 border-emerald-200' : strength === 'Moderate' ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200';
   const strengthDesc = strength === 'Strong'
-    ? 'Multiple services and categories available to support local stabilization.'
+    ? 'Multiple services and provider options support local stabilization.'
     : strength === 'Moderate'
     ? 'Core services are present with some local stabilization capability.'
-    : 'Basic services exist but are limited in capacity and scope.';
+    : 'Basic services exist but are limited in capacity, access, and redundancy.';
 
   return (
     <div className="rounded-md border border-border bg-secondary/30 px-2 py-1.5 mb-2">
