@@ -619,18 +619,28 @@ const Sidebar = ({
 
           {/* Coverage Radius — standalone */}
           <div className={!layers.serviceLocations ? 'opacity-50 pointer-events-none' : ''}>
-            <button
-              onClick={() => onCoverageRadiusChange(!coverageRadius)}
-              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-            >
-              <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
-              <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Coverage Radius ({kmToMiles(radiusKm)} mi)
+            <div className="flex items-center">
+              <button
+                onClick={() => onCoverageRadiusChange(!coverageRadius)}
+                className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+              >
+                <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  Coverage Radius ({kmToMiles(radiusKm)} mi)
+                </span>
+                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
+                </div>
+              </button>
+              <span
+                className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                onMouseEnter={() => onHelpEnter?.('coverageRadius')}
+                onMouseLeave={() => onHelpLeave?.()}
+                onTouchStart={() => onHelpEnter?.('coverageRadius')}
+              >
+                <HelpCircle className="w-3 h-3" />
               </span>
-              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
-              </div>
-            </button>
+            </div>
             {coverageRadius && (
               <div className="px-2 pb-1 pt-0.5">
                 <input
