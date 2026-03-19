@@ -39,6 +39,8 @@ interface SidebarProps {
   onFteCardClick?: (fteId: string) => void;
   coverageRadiusKm?: number;
   onCoverageRadiusKmChange?: (km: number) => void;
+  topProvidersOnly: boolean;
+  onTopProvidersOnlyChange: (checked: boolean) => void;
 }
 
 const LAYER_CONFIG = [
