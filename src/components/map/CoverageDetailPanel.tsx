@@ -47,6 +47,7 @@ interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   hoverEntity: MapEntity | null;
   onClear: () => void;
+  coverageRadiusKm?: number;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
