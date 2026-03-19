@@ -971,6 +971,8 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
       <FieldCapacitySection county={county} />
       {/* 4. Utilization & Engagement */}
       <UtilizationEngagementSection county={county} />
+      {/* 4b. Utilization Metrics */}
+      <UtilizationMetricsCard county={county} />
       {/* 5. Assigned FTE */}
       <CapacityStatusSection county={county} />
       {/* 6. Recommended Action Path */}
