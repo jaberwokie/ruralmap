@@ -30,7 +30,7 @@ export function getFacilityUtilization(facility: Facility): FacilityUtilization 
 // ── Sub-county Washoe zone split ──
 // Latitude threshold: facilities north of this are "Northern Washoe" (rural).
 // Reno/Sparks core sits at ~39.50–39.55; 39.60 cleanly separates.
-const WASHOE_URBAN_RURAL_LAT = 39.60;
+export const WASHOE_URBAN_RURAL_LAT = 39.60;
 
 /** Excluded from all engagement gap logic */
 const ENGAGEMENT_GAP_EXCLUDED_COUNTIES = new Set(['Carson City']);
