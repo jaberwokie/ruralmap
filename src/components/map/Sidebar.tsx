@@ -79,17 +79,21 @@ const Sidebar = ({
   onHelpEnter,
   onHelpLeave,
 }: SidebarProps) => {
-  const [facilitiesOpen, setFacilitiesOpen] = useState(() => {
-    try { const v = localStorage.getItem('sidebar_facilities'); return v === 'true'; } catch { return false; }
-  });
-  const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(() => {
-    try { const v = localStorage.getItem('sidebar_filters'); return v === 'true'; } catch { return false; }
-  });
+  const usePersistToggle = (key: string, defaultOpen = false) => {
+    const [open, setOpen] = useState(() => {
+      try { const v = localStorage.getItem(key); return v === null ? defaultOpen : v === 'true'; } catch { return defaultOpen; }
+    });
+    const toggle = () => setOpen(prev => { const next = !prev; try { localStorage.setItem(key, String(next)); } catch {} return next; });
+    return [open, toggle] as const;
+  };
 
-  // Persist collapse state
-  const toggleFilters = () => setFiltersOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_filters', String(next)); } catch {} return next; });
-  const toggleFacilities = () => setFacilitiesOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_facilities', String(next)); } catch {} return next; });
+  const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
+  const [csvOpen, setCsvOpen] = useState(false);
+  const [filtersOpen, toggleFilters] = usePersistToggle('sidebar_filters');
+  const [coreMapOpen, toggleCoreMap] = usePersistToggle('sidebar_layer_core');
+  const [operationsOpen, toggleOperations] = usePersistToggle('sidebar_layer_ops');
+  const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
+  const [accessOpen, toggleAccess] = usePersistToggle('sidebar_layer_access');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Counts from filtered set
@@ -376,265 +380,238 @@ const Sidebar = ({
         <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
           Layers
         </div>
-        <div className="space-y-1">
-          {LAYER_CONFIG.map(({ key, label, color }) => (
-            <div key={key}>
-              <div className="flex items-center">
-                <button
-                  onClick={() => onToggleLayer(key)}
-                  className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-                >
-                  <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                  <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
-                    {label}
+
+        {/* ── CORE MAP ── */}
+        <div className="mb-1">
+          <button onClick={toggleCoreMap} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
+            {coreMapOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            <span>Core Map</span>
+          </button>
+          {coreMapOpen && (
+            <div className="space-y-1 mt-0.5">
+              {LAYER_CONFIG.filter(l => l.key === 'counties' || l.key === 'serviceLocations').map(({ key, label, color }) => (
+                <div key={key} className="flex items-center">
+                  <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
+                    <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                    <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+                    <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
+                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+                    </div>
+                  </button>
+                  <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.(key)} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.(key)}>
+                    <HelpCircle className="w-3 h-3" />
                   </span>
-                  <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
-                  </div>
-                </button>
-                <span
-                  className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                  onMouseEnter={() => onHelpEnter?.(key)}
-                  onMouseLeave={() => onHelpLeave?.()}
-                  onTouchStart={() => onHelpEnter?.(key)}
-                >
-                  <HelpCircle className="w-3 h-3" />
-                </span>
-              </div>
-              {key === 'operationalCoverage' && layers.operationalCoverage && (
-                <div className="px-2 pb-2 pt-1.5 space-y-2">
-                  {/* Drive-time radius slider */}
-                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Drive-Time Threshold</span>
-                      <span className="text-[11px] font-bold text-foreground tabular-nums">
-                        ~{Math.round((coverageRadiusKm / 80) * 60)} min (~{kmToMiles(coverageRadiusKm)} mi)
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={40}
-                      max={200}
-                      step={10}
-                      value={coverageRadiusKm}
-                      onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))}
-                      className="w-full h-1.5 accent-teal-600 cursor-pointer"
-                    />
-                    <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                      <span>~30 min (~25 mi)</span>
-                      <span>~150 min (~124 mi)</span>
-                    </div>
-                  </div>
-                  {[
-                    {
-                      label: 'Active Field Coverage',
-                      description: 'Within 75–90 min drive (~60–85 mi) from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.',
-                      color: 'hsl(190, 70%, 37%)',
-                      style: 'solid' as const,
-                    },
-                    {
-                      label: 'Scheduled Outreach',
-                      description: 'Outside active coverage zone. Planned outreach through scheduled field visits and coordinated engagement.',
-                      color: 'hsl(190, 55%, 50%)',
-                      style: 'dashed' as const,
-                    },
-                    {
-                      label: 'Telehealth (Universal)',
-                      description: 'Telephonic/virtual coordination available statewide regardless of geography.',
-                      color: 'hsl(240, 5%, 64%)',
-                      style: 'solid' as const,
-                    },
-                  ].map(({ label, description, color, style }) => (
-                    <div key={label} className="flex gap-2">
-                      <div className="flex-shrink-0 mt-0.5">
-                        <div
-                          className="w-3 h-3 rounded-sm"
-                          style={{
-                            backgroundColor: color,
-                            opacity: 0.7,
-                            border: style === 'dashed' ? `1.5px dashed ${color}` : 'none',
-                          }}
-                        />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="text-[11px] font-medium text-foreground leading-tight">{label}</div>
-                        <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{description}</p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
-               )}
-              {key === 'fteCapacity' && layers.fteCapacity && (
-                <div className="px-2 pb-2 pt-1.5 space-y-2">
-                  {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
-                    const role = FTE_ROLE_COLORS[fte.id];
-                    const isSelected = selectedFteId === fte.id;
-                    const isDimmed = selectedFteId != null && !isSelected;
-                    const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
-                    return (
-                      <button
-                        key={fte.id}
-                        onClick={() => onFteCardClick?.(fte.id)}
-                        className={`w-full text-left rounded-md border-2 px-2 py-1.5 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}
-                      >
-                        <div className="flex items-center justify-between mb-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
-                            <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── OPERATIONS ── */}
+        <div className="mb-1">
+          <button onClick={toggleOperations} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
+            {operationsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            <span>Operations</span>
+          </button>
+          {operationsOpen && (
+            <div className="space-y-1 mt-0.5">
+              {LAYER_CONFIG.filter(l => l.key === 'operationalCoverage' || l.key === 'fteCapacity' || l.key === 'engagementGap').map(({ key, label, color }) => (
+                <div key={key}>
+                  <div className="flex items-center">
+                    <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
+                      <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                      <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+                      <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
+                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+                      </div>
+                    </button>
+                    <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.(key)} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.(key)}>
+                      <HelpCircle className="w-3 h-3" />
+                    </span>
+                  </div>
+                  {key === 'operationalCoverage' && layers.operationalCoverage && (
+                    <div className="px-2 pb-2 pt-1.5 space-y-2">
+                      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Drive-Time Threshold</span>
+                          <span className="text-[11px] font-bold text-foreground tabular-nums">
+                            ~{Math.round((coverageRadiusKm / 80) * 60)} min (~{kmToMiles(coverageRadiusKm)} mi)
+                          </span>
+                        </div>
+                        <input type="range" min={40} max={200} step={10} value={coverageRadiusKm} onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))} className="w-full h-1.5 accent-teal-600 cursor-pointer" />
+                        <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+                          <span>~30 min (~25 mi)</span>
+                          <span>~150 min (~124 mi)</span>
+                        </div>
+                      </div>
+                      {[
+                        { label: 'Active Field Coverage', description: 'Within 75–90 min drive (~60–85 mi) from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.', color: 'hsl(190, 70%, 37%)', style: 'solid' as const },
+                        { label: 'Scheduled Outreach', description: 'Outside active coverage zone. Planned outreach through scheduled field visits and coordinated engagement.', color: 'hsl(190, 55%, 50%)', style: 'dashed' as const },
+                        { label: 'Telehealth (Universal)', description: 'Telephonic/virtual coordination available statewide regardless of geography.', color: 'hsl(240, 5%, 64%)', style: 'solid' as const },
+                      ].map(({ label: lbl, description, color: clr, style }) => (
+                        <div key={lbl} className="flex gap-2">
+                          <div className="flex-shrink-0 mt-0.5">
+                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: clr, opacity: 0.7, border: style === 'dashed' ? `1.5px dashed ${clr}` : 'none' }} />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-[11px] font-medium text-foreground leading-tight">{lbl}</div>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{description}</p>
                           </div>
                         </div>
-                        <div className="text-[10px] text-foreground/70">
-                          {coverageLabel}
-                        </div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                          {fte.counties.length} counties served
-                        </div>
-                      </button>
-                    );
-                  })}
-                  {/* Remote FTE — visually distinct */}
-                  {(() => {
-                    const remote = fteCapacityData.find(f => f.hubLocation === null);
-                    if (!remote) return null;
-                    const role = FTE_ROLE_COLORS[remote.id];
-                    const isRemoteSelected = selectedFteId === remote.id;
-                    const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
-                    return (
-                      <button
-                        onClick={() => onFteCardClick?.(remote.id)}
-                        className={`w-full text-left rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}
-                      >
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
-                          <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
-                        </div>
-                        <div className="text-[10px] text-foreground/70">
-                          Remote Only
-                        </div>
-                        <div className="text-[9px] text-muted-foreground mt-1">Statewide telephonic and virtual coordination (no in-person response)</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">
-                          {remote.counties.length} counties served
-                        </div>
-                      </button>
-                    );
-                  })()}
-                </div>
-              )}
-              {key === 'utilizationIntensity' && layers.utilizationIntensity && (
-                <div className="px-2 pb-2 pt-1.5 space-y-1.5">
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    County shading by avg visits per member. Purple ramp — darker = higher utilization.
-                  </p>
-                  <div className="flex items-center gap-1.5">
-                    <div className="flex-1 h-2.5 rounded-sm" style={{
-                      background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))'
-                    }} />
-                  </div>
-                  <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
-                    <span>Low (&lt;10)</span>
-                    <span>Mod (10–18)</span>
-                    <span>High (&gt;18)</span>
-                  </div>
-                  {/* Top Providers Only toggle */}
-                  <button
-                    onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)}
-                    className="w-full flex items-center gap-2 px-1 py-1 rounded text-[11px] transition-colors duration-200 hover:bg-secondary mt-1"
-                  >
-                    <div className={`w-6 h-3.5 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-purple-600' : 'bg-input'} relative`}>
-                      <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
+                      ))}
                     </div>
-                    <span className={`${topProvidersOnly ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
-                      Top Providers Only (Top 20)
+                  )}
+                  {key === 'fteCapacity' && layers.fteCapacity && (
+                    <div className="px-2 pb-2 pt-1.5 space-y-2">
+                      {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
+                        const role = FTE_ROLE_COLORS[fte.id];
+                        const isSelected = selectedFteId === fte.id;
+                        const isDimmed = selectedFteId != null && !isSelected;
+                        const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
+                        return (
+                          <button key={fte.id} onClick={() => onFteCardClick?.(fte.id)} className={`w-full text-left rounded-md border-2 px-2 py-1.5 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <div className="flex items-center gap-1.5">
+                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
+                                <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
+                              </div>
+                            </div>
+                            <div className="text-[10px] text-foreground/70">{coverageLabel}</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">{fte.counties.length} counties served</div>
+                          </button>
+                        );
+                      })}
+                      {(() => {
+                        const remote = fteCapacityData.find(f => f.hubLocation === null);
+                        if (!remote) return null;
+                        const role = FTE_ROLE_COLORS[remote.id];
+                        const isRemoteSelected = selectedFteId === remote.id;
+                        const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
+                        return (
+                          <button onClick={() => onFteCardClick?.(remote.id)} className={`w-full text-left rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}>
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
+                              <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
+                            </div>
+                            <div className="text-[10px] text-foreground/70">Remote Only</div>
+                            <div className="text-[9px] text-muted-foreground mt-1">Statewide telephonic and virtual coordination (no in-person response)</div>
+                            <div className="text-[10px] text-muted-foreground mt-0.5">{remote.counties.length} counties served</div>
+                          </button>
+                        );
+                      })()}
+                    </div>
+                  )}
+                  {key === 'engagementGap' && layers.engagementGap && (
+                    <div className="px-2 pb-2 pt-1 space-y-1">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">Orange outline on counties with avg visits/member &gt;15 and no field engagement support.</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── UTILIZATION ── */}
+        <div className="mb-1">
+          <button onClick={toggleUtilization} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
+            {utilizationOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            <span>Utilization</span>
+          </button>
+          {utilizationOpen && (
+            <div className="space-y-1 mt-0.5">
+              {LAYER_CONFIG.filter(l => l.key === 'utilizationIntensity').map(({ key, label, color }) => (
+                <div key={key}>
+                  <div className="flex items-center">
+                    <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
+                      <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                      <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+                      <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
+                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+                      </div>
+                    </button>
+                    <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.(key)} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.(key)}>
+                      <HelpCircle className="w-3 h-3" />
                     </span>
+                  </div>
+                  {layers.utilizationIntensity && (
+                    <div className="px-2 pb-2 pt-1.5 space-y-1.5">
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex-1 h-2.5 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
+                      </div>
+                      <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                        <span>Low (&lt;10)</span>
+                        <span>Mod (10–18)</span>
+                        <span>High (&gt;18)</span>
+                      </div>
+                      <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="w-full flex items-center gap-2 px-1 py-1 rounded text-[11px] transition-colors duration-200 hover:bg-secondary mt-1">
+                        <div className={`w-6 h-3.5 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-purple-600' : 'bg-input'} relative`}>
+                          <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
+                        </div>
+                        <span className={`${topProvidersOnly ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>Top Providers Only (Top 20)</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── ACCESS ── */}
+        <div className="mb-1">
+          <button onClick={toggleAccess} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
+            {accessOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+            <span>Access</span>
+          </button>
+          {accessOpen && (
+            <div className="space-y-1 mt-0.5">
+              {/* Coverage Radius */}
+              <div className={!layers.serviceLocations ? 'opacity-50 pointer-events-none' : ''}>
+                <div className="flex items-center">
+                  <button onClick={() => onCoverageRadiusChange(!coverageRadius)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
+                    <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                    <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>Coverage Radius ({kmToMiles(radiusKm)} mi)</span>
+                    <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
+                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
+                    </div>
                   </button>
+                  <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.('coverageRadius')} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.('coverageRadius')}>
+                    <HelpCircle className="w-3 h-3" />
+                  </span>
                 </div>
-              )}
-              {key === 'engagementGap' && layers.engagementGap && (
-                <div className="px-2 pb-2 pt-1 space-y-1">
-                  <p className="text-[10px] text-muted-foreground leading-relaxed">
-                    Orange outline on counties with avg visits/member &gt;15 and no field engagement support.
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {/* Coverage Radius — standalone */}
-          <div className={!layers.serviceLocations ? 'opacity-50 pointer-events-none' : ''}>
-            <div className="flex items-center">
-              <button
-                onClick={() => onCoverageRadiusChange(!coverageRadius)}
-                className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-              >
-                <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  Coverage Radius ({kmToMiles(radiusKm)} mi)
-                </span>
-                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
-                </div>
-              </button>
-              <span
-                className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                onMouseEnter={() => onHelpEnter?.('coverageRadius')}
-                onMouseLeave={() => onHelpLeave?.()}
-                onTouchStart={() => onHelpEnter?.('coverageRadius')}
-              >
-                <HelpCircle className="w-3 h-3" />
-              </span>
-            </div>
-            {coverageRadius && (
-              <div className="px-2 pb-1 pt-0.5">
-                <input
-                  type="range"
-                  min={10}
-                  max={150}
-                  step={5}
-                  value={radiusKm}
-                  onChange={(e) => onRadiusChange(Number(e.target.value))}
-                  className="w-full h-1 accent-primary cursor-pointer"
-                />
-                <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
-                  <span>6 mi</span>
-                  <span>93 mi</span>
-                </div>
+                {coverageRadius && (
+                  <div className="px-2 pb-1 pt-0.5">
+                    <input type="range" min={10} max={150} step={5} value={radiusKm} onChange={(e) => onRadiusChange(Number(e.target.value))} className="w-full h-1 accent-primary cursor-pointer" />
+                    <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
+                      <span>6 mi</span>
+                      <span>93 mi</span>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-
-          {/* Coverage Gaps — independent toggle */}
-          <div>
-            <div className="flex items-center">
-              <button
-                onClick={() => onCoverageGapsChange(!coverageGaps)}
-                className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-              >
-                <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  Coverage Gaps
-                </span>
-                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
+              {/* Coverage Gaps */}
+              <div>
+                <div className="flex items-center">
+                  <button onClick={() => onCoverageGapsChange(!coverageGaps)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
+                    <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                    <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>Coverage Gaps</span>
+                    <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
+                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
+                    </div>
+                  </button>
+                  <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.('coverageGaps')} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.('coverageGaps')}>
+                    <HelpCircle className="w-3 h-3" />
+                  </span>
                 </div>
-              </button>
-              <span
-                className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
-                onMouseEnter={() => onHelpEnter?.('coverageGaps')}
-                onMouseLeave={() => onHelpLeave?.()}
-                onTouchStart={() => onHelpEnter?.('coverageGaps')}
-              >
-                <HelpCircle className="w-3 h-3" />
-              </span>
+                {coverageGaps && (
+                  <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.</p>
+                )}
+                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">Gaps use the radius setting ({kmToMiles(radiusKm)} mi) independently of the radius overlay.</p>
+              </div>
             </div>
-            {coverageGaps && (
-              <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
-                Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
-              </p>
-            )}
-            <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
-              Gaps use the radius setting ({kmToMiles(radiusKm)} mi) independently of the radius overlay.
-            </p>
-          </div>
+          )}
         </div>
       </div>
 
