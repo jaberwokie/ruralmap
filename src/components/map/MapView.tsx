@@ -418,52 +418,64 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     const activeZone = getActiveCoverageZone(coverageRadiusKm);
     const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
 
-    if (!activeZone) {
-      // No active zone — grey out entire state
-      const greyAll = L.geoJSON(nevadaFeat as any, {
-        style: {
-          color: 'transparent',
-          weight: 0,
-          fillColor: 'hsl(220, 10%, 50%)',
-          fillOpacity: 0.30,
-        },
-        interactive: false,
-      });
-      coverageGreyRef.current.addLayer(greyAll);
-      return;
-    }
+    // 1. Full-state grey overlay (single polygon, no gaps possible)
+    const greyAll = L.geoJSON(nevadaFeat as any, {
+      style: {
+        color: 'transparent',
+        weight: 0,
+        fillColor: 'hsl(220, 10%, 50%)',
+        fillOpacity: 0.30,
+      },
+      interactive: false,
+    });
+    coverageGreyRef.current.addLayer(greyAll);
 
-    // Active field coverage — clear/emphasized (teal tint)
-    const activeLayer = L.geoJSON(activeZone, {
+    if (!activeZone) return;
+
+    // 2. Active field coverage — opaque cut-out on top of grey
+    //    White base fill masks the grey beneath, then a subtle teal tint on top
+    const activeCutout = L.geoJSON(activeZone, {
       style: {
         color: 'hsla(174, 50%, 40%, 0.30)',
         weight: 1.5,
+        fillColor: 'hsl(0, 0%, 98%)',
+        fillOpacity: 1,
+      },
+      interactive: false,
+    });
+    operationalCoverageRef.current.addLayer(activeCutout);
+
+    // Teal tint layer on top of the white cutout
+    const activeTint = L.geoJSON(activeZone, {
+      style: {
+        color: 'transparent',
+        weight: 0,
         fillColor: 'hsla(174, 50%, 45%, 0.08)',
         fillOpacity: 1,
       },
       interactive: false,
     });
-    operationalCoverageRef.current.addLayer(activeLayer);
+    operationalCoverageRef.current.addLayer(activeTint);
 
-    // Scheduled outreach zone — Nevada minus active: partially muted grey
+    // 3. Scheduled outreach — partial cut-out (lighter grey, not fully clear)
     try {
       const fc = featureCollection([nevadaFeat, activeZone]);
-      const scheduled = difference(fc as any);
-      if (scheduled) {
-        // Partially muted overlay for scheduled areas (reachable but not same-day)
-        const scheduledGrey = L.geoJSON(scheduled as any, {
+      const scheduledArea = difference(fc as any);
+      if (scheduledArea) {
+        // Lighten the scheduled zone by overlaying a semi-transparent white
+        const scheduledLighten = L.geoJSON(scheduledArea as any, {
           style: {
             color: 'transparent',
             weight: 0,
-            fillColor: 'hsl(220, 10%, 50%)',
-            fillOpacity: 0.18,
+            fillColor: 'hsl(0, 0%, 98%)',
+            fillOpacity: 0.35,
           },
           interactive: false,
         });
-        coverageGreyRef.current.addLayer(scheduledGrey);
+        coverageGreyRef.current.addLayer(scheduledLighten);
 
-        // Light dashed outline for scheduled zone
-        const scheduledOutline = L.geoJSON(scheduled as any, {
+        // Dashed outline for scheduled zone
+        const scheduledOutline = L.geoJSON(scheduledArea as any, {
           style: {
             color: 'hsla(174, 40%, 50%, 0.22)',
             weight: 1.5,
