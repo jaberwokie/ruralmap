@@ -716,7 +716,15 @@ const Sidebar = ({
               </div>
               <div className="flex items-center gap-2 px-2">
                 <div className="w-3 h-3 flex-shrink-0" style={{ background: 'hsl(45, 93%, 47%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)', transform: 'rotate(45deg)' }} />
-                <span className="text-muted-foreground">Tier 1</span>
+                <span className="text-muted-foreground flex-1">Tier 1</span>
+                <span
+                  className="p-0.5 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                  onMouseEnter={() => onHelpEnter?.('tier1Legend')}
+                  onMouseLeave={() => onHelpLeave?.()}
+                  onTouchStart={() => onHelpEnter?.('tier1Legend')}
+                >
+                  <HelpCircle className="w-3 h-3" />
+                </span>
               </div>
             </div>
           </div>
