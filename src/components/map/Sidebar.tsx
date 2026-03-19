@@ -599,7 +599,7 @@ const Sidebar = ({
             </button>
             {coverageGaps && (
               <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
-                Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{radiusKm} km</span>.
+                Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
               </p>
             )}
             <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
