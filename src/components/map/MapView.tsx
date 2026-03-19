@@ -320,7 +320,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], { icon });
       marker.on('click', () => onFacilityClick(facility));
 
-      const typeLabel = facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type === 'hospital' ? 'Hospital' : 'Clinic';
+      const typeLabel = facility.type === 'hospital' ? 'Hospital' : facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic';
       const utilHtml = showUtilization && util
         ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
             <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
