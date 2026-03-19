@@ -1,82 +1,32 @@
 /**
- * Operational Coverage Model
+ * Operational Coverage Model — FTE-Centered (75–90 Minute Drive-Time)
  *
- * Defines staffing-based coverage zones aligned to real FTE positions.
- * Does NOT use radius/circle logic — uses county polygons as zone boundaries.
+ * Coverage tiers are determined by drive-time radius from FTE base locations,
+ * NOT county boundaries. Counties are reference overlays only.
  */
 
 export type CoverageType = 'active' | 'scheduled' | 'remote';
 
-export interface OperationalZone {
-  id: string;
-  coverageType: CoverageType;
-  fte: string;              // e.g. "Carson City FTE", "Pahrump FTE", "Remote Team"
-  counties: string[];       // County names included in this zone
-  label: string;            // Display label
-  description: string;      // Short tooltip description
-}
+/**
+ * Drive-time radius in km.
+ * ~75–90 min at ~80 km/h average rural Nevada speed ≈ 120 km.
+ */
+export const ACTIVE_COVERAGE_RADIUS_KM = 120;
 
 export const COVERAGE_TYPE_LABELS: Record<CoverageType, string> = {
   active: 'Active Field Coverage',
   scheduled: 'Scheduled Outreach',
-  remote: 'Remote Support Only',
+  remote: 'Telehealth / Remote Support',
 };
 
 export const COVERAGE_TYPE_DESCRIPTIONS: Record<CoverageType, string> = {
-  active: 'Same-day in-person response available',
-  scheduled: 'Planned outreach, not immediate response',
-  remote: 'Telephonic/virtual coordination only',
+  active: 'Within 75–90 min drive from FTE base — same-day in-person response',
+  scheduled: 'Outside active coverage — planned outreach, not immediate response',
+  remote: 'Telephonic/virtual coordination available statewide',
 };
 
-export const operationalZones: OperationalZone[] = [
-  {
-    id: 'carson-active',
-    coverageType: 'active',
-    fte: 'Carson City FTE',
-    counties: ['Carson City', 'Douglas', 'Lyon', 'Washoe'],
-    label: 'Carson City FTE — Active',
-    description: 'Same-day in-person response available',
-  },
-  {
-    id: 'carson-scheduled',
-    coverageType: 'scheduled',
-    fte: 'Carson City FTE',
-    counties: ['Churchill', 'Storey'],
-    label: 'Carson City FTE — Scheduled',
-    description: 'Planned outreach, not immediate response',
-  },
-  {
-    id: 'pahrump-active',
-    coverageType: 'active',
-    fte: 'Pahrump FTE',
-    counties: ['Nye', 'Clark'],
-    label: 'Pahrump FTE — Active',
-    description: 'Same-day in-person response available',
-  },
-  {
-    id: 'pahrump-scheduled',
-    coverageType: 'scheduled',
-    fte: 'Pahrump FTE',
-    counties: ['Esmeralda'],
-    label: 'Pahrump FTE — Scheduled',
-    description: 'Planned outreach, not immediate response',
-  },
-  {
-    id: 'remote',
-    coverageType: 'remote',
-    fte: 'Remote Team',
-    counties: ['Humboldt', 'Pershing', 'Lander', 'Eureka', 'Elko', 'White Pine', 'Mineral', 'Lincoln'],
-    label: 'Remote Coverage',
-    description: 'Telephonic/virtual coordination only',
-  },
-];
-
-/** Look up the operational zone for a given county */
-export function getOperationalZone(countyName: string): OperationalZone | undefined {
-  return operationalZones.find(z => z.counties.includes(countyName));
-}
-
-/** Build a county→zone lookup map */
-export const COUNTY_OPERATIONAL_MAP = new Map<string, OperationalZone>(
-  operationalZones.flatMap(z => z.counties.map(c => [c, z] as [string, OperationalZone]))
-);
+export const PRIMARY_RESPONSE_LABELS: Record<CoverageType, string> = {
+  active: 'Field (Same-day)',
+  scheduled: 'Scheduled Field',
+  remote: 'Remote Coordination',
+};

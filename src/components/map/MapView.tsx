@@ -428,73 +428,49 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.memberVolume, coverageGaps]);
 
-  // ── Operational Coverage Model layer ──
+  // ── Operational Coverage Model layer (FTE-centered drive-time zones) ──
   useEffect(() => {
     if (!operationalCoverageRef.current) return;
     operationalCoverageRef.current.clearLayers();
 
     if (!layers.operationalCoverage) return;
 
-    const nevadaClip = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: nevadaBoundaryGeoJSON,
-    };
+    const activeZone = getActiveCoverageZone();
+    if (!activeZone) return;
 
-    operationalZones.forEach(zone => {
-      const zoneCounties = nevadaCounties.filter(c => zone.counties.includes(c.name));
-      if (zoneCounties.length === 0) return;
-
-      const merged = mergePolygons(zoneCounties.map(c => c.boundaries));
-      if (!merged) return;
-
-      const clipped = clipPolygon(merged, nevadaClip as any);
-      if (!clipped) return;
-
-      // Visual styles per coverage type
-      let fillColor: string;
-      let borderColor: string;
-      let weight: number;
-      let dashArray: string | undefined;
-      let fillOpacity: number;
-
-      switch (zone.coverageType) {
-        case 'active':
-          fillColor = 'hsla(174, 50%, 45%, 0.14)';
-          borderColor = 'hsla(174, 50%, 40%, 0.30)';
-          weight = 1.5;
-          dashArray = undefined;
-          fillOpacity = 1;
-          break;
-        case 'scheduled':
-          fillColor = 'hsla(174, 40%, 55%, 0.07)';
-          borderColor = 'hsla(174, 40%, 50%, 0.22)';
-          weight = 1.5;
-          dashArray = '8 5';
-          fillOpacity = 1;
-          break;
-        case 'remote':
-          fillColor = 'hsla(220, 10%, 70%, 0.05)';
-          borderColor = 'hsla(220, 10%, 60%, 0.12)';
-          weight = 1;
-          dashArray = '3 4';
-          fillOpacity = 1;
-          break;
-      }
-
-      const geoLayer = L.geoJSON(clipped, {
-        style: {
-          color: borderColor,
-          weight,
-          fillColor,
-          fillOpacity,
-          dashArray,
-        },
-        interactive: false,
-      });
-
-      operationalCoverageRef.current!.addLayer(geoLayer);
+    // Active field coverage — continuous merged zone from all field FTEs
+    const activeLayer = L.geoJSON(activeZone, {
+      style: {
+        color: 'hsla(174, 50%, 40%, 0.30)',
+        weight: 1.5,
+        fillColor: 'hsla(174, 50%, 45%, 0.14)',
+        fillOpacity: 1,
+      },
+      interactive: false,
     });
+    operationalCoverageRef.current.addLayer(activeLayer);
+
+    // Scheduled outreach zone — Nevada minus active coverage
+    try {
+      const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const fc = featureCollection([nevadaFeat, activeZone]);
+      const scheduled = difference(fc as any);
+      if (scheduled) {
+        const scheduledLayer = L.geoJSON(scheduled as any, {
+          style: {
+            color: 'hsla(174, 40%, 50%, 0.22)',
+            weight: 1.5,
+            fillColor: 'hsla(174, 40%, 55%, 0.07)',
+            fillOpacity: 1,
+            dashArray: '8 5',
+          },
+          interactive: false,
+        });
+        operationalCoverageRef.current.addLayer(scheduledLayer);
+      }
+    } catch (e) {
+      console.error('Scheduled zone computation error:', e);
+    }
   }, [layers.operationalCoverage]);
 
   // ── FTE Capacity hub indicators ──
