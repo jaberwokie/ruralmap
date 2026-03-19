@@ -57,6 +57,8 @@ export interface CountyUtilization {
   engagementGap: boolean;
   /** Watchlist: moderate utilization without engagement support */
   engagementWatchlist: boolean;
+  /** Early Signal: emerging utilization without engagement support */
+  engagementEarlySignal: boolean;
 }
 
 // Counties with CCC/CHW/field engagement presence (based on FTE field assignments)
@@ -109,10 +111,11 @@ export function getCountyUtilization(county: string): CountyUtilization {
   const topProviders = providerList.sort((a, b) => b.visits - a.visits).slice(0, 3);
   const hasEngagement = countyHasEngagementSupport(county);
 
-  // Engagement gap / watchlist (county-level; Washoe sub-county handled separately)
+  // Engagement gap / watchlist / early signal (county-level; Washoe sub-county handled separately)
   const isExcluded = ENGAGEMENT_GAP_EXCLUDED_COUNTIES.has(county);
   const engagementGap = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 15 && !hasEngagement;
   const engagementWatchlist = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 10 && avgVisitsPerMember <= 15 && !hasEngagement;
+  const engagementEarlySignal = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 6 && avgVisitsPerMember <= 10 && !hasEngagement;
 
   const operationalRead = computeOperationalRead(avgVisitsPerMember, activeProviderCount, hasEngagement);
 
@@ -126,6 +129,7 @@ export function getCountyUtilization(county: string): CountyUtilization {
     operationalRead,
     engagementGap,
     engagementWatchlist,
+    engagementEarlySignal,
   };
   _countyUtilCache.set(county, result);
   return result;
@@ -168,7 +172,7 @@ export function isTopProvider(name: string): boolean {
 }
 
 // ── Engagement gap counties ──
-export type EngagementGapTier = 'gap' | 'watchlist';
+export type EngagementGapTier = 'gap' | 'watchlist' | 'early-signal';
 
 export interface EngagementGapResult {
   county: string;
@@ -194,6 +198,14 @@ function getNorthernWashoeUtilization(): { avgVpm: number; hasEngagement: boolea
   return { avgVpm, hasEngagement };
 }
 
+function classifyEngagementTier(avgVpm: number, hasEngagement: boolean): EngagementGapTier | null {
+  if (hasEngagement) return null;
+  if (avgVpm > 15) return 'gap';
+  if (avgVpm > 10) return 'watchlist';
+  if (avgVpm > 6) return 'early-signal';
+  return null;
+}
+
 export function getEngagementGapCounties(): string[] {
   return getEngagementGapResults().filter(r => r.tier === 'gap').map(r => r.county);
 }
@@ -206,13 +218,9 @@ export function getEngagementGapResults(): EngagementGapResult[] {
     if (ENGAGEMENT_GAP_EXCLUDED_COUNTIES.has(county)) continue;
 
     if (county === 'Washoe') {
-      // Sub-county: only Northern Washoe
       const { avgVpm, hasEngagement } = getNorthernWashoeUtilization();
-      if (avgVpm > 15 && !hasEngagement) {
-        results.push({ county: 'Washoe', tier: 'gap', subZone: 'northern-washoe' });
-      } else if (avgVpm > 10 && !hasEngagement) {
-        results.push({ county: 'Washoe', tier: 'watchlist', subZone: 'northern-washoe' });
-      }
+      const tier = classifyEngagementTier(avgVpm, hasEngagement);
+      if (tier) results.push({ county: 'Washoe', tier, subZone: 'northern-washoe' });
       continue;
     }
 
@@ -221,6 +229,8 @@ export function getEngagementGapResults(): EngagementGapResult[] {
       results.push({ county, tier: 'gap' });
     } else if (util.engagementWatchlist) {
       results.push({ county, tier: 'watchlist' });
+    } else if (util.engagementEarlySignal) {
+      results.push({ county, tier: 'early-signal' });
     }
   }
 
