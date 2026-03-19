@@ -10,7 +10,6 @@ import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 interface LayerState {
   counties: boolean;
   serviceLocations: boolean;
-  memberVolume: boolean;
   ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
