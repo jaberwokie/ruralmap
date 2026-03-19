@@ -560,9 +560,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     const results = getEngagementGapResults();
 
-    const TIER_STYLES: Record<string, { color: string; icon: string; title: string }> = {
-      gap:       { color: 'hsl(30, 90%, 50%)',  icon: '⚠', title: 'Engagement Gap: High utilization, no field support' },
-      watchlist: { color: 'hsl(48, 90%, 50%)',  icon: '⚡', title: 'Watchlist: Moderate utilization, no field support' },
+    const TIER_STYLES: Record<string, { color: string; fill: string; fillOpacity: number; weight: number; dash: string; icon: string; title: string }> = {
+      gap:            { color: 'hsl(30, 90%, 50%)',  fill: 'transparent',            fillOpacity: 0,    weight: 2.5, dash: '6 3', icon: '⚠', title: 'Engagement Gap: High utilization, no field support' },
+      watchlist:      { color: 'hsl(48, 90%, 50%)',  fill: 'hsla(48, 90%, 50%, 0.08)', fillOpacity: 0.08, weight: 2.5, dash: '4 4', icon: '⚡', title: 'Watchlist: Moderate utilization, no field support' },
+      'early-signal': { color: 'hsl(200, 70%, 55%)', fill: 'hsla(200, 70%, 55%, 0.06)', fillOpacity: 0.06, weight: 1.5, dash: '3 3', icon: '◈', title: 'Early Signal: Emerging utilization, no field support' },
     };
 
     results.forEach((result: EngagementGapResult) => {
@@ -572,10 +573,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       let geoJson: any;
 
       if (result.subZone === 'northern-washoe') {
-        // Clip Washoe polygon to only the area north of the urban/rural latitude threshold
         const merged = mergePolygons([county.boundaries]);
         if (!merged) return;
-        // Create a clipping rectangle: west/east of Nevada, from threshold north
         const clipNorth = {
           type: "Feature" as const,
           properties: {},
@@ -599,14 +598,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       }
       if (!geoJson) return;
 
-      const style = TIER_STYLES[result.tier];
+      const s = TIER_STYLES[result.tier];
       const geoLayer = L.geoJSON(geoJson, {
         style: {
-          color: style.color,
-          weight: 2.5,
-          fillColor: result.tier === 'watchlist' ? 'hsla(48, 90%, 50%, 0.08)' : 'transparent',
-          fillOpacity: result.tier === 'watchlist' ? 0.08 : 0,
-          dashArray: result.tier === 'watchlist' ? '4 4' : '6 3',
+          color: s.color,
+          weight: s.weight,
+          fillColor: s.fill,
+          fillOpacity: s.fillOpacity,
+          dashArray: s.dash,
         },
         interactive: false,
       });
