@@ -21,7 +21,6 @@ interface MapViewProps {
   layers: {
     counties: boolean;
     serviceLocations: boolean;
-    ruralServices: boolean;
     operationalCoverage: boolean;
     fteCapacity: boolean;
     utilizationIntensity: boolean;
