@@ -693,7 +693,6 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
-  const memberCount = volumeMap.get(county) ?? 0;
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   return (
