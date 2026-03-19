@@ -5,7 +5,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
-import { getCountyCoverageBreakdown } from '@/utils/coverageZones';
+import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
@@ -79,7 +79,7 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
     <>
       <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-2 py-1.5 mb-2">
         <AlertTriangle className="w-3.5 h-3.5 text-destructive flex-shrink-0" />
-        <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 50 km</span>
+        <span className="text-[11px] font-semibold text-destructive">No hospital coverage within 31 mi</span>
       </div>
       {serviceCount > 0 && (
         <div className="flex items-center gap-1.5 rounded-md border border-border bg-secondary px-2 py-1.5 mb-2">
@@ -542,7 +542,7 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
     </div>
     <p className="text-sm font-semibold text-foreground mb-2">Service Gap Detected</p>
     <div className="text-xs text-muted-foreground space-y-1">
-      <p>No hospital or clinic within <strong>{radiusKm} km</strong> of this area.</p>
+      <p>No hospital or clinic within <strong>{kmToMiles(radiusKm)} mi</strong> of this area.</p>
       <p className="italic">This region may have limited access to emergency and primary care services.</p>
     </div>
   </>

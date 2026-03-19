@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
+import { kmToMiles } from '@/utils/coverageZones';
 
 interface LayerState {
   counties: boolean;
@@ -420,7 +421,9 @@ const Sidebar = ({
                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Drive-Time Threshold</span>
-                      <span className="text-[11px] font-bold text-foreground tabular-nums">~{Math.round((coverageRadiusKm / 80) * 60)} min</span>
+                      <span className="text-[11px] font-bold text-foreground tabular-nums">
+                        ~{Math.round((coverageRadiusKm / 80) * 60)} min (~{kmToMiles(coverageRadiusKm)} mi)
+                      </span>
                     </div>
                     <input
                       type="range"
@@ -432,14 +435,14 @@ const Sidebar = ({
                       className="w-full h-1.5 accent-teal-600 cursor-pointer"
                     />
                     <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                      <span>~30 min</span>
-                      <span>~150 min</span>
+                      <span>~30 min (~25 mi)</span>
+                      <span>~150 min (~124 mi)</span>
                     </div>
                   </div>
                   {[
                     {
                       label: 'Active Field Coverage',
-                      description: 'Within 75–90 min drive from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.',
+                      description: 'Within 75–90 min drive (~60–85 mi) from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.',
                       color: 'hsl(190, 70%, 37%)',
                       style: 'solid' as const,
                     },
@@ -555,7 +558,7 @@ const Sidebar = ({
             >
               <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
               <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Coverage Radius ({radiusKm} km)
+                Coverage Radius ({kmToMiles(radiusKm)} mi)
               </span>
               <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
                 <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
@@ -573,8 +576,8 @@ const Sidebar = ({
                   className="w-full h-1 accent-primary cursor-pointer"
                 />
                 <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
-                  <span>10 km</span>
-                  <span>150 km</span>
+                  <span>6 mi</span>
+                  <span>93 mi</span>
                 </div>
               </div>
             )}
@@ -596,11 +599,11 @@ const Sidebar = ({
             </button>
             {coverageGaps && (
               <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
-                Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{radiusKm} km</span>.
+                Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
               </p>
             )}
             <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">
-              Gaps use the radius setting ({radiusKm} km) independently of the radius overlay.
+              Gaps use the radius setting ({kmToMiles(radiusKm)} mi) independently of the radius overlay.
             </p>
           </div>
         </div>
