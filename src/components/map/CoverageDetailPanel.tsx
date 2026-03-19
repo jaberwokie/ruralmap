@@ -585,17 +585,12 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
     );
   }
 
-  const totalLoad = serving.reduce((s, f) => s + f.currentLoad, 0);
-  const totalCapacity = serving.reduce((s, f) => s + f.capacity, 0);
-  const ratio = totalCapacity > 0 ? totalLoad / totalCapacity : 0;
-  const status: LoadStatus = ratio >= 1 ? 'over' : ratio >= 0.7 ? 'near' : 'available';
-  const statusColors = LOAD_STATUS_COLORS[status];
   const hasField = serving.some(f => f.hubLocation !== null);
   const hasRemote = serving.some(f => f.hubLocation === null);
   const coverageType = hasField && hasRemote ? 'Mixed' : hasField ? 'In-person available' : 'Remote only';
 
   return (
-    <div className={`rounded-md border px-2 py-1.5 mb-2 ${statusColors.bg} border-border`}>
+    <div className="rounded-md border px-2 py-1.5 mb-2 bg-secondary/50 border-border">
       <div className="flex items-center gap-1.5 mb-1">
         <Users className="w-3 h-3 flex-shrink-0 text-foreground/70" />
         <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Capacity</span>
@@ -606,21 +601,13 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
           <span className="font-semibold text-foreground">{serving.length}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-foreground/80">Combined Capacity</span>
-          <span className="font-semibold text-foreground tabular-nums">{totalLoad} / {totalCapacity} engagements</span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span className="text-foreground/80">Status</span>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors.dot }} />
-            <span className={`font-semibold ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
-          </div>
-        </div>
-        <div className="flex justify-between">
           <span className="text-foreground/80">Coverage Type</span>
           <span className="font-medium text-foreground">{coverageType}</span>
         </div>
       </div>
+      <p className="text-[10px] text-muted-foreground italic mt-1">
+        Detailed engagement capacity counts are not currently available for this county.
+      </p>
       <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-border/50">
         {serving.map(f => {
           const rc = FTE_ROLE_COLORS[f.id];

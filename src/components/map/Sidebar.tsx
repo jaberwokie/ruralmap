@@ -522,8 +522,6 @@ const Sidebar = ({
                   {(() => {
                     const remote = fteCapacityData.find(f => f.hubLocation === null);
                     if (!remote) return null;
-                    const status = getLoadStatus(remote.currentLoad, remote.capacity);
-                    const statusColors = LOAD_STATUS_COLORS[status];
                     const role = FTE_ROLE_COLORS[remote.id];
                     const isRemoteSelected = selectedFteId === remote.id;
                     const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
@@ -536,19 +534,13 @@ const Sidebar = ({
                           <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
                           <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-foreground/70">
-                            {remote.currentLoad} / {remote.capacity} interactions
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statusColors.dot }} />
-                            <span className={`text-[10px] font-semibold ${statusColors.text}`}>{LOAD_STATUS_LABELS[status]}</span>
-                          </div>
-                        </div>
-                        <div className={`text-[10px] italic ${statusColors.text} opacity-70 mt-0.5`}>
-                          {LOAD_STATUS_GUIDANCE[status]}
+                        <div className="text-[10px] text-foreground/70">
+                          Remote Only
                         </div>
                         <div className="text-[9px] text-muted-foreground mt-1">Statewide telephonic and virtual coordination (no in-person response)</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5">
+                          {remote.counties.length} counties served
+                        </div>
                       </button>
                     );
                   })()}
