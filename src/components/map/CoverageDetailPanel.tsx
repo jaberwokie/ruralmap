@@ -90,39 +90,36 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
   );
 };
 
-/** Operational Coverage badge for county-based entities */
-const OperationalCoverageBadge = ({ county }: { county: string }) => {
-  const zone = COUNTY_OPERATIONAL_MAP.get(county);
-  if (!zone) return null;
-
-  const typeColor = zone.coverageType === 'active'
-    ? 'bg-teal-100 text-teal-800 border-teal-200'
-    : zone.coverageType === 'scheduled'
-    ? 'bg-teal-50 text-teal-700 border-teal-100'
-    : 'bg-muted text-muted-foreground border-border';
+/** Coverage Breakdown badge for county-based entities (FTE drive-time model) */
+const CoverageBreakdownBadge = ({ county }: { county: string }) => {
+  const breakdown = getCountyCoverageBreakdown(county);
 
   return (
-    <div className={`rounded-md border px-2 py-1.5 mb-2 ${typeColor}`}>
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <Radio className="w-3 h-3 flex-shrink-0" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide">Operational Coverage</span>
+    <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 mb-2">
+      <div className="flex items-center gap-1.5 mb-1">
+        <Radio className="w-3 h-3 flex-shrink-0 text-teal-700" />
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-teal-800">Coverage Breakdown</span>
       </div>
-      <div className="text-[11px] font-medium">{COVERAGE_TYPE_LABELS[zone.coverageType]}</div>
-      <div className="flex items-center gap-1 mt-0.5">
-        <Users className="w-3 h-3 flex-shrink-0 opacity-70" />
-        <span className="text-[10px]">{zone.fte}</span>
+      <div className="space-y-0.5">
+        <div className="flex justify-between text-[11px]">
+          <span className="text-teal-700">Active Field Coverage</span>
+          <span className="font-bold text-teal-800">{breakdown.activePercent}%</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-teal-600">Scheduled Outreach</span>
+          <span className="font-bold text-teal-700">{breakdown.scheduledPercent}%</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground">Telehealth / Remote</span>
+          <span className="font-medium text-muted-foreground">100%</span>
+        </div>
       </div>
-      <div className="text-[10px] italic mt-0.5 opacity-80">{COVERAGE_TYPE_DESCRIPTIONS[zone.coverageType]}</div>
-      <div className="flex items-center gap-1 mt-1">
-        <ArrowRight className="w-3 h-3 flex-shrink-0 opacity-70" />
-        <span className="text-[10px] font-medium">
-          {zone.coverageType === 'active'
-            ? 'Field response + placement coordination'
-            : zone.coverageType === 'scheduled'
-            ? 'Remote triage + scheduled field visit'
-            : 'Telephonic coordination + referral navigation'}
-        </span>
-      </div>
+      {breakdown.anchoringFtes.length > 0 && (
+        <div className="flex items-center gap-1 mt-1 pt-1 border-t border-teal-100">
+          <Users className="w-3 h-3 flex-shrink-0 text-teal-600 opacity-70" />
+          <span className="text-[10px] text-teal-700">{breakdown.anchoringFtes.join(', ')}</span>
+        </div>
+      )}
     </div>
   );
 };
