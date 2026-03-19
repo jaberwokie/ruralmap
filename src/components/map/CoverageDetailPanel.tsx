@@ -192,14 +192,14 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 
 
 // ── Renderer per entity type ──
 
-const EntityContent = ({ entity }: { entity: MapEntity }) => {
+const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; coverageRadiusKm: number }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
     case 'facility': return <FacilityContent facility={entity.facility} />;
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
-    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} />;
-    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} />;
+    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     default: return null;
   }
