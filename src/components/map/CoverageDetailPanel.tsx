@@ -622,6 +622,72 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
   );
 };
 
+/** Local Resources section — rural services for a county */
+const LocalResourcesSection = ({ county }: { county: string }) => {
+  const services = useMemo(() => ruralServices.filter(s => s.county === county), [county]);
+
+  if (services.length === 0) {
+    return (
+      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Local Resources</div>
+        <p className="text-[11px] text-muted-foreground italic">No known community resources mapped for this county.</p>
+      </div>
+    );
+  }
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, RuralService[]>();
+    services.forEach(s => {
+      const list = map.get(s.category) ?? [];
+      list.push(s);
+      map.set(s.category, list);
+    });
+    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
+  }, [services]);
+
+  return (
+    <div className="rounded-md border border-border bg-secondary/30 px-2 py-1.5 mb-2">
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Local Resources</span>
+        <span className="text-[10px] font-semibold text-foreground tabular-nums">{services.length}</span>
+      </div>
+      <div className="space-y-0.5 mb-1.5">
+        {grouped.map(([category, items]) => (
+          <div key={category} className="flex items-center justify-between text-[11px]">
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+              {category}
+            </span>
+            <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
+          </div>
+        ))}
+      </div>
+      <div className="space-y-1 max-h-32 overflow-y-auto">
+        {services.slice(0, 10).map(service => (
+          <div key={service.id} className="flex items-start justify-between gap-1">
+            <div className="min-w-0">
+              <div className="text-[10px] font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+              {service.city && <div className="text-[9px] text-muted-foreground">{service.city}</div>}
+            </div>
+            {service.phone && (
+              <a
+                href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
+                className="flex-shrink-0 p-0.5 rounded hover:bg-secondary text-primary"
+                title={service.phone}
+                onClick={e => e.stopPropagation()}
+              >
+                <Phone className="w-2.5 h-2.5" />
+              </a>
+            )}
+          </div>
+        ))}
+        {services.length > 10 && (
+          <p className="text-[9px] text-muted-foreground italic">+ {services.length - 10} more resources</p>
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
   const countyData = nevadaCounties.find(c => c.name === county);
