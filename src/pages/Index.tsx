@@ -230,6 +230,7 @@ const Index = () => {
           onClear={handleClearEntity}
           coverageRadiusKm={coverageRadiusKm}
           memberVolumeLayerOn={layers.memberVolume}
+          activeHelp={activeHelp}
         />
       </div>
     </div>
