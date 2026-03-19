@@ -168,9 +168,63 @@ export function isTopProvider(name: string): boolean {
 }
 
 // ── Engagement gap counties ──
+export type EngagementGapTier = 'gap' | 'watchlist';
+
+export interface EngagementGapResult {
+  county: string;
+  tier: EngagementGapTier;
+  /** For Washoe sub-county: only Northern Washoe qualifies */
+  subZone?: 'northern-washoe';
+}
+
+/** Northern Washoe utilization computed from facilities north of the latitude split */
+function getNorthernWashoeUtilization(): { avgVpm: number; hasEngagement: boolean } {
+  const northFacs = defaultFacilities.filter(f => isNorthernWashoe(f));
+  let totalMembers = 0;
+  let totalVisits = 0;
+  northFacs.forEach(f => {
+    const util = getFacilityUtilization(f);
+    if (util) {
+      totalMembers += util.totalMembers;
+      totalVisits += util.totalVisits;
+    }
+  });
+  const avgVpm = totalMembers > 0 ? totalVisits / totalMembers : 0;
+  const hasEngagement = countyHasEngagementSupport('Washoe');
+  return { avgVpm, hasEngagement };
+}
+
 export function getEngagementGapCounties(): string[] {
+  return getEngagementGapResults().filter(r => r.tier === 'gap').map(r => r.county);
+}
+
+export function getEngagementGapResults(): EngagementGapResult[] {
+  const results: EngagementGapResult[] = [];
   const allCounties = new Set(defaultFacilities.map(f => f.county));
-  return Array.from(allCounties).filter(c => getCountyUtilization(c).engagementGap);
+
+  for (const county of allCounties) {
+    if (ENGAGEMENT_GAP_EXCLUDED_COUNTIES.has(county)) continue;
+
+    if (county === 'Washoe') {
+      // Sub-county: only Northern Washoe
+      const { avgVpm, hasEngagement } = getNorthernWashoeUtilization();
+      if (avgVpm > 15 && !hasEngagement) {
+        results.push({ county: 'Washoe', tier: 'gap', subZone: 'northern-washoe' });
+      } else if (avgVpm > 10 && !hasEngagement) {
+        results.push({ county: 'Washoe', tier: 'watchlist', subZone: 'northern-washoe' });
+      }
+      continue;
+    }
+
+    const util = getCountyUtilization(county);
+    if (util.engagementGap) {
+      results.push({ county, tier: 'gap' });
+    } else if (util.engagementWatchlist) {
+      results.push({ county, tier: 'watchlist' });
+    }
+  }
+
+  return results;
 }
 
 // ── Pin size scaling ──
