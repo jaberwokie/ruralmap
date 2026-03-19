@@ -3,7 +3,6 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
-import { memberVolumeData } from '@/data/member-volume';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { RuralService } from '@/data/rural-services';
