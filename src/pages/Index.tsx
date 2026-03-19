@@ -14,6 +14,8 @@ interface LayerState {
   ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
+  utilizationIntensity: boolean;
+  engagementGap: boolean;
 }
 
 export interface Filters {
@@ -31,6 +33,7 @@ const Index = () => {
   const [coverageRadiusKm, setCoverageRadiusKm] = useState(ACTIVE_COVERAGE_RADIUS_KM);
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [topProvidersOnly, setTopProvidersOnly] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     serviceLocations: true,
@@ -38,6 +41,8 @@ const Index = () => {
     ruralServices: false,
     operationalCoverage: false,
     fteCapacity: false,
+    utilizationIntensity: false,
+    engagementGap: false,
   });
 
   // ── Unified detail panel state ──
@@ -182,6 +187,8 @@ const Index = () => {
           onFteCardClick={handleFteCardClick}
           coverageRadiusKm={coverageRadiusKm}
           onCoverageRadiusKmChange={setCoverageRadiusKm}
+          topProvidersOnly={topProvidersOnly}
+          onTopProvidersOnlyChange={setTopProvidersOnly}
         />
       </div>
 
@@ -202,6 +209,7 @@ const Index = () => {
           onFteHubClick={handleFteHubClick}
           selectedFteId={activeFteId}
           coverageRadiusKm={coverageRadiusKm}
+          topProvidersOnly={topProvidersOnly}
         />
         <CoverageDetailPanel
           entity={lockedEntity}

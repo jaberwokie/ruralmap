@@ -10,6 +10,7 @@ import { RuralService } from '@/data/rural-services';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone } from '@/utils/coverageZones';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_COLORS, FTE_ROLE_COLORS } from '@/data/fte-capacity';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties } from '@/utils/utilizationAggregation';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -25,6 +26,8 @@ interface MapViewProps {
     ruralServices: boolean;
     operationalCoverage: boolean;
     fteCapacity: boolean;
+    utilizationIntensity: boolean;
+    engagementGap: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   onMapClick?: () => void;
@@ -39,6 +42,7 @@ interface MapViewProps {
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
   coverageRadiusKm?: number;
+  topProvidersOnly?: boolean;
 }
 
 // Haversine distance in km
@@ -55,7 +59,7 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
 
-const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120 }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, ruralServices: ruralServicesData, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -68,6 +72,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const ruralServicesRef = useRef<L.LayerGroup | null>(null);
   const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
+  const utilizationRef = useRef<L.LayerGroup | null>(null);
+  const engagementGapRef = useRef<L.LayerGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
@@ -108,8 +114,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     // Create layers in visual stacking order (bottom to top)
     stateBoundaryRef.current = L.layerGroup().addTo(map);       // 0. State boundary
     memberVolumeRef.current = L.layerGroup().addTo(map);        // 1. Member volume
+    utilizationRef.current = L.layerGroup().addTo(map);         // 1.3 Utilization intensity
     operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
     countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
+    engagementGapRef.current = L.layerGroup().addTo(map);       // 3. Engagement gap outlines
     labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
@@ -272,9 +280,14 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     if (!layers.serviceLocations) return;
 
+    const showUtilization = layers.utilizationIntensity;
     const locationCounts = new Map<string, number>();
 
-    filteredFacilities.forEach(facility => {
+    const visibleFacilities = topProvidersOnly
+      ? filteredFacilities.filter(f => isTopProvider(f.name))
+      : filteredFacilities;
+
+    visibleFacilities.forEach(facility => {
       const key = `${facility.lat.toFixed(4)},${facility.lng.toFixed(4)}`;
       const count = locationCounts.get(key) ?? 0;
       locationCounts.set(key, count + 1);
@@ -282,13 +295,15 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const offsetLng = count * 0.003;
 
       const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
+      const util = getFacilityUtilization(facility);
+      const scaledSize = showUtilization && util ? getScaledPinSize(pin.size, util.totalVisits) : pin.size;
 
       const isHospital = facility.type === 'hospital';
       const isDiamond = pin.shape === 'diamond';
       const markerHtml = isDiamond
         ? `<div style="
-            width: ${pin.size}px;
-            height: ${pin.size}px;
+            width: ${scaledSize}px;
+            height: ${scaledSize}px;
             background: ${pin.bg};
             border: 2px solid white;
             box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35);
@@ -297,8 +312,8 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
             transition: background 150ms ease;
           " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`
         : `<div style="
-            width: ${pin.size}px;
-            height: ${pin.size}px;
+            width: ${scaledSize}px;
+            height: ${scaledSize}px;
             border-radius: 50%;
             background: ${pin.bg};
             border: 2px solid white;
@@ -310,19 +325,26 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       const icon = L.divIcon({
         className: '',
         html: markerHtml,
-        iconSize: [pin.size, pin.size],
-        iconAnchor: [pin.size / 2, pin.size / 2],
+        iconSize: [scaledSize, scaledSize],
+        iconAnchor: [scaledSize / 2, scaledSize / 2],
       });
 
       const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], { icon });
       marker.on('click', () => onFacilityClick(facility));
 
       const typeLabel = facility.type === 'tier1' ? 'Tier 1 Provider' : facility.type === 'hospital' ? 'Hospital' : 'Clinic';
+      const utilHtml = showUtilization && util
+        ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
+            <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
+            <div>Visits/Member: ${util.visitsPerMember} · Rank #${util.rank}</div>
+          </div>`
+        : '';
       const tooltipContent = `
         <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
           <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
+          ${utilHtml}
         </div>
       `;
       marker.bindTooltip(tooltipContent, {
@@ -333,7 +355,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
       markersRef.current!.addLayer(marker);
     });
-  }, [filteredFacilities, layers.serviceLocations, onFacilityClick]);
+  }, [filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
@@ -519,6 +541,79 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.fteCapacity, selectedFteId]);
 
+
+  // ── Utilization Intensity choropleth (purple ramp) ──
+  useEffect(() => {
+    if (!utilizationRef.current) return;
+    utilizationRef.current.clearLayers();
+    if (!layers.utilizationIntensity) return;
+
+    nevadaCounties.forEach(county => {
+      const util = getCountyUtilization(county.name);
+      const tier = getUtilizationTier(util.avgVisitsPerMember);
+      const colors = UTILIZATION_COLORS[tier];
+
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: colors.border,
+          weight: 1,
+          fillColor: colors.fill,
+          fillOpacity: 1,
+        },
+      });
+      geoLayer.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
+      });
+      utilizationRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.utilizationIntensity]);
+
+  // ── Engagement Gap county outlines (orange) ──
+  useEffect(() => {
+    if (!engagementGapRef.current) return;
+    engagementGapRef.current.clearLayers();
+    if (!layers.engagementGap) return;
+
+    const gapCounties = getEngagementGapCounties();
+
+    nevadaCounties.forEach(county => {
+      if (!gapCounties.includes(county.name)) return;
+
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: 'hsl(30, 90%, 50%)',
+          weight: 2.5,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          dashArray: '6 3',
+        },
+        interactive: false,
+      });
+      engagementGapRef.current!.addLayer(geoLayer);
+
+      // Warning icon at county center
+      const warnIcon = L.divIcon({
+        className: '',
+        html: `<div style="font-size:14px;text-shadow:0 0 3px white,0 0 3px white;" title="Engagement Gap: High utilization, no field support">⚠</div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      L.marker(county.center, { icon: warnIcon, interactive: false }).addTo(engagementGapRef.current!);
+    });
+  }, [layers.engagementGap]);
 
   const zoomRef = useRef(7);
   useEffect(() => {

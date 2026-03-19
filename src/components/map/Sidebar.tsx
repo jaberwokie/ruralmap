@@ -14,6 +14,8 @@ interface LayerState {
   ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
+  utilizationIntensity: boolean;
+  engagementGap: boolean;
 }
 
 interface SidebarProps {
@@ -37,6 +39,8 @@ interface SidebarProps {
   onFteCardClick?: (fteId: string) => void;
   coverageRadiusKm?: number;
   onCoverageRadiusKmChange?: (km: number) => void;
+  topProvidersOnly: boolean;
+  onTopProvidersOnlyChange: (checked: boolean) => void;
 }
 
 const LAYER_CONFIG = [
@@ -46,6 +50,8 @@ const LAYER_CONFIG = [
   { key: 'ruralServices' as const, label: 'Rural Services (Resource Guide)', color: 'bg-slate-500' },
   { key: 'operationalCoverage' as const, label: 'Operational Coverage Model', color: 'bg-teal-600' },
   { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
+  { key: 'utilizationIntensity' as const, label: 'Utilization Intensity', color: 'bg-purple-500' },
+  { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-orange-500' },
 ];
 
 const Sidebar = ({
@@ -69,6 +75,8 @@ const Sidebar = ({
   onFteCardClick,
   coverageRadiusKm = 120,
   onCoverageRadiusKmChange,
+  topProvidersOnly,
+  onTopProvidersOnlyChange,
 }: SidebarProps) => {
   const [facilitiesOpen, setFacilitiesOpen] = useState(true);
   const [csvOpen, setCsvOpen] = useState(false);
@@ -545,6 +553,42 @@ const Sidebar = ({
                       </button>
                     );
                   })()}
+                </div>
+              )}
+              {key === 'utilizationIntensity' && layers.utilizationIntensity && (
+                <div className="px-2 pb-2 pt-1.5 space-y-1.5">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    County shading by avg visits per member. Purple ramp — darker = higher utilization.
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex-1 h-2.5 rounded-sm" style={{
+                      background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))'
+                    }} />
+                  </div>
+                  <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                    <span>Low (&lt;10)</span>
+                    <span>Mod (10–18)</span>
+                    <span>High (&gt;18)</span>
+                  </div>
+                  {/* Top Providers Only toggle */}
+                  <button
+                    onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)}
+                    className="w-full flex items-center gap-2 px-1 py-1 rounded text-[11px] transition-colors duration-200 hover:bg-secondary mt-1"
+                  >
+                    <div className={`w-6 h-3.5 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-purple-600' : 'bg-input'} relative`}>
+                      <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
+                    </div>
+                    <span className={`${topProvidersOnly ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                      Top Providers Only (Top 20)
+                    </span>
+                  </button>
+                </div>
+              )}
+              {key === 'engagementGap' && layers.engagementGap && (
+                <div className="px-2 pb-2 pt-1 space-y-1">
+                  <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    Orange outline on counties with avg visits/member &gt;15 and no field engagement support.
+                  </p>
                 </div>
               )}
             </div>
