@@ -407,18 +407,28 @@ const Sidebar = ({
         <div className="space-y-1">
           {LAYER_CONFIG.map(({ key, label, color }) => (
             <div key={key}>
-              <button
-                onClick={() => onToggleLayer(key)}
-                className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-              >
-                <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
-                  {label}
+              <div className="flex items-center">
+                <button
+                  onClick={() => onToggleLayer(key)}
+                  className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+                >
+                  <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                  <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>
+                    {label}
+                  </span>
+                  <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
+                    <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+                  </div>
+                </button>
+                <span
+                  className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                  onMouseEnter={() => onHelpEnter?.(key)}
+                  onMouseLeave={() => onHelpLeave?.()}
+                  onTouchStart={() => onHelpEnter?.(key)}
+                >
+                  <HelpCircle className="w-3 h-3" />
                 </span>
-                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
-                </div>
-              </button>
+              </div>
               {key === 'memberVolume' && layers.memberVolume && (
                 <div className="px-2 pb-1 pt-1 space-y-1.5">
                   <div className="flex items-center gap-1.5">
