@@ -142,20 +142,25 @@ const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; 
 
 /** Capacity Status section for county panel */
 const CapacityStatusSection = ({ county }: { county: string }) => {
-  const fte = COUNTY_FTE_MAP.get(county);
-  if (!fte) return null;
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  if (serving.length === 0) return null;
 
-  const role = FTE_ROLE_COLORS[fte.id];
-  const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
-
+  // Show all assigned FTEs
   return (
-    <div className={`rounded-md border-2 px-2 py-1.5 mb-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Assigned FTE</span>
-      </div>
-      <div className="text-[11px] font-medium text-foreground">{fte.label}</div>
-      <div className="text-[10px] text-muted-foreground mt-0.5">{coverageLabel}</div>
+    <div className="space-y-1.5 mb-2">
+      {serving.map(fte => {
+        const role = FTE_ROLE_COLORS[fte.id];
+        const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
+        return (
+          <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Assigned FTE</span>
+            </div>
+            <div className="text-[11px] font-medium text-foreground">{fte.label} — {coverageLabel}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
