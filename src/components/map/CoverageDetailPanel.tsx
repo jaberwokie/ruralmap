@@ -590,7 +590,7 @@ const RuralServiceGroupContent = ({ county, services }: { county: string; servic
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
-      <OperationalCoverageBadge county={county} />
+      <CoverageBreakdownBadge county={county} />
       <GapContextAlerts county={county} serviceCount={services.length} />
 
       <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
