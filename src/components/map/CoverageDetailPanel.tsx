@@ -1188,6 +1188,8 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={services.length} />
       {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+      <UtilizationEngagementSection county={county} />
+      <UtilizationMetricsCard county={county} />
 
       <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
       <p className="text-[10px] text-muted-foreground mb-3">total services</p>
