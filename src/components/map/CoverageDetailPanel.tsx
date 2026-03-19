@@ -746,7 +746,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 };
 
 // ── Rural Service Group ──
-const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
+const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; services: RuralService[]; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
