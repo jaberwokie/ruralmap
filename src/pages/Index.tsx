@@ -201,6 +201,7 @@ const Index = () => {
           selectedCounty={selectedCounty}
           onFteHubClick={handleFteHubClick}
           selectedFteId={activeFteId}
+          coverageRadiusKm={coverageRadiusKm}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
