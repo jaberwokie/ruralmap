@@ -563,6 +563,104 @@ const UtilizationEngagementSection = ({ county }: { county: string }) => {
           <p className="text-[10px] text-purple-600 italic leading-relaxed mt-1">{interpretation}</p>
         </div>
 
+        {/* ── Provider Network Risk ── */}
+        <div className="pt-1.5 border-t border-purple-100 mt-1.5">
+          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Provider Network Risk</div>
+          <div className="space-y-0.5">
+            <div className="flex justify-between text-[10px]">
+              <span className="text-purple-700">Total Providers</span>
+              <span className="font-bold text-purple-800 tabular-nums">{providers}</span>
+            </div>
+            <div className="flex justify-between text-[10px]">
+              <span className="text-purple-700">Top Provider Share</span>
+              <span className="font-bold text-purple-800 tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
+            </div>
+            <div className="flex justify-between text-[10px]">
+              <span className="text-purple-700">Network Depth</span>
+              <span className={`font-bold ${providers <= 1 ? 'text-red-700' : providers <= 3 ? 'text-amber-700' : 'text-emerald-700'}`}>
+                {providers === 0 ? 'No providers' : providers === 1 ? 'Single point of failure' : providers <= 3 ? 'Limited network depth' : 'Distributed network'}
+              </span>
+            </div>
+            {topProviderShare !== null && topProviderShare > 60 && (
+              <p className="text-[10px] text-orange-600 italic">High dependency on a single provider</p>
+            )}
+          </div>
+        </div>
+
+        {/* ── Access Reality ── */}
+        {(() => {
+          const countyFacs = defaultFacilities.filter(f => f.county === county);
+          const hasInPerson = countyFacs.some(f => f.type === 'hospital' || f.type === 'clinic');
+
+          // Nearest in-person care logic
+          let nearestCare = 'Regional hub access required';
+          if (hasInPerson) {
+            nearestCare = 'Available within county';
+          } else {
+            // Check adjacent counties via facilities
+            const ADJACENT: Record<string, string[]> = {
+              'Esmeralda': ['Nye', 'Mineral'],
+              'Mineral': ['Lyon', 'Churchill', 'Nye', 'Esmeralda'],
+              'Storey': ['Washoe', 'Lyon', 'Carson City'],
+              'Pershing': ['Humboldt', 'Lander', 'Churchill'],
+              'Eureka': ['Lander', 'White Pine', 'Elko'],
+              'Lincoln': ['Nye', 'White Pine', 'Clark'],
+              'Douglas': ['Carson City', 'Lyon', 'Washoe'],
+            };
+            const adj = ADJACENT[county] ?? [];
+            const adjHasProvider = adj.some(c => defaultFacilities.some(f => f.county === c && (f.type === 'hospital' || f.type === 'clinic')));
+            if (adjHasProvider) nearestCare = 'Available in adjacent county';
+          }
+
+          const accessType = hasInPerson ? 'In-person available' : providers > 0 ? 'Telehealth only' : 'Mixed or unknown';
+
+          return (
+            <div className="pt-1.5 border-t border-purple-100 mt-1.5">
+              <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Access Reality</div>
+              <div className="space-y-0.5">
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-purple-700">Access Type</span>
+                  <span className={`font-bold ${hasInPerson ? 'text-emerald-700' : 'text-orange-700'}`}>{accessType}</span>
+                </div>
+                <div className="flex justify-between text-[10px]">
+                  <span className="text-purple-700">Nearest In-Person Care</span>
+                  <span className={`font-bold ${nearestCare === 'Available within county' ? 'text-emerald-700' : nearestCare === 'Available in adjacent county' ? 'text-amber-700' : 'text-red-700'}`}>
+                    {nearestCare}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ── Engagement Signal ── */}
+        <div className="pt-1.5 border-t border-purple-100 mt-1.5">
+          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Engagement Signal</div>
+          <p className="text-[10px] text-purple-700 italic leading-relaxed">
+            {encountersPerMember !== null && encountersPerMember <= 5 && providers > 0
+              ? 'Engagement gap likely (services exist but underutilized)'
+              : mppHigh && epmHigh
+              ? 'High provider strain with active engagement'
+              : !mppHigh && epmHigh
+              ? 'Healthy utilization with available capacity'
+              : 'Low demand or limited engagement'}
+          </p>
+        </div>
+
+        {/* ── Data Confidence ── */}
+        {(() => {
+          const confidence = encounters > 200 && providers >= 3 ? 'High' : (encounters > 50 || providers === 2) ? 'Moderate' : 'Limited';
+          const confColor = confidence === 'High' ? 'text-emerald-700' : confidence === 'Moderate' ? 'text-amber-700' : 'text-red-700';
+          return (
+            <div className="pt-1.5 border-t border-purple-100 mt-1.5">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-purple-600 font-semibold">Data Confidence</span>
+                <span className={`font-bold ${confColor}`}>{confidence}</span>
+              </div>
+            </div>
+          );
+        })()}
+
         <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
           <div className="flex justify-between text-[11px]">
             <span className="text-purple-700">Engagement Support</span>
