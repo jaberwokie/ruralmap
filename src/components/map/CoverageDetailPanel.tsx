@@ -99,6 +99,15 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
 const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
 
+  // Determine if county is remote-only based on FTE assignments
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const hasField = serving.some(f => f.hubLocation !== null);
+  const isRemoteOnly = serving.length === 0 || !hasField;
+
+  // Override breakdown for remote-only counties
+  const activePercent = isRemoteOnly ? 0 : breakdown.activePercent;
+  const scheduledPercent = isRemoteOnly ? 0 : breakdown.scheduledPercent;
+
   return (
     <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 mb-2">
       <div className="flex items-center gap-1.5 mb-1">
@@ -108,12 +117,14 @@ const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; 
       <div className="space-y-0.5">
         <div className="flex justify-between text-[11px]">
           <span className="text-teal-700">Active Field Coverage</span>
-          <span className="font-bold text-teal-800">{breakdown.activePercent}%</span>
+          <span className="font-bold text-teal-800">{activePercent}%</span>
         </div>
-        <div className="flex justify-between text-[11px]">
-          <span className="text-teal-600">Scheduled Outreach</span>
-          <span className="font-bold text-teal-700">{breakdown.scheduledPercent}%</span>
-        </div>
+        {!isRemoteOnly && (
+          <div className="flex justify-between text-[11px]">
+            <span className="text-teal-600">Scheduled Outreach</span>
+            <span className="font-bold text-teal-700">{scheduledPercent}%</span>
+          </div>
+        )}
         <div className="flex justify-between text-[11px]">
           <span className="text-muted-foreground">Telehealth / Remote</span>
           <span className="font-medium text-muted-foreground">100%</span>
