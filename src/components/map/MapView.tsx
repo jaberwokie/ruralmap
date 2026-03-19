@@ -407,45 +407,73 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     }
   }, [facilities, coverageGaps, coverageRadius, radiusKm]);
 
-  // ── Operational Coverage Model layer (FTE-centered drive-time zones) ──
+  // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
   useEffect(() => {
-    if (!operationalCoverageRef.current) return;
+    if (!operationalCoverageRef.current || !coverageGreyRef.current) return;
     operationalCoverageRef.current.clearLayers();
+    coverageGreyRef.current.clearLayers();
 
     if (!layers.operationalCoverage) return;
 
     const activeZone = getActiveCoverageZone(coverageRadiusKm);
-    if (!activeZone) return;
+    const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
 
-    // Active field coverage — continuous merged zone from all field FTEs
+    if (!activeZone) {
+      // No active zone — grey out entire state
+      const greyAll = L.geoJSON(nevadaFeat as any, {
+        style: {
+          color: 'transparent',
+          weight: 0,
+          fillColor: 'hsl(220, 10%, 50%)',
+          fillOpacity: 0.30,
+        },
+        interactive: false,
+      });
+      coverageGreyRef.current.addLayer(greyAll);
+      return;
+    }
+
+    // Active field coverage — clear/emphasized (teal tint)
     const activeLayer = L.geoJSON(activeZone, {
       style: {
         color: 'hsla(174, 50%, 40%, 0.30)',
         weight: 1.5,
-        fillColor: 'hsla(174, 50%, 45%, 0.14)',
+        fillColor: 'hsla(174, 50%, 45%, 0.08)',
         fillOpacity: 1,
       },
       interactive: false,
     });
     operationalCoverageRef.current.addLayer(activeLayer);
 
-    // Scheduled outreach zone — Nevada minus active coverage
+    // Scheduled outreach zone — Nevada minus active: partially muted grey
     try {
-      const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
       const fc = featureCollection([nevadaFeat, activeZone]);
       const scheduled = difference(fc as any);
       if (scheduled) {
-        const scheduledLayer = L.geoJSON(scheduled as any, {
+        // Partially muted overlay for scheduled areas (reachable but not same-day)
+        const scheduledGrey = L.geoJSON(scheduled as any, {
+          style: {
+            color: 'transparent',
+            weight: 0,
+            fillColor: 'hsl(220, 10%, 50%)',
+            fillOpacity: 0.18,
+          },
+          interactive: false,
+        });
+        coverageGreyRef.current.addLayer(scheduledGrey);
+
+        // Light dashed outline for scheduled zone
+        const scheduledOutline = L.geoJSON(scheduled as any, {
           style: {
             color: 'hsla(174, 40%, 50%, 0.22)',
             weight: 1.5,
-            fillColor: 'hsla(174, 40%, 55%, 0.07)',
-            fillOpacity: 1,
+            fillColor: 'transparent',
+            fillOpacity: 0,
             dashArray: '8 5',
           },
           interactive: false,
         });
-        operationalCoverageRef.current.addLayer(scheduledLayer);
+        operationalCoverageRef.current.addLayer(scheduledOutline);
       }
     } catch (e) {
       console.error('Scheduled zone computation error:', e);
