@@ -32,7 +32,6 @@ interface MapViewProps {
   radiusKm: number;
   coverageRadius: boolean;
   coverageGaps: boolean;
-  ruralServices?: RuralService[];
   onEntityClick?: (entity: MapEntity | null) => void;
   onEntityHover?: (entity: MapEntity | null) => void;
   selectedCounty?: string | null;

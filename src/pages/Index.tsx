@@ -201,7 +201,6 @@ const Index = () => {
           radiusKm={radiusKm}
           coverageRadius={coverageRadius}
           coverageGaps={coverageGaps}
-          ruralServices={filteredRuralServices}
           onEntityClick={handleEntityClick}
           onEntityHover={handleEntityHover}
           selectedCounty={selectedCounty}
