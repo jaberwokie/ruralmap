@@ -99,6 +99,15 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
 const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
 
+  // Determine if county is remote-only based on FTE assignments
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const hasField = serving.some(f => f.hubLocation !== null);
+  const isRemoteOnly = serving.length === 0 || !hasField;
+
+  // Override breakdown for remote-only counties
+  const activePercent = isRemoteOnly ? 0 : breakdown.activePercent;
+  const scheduledPercent = isRemoteOnly ? 0 : breakdown.scheduledPercent;
+
   return (
     <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 mb-2">
       <div className="flex items-center gap-1.5 mb-1">
@@ -108,12 +117,14 @@ const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; 
       <div className="space-y-0.5">
         <div className="flex justify-between text-[11px]">
           <span className="text-teal-700">Active Field Coverage</span>
-          <span className="font-bold text-teal-800">{breakdown.activePercent}%</span>
+          <span className="font-bold text-teal-800">{activePercent}%</span>
         </div>
-        <div className="flex justify-between text-[11px]">
-          <span className="text-teal-600">Scheduled Outreach</span>
-          <span className="font-bold text-teal-700">{breakdown.scheduledPercent}%</span>
-        </div>
+        {!isRemoteOnly && (
+          <div className="flex justify-between text-[11px]">
+            <span className="text-teal-600">Scheduled Outreach</span>
+            <span className="font-bold text-teal-700">{scheduledPercent}%</span>
+          </div>
+        )}
         <div className="flex justify-between text-[11px]">
           <span className="text-muted-foreground">Telehealth / Remote</span>
           <span className="font-medium text-muted-foreground">100%</span>
@@ -131,20 +142,25 @@ const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; 
 
 /** Capacity Status section for county panel */
 const CapacityStatusSection = ({ county }: { county: string }) => {
-  const fte = COUNTY_FTE_MAP.get(county);
-  if (!fte) return null;
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  if (serving.length === 0) return null;
 
-  const role = FTE_ROLE_COLORS[fte.id];
-  const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
-
+  // Show all assigned FTEs
   return (
-    <div className={`rounded-md border-2 px-2 py-1.5 mb-2 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
-      <div className="flex items-center gap-1.5 mb-0.5">
-        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Assigned FTE</span>
-      </div>
-      <div className="text-[11px] font-medium text-foreground">{fte.label}</div>
-      <div className="text-[10px] text-muted-foreground mt-0.5">{coverageLabel}</div>
+    <div className="space-y-1.5 mb-2">
+      {serving.map(fte => {
+        const role = FTE_ROLE_COLORS[fte.id];
+        const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
+        return (
+          <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Assigned FTE</span>
+            </div>
+            <div className="text-[11px] font-medium text-foreground">{fte.label} — {coverageLabel}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -616,24 +632,23 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
 /** Field Capacity section — aggregates all FTEs serving a county */
 const FieldCapacitySection = ({ county }: { county: string }) => {
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
-  if (serving.length === 0) {
-    return (
-      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Field Capacity</div>
-        <p className="text-[11px] text-muted-foreground italic">No field-based engagement coverage assigned to this county.</p>
-      </div>
-    );
-  }
+
+  // No FTEs at all — hide section
+  if (serving.length === 0) return null;
 
   const hasField = serving.some(f => f.hubLocation !== null);
   const hasRemote = serving.some(f => f.hubLocation === null);
+  const isRemoteOnly = !hasField;
   const coverageType = hasField && hasRemote ? 'Mixed' : hasField ? 'In-person available' : 'Remote only';
+
+  // Remote-only counties: show as "Regional FTE Support" instead of "Field Capacity"
+  const sectionTitle = isRemoteOnly ? 'Regional FTE Support' : 'Field Capacity';
 
   return (
     <div className="rounded-md border px-2 py-1.5 mb-2 bg-secondary/50 border-border">
       <div className="flex items-center gap-1.5 mb-1">
         <Users className="w-3 h-3 flex-shrink-0 text-foreground/70" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Capacity</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">{sectionTitle}</span>
       </div>
       <div className="space-y-0.5 text-[11px]">
         <div className="flex justify-between">
@@ -646,7 +661,9 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
         </div>
       </div>
       <p className="text-[10px] text-muted-foreground italic mt-1">
-        Detailed engagement capacity counts are not currently available for this county.
+        {isRemoteOnly
+          ? 'No locally assigned field staff. Support is coordinated remotely or from regional hubs.'
+          : 'Detailed engagement capacity counts are not currently available for this county.'}
       </p>
       <div className="flex flex-wrap gap-1 mt-1 pt-1 border-t border-border/50">
         {serving.map(f => {
@@ -688,18 +705,20 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
   const categoryCount = grouped.length;
   const total = services.length;
 
-  // Resource Strength rating
-  const strength = total >= 13 && categoryCount >= 4 ? 'Strong'
-    : total >= 6 ? 'Moderate'
+  // Resource Strength rating — based on total count + redundancy
+  const categoriesWithRedundancy = grouped.filter(([, items]) => items.length > 1).length;
+  const strength: 'Strong' | 'Moderate' | 'Minimal' =
+    total > 20 && categoriesWithRedundancy >= 3 ? 'Strong'
+    : total >= 10 && categoriesWithRedundancy >= 2 ? 'Moderate'
     : 'Minimal';
 
   const strengthColor = strength === 'Strong' ? 'text-emerald-700' : strength === 'Moderate' ? 'text-amber-700' : 'text-orange-700';
   const strengthBg = strength === 'Strong' ? 'bg-emerald-50 border-emerald-200' : strength === 'Moderate' ? 'bg-amber-50 border-amber-200' : 'bg-orange-50 border-orange-200';
   const strengthDesc = strength === 'Strong'
-    ? 'Multiple services and categories available to support local stabilization.'
+    ? 'Multiple services and provider options support local stabilization.'
     : strength === 'Moderate'
     ? 'Core services are present with some local stabilization capability.'
-    : 'Basic services exist but are limited in capacity and scope.';
+    : 'Basic services exist but are limited in capacity, access, and redundancy.';
 
   return (
     <div className="rounded-md border border-border bg-secondary/30 px-2 py-1.5 mb-2">
@@ -765,12 +784,14 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       {(() => {
-        const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
-        const label = breakdown.primaryType === 'active'
+        const serving = fteCapacityData.filter(f => f.counties.includes(county));
+        const hasField = serving.some(f => f.hubLocation !== null);
+        const isRemoteOnly = serving.length === 0 || !hasField;
+        const label = isRemoteOnly
+          ? PRIMARY_RESPONSE_LABELS.remote
+          : hasField
           ? PRIMARY_RESPONSE_LABELS.active
-          : breakdown.activePercent > 0
-          ? PRIMARY_RESPONSE_LABELS.scheduled
-          : PRIMARY_RESPONSE_LABELS.remote;
+          : PRIMARY_RESPONSE_LABELS.scheduled;
         return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
       })()}
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
