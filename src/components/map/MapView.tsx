@@ -377,12 +377,17 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
       });
 
-      let mergedCoverage: Feature<Polygon | MultiPolygon> = buffers[0];
-      for (let i = 1; i < buffers.length; i++) {
-        const fc = featureCollection([mergedCoverage, buffers[i]]);
-        const u = union(fc as any);
-        if (u) mergedCoverage = u as Feature<Polygon | MultiPolygon>;
-      }
+      // Union all buffers in one pass to eliminate internal overlap seams.
+      // Fallback keeps every buffer if Turf returns null for non-overlapping sets.
+      const mergedCoverage = (union(featureCollection(buffers) as any) as Feature<Polygon | MultiPolygon> | null)
+        ?? ({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'MultiPolygon',
+            coordinates: buffers.map(b => b.geometry.coordinates),
+          },
+        } as Feature<MultiPolygon>);
 
       const fc = featureCollection([analysisFeature, mergedCoverage]);
       const gapGeometry = difference(fc as any);
@@ -413,7 +418,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     operationalCoverageRef.current.clearLayers();
     coverageGreyRef.current.clearLayers();
 
-    if (!layers.operationalCoverage) return;
+    if (!layers.operationalCoverage || coverageGaps) return;
 
     const activeZone = getActiveCoverageZone(coverageRadiusKm);
     const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
@@ -490,7 +495,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     } catch (e) {
       console.error('Scheduled zone computation error:', e);
     }
-  }, [layers.operationalCoverage, coverageRadiusKm]);
+  }, [layers.operationalCoverage, coverageRadiusKm, coverageGaps]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {
