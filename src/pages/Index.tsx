@@ -86,13 +86,6 @@ const Index = () => {
       });
   }, [facilities, filters]);
 
-  const filteredRuralServices = useMemo(() => {
-    return ruralServices.filter(s => {
-      if (filters.counties.size > 0 && !filters.counties.has(s.county)) return false;
-      if (filters.serviceCategories.size > 0 && !filters.serviceCategories.has(s.category)) return false;
-      return true;
-    });
-  }, [filters]);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
