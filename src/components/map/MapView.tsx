@@ -528,6 +528,79 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   }, [layers.fteCapacity, selectedFteId]);
 
 
+  // ── Utilization Intensity choropleth (purple ramp) ──
+  useEffect(() => {
+    if (!utilizationRef.current) return;
+    utilizationRef.current.clearLayers();
+    if (!layers.utilizationIntensity) return;
+
+    nevadaCounties.forEach(county => {
+      const util = getCountyUtilization(county.name);
+      const tier = getUtilizationTier(util.avgVisitsPerMember);
+      const colors = UTILIZATION_COLORS[tier];
+
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: colors.border,
+          weight: 1,
+          fillColor: colors.fill,
+          fillOpacity: 1,
+        },
+      });
+      geoLayer.on('click', (e: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(e as any);
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
+      });
+      utilizationRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.utilizationIntensity]);
+
+  // ── Engagement Gap county outlines (orange) ──
+  useEffect(() => {
+    if (!engagementGapRef.current) return;
+    engagementGapRef.current.clearLayers();
+    if (!layers.engagementGap) return;
+
+    const gapCounties = getEngagementGapCounties();
+
+    nevadaCounties.forEach(county => {
+      if (!gapCounties.includes(county.name)) return;
+
+      const merged = mergePolygons([county.boundaries]);
+      if (!merged) return;
+      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
+      const clipped = clipPolygon(merged, nevadaClip as any);
+      if (!clipped) return;
+
+      const geoLayer = L.geoJSON(clipped, {
+        style: {
+          color: 'hsl(30, 90%, 50%)',
+          weight: 2.5,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          dashArray: '6 3',
+        },
+        interactive: false,
+      });
+      engagementGapRef.current!.addLayer(geoLayer);
+
+      // Warning icon at county center
+      const warnIcon = L.divIcon({
+        className: '',
+        html: `<div style="font-size:14px;text-shadow:0 0 3px white,0 0 3px white;" title="Engagement Gap: High utilization, no field support">⚠</div>`,
+        iconSize: [16, 16],
+        iconAnchor: [8, 8],
+      });
+      L.marker(county.center, { icon: warnIcon, interactive: false }).addTo(engagementGapRef.current!);
+    });
+  }, [layers.engagementGap]);
+
   const zoomRef = useRef(7);
   useEffect(() => {
     if (!mapRef.current) return;
