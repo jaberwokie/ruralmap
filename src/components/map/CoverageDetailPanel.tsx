@@ -235,11 +235,8 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
   const meta = FTE_META[fteId];
   if (!meta) return null;
 
-  const status = getLoadStatus(fte.currentLoad, fte.capacity);
-  const statusColors = LOAD_STATUS_COLORS[status];
   const roleColors = FTE_ROLE_COLORS[fte.id];
   const Icon = meta.icon;
-  const unit = fteId === 'remote' ? 'interactions' : 'engagements';
 
   return (
     <div className="space-y-2">
@@ -257,17 +254,11 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
         {meta.description}
       </p>
 
-      <div className={`rounded-md border px-2 py-1.5 ${roleColors?.light ?? 'bg-secondary'} ${roleColors?.border ?? 'border-border'}`}>
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Capacity</div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: statusColors.dot }} />
-          <span className={`text-[11px] font-medium ${statusColors.text}`}>
-            {fte.currentLoad} / {fte.capacity} {unit} · <span className="font-semibold">{LOAD_STATUS_LABELS[status]}</span>
-          </span>
-        </div>
-        <div className={`text-[10px] italic ${statusColors.text} opacity-80 mt-0.5`}>
-          {LOAD_STATUS_GUIDANCE[status]}
-        </div>
+      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Operational Status</div>
+        <p className="text-[11px] text-muted-foreground italic">
+          Detailed engagement capacity counts are not currently available.
+        </p>
       </div>
 
       <div className="rounded-md border border-border bg-secondary px-2 py-1.5">
