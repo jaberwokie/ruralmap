@@ -492,17 +492,51 @@ const Sidebar = ({
                       })()}
                     </div>
                   )}
-                  {key === 'engagementGap' && layers.engagementGap && (
-                    <div className="px-2 pb-2 pt-1 space-y-1">
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">
-                        <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (avg visits/member &gt;15, no field support).{' '}
-                        <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15 visits/member, no field support).
-                      </p>
-                      <p className="text-[10px] text-muted-foreground/70 italic leading-relaxed">
-                        Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.
-                      </p>
-                    </div>
-                  )}
+                  {key === 'engagementGap' && layers.engagementGap && (() => {
+                    const { getEngagementGapResults } = require('@/utils/utilizationAggregation');
+                    const results = getEngagementGapResults();
+                    const gapCounties = results.filter((r: any) => r.tier === 'gap');
+                    const watchCounties = results.filter((r: any) => r.tier === 'watchlist');
+                    const earlyCounties = results.filter((r: any) => r.tier === 'early-signal');
+                    const hasAny = results.length > 0;
+
+                    return (
+                      <div className="px-2 pb-2 pt-1 space-y-1.5">
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">
+                          <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (&gt;15 VPM).{' '}
+                          <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15).{' '}
+                          <span className="font-medium" style={{ color: 'hsl(200, 70%, 55%)' }}>Blue</span> = Early Signal (6–10).
+                        </p>
+
+                        {!hasAny && (
+                          <p className="text-[10px] text-muted-foreground/60 italic">No counties currently meet Engagement Gap or Early Signal thresholds.</p>
+                        )}
+
+                        {gapCounties.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold" style={{ color: 'hsl(30, 90%, 50%)' }}>True Gap ({gapCounties.length})</p>
+                            <p className="text-[10px] text-muted-foreground">{gapCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
+                          </div>
+                        )}
+                        {watchCounties.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold" style={{ color: 'hsl(48, 90%, 50%)' }}>Watchlist ({watchCounties.length})</p>
+                            <p className="text-[10px] text-muted-foreground">{watchCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
+                          </div>
+                        )}
+                        {earlyCounties.length > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold" style={{ color: 'hsl(200, 70%, 55%)' }}>Early Signal ({earlyCounties.length})</p>
+                            <p className="text-[10px] text-muted-foreground">{earlyCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
+                          </div>
+                        )}
+
+                        <p className="text-[10px] text-muted-foreground/70 italic leading-relaxed">
+                          Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>

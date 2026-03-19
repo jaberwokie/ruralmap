@@ -617,7 +617,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         : county.center;
       const warnIcon = L.divIcon({
         className: '',
-        html: `<div style="font-size:14px;text-shadow:0 0 3px white,0 0 3px white;" title="${style.title}">${style.icon}</div>`,
+        html: `<div style="font-size:${result.tier === 'early-signal' ? '11' : '14'}px;text-shadow:0 0 3px white,0 0 3px white;" title="${s.title}">${s.icon}</div>`,
         iconSize: [16, 16],
         iconAnchor: [8, 8],
       });
