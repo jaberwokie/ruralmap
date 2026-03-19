@@ -114,8 +114,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     // Create layers in visual stacking order (bottom to top)
     stateBoundaryRef.current = L.layerGroup().addTo(map);       // 0. State boundary
     memberVolumeRef.current = L.layerGroup().addTo(map);        // 1. Member volume
+    utilizationRef.current = L.layerGroup().addTo(map);         // 1.3 Utilization intensity
     operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
     countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
+    engagementGapRef.current = L.layerGroup().addTo(map);       // 3. Engagement gap outlines
     labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
