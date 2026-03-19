@@ -422,38 +422,78 @@ const Sidebar = ({
                       <HelpCircle className="w-3 h-3" />
                     </span>
                   </div>
-                  {key === 'operationalCoverage' && layers.operationalCoverage && (
-                    <div className="px-2 pb-2 pt-1.5 space-y-2">
-                      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Drive-Time Threshold</span>
-                          <span className="text-[11px] font-bold text-foreground tabular-nums">
-                            ~{Math.round((coverageRadiusKm / 80) * 60)} min (~{kmToMiles(coverageRadiusKm)} mi)
-                          </span>
+                  {key === 'operationalCoverage' && layers.operationalCoverage && (() => {
+                    const radius = coverageRadiusKm ?? 120;
+                    // Dynamic county counts
+                    const counts = { active: 0, scheduled: 0, remote: 0 };
+                    nevadaCounties.forEach(c => {
+                      const bd = getCountyCoverageBreakdown(c.name, radius);
+                      if (bd.activePercent >= 50) counts.active++;
+                      else if (bd.activePercent > 0 || bd.anchoringFtes.length > 0) counts.scheduled++;
+                      else counts.remote++;
+                    });
+
+                    return (
+                      <div className="px-2 pb-2 pt-1.5 space-y-2.5">
+                        {/* Summary strip */}
+                        <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                          <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80 mb-1">Field Coverage Status</div>
+                          <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'hsl(174, 50%, 40%)' }} />
+                              <span><span className="font-semibold text-foreground">{counts.active}</span> counties with same-day field response</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'hsl(190, 55%, 50%)' }} />
+                              <span><span className="font-semibold text-foreground">{counts.scheduled}</span> counties with scheduled outreach only</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'hsl(220, 10%, 70%)' }} />
+                              <span><span className="font-semibold text-foreground">{counts.remote}</span> counties with remote-only support</span>
+                            </div>
+                          </div>
                         </div>
-                        <input type="range" min={40} max={200} step={10} value={coverageRadiusKm} onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))} className="w-full h-1.5 accent-teal-600 cursor-pointer" />
-                        <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                          <span>~30 min (~25 mi)</span>
-                          <span>~150 min (~124 mi)</span>
+
+                        {/* Field Response Radius slider */}
+                        <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Response Radius</span>
+                            <span className="text-[11px] font-bold text-foreground tabular-nums">
+                              ~{Math.round((radius / 80) * 60)} min (~{kmToMiles(radius)} mi)
+                            </span>
+                          </div>
+                          <input type="range" min={40} max={200} step={10} value={radius} onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))} className="w-full h-1.5 accent-teal-600 cursor-pointer" />
+                          <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+                            <span>~30 min (~25 mi)</span>
+                            <span>~150 min (~124 mi)</span>
+                          </div>
+                          <p className="text-[9px] text-muted-foreground/70 mt-1 leading-relaxed">Defines the maximum same-day response range from field staff base.</p>
                         </div>
+
+                        {/* Response Capability tiers */}
+                        <div className="space-y-2">
+                          <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
+                          {[
+                            { label: 'Same-Day Field Response Available', desc: 'In-person response within ~75–90 minutes of FTE base.', color: 'hsl(174, 50%, 40%)', opacity: 0.85, style: 'solid' as const },
+                            { label: 'Field Response Available (Planned)', desc: 'In-person visits require scheduling. Not same-day.', color: 'hsl(190, 55%, 50%)', opacity: 0.55, style: 'dashed' as const },
+                            { label: 'Remote Support Only', desc: 'No in-person response. Telephonic and virtual coordination only.', color: 'hsl(220, 10%, 64%)', opacity: 0.35, style: 'dashed' as const },
+                          ].map(({ label: lbl, desc, color: clr, opacity, style }) => (
+                            <div key={lbl} className="flex gap-2">
+                              <div className="flex-shrink-0 mt-0.5">
+                                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: clr, opacity, border: style === 'dashed' ? `1.5px dashed ${clr}` : 'none' }} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-[11px] font-medium text-foreground leading-tight" style={{ opacity }}>{lbl}</div>
+                                <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{desc}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        <p className="text-[9px] text-muted-foreground/60 italic leading-relaxed">Coverage is based on real travel time, not straight-line distance.</p>
                       </div>
-                      {[
-                        { label: 'Active Field Coverage', description: 'Within 75–90 min drive (~60–85 mi) from FTE base. Same-day, in-person response available. Zones are continuous shapes based on realistic travel capability.', color: 'hsl(190, 70%, 37%)', style: 'solid' as const },
-                        { label: 'Scheduled Outreach', description: 'Outside active coverage zone. Planned outreach through scheduled field visits and coordinated engagement.', color: 'hsl(190, 55%, 50%)', style: 'dashed' as const },
-                        { label: 'Telehealth (Universal)', description: 'Telephonic/virtual coordination available statewide regardless of geography.', color: 'hsl(240, 5%, 64%)', style: 'solid' as const },
-                      ].map(({ label: lbl, description, color: clr, style }) => (
-                        <div key={lbl} className="flex gap-2">
-                          <div className="flex-shrink-0 mt-0.5">
-                            <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: clr, opacity: 0.7, border: style === 'dashed' ? `1.5px dashed ${clr}` : 'none' }} />
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-medium text-foreground leading-tight">{lbl}</div>
-                            <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{description}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                    );
+                  })()}
                   {key === 'fteCapacity' && layers.fteCapacity && (
                     <div className="px-2 pb-2 pt-1.5 space-y-2">
                       {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
