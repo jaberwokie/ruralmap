@@ -340,15 +340,24 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
 
+  // Determine actual FTE-based coverage type
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const hasField = serving.some(f => f.hubLocation !== null);
+  const hasRemote = serving.some(f => f.hubLocation === null);
+  const coverageType = serving.length === 0 ? 'remote' : hasField && hasRemote ? 'mixed' : hasField ? 'active' : 'remote';
+  const isRemoteOnly = coverageType === 'remote';
+
   return (
     <div className="mb-3">
       <div className="flex items-center gap-1.5 mb-2">
         <Route className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-        <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">NBH Routing</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">
+          {isRemoteOnly ? 'Remote Coordination' : 'NBH Routing'}
+        </span>
       </div>
 
       {/* Coverage-based routing info */}
-      {breakdown.primaryType === 'active' ? (
+      {coverageType === 'active' ? (
         <div className="rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5 mb-2 space-y-0.5">
           <div className="text-[11px] font-semibold text-teal-800">
             {breakdown.anchoringFtes.length > 0 ? breakdown.anchoringFtes[0] : 'Field FTE'}
@@ -356,17 +365,18 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
           <div className="text-[10px] text-teal-700">Same-day field response available ({breakdown.activePercent}% active coverage)</div>
           <div className="text-[10px] text-teal-700 italic">Primary: in-person engagement + direct placement coordination</div>
         </div>
-      ) : (
-        <div className="rounded-md border border-teal-100 bg-teal-50/60 px-2 py-1.5 mb-2 space-y-0.5">
+      ) : coverageType === 'mixed' ? (
+        <div className="rounded-md border border-teal-200 bg-teal-50/80 px-2 py-1.5 mb-2 space-y-0.5">
           <div className="text-[11px] font-semibold text-teal-700">
-            {breakdown.anchoringFtes.length > 0 ? breakdown.anchoringFtes[0] : 'Scheduled Outreach'}
+            {breakdown.anchoringFtes.length > 0 ? breakdown.anchoringFtes[0] : 'Mixed Coverage'}
           </div>
-          <div className="text-[10px] text-teal-600">
-            {breakdown.activePercent > 0
-              ? `Partial active coverage (${breakdown.activePercent}%) — scheduled outreach for remainder`
-              : 'Scheduled outreach only (not same-day)'}
-          </div>
-          <div className="text-[10px] text-teal-600 italic">Primary: remote triage + scheduled field visit</div>
+          <div className="text-[10px] text-teal-600">Field and remote coverage available ({breakdown.activePercent}% active)</div>
+          <div className="text-[10px] text-teal-600 italic">Primary: in-person when feasible, remote support to bridge gaps</div>
+        </div>
+      ) : (
+        <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2 space-y-0.5">
+          <div className="text-[11px] font-semibold text-foreground">Remote Coordination</div>
+          <div className="text-[10px] text-muted-foreground">Remote triage and coordination only. No routine field-based outreach is currently available in this county.</div>
         </div>
       )}
 
@@ -374,64 +384,48 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
       <div className="mt-2">
         <div className="text-[10px] font-bold uppercase tracking-wide text-foreground mb-1">Recommended Action Path</div>
         <div className="space-y-1">
-          {(() => {
-            const serving = fteCapacityData.filter(f => f.counties.includes(county));
-            const hasField = serving.some(f => f.hubLocation !== null);
-            const hasRemote = serving.some(f => f.hubLocation === null);
-            const coverageType = hasField && hasRemote ? 'mixed' : hasField ? 'active' : 'remote';
-
-            if (coverageType === 'active') {
-              return (
-                <>
-                  <ActionStep n={1}>In-person engagement</ActionStep>
-                  <ActionStep n={2}>Stabilize using local services</ActionStep>
-                  <ActionStep n={3}>
-                    <div>Escalate if needed:</div>
-                    <div className="pl-2 space-y-0.5 text-muted-foreground">
-                      <div>• Transfer to Las Vegas or Reno</div>
-                      <div>• Telehealth support</div>
-                      <div>• Schedule outreach</div>
-                    </div>
-                  </ActionStep>
-                </>
-              );
-            }
-
-            if (coverageType === 'mixed') {
-              return (
-                <>
-                  <ActionStep n={1}>Attempt in-person engagement when feasible</ActionStep>
-                  <ActionStep n={2}>Use remote support to bridge gaps</ActionStep>
-                  <ActionStep n={3}>Stabilize using local services</ActionStep>
-                  <ActionStep n={4}>
-                    <div>Escalate if needed:</div>
-                    <div className="pl-2 space-y-0.5 text-muted-foreground">
-                      <div>• Transfer to Las Vegas or Reno</div>
-                      <div>• Telehealth support</div>
-                      <div>• Schedule outreach</div>
-                    </div>
-                  </ActionStep>
-                </>
-              );
-            }
-
-            // remote only
-            return (
-              <>
-                <ActionStep n={1}>Remote engagement (primary)</ActionStep>
-                <ActionStep n={2}>Stabilize using local services</ActionStep>
-                <ActionStep n={3}>Schedule outreach when field support becomes available</ActionStep>
-                <ActionStep n={4}>
-                  <div>Escalate if needed:</div>
-                  <div className="pl-2 space-y-0.5 text-muted-foreground">
-                    <div>• Transfer to Las Vegas or Reno</div>
-                    <div>• Telehealth support</div>
-                    <div>• Coordinate transport if appropriate</div>
-                  </div>
-                </ActionStep>
-              </>
-            );
-          })()}
+          {coverageType === 'active' ? (
+            <>
+              <ActionStep n={1}>In-person engagement</ActionStep>
+              <ActionStep n={2}>Stabilize using local services</ActionStep>
+              <ActionStep n={3}>
+                <div>Escalate if needed:</div>
+                <div className="pl-2 space-y-0.5 text-muted-foreground">
+                  <div>• Transfer to Las Vegas or Reno</div>
+                  <div>• Telehealth support</div>
+                  <div>• Schedule outreach</div>
+                </div>
+              </ActionStep>
+            </>
+          ) : coverageType === 'mixed' ? (
+            <>
+              <ActionStep n={1}>Attempt in-person engagement when feasible</ActionStep>
+              <ActionStep n={2}>Use remote support to bridge gaps</ActionStep>
+              <ActionStep n={3}>Stabilize using local services</ActionStep>
+              <ActionStep n={4}>
+                <div>Escalate if needed:</div>
+                <div className="pl-2 space-y-0.5 text-muted-foreground">
+                  <div>• Transfer to Las Vegas or Reno</div>
+                  <div>• Telehealth support</div>
+                  <div>• Schedule outreach</div>
+                </div>
+              </ActionStep>
+            </>
+          ) : (
+            <>
+              <ActionStep n={1}>Remote engagement (primary)</ActionStep>
+              <ActionStep n={2}>Stabilize using local services</ActionStep>
+              <ActionStep n={3}>Schedule outreach only if field capacity becomes available</ActionStep>
+              <ActionStep n={4}>
+                <div>Escalate if needed:</div>
+                <div className="pl-2 space-y-0.5 text-muted-foreground">
+                  <div>• Transfer to Las Vegas or Reno</div>
+                  <div>• Telehealth support</div>
+                  <div>• Coordinated transport if appropriate</div>
+                </div>
+              </ActionStep>
+            </>
+          )}
         </div>
       </div>
 
