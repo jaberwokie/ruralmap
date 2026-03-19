@@ -25,6 +25,8 @@ interface MapViewProps {
     ruralServices: boolean;
     operationalCoverage: boolean;
     fteCapacity: boolean;
+    utilizationIntensity: boolean;
+    engagementGap: boolean;
   };
   onFacilityClick: (facility: Facility) => void;
   onMapClick?: () => void;
@@ -39,6 +41,7 @@ interface MapViewProps {
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
   coverageRadiusKm?: number;
+  topProvidersOnly?: boolean;
 }
 
 // Haversine distance in km
