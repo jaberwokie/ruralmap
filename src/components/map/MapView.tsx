@@ -71,6 +71,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
+  const fteServiceAreaRef = useRef<L.LayerGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
