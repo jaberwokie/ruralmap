@@ -290,7 +290,7 @@ const Sidebar = ({
       {/* Filter Panel */}
       <div className="px-4 pb-3">
         <button
-          onClick={() => setFiltersOpen(!filtersOpen)}
+          onClick={toggleFilters}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors w-full"
         >
           {filtersOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
