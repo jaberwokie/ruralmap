@@ -14,6 +14,8 @@ interface LayerState {
   ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
+  utilizationIntensity: boolean;
+  engagementGap: boolean;
 }
 
 interface SidebarProps {
