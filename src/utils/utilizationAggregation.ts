@@ -109,10 +109,11 @@ export function getCountyUtilization(county: string): CountyUtilization {
   const topProviders = providerList.sort((a, b) => b.visits - a.visits).slice(0, 3);
   const hasEngagement = countyHasEngagementSupport(county);
 
-  // Engagement gap / watchlist (county-level; Washoe sub-county handled separately)
+  // Engagement gap / watchlist / early signal (county-level; Washoe sub-county handled separately)
   const isExcluded = ENGAGEMENT_GAP_EXCLUDED_COUNTIES.has(county);
   const engagementGap = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 15 && !hasEngagement;
   const engagementWatchlist = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 10 && avgVisitsPerMember <= 15 && !hasEngagement;
+  const engagementEarlySignal = !isExcluded && county !== 'Washoe' && avgVisitsPerMember > 6 && avgVisitsPerMember <= 10 && !hasEngagement;
 
   const operationalRead = computeOperationalRead(avgVisitsPerMember, activeProviderCount, hasEngagement);
 
