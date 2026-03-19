@@ -436,7 +436,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     if (!layers.operationalCoverage) return;
 
-    const activeZone = getActiveCoverageZone();
+    const activeZone = getActiveCoverageZone(coverageRadiusKm);
     if (!activeZone) return;
 
     // Active field coverage — continuous merged zone from all field FTEs
