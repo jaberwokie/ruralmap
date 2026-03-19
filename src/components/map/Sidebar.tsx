@@ -494,7 +494,6 @@ const Sidebar = ({
                     </div>
                   )}
                   {key === 'engagementGap' && layers.engagementGap && (() => {
-                    const { getEngagementGapResults } = require('@/utils/utilizationAggregation');
                     const results = getEngagementGapResults();
                     const gapCounties = results.filter((r: any) => r.tier === 'gap');
                     const watchCounties = results.filter((r: any) => r.tier === 'watchlist');
