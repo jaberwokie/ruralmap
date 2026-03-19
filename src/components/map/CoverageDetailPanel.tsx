@@ -471,6 +471,32 @@ const UtilizationEngagementSection = ({ county }: { county: string }) => {
   const tier = getUtilizationTier(util.avgVisitsPerMember);
   const readColor = OPERATIONAL_READ_COLORS[util.operationalRead] ?? 'text-foreground';
 
+  // ── New utilization metrics ──
+  const providers = util.activeProviderCount;
+  const members = util.totalMembers;
+  const encounters = util.totalVisits;
+
+  const membersPerProvider = providers > 0 ? (members / providers) : null;
+  const encountersPerMember = members > 0 ? (encounters / members) : null;
+  const encountersPerProvider = providers > 0 ? (encounters / providers) : null;
+  const providerDensity = members > 0 ? (providers / members) * 1000 : null;
+
+  // Top Provider Share: top 2 (or 1) providers' visits / total encounters
+  const topProviderVisits = util.topProviders.slice(0, Math.min(2, util.topProviders.length)).reduce((s, p) => s + p.visits, 0);
+  const topProviderShare = encounters > 0 ? (topProviderVisits / encounters) * 100 : null;
+
+  // Interpretation
+  const mppHigh = membersPerProvider !== null && membersPerProvider > 150;
+  const epmHigh = encountersPerMember !== null && encountersPerMember > 10;
+  let interpretation = '';
+  if (mppHigh && epmHigh) interpretation = 'High provider strain with active engagement.';
+  else if (mppHigh && !epmHigh) interpretation = 'Access gap: demand exceeds engagement.';
+  else if (!mppHigh && epmHigh) interpretation = 'Strong local utilization with available capacity.';
+  else interpretation = 'Low engagement and low demand.';
+  if (topProviderShare !== null && topProviderShare > 60) interpretation += ' High dependency on a single provider.';
+
+  const fmt1 = (v: number | null) => v !== null ? v.toFixed(1) : 'N/A';
+
   return (
     <div className="mt-2 mb-2">
       <div className="flex items-center gap-1.5 mb-1.5">
@@ -504,6 +530,39 @@ const UtilizationEngagementSection = ({ county }: { county: string }) => {
             ))}
           </div>
         )}
+
+        {/* ── Utilization Metrics subsection ── */}
+        <div className="pt-1.5 border-t border-purple-100 mt-1.5">
+          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Utilization Metrics</div>
+          {providers === 0 ? (
+            <p className="text-[10px] text-muted-foreground italic">No active providers mapped for this county</p>
+          ) : (
+            <div className="space-y-0.5">
+              <div className="flex justify-between text-[10px]">
+                <span className="text-purple-700">Members per Provider</span>
+                <span className="font-bold text-purple-800 tabular-nums">{fmt1(membersPerProvider)}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-purple-700">Encounters per Member</span>
+                <span className="font-bold text-purple-800 tabular-nums">{fmt1(encountersPerMember)}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-purple-700">Encounters per Provider</span>
+                <span className="font-bold text-purple-800 tabular-nums">{fmt1(encountersPerProvider)}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-purple-700">Provider Density (per 1k)</span>
+                <span className="font-bold text-purple-800 tabular-nums">{fmt1(providerDensity)}</span>
+              </div>
+              <div className="flex justify-between text-[10px]">
+                <span className="text-purple-700">Top Provider Share</span>
+                <span className="font-bold text-purple-800 tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
+              </div>
+            </div>
+          )}
+          <p className="text-[10px] text-purple-600 italic leading-relaxed mt-1">{interpretation}</p>
+        </div>
+
         <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
           <div className="flex justify-between text-[11px]">
             <span className="text-purple-700">Engagement Support</span>
