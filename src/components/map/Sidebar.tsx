@@ -662,18 +662,28 @@ const Sidebar = ({
 
           {/* Coverage Gaps — independent toggle */}
           <div>
-            <button
-              onClick={() => onCoverageGapsChange(!coverageGaps)}
-              className="w-full flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
-            >
-              <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
-              <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
-                Coverage Gaps
+            <div className="flex items-center">
+              <button
+                onClick={() => onCoverageGapsChange(!coverageGaps)}
+                className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary"
+              >
+                <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
+                <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>
+                  Coverage Gaps
+                </span>
+                <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
+                  <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
+                </div>
+              </button>
+              <span
+                className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors"
+                onMouseEnter={() => onHelpEnter?.('coverageGaps')}
+                onMouseLeave={() => onHelpLeave?.()}
+                onTouchStart={() => onHelpEnter?.('coverageGaps')}
+              >
+                <HelpCircle className="w-3 h-3" />
               </span>
-              <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
-                <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
-              </div>
-            </button>
+            </div>
             {coverageGaps && (
               <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">
                 Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
