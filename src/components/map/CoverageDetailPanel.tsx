@@ -335,13 +335,10 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
 
 // ── NBH Routing ──
 const NBHRoutingSection = ({ county }: { county: string }) => {
-  const zone = COUNTY_OPERATIONAL_MAP.get(county);
+  const breakdown = getCountyCoverageBreakdown(county);
   const serviceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
-
-
-
 
   return (
     <div className="mb-3">
@@ -351,25 +348,25 @@ const NBHRoutingSection = ({ county }: { county: string }) => {
       </div>
 
       {/* Coverage-based routing info */}
-      {zone?.coverageType === 'active' && (
+      {breakdown.primaryType === 'active' ? (
         <div className="rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5 mb-2 space-y-0.5">
-          <div className="text-[11px] font-semibold text-teal-800">{zone.fte}</div>
-          <div className="text-[10px] text-teal-700">Same-day field response available</div>
+          <div className="text-[11px] font-semibold text-teal-800">
+            {breakdown.anchoringFtes.length > 0 ? breakdown.anchoringFtes[0] : 'Field FTE'}
+          </div>
+          <div className="text-[10px] text-teal-700">Same-day field response available ({breakdown.activePercent}% active coverage)</div>
           <div className="text-[10px] text-teal-700 italic">Primary: in-person engagement + direct placement coordination</div>
         </div>
-      )}
-      {zone?.coverageType === 'scheduled' && (
+      ) : (
         <div className="rounded-md border border-teal-100 bg-teal-50/60 px-2 py-1.5 mb-2 space-y-0.5">
-          <div className="text-[11px] font-semibold text-teal-700">{zone.fte}</div>
-          <div className="text-[10px] text-teal-600">Scheduled outreach only (not same-day)</div>
+          <div className="text-[11px] font-semibold text-teal-700">
+            {breakdown.anchoringFtes.length > 0 ? breakdown.anchoringFtes[0] : 'Scheduled Outreach'}
+          </div>
+          <div className="text-[10px] text-teal-600">
+            {breakdown.activePercent > 0
+              ? `Partial active coverage (${breakdown.activePercent}%) — scheduled outreach for remainder`
+              : 'Scheduled outreach only (not same-day)'}
+          </div>
           <div className="text-[10px] text-teal-600 italic">Primary: remote triage + scheduled field visit</div>
-        </div>
-      )}
-      {zone?.coverageType === 'remote' && (
-        <div className="rounded-md border border-border bg-muted px-2 py-1.5 mb-2 space-y-0.5">
-          <div className="text-[11px] font-semibold text-muted-foreground">Remote coordination team</div>
-          <div className="text-[10px] text-muted-foreground">No in-person response available</div>
-          <div className="text-[10px] text-muted-foreground italic">Primary: telephonic engagement + referral to local services</div>
         </div>
       )}
 
