@@ -99,7 +99,6 @@ const Sidebar = ({
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
   const clinicCount = facilities.filter(f => f.type === 'clinic').length;
-  const tier1Count = facilities.filter(f => f.type === 'tier1').length;
   const totalCount = facilities.length;
 
   // Unique counties from all facilities
