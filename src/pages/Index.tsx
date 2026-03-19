@@ -187,6 +187,8 @@ const Index = () => {
           onFteCardClick={handleFteCardClick}
           coverageRadiusKm={coverageRadiusKm}
           onCoverageRadiusKmChange={setCoverageRadiusKm}
+          topProvidersOnly={topProvidersOnly}
+          onTopProvidersOnlyChange={setTopProvidersOnly}
         />
       </div>
 
