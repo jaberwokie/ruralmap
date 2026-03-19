@@ -7,6 +7,7 @@ import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles } from '@/utils/coverageZones';
+import { getEngagementGapResults } from '@/utils/utilizationAggregation';
 
 interface LayerState {
   counties: boolean;
