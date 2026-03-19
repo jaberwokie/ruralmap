@@ -78,9 +78,17 @@ const Sidebar = ({
   topProvidersOnly,
   onTopProvidersOnlyChange,
 }: SidebarProps) => {
-  const [facilitiesOpen, setFacilitiesOpen] = useState(true);
+  const [facilitiesOpen, setFacilitiesOpen] = useState(() => {
+    try { const v = localStorage.getItem('sidebar_facilities'); return v === 'true'; } catch { return false; }
+  });
   const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(() => {
+    try { const v = localStorage.getItem('sidebar_filters'); return v === 'true'; } catch { return false; }
+  });
+
+  // Persist collapse state
+  const toggleFilters = () => setFiltersOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_filters', String(next)); } catch {} return next; });
+  const toggleFacilities = () => setFacilitiesOpen(prev => { const next = !prev; try { localStorage.setItem('sidebar_facilities', String(next)); } catch {} return next; });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Counts from filtered set
