@@ -8,7 +8,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
-import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT } from '@/utils/utilizationAggregation';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -552,43 +552,77 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.utilizationIntensity]);
 
-  // ── Engagement Gap county outlines (orange) ──
+  // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) ──
   useEffect(() => {
     if (!engagementGapRef.current) return;
     engagementGapRef.current.clearLayers();
     if (!layers.engagementGap) return;
 
-    const gapCounties = getEngagementGapCounties();
+    const results = getEngagementGapResults();
 
-    nevadaCounties.forEach(county => {
-      if (!gapCounties.includes(county.name)) return;
+    const TIER_STYLES: Record<string, { color: string; icon: string; title: string }> = {
+      gap:       { color: 'hsl(30, 90%, 50%)',  icon: '⚠', title: 'Engagement Gap: High utilization, no field support' },
+      watchlist: { color: 'hsl(48, 90%, 50%)',  icon: '⚡', title: 'Watchlist: Moderate utilization, no field support' },
+    };
 
-      const merged = mergePolygons([county.boundaries]);
-      if (!merged) return;
-      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
-      const clipped = clipPolygon(merged, nevadaClip as any);
-      if (!clipped) return;
+    results.forEach((result: EngagementGapResult) => {
+      const county = nevadaCounties.find(c => c.name === result.county);
+      if (!county) return;
 
-      const geoLayer = L.geoJSON(clipped, {
+      let geoJson: any;
+
+      if (result.subZone === 'northern-washoe') {
+        // Clip Washoe polygon to only the area north of the urban/rural latitude threshold
+        const merged = mergePolygons([county.boundaries]);
+        if (!merged) return;
+        // Create a clipping rectangle: west/east of Nevada, from threshold north
+        const clipNorth = {
+          type: "Feature" as const,
+          properties: {},
+          geometry: {
+            type: "Polygon" as const,
+            coordinates: [[
+              [-120.5, WASHOE_URBAN_RURAL_LAT],
+              [-119.0, WASHOE_URBAN_RURAL_LAT],
+              [-119.0, 42.1],
+              [-120.5, 42.1],
+              [-120.5, WASHOE_URBAN_RURAL_LAT],
+            ]],
+          },
+        };
+        geoJson = clipPolygon(merged, clipNorth as any);
+      } else {
+        const merged = mergePolygons([county.boundaries]);
+        if (!merged) return;
+        const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
+        geoJson = clipPolygon(merged, nevadaClip as any);
+      }
+      if (!geoJson) return;
+
+      const style = TIER_STYLES[result.tier];
+      const geoLayer = L.geoJSON(geoJson, {
         style: {
-          color: 'hsl(30, 90%, 50%)',
+          color: style.color,
           weight: 2.5,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          dashArray: '6 3',
+          fillColor: result.tier === 'watchlist' ? 'hsla(48, 90%, 50%, 0.08)' : 'transparent',
+          fillOpacity: result.tier === 'watchlist' ? 0.08 : 0,
+          dashArray: result.tier === 'watchlist' ? '4 4' : '6 3',
         },
         interactive: false,
       });
       engagementGapRef.current!.addLayer(geoLayer);
 
-      // Warning icon at county center
+      // Icon at county center (or offset north for Northern Washoe)
+      const iconCenter: [number, number] = result.subZone === 'northern-washoe'
+        ? [40.8, -119.7]  // center of northern Washoe zone
+        : county.center;
       const warnIcon = L.divIcon({
         className: '',
-        html: `<div style="font-size:14px;text-shadow:0 0 3px white,0 0 3px white;" title="Engagement Gap: High utilization, no field support">⚠</div>`,
+        html: `<div style="font-size:14px;text-shadow:0 0 3px white,0 0 3px white;" title="${style.title}">${style.icon}</div>`,
         iconSize: [16, 16],
         iconAnchor: [8, 8],
       });
-      L.marker(county.center, { icon: warnIcon, interactive: false }).addTo(engagementGapRef.current!);
+      L.marker(iconCenter, { icon: warnIcon, interactive: false }).addTo(engagementGapRef.current!);
     });
   }, [layers.engagementGap]);
 
