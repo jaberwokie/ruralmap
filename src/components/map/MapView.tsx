@@ -117,8 +117,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
     gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
     radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
-    ruralServicesRef.current = L.layerGroup().addTo(map);       // 7. Rural service pins
-    markersRef.current = L.layerGroup().addTo(map);             // 8. Facility markers
+    markersRef.current = L.layerGroup().addTo(map);             // 7. Facility markers
     fteCapacityRef.current = L.layerGroup().addTo(map);          // 9. FTE hub indicators (top)
 
     mapRef.current = map;
