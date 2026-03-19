@@ -51,6 +51,7 @@ interface CoverageDetailPanelProps {
   onClear: () => void;
   coverageRadiusKm?: number;
   memberVolumeLayerOn?: boolean;
+  activeHelp?: string | null;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
