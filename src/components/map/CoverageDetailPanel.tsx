@@ -784,12 +784,14 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       {(() => {
-        const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
-        const label = breakdown.primaryType === 'active'
+        const serving = fteCapacityData.filter(f => f.counties.includes(county));
+        const hasField = serving.some(f => f.hubLocation !== null);
+        const isRemoteOnly = serving.length === 0 || !hasField;
+        const label = isRemoteOnly
+          ? PRIMARY_RESPONSE_LABELS.remote
+          : hasField
           ? PRIMARY_RESPONSE_LABELS.active
-          : breakdown.activePercent > 0
-          ? PRIMARY_RESPONSE_LABELS.scheduled
-          : PRIMARY_RESPONSE_LABELS.remote;
+          : PRIMARY_RESPONSE_LABELS.scheduled;
         return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
       })()}
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
