@@ -183,7 +183,7 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 
             Select a map element to view details.
           </p>
         ) : (
-          <EntityContent entity={display} />
+          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
         )}
       </div>
     </div>
