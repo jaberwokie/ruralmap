@@ -389,7 +389,11 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
           },
         } as Feature<MultiPolygon>);
 
-      const fc = featureCollection([analysisFeature, mergedCoverage]);
+      // Morphological close: expand then shrink to seal micro-gaps between adjacent buffers
+      const expanded = buffer(mergedCoverage, 0.5, { units: 'kilometers' });
+      const cleaned = expanded ? buffer(expanded, -0.5, { units: 'kilometers' }) ?? mergedCoverage : mergedCoverage;
+
+      const fc = featureCollection([analysisFeature, cleaned]);
       const gapGeometry = difference(fc as any);
 
       if (gapGeometry) {
