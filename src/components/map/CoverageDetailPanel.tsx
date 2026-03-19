@@ -326,6 +326,13 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
   );
 };
 
+const ActionStep = ({ n, children }: { n: number; children: React.ReactNode }) => (
+  <div className="flex items-start gap-1.5">
+    <span className="text-[10px] font-bold text-primary mt-px">{n}</span>
+    <div className="text-[10px] text-foreground/80 space-y-0.5">{children}</div>
+  </div>
+);
+
 // ── NBH Routing ──
 const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
