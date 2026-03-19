@@ -710,19 +710,19 @@ const Sidebar = ({
           {/* Operational Coverage */}
           {layers.operationalCoverage && (
             <div>
-              <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Operational Coverage</div>
+              <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Response Capability</div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2 px-2">
                   <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(174, 50%, 45%, 0.25)', border: '1.5px solid hsla(174, 50%, 40%, 0.6)' }} />
-                  <span className="text-muted-foreground">Active Field Coverage</span>
+                  <span className="text-muted-foreground">Same-Day Field</span>
                 </div>
                 <div className="flex items-center gap-2 px-2">
                   <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(174, 40%, 55%, 0.12)', border: '1.5px dashed hsla(174, 40%, 50%, 0.45)' }} />
-                  <span className="text-muted-foreground">Scheduled Outreach</span>
+                  <span className="text-muted-foreground">Planned Field</span>
                 </div>
                 <div className="flex items-center gap-2 px-2">
                   <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(220, 10%, 70%, 0.10)', border: '1.5px dashed hsla(220, 10%, 60%, 0.25)' }} />
-                  <span className="text-muted-foreground">Remote Support Only</span>
+                  <span className="text-muted-foreground">Remote Only</span>
                 </div>
               </div>
             </div>
