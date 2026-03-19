@@ -11,7 +11,6 @@ import { kmToMiles } from '@/utils/coverageZones';
 interface LayerState {
   counties: boolean;
   serviceLocations: boolean;
-  ruralServices: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
   utilizationIntensity: boolean;
