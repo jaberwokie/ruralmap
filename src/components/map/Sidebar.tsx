@@ -724,6 +724,10 @@ const Sidebar = ({
                   <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(220, 10%, 70%, 0.10)', border: '1.5px dashed hsla(220, 10%, 60%, 0.25)' }} />
                   <span className="text-muted-foreground">Remote Only</span>
                 </div>
+                <div className="flex items-center gap-2 px-2 mt-1.5 pt-1.5 border-t border-border">
+                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(220, 10%, 50%, 0.30)', border: '1px solid hsla(220, 10%, 50%, 0.15)' }} />
+                  <span className="text-muted-foreground">Greyed Area = No Same-Day Field Response</span>
+                </div>
               </div>
             </div>
           )}
