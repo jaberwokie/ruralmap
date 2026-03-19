@@ -1,5 +1,6 @@
 import { useState, useRef, useMemo } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity, Headphones } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity, Headphones, HelpCircle } from 'lucide-react';
+import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
