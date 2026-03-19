@@ -3,6 +3,7 @@
  *
  * Generates continuous drive-time coverage zones from FTE base locations,
  * merges overlapping zones, and clips to Nevada state boundary.
+ * All functions accept a radiusKm parameter for configurable thresholds.
  */
 import buffer from '@turf/buffer';
 import union from '@turf/union';
@@ -14,7 +15,6 @@ import { fteCapacityData } from '@/data/fte-capacity';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
-import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 const nevadaFeature: Feature<Polygon> = {
   type: 'Feature',
@@ -24,21 +24,22 @@ const nevadaFeature: Feature<Polygon> = {
 
 // ── Active coverage zone (merged FTE buffers, clipped to NV) ──
 
-let _activeZoneCache: Feature<Polygon | MultiPolygon> | null | undefined;
+const _activeZoneCache = new Map<number, Feature<Polygon | MultiPolygon> | null>();
 
-export function getActiveCoverageZone(): Feature<Polygon | MultiPolygon> | null {
-  if (_activeZoneCache !== undefined) return _activeZoneCache;
-  _activeZoneCache = computeActiveCoverageZone();
-  return _activeZoneCache;
+export function getActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
+  if (_activeZoneCache.has(radiusKm)) return _activeZoneCache.get(radiusKm)!;
+  const result = computeActiveCoverageZone(radiusKm);
+  _activeZoneCache.set(radiusKm, result);
+  return result;
 }
 
-function computeActiveCoverageZone(): Feature<Polygon | MultiPolygon> | null {
+function computeActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
   const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
   if (fieldFtes.length === 0) return null;
 
   const buffers = fieldFtes.map(f => {
     const pt = turfPoint([f.hubLocation!.lng, f.hubLocation!.lat]);
-    return buffer(pt, ACTIVE_COVERAGE_RADIUS_KM, { units: 'kilometers' }) as Feature<Polygon>;
+    return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
   });
 
   let merged: Feature<Polygon | MultiPolygon> = buffers[0];
@@ -63,13 +64,13 @@ export interface CountyCoverageBreakdown {
   primaryType: 'active' | 'scheduled';
 }
 
-let _breakdownCache: Map<string, CountyCoverageBreakdown> | undefined;
+const _breakdownCache = new Map<number, Map<string, CountyCoverageBreakdown>>();
 
-export function getCountyCoverageBreakdown(county: string): CountyCoverageBreakdown {
-  if (!_breakdownCache) {
-    _breakdownCache = computeAllBreakdowns();
+export function getCountyCoverageBreakdown(county: string, radiusKm: number): CountyCoverageBreakdown {
+  if (!_breakdownCache.has(radiusKm)) {
+    _breakdownCache.set(radiusKm, computeAllBreakdowns(radiusKm));
   }
-  return _breakdownCache.get(county) ?? {
+  return _breakdownCache.get(radiusKm)!.get(county) ?? {
     activePercent: 0,
     scheduledPercent: 100,
     anchoringFtes: [],
@@ -77,9 +78,9 @@ export function getCountyCoverageBreakdown(county: string): CountyCoverageBreakd
   };
 }
 
-function computeAllBreakdowns(): Map<string, CountyCoverageBreakdown> {
+function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreakdown> {
   const result = new Map<string, CountyCoverageBreakdown>();
-  const activeZone = getActiveCoverageZone();
+  const activeZone = getActiveCoverageZone(radiusKm);
 
   // Per-FTE buffers for anchoring info
   const fteBuffers = fteCapacityData
@@ -88,7 +89,7 @@ function computeAllBreakdowns(): Map<string, CountyCoverageBreakdown> {
       label: f.label,
       zone: buffer(
         turfPoint([f.hubLocation!.lng, f.hubLocation!.lat]),
-        ACTIVE_COVERAGE_RADIUS_KM,
+        radiusKm,
         { units: 'kilometers' }
       ) as Feature<Polygon>,
     }));
@@ -136,4 +137,14 @@ function computeAllBreakdowns(): Map<string, CountyCoverageBreakdown> {
   });
 
   return result;
+}
+
+/** Convert drive-time minutes to radius km (assuming ~80 km/h rural average) */
+export function driveMinutesToKm(minutes: number): number {
+  return Math.round((minutes / 60) * 80);
+}
+
+/** Convert radius km to approximate drive-time minutes */
+export function kmToDriveMinutes(km: number): number {
+  return Math.round((km / 80) * 60);
 }
