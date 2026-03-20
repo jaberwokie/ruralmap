@@ -20,8 +20,8 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   services: {
     label: 'Service Presence',
     explanation:
-      'Shows county-level community service presence across Nevada, scaled by how many mapped rural services exist in each county. This compares broader support availability against provider locations, member volume, utilization, and engagement gaps without implying provider-to-provider network links.',
-    shortExplanation: 'Shows county-level community service presence scaled by the number of mapped services.',
+      'Shows each mapped community service as an individual point across Nevada. The lighter, smaller markers separate broader service presence from Provider Locations while preserving the true geographic spread of the service dataset.',
+    shortExplanation: 'Shows each mapped community service as its own point, separate from Provider Locations.',
   },
   operationalCoverage: {
     label: 'Response Capability',

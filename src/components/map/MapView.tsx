@@ -5,7 +5,7 @@ import { Info } from 'lucide-react';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { ruralServices, type RuralService } from '@/data/rural-services';
+import { ruralServices } from '@/data/rural-services';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
@@ -66,17 +66,6 @@ interface CountyHoverMetrics {
 interface CountyHoverPreview extends CountyHoverMetrics {
   x: number;
   y: number;
-}
-
-interface ServicePresenceCountySummary {
-  county: string;
-  center: [number, number];
-  services: RuralService[];
-  serviceCount: number;
-  categoryCount: number;
-  topCategories: string[];
-  haloRadiusMeters: number;
-  coreRadiusMeters: number;
 }
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
@@ -181,7 +170,7 @@ const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
   },
   {
     id: 'service-presence-markers',
-    name: 'Service Presence Halos',
+    name: 'Service Presence Points',
     source: 'rural-services',
     controllingToggle: 'layers.services',
     drawOrder: 610,
@@ -505,46 +494,15 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     return result;
   }, [countyFilters, serviceCategoryFilters]);
 
-  const servicePresenceCounties = useMemo<ServicePresenceCountySummary[]>(() => {
-    const grouped = filteredRuralServices.reduce((acc, service) => {
-      const countyServices = acc.get(service.county) ?? [];
-      countyServices.push(service);
-      acc.set(service.county, countyServices);
-      return acc;
-    }, new Map<string, RuralService[]>());
-
-    const maxServiceCount = Math.max(...Array.from(grouped.values(), (countyServices) => countyServices.length), 1);
-
-    return nevadaCounties
-      .flatMap((county) => {
-        const countyServices = grouped.get(county.name);
-        if (!countyServices?.length) return [];
-
-        const categoryCounts = countyServices.reduce((acc, service) => {
-          acc.set(service.category, (acc.get(service.category) ?? 0) + 1);
-          return acc;
-        }, new Map<RuralService['category'], number>());
-
-        const topCategories = Array.from(categoryCounts.entries())
-          .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
-          .slice(0, 3)
-          .map(([category, count]) => `${category} (${count})`);
-
-        const intensity = countyServices.length / maxServiceCount;
-
-        return [{
-          county: county.name,
-          center: county.center as [number, number],
-          services: countyServices,
-          serviceCount: countyServices.length,
-          categoryCount: categoryCounts.size,
-          topCategories,
-          haloRadiusMeters: Math.round(10000 + intensity * 18000),
-          coreRadiusMeters: Math.round(3200 + intensity * 4200),
-        }];
-      })
-      .sort((left, right) => right.serviceCount - left.serviceCount || left.county.localeCompare(right.county));
-  }, [filteredRuralServices]);
+  const ruralServicesByCounty = useMemo(() => {
+    const grouped = new Map<string, typeof ruralServices>();
+    ruralServices.forEach((service) => {
+      const current = grouped.get(service.county) ?? [];
+      current.push(service);
+      grouped.set(service.county, current);
+    });
+    return grouped;
+  }, []);
 
   const activeCoverageZone = useMemo(() => {
     if (!layers.operationalCoverage || coverageGaps) return null;
@@ -935,80 +893,77 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
   }, [selectedCounty]);
 
-  // Draw county-level service presence halos using real rural service counts.
+  // Draw individual service presence points with subtle separation from provider markers.
   useEffect(() => {
     if (!servicePresenceRef.current) return;
     servicePresenceRef.current.clearLayers();
 
     if (!layers.services) return;
 
-    servicePresenceCounties.forEach((summary) => {
-      const entity: MapEntity = {
-        type: 'ruralServiceGroup',
-        county: summary.county,
-        services: summary.services,
-      };
+    const locationCounts = new Map<string, number>();
 
-      const tooltipContent = `
-        <div style="padding: 8px 12px; font-size: 13px; width: 250px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-          <div style="font-weight: 600; margin-bottom: 2px;">${getCountyDisplayName(summary.county)}</div>
-          <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${numberFormatter.format(summary.serviceCount)} mapped community services · ${summary.categoryCount} categories</div>
-          <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 6px;">Strongest presence: ${summary.topCategories.join(' · ')}</div>
-        </div>
-      `;
+    filteredRuralServices.forEach((service) => {
+      const key = `${service.lat.toFixed(4)},${service.lng.toFixed(4)}`;
+      const overlapCount = locationCounts.get(key) ?? 0;
+      locationCounts.set(key, overlapCount + 1);
 
-      const attachInteractions = (layer: L.Circle | L.Marker) => {
-        layer.on('mouseover', () => onEntityHoverRef.current?.(entity));
-        layer.on('mouseout', () => onEntityHoverRef.current?.(null));
-        layer.on('click', (event: L.LeafletEvent) => {
-          L.DomEvent.stopPropagation(event as any);
-          onEntityClickRef.current?.(entity);
-        });
-        layer.bindTooltip(tooltipContent, {
-          direction: 'top',
-          offset: [0, -8],
-          className: 'facility-tooltip',
-        });
-      };
+      const angle = overlapCount * 0.9;
+      const offsetDistance = overlapCount === 0 ? 0 : 0.0014 + overlapCount * 0.00008;
+      const lat = service.lat + Math.sin(angle) * offsetDistance;
+      const lng = service.lng + Math.cos(angle) * offsetDistance;
+      const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
 
-      const halo = L.circle(summary.center, {
+      const marker = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: summary.haloRadiusMeters,
-        color: 'hsl(var(--service-presence))',
+        radius: 3.5,
+        color: 'hsl(var(--card))',
         weight: 1.5,
-        opacity: 0.36,
         fillColor: 'hsl(var(--service-presence))',
-        fillOpacity: 0.14,
+        fillOpacity: 0.86,
+        opacity: 0.95,
+      });
+
+      const halo = L.circleMarker([lat, lng], {
+        pane: MAP_PANES.servicePresence,
+        radius: 6.5,
+        color: 'hsla(var(--service-presence), 0.18)',
+        weight: 2,
+        fillColor: 'hsla(var(--service-presence), 0.08)',
+        fillOpacity: 1,
+        opacity: 1,
         interactive: false,
       });
 
-      const core = L.circle(summary.center, {
-        pane: MAP_PANES.servicePresence,
-        radius: summary.coreRadiusMeters,
-        color: 'hsl(var(--service-presence))',
-        weight: 2,
-        opacity: 0.82,
-        fillColor: 'hsl(var(--card))',
-        fillOpacity: 0.96,
+      marker.on('mouseover', () => {
+        onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
       });
-      attachInteractions(core);
+      marker.on('mouseout', () => {
+        onEntityHoverRef.current?.(null);
+      });
+      marker.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+      });
 
-      const badge = L.marker(summary.center, {
-        pane: MAP_PANES.servicePresence,
-        icon: L.divIcon({
-          className: '',
-          html: `<div style="display:flex;align-items:center;justify-content:center;min-width:34px;height:24px;padding:0 8px;border-radius:999px;background:hsl(var(--card));color:hsl(var(--foreground));border:1px solid hsla(var(--foreground), 0.12);box-shadow:0 8px 18px hsla(var(--foreground), 0.12), 0 0 0 1px hsla(var(--service-presence), 0.16) inset;font-size:11px;font-weight:700;line-height:1;">${numberFormatter.format(summary.serviceCount)}</div>`,
-          iconSize: [40, 24],
-          iconAnchor: [20, 12],
-        }),
-      });
-      attachInteractions(badge);
+      marker.bindTooltip(
+        `
+          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+            <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
+            <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
+            <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
+          </div>
+        `,
+        {
+          direction: 'top',
+          offset: [0, -8],
+          className: 'facility-tooltip',
+        }
+      );
 
       servicePresenceRef.current!.addLayer(halo);
-      servicePresenceRef.current!.addLayer(core);
-      servicePresenceRef.current!.addLayer(badge);
+      servicePresenceRef.current!.addLayer(marker);
     });
-  }, [layers.services, servicePresenceCounties]);
+  }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
 
   // Draw coverage radii
   useEffect(() => {
