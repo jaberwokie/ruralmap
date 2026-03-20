@@ -577,16 +577,13 @@ const Sidebar = ({
                                 Top 5 unengaged counties{engagementRateBelow20Only ? ' (filtered)' : ''}
                               </p>
                               {rankedPriorityCounties.map((metrics) => (
-                                <div key={metrics.county} className="flex items-center justify-between gap-2 text-[10px]">
-                                  <div className="min-w-0">
-                                    <span className={`font-semibold ${metrics.isTop5Unengaged ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank}</span>{' '}
-                                    <span className="text-foreground">{metrics.county}</span>
-                                  </div>
-                                  <div className="text-right leading-tight">
-                                    <div className="font-semibold text-foreground tabular-nums">{metrics.unengagedMembers.toLocaleString()}</div>
-                                    <div className="text-muted-foreground tabular-nums">{(metrics.engagementRate * 100).toFixed(1)}%</div>
-                                  </div>
-                                </div>
+                                <p key={metrics.county} className="text-[10px] leading-relaxed text-foreground">
+                                  <span className={`font-semibold ${metrics.isTop5Unengaged ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank}</span>{' '}
+                                  <span className="font-medium">{metrics.county}</span>
+                                  <span className="text-muted-foreground"> — </span>
+                                  <span className="font-semibold tabular-nums">{metrics.unengagedMembers.toLocaleString()}</span>{' '}
+                                  <span className="text-muted-foreground">unengaged</span>
+                                </p>
                               ))}
                             </div>
                           ) : (
