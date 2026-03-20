@@ -52,11 +52,11 @@ interface SidebarProps {
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
-  { key: 'services' as const, label: 'Services', color: 'bg-primary' },
-  { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
+  { key: 'services' as const, label: 'Service Network', color: 'bg-primary' },
+  { key: 'serviceLocations' as const, label: 'Provider Locations', color: 'bg-foreground' },
   { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-teal-600' },
-  { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
-  { key: 'utilizationIntensity' as const, label: 'Utilization Intensity', color: 'bg-purple-500' },
+  { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', color: 'bg-amber-500' },
+  { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', color: 'bg-purple-500' },
   { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-orange-500' },
 ];
 
@@ -701,7 +701,7 @@ const Sidebar = ({
                 <div className="flex items-center">
                   <button onClick={() => onCoverageRadiusChange(!coverageRadius)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                     <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                    <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>Coverage Radius ({kmToMiles(radiusKm)} mi)</span>
+                     <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>Provider Coverage Radius ({kmToMiles(radiusKm)} mi)</span>
                     <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
                       <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
                     </div>
@@ -725,7 +725,7 @@ const Sidebar = ({
                 <div className="flex items-center">
                   <button onClick={() => onCoverageGapsChange(!coverageGaps)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                     <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                    <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>Coverage Gaps</span>
+                    <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>Access Gaps (Outside Coverage Radius)</span>
                     <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
                       <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
                     </div>
@@ -735,9 +735,9 @@ const Sidebar = ({
                   </span>
                 </div>
                 {coverageGaps && (
-                  <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">Counties highlighted in red have no hospital within <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.</p>
+                  <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.</p>
                 )}
-                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">Gaps use the radius setting ({kmToMiles(radiusKm)} mi) independently of the radius overlay.</p>
+                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
               </div>
             </div>
           )}
