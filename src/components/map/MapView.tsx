@@ -4,7 +4,6 @@ import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { ruralServices } from '@/data/rural-services';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
@@ -273,7 +272,6 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
   const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
-  const servicesRef = useRef<L.LayerGroup | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [debugOpen, setDebugOpen] = useState(false);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
@@ -324,7 +322,6 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
       'drive-radius-overlay': radiusRef.current,
       'coverage-gap-overlay': gapsRef.current,
       'engagement-gap-overlay': engagementGapRef.current,
-      'services-overlay': servicesRef.current,
       'facility-markers': markersRef.current,
       'county-labels': labelsRef.current,
       'engagement-gap-labels': engagementGapLabelRef.current,
@@ -490,7 +487,6 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
-    servicesRef.current = L.layerGroup().addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
@@ -684,75 +680,23 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     });
   }, [selectedCounty]);
 
-  useEffect(() => {
-    if (!servicesRef.current) return;
-    servicesRef.current.clearLayers();
-
-    if (!layers.services) return;
-
-    const visibleServices = ruralServices.filter((service) => {
-      if (countyFilters && countyFilters.size > 0 && !countyFilters.has(service.county)) return false;
-      if (serviceCategoryFilters && serviceCategoryFilters.size > 0 && !serviceCategoryFilters.has(service.category)) return false;
-      return true;
-    });
-
-    const servicesByCounty = visibleServices.reduce((map, service) => {
-      const existing = map.get(service.county) ?? [];
-      existing.push(service);
-      map.set(service.county, existing);
-      return map;
-    }, new Map<string, typeof ruralServices>());
-
-    servicesByCounty.forEach((services, county) => {
-      const countyInfo = nevadaCounties.find((entry) => entry.name === county);
-      if (!countyInfo) return;
-
-      const icon = L.divIcon({
-        className: '',
-        html: `<div style="display:flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));border:2px solid hsl(var(--background));box-shadow:0 1px 4px hsla(0,0%,0%,0.2);font-size:10px;font-weight:700;line-height:1;">${services.length}</div>`,
-        iconSize: [22, 22],
-        iconAnchor: [11, 11],
-      });
-
-      const marker = L.marker(countyInfo.center, {
-        icon,
-        pane: MAP_PANES.facilityMarkers,
-      });
-
-      marker.on('mouseover', () => onEntityHoverRef.current?.({ type: 'county', county }));
-      marker.on('mouseout', () => onEntityHoverRef.current?.(null));
-      marker.on('click', (event: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(event as any);
-        onEntityClickRef.current?.({ type: 'ruralServiceGroup', county, services });
-      });
-
-      marker.bindTooltip(
-        `<div style="padding:8px 10px;font-size:12px;white-space:normal;word-break:break-word;overflow-wrap:anywhere;">
-          <div style="font-weight:600;">${county} County</div>
-          <div style="color:hsl(240, 4%, 46%);font-size:11px;margin-top:2px;">${services.length.toLocaleString()} mapped services</div>
-        </div>`,
-        {
-          direction: 'top',
-          offset: [0, -10],
-          className: 'facility-tooltip',
-        },
-      );
-
-      servicesRef.current!.addLayer(marker);
-    });
-  }, [countyFilters, layers.services, serviceCategoryFilters]);
-
   // Draw coverage radii
   useEffect(() => {
     if (!radiusRef.current) return;
     radiusRef.current.clearLayers();
 
-    if (!coverageRadius) return;
+    if (!coverageRadius && !layers.services) return;
 
-    filteredFacilities
-      .filter(f => f.type === 'hospital')
-      .forEach(facility => {
-        const colors = RADIUS_COLORS;
+    const visibleFacilities = topProvidersOnly
+      ? filteredFacilities.filter(f => isTopProvider(f.name))
+      : filteredFacilities;
+
+    visibleFacilities.forEach(facility => {
+        const colors = layers.services
+          ? facility.type === 'hospital'
+            ? { stroke: 'hsla(0, 72%, 51%, 0.55)', fill: 'hsla(0, 72%, 51%, 0.10)' }
+            : { stroke: 'hsla(217, 91%, 60%, 0.38)', fill: 'hsla(217, 91%, 60%, 0.08)' }
+          : RADIUS_COLORS;
 
         const halo = L.circle([facility.lat, facility.lng], {
           pane: MAP_PANES.driveRadii,
@@ -777,7 +721,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, radiusKm]);
+  }, [filteredFacilities, coverageRadius, layers.services, radiusKm, topProvidersOnly]);
 
   // Pin color by facility type
   const PIN_COLORS: Record<string, { bg: string; hover: string; size: number; shape: 'circle' | 'diamond' }> = {
@@ -791,7 +735,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     if (!markersRef.current || !mapRef.current) return;
     markersRef.current.clearLayers();
 
-    if (!layers.serviceLocations) return;
+    if (!layers.serviceLocations && !layers.services) return;
 
     const showUtilization = layers.utilizationIntensity;
     const locationCounts = new Map<string, number>();
@@ -871,7 +815,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
 
       markersRef.current!.addLayer(marker);
     });
-  }, [filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
+  }, [filteredFacilities, layers.serviceLocations, layers.services, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
