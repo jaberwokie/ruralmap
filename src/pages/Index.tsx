@@ -15,7 +15,7 @@ const TOGGLE_DIAGNOSTICS = {
   },
   services: {
     toggleName: 'Service Presence',
-    layerIds: ['service-presence-markers'],
+    layerIds: ['service-presence-halos', 'service-presence-markers'],
   },
   serviceLocations: {
     toggleName: 'Provider Locations',
