@@ -18,10 +18,10 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
       'Shows mapped hospitals, clinics, and provider sites across the rural network. These points show where providers are located on the map, not where field engagement coverage is assigned.',
   },
   services: {
-    label: 'Service Network',
+    label: 'Service Presence',
     explanation:
-      'Shows the broader community service network across Nevada so users can compare service presence against member volume, utilization, and engagement gaps. Use the detail panel for county-level service context and supporting resource detail.',
-    shortExplanation: 'Shows where provider and service presence is distributed across the map.',
+      'Shows county-level community service presence across Nevada, scaled by how many mapped rural services exist in each county. This compares broader support availability against provider locations, member volume, utilization, and engagement gaps without implying provider-to-provider network links.',
+    shortExplanation: 'Shows county-level community service presence scaled by the number of mapped services.',
   },
   operationalCoverage: {
     label: 'Response Capability',
