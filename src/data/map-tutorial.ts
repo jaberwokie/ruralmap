@@ -11,6 +11,7 @@ export interface MapTutorialStep {
   title: string;
   text: string;
   selectors: string[];
+  footer?: string;
 }
 
 export const MAP_TUTORIAL_STORAGE_KEY = 'rural-operations-map-tutorial-complete';
@@ -19,7 +20,7 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   {
     key: 'map',
     title: 'What you’re looking at',
-    text: 'This map shows where services exist, how far they reach, and where people are not being reached across the system.',
+    text: 'This map shows where services exist, how far they reach, and where people are not being reached.',
     selectors: ['[data-tutorial="map-region"]'],
   },
   {
@@ -31,19 +32,19 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   {
     key: 'coverageRadius',
     title: 'Coverage radius',
-    text: 'These circles show how far providers can realistically reach. Outside them, access drops off quickly.',
+    text: 'These circles show how far providers can realistically reach. Outside them, access drops off.',
     selectors: ['[data-tutorial="toggle-coverage-radius"]', '[data-tutorial="map-region"]'],
   },
   {
     key: 'engagementGap',
     title: 'Engagement gaps',
-    text: 'These areas show where people are not being reached, even when services exist nearby.',
+    text: 'These areas show where people are not being reached, even when services are nearby.',
     selectors: ['[data-tutorial="toggle-engagement-gap"]', '[data-tutorial="map-region"]'],
   },
   {
     key: 'serviceNetwork',
     title: 'Service network',
-    text: 'This shows how providers are connected. Strong networks support coordination. Weak ones create gaps.',
+    text: 'This shows how providers are connected. Weak connections lead to gaps.',
     selectors: ['[data-tutorial="toggle-services"]', '[data-tutorial="map-region"]'],
   },
   {
@@ -51,5 +52,6 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
     title: 'Using the map',
     text: 'Use this to decide where to deploy staff, expand services, or fix access gaps.',
     selectors: ['[data-tutorial="sidebar"]', '[data-tutorial="map-region"]'],
+    footer: 'This is a decision tool, not a directory.',
   },
 ];

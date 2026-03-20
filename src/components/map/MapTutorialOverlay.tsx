@@ -180,6 +180,11 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
 
         <h3 className="mt-2 text-base font-semibold text-balance">{step.title}</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+        {step.footer && (
+          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground">
+            {step.footer}
+          </p>
+        )}
 
         <div className="mt-4 flex items-center justify-between gap-3">
           <button

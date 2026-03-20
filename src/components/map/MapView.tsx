@@ -10,11 +10,13 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
-import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
+import intersect from '@turf/intersect';
 import union from '@turf/union';
 import { point as turfPoint, featureCollection, polygon as turfPolygon } from '@turf/helpers';
+import turfArea from '@turf/area';
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
 import MapDebugPanel from '@/components/map/MapDebugPanel';
 import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGroup, type DebugLayerDefinition } from '@/components/map/mapDiagnostics';
@@ -22,6 +24,7 @@ import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '
 
 interface MapViewProps {
   facilities: Facility[];
+  allFacilities?: Facility[];
   layers: {
     counties: boolean;
     services: boolean;
@@ -48,6 +51,19 @@ interface MapViewProps {
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
   tutorialStepKey?: string | null;
+}
+
+interface CountyHoverMetrics {
+  county: string;
+  totalMembers?: number;
+  unengagedMembers?: number;
+  providerCount?: number;
+  coverageGapPercent?: number;
+}
+
+interface CountyHoverPreview extends CountyHoverMetrics {
+  x: number;
+  y: number;
 }
 
 // Haversine distance in km
@@ -267,8 +283,19 @@ const createGeoJsonLayer = (
   interactive = false,
 ) => L.geoJSON(geometry as any, { pane, style, interactive });
 
+const numberFormatter = new Intl.NumberFormat();
 
-const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
+const getCountyDisplayName = (county: string) => county === 'Carson City' ? county : `${county} County`;
+
+const CountyHoverMetricRow = ({ label, value, emphasize = false }: { label: string; value: string; emphasize?: boolean }) => (
+  <div className="flex items-baseline justify-between gap-3 text-[11px] leading-relaxed">
+    <span className="text-muted-foreground">{label}</span>
+    <span className={`text-right font-medium tabular-nums ${emphasize ? 'text-foreground' : 'text-foreground/85'}`}>{value}</span>
+  </div>
+);
+
+
+const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -289,6 +316,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
   const [mapReady, setMapReady] = useState(false);
   const [debugOpen, setDebugOpen] = useState(false);
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
+  const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
@@ -314,7 +342,104 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     return result;
   }, [facilities, searchQuery]);
 
+  const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
+
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(facilities), [facilities]);
+
+  const countyHoverMetrics = useMemo(() => {
+    const metricsByCounty = new Map<string, CountyHoverMetrics>();
+    const providerCountByCounty = providerFacilities.reduce((acc, facility) => {
+      acc.set(facility.county, (acc.get(facility.county) ?? 0) + 1);
+      return acc;
+    }, new Map<string, number>());
+
+    const coverageBuffers = providerFacilities
+      .filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng))
+      .map((facility) => buffer(turfPoint([facility.lng, facility.lat]), radiusKm, { units: 'kilometers' }) as Feature<Polygon>);
+
+    const mergedCoverage = coverageBuffers.length === 0
+      ? null
+      : (union(featureCollection(coverageBuffers) as any) as Feature<Polygon | MultiPolygon> | null)
+        ?? ({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'MultiPolygon',
+            coordinates: coverageBuffers.map((feature) => feature.geometry.coordinates),
+          },
+        } as Feature<MultiPolygon>);
+
+    nevadaCounties.forEach(({ name }) => {
+      const metric: CountyHoverMetrics = { county: name };
+      const totalMembers = memberVolumeData.find((entry) => entry.county === name)?.memberCount;
+      if (typeof totalMembers === 'number') {
+        metric.totalMembers = totalMembers;
+      }
+
+      const engagement = getCountyEngagementMetrics(name);
+      if (engagement.totalMembers > 0) {
+        metric.unengagedMembers = engagement.unengagedMembers;
+      }
+
+      const providerCount = providerCountByCounty.get(name);
+      if (typeof providerCount === 'number') {
+        metric.providerCount = providerCount;
+      }
+
+      const countyFeature = getCountyFeature(name);
+      if (countyFeature) {
+        const countyArea = turfArea(countyFeature as any);
+        if (countyArea > 0) {
+          let coveredArea = 0;
+          if (mergedCoverage) {
+            try {
+              const coverageWithinCounty = intersect(featureCollection([countyFeature, mergedCoverage]) as any);
+              if (coverageWithinCounty) {
+                coveredArea = turfArea(coverageWithinCounty as any);
+              }
+            } catch {
+              coveredArea = 0;
+            }
+          }
+
+          metric.coverageGapPercent = Math.max(0, Math.min(100, Math.round(((countyArea - coveredArea) / countyArea) * 100)));
+        }
+      }
+
+      metricsByCounty.set(name, metric);
+    });
+
+    return metricsByCounty;
+  }, [providerFacilities, radiusKm]);
+
+  const updateCountyHoverPreview = useCallback((county: string, event: L.LeafletMouseEvent) => {
+    const rect = containerRef.current?.getBoundingClientRect();
+    const originalEvent = event.originalEvent as MouseEvent | undefined;
+    const x = rect && originalEvent ? originalEvent.clientX - rect.left : 16;
+    const y = rect && originalEvent ? originalEvent.clientY - rect.top : 16;
+    const metrics = countyHoverMetrics.get(county) ?? { county };
+
+    setCountyHoverPreview({ ...metrics, county, x, y });
+  }, [countyHoverMetrics]);
+
+  const clearCountyHoverPreview = useCallback(() => {
+    setCountyHoverPreview(null);
+  }, []);
+
+  const countyHoverPreviewStyle = useMemo(() => {
+    if (!countyHoverPreview || !containerRef.current) return null;
+
+    const width = 240;
+    const height = 140;
+    const containerWidth = containerRef.current.clientWidth;
+    const containerHeight = containerRef.current.clientHeight;
+
+    return {
+      width,
+      left: Math.min(Math.max(countyHoverPreview.x + 16, 12), Math.max(containerWidth - width - 12, 12)),
+      top: Math.min(Math.max(countyHoverPreview.y + 16, 12), Math.max(containerHeight - height - 12, 12)),
+    };
+  }, [countyHoverPreview]);
 
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
@@ -593,10 +718,15 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         interactive: true,
       });
 
-      hitArea.on('mouseover', () => {
+      hitArea.on('mouseover', (event: L.LeafletMouseEvent) => {
+        updateCountyHoverPreview(county.name, event);
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.06)' });
       });
+      hitArea.on('mousemove', (event: L.LeafletMouseEvent) => {
+        updateCountyHoverPreview(county.name, event);
+      });
       hitArea.on('mouseout', () => {
+        clearCountyHoverPreview();
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
       });
       hitArea.on('click', (e: L.LeafletEvent) => {
@@ -640,7 +770,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         pane: MAP_PANES.labels,
       }).addTo(labelsRef.current!);
     });
-  }, [layers.counties]);
+  }, [clearCountyHoverPreview, layers.counties, updateCountyHoverPreview]);
 
   useEffect(() => {
     if (!DEBUG_ENABLED || !mapRef.current || !mapReady) return;
@@ -1152,7 +1282,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
       });
       utilizationRef.current!.addLayer(geoLayer);
     });
-  }, [layers.utilizationIntensity, coverageGaps]);
+  }, [layers.utilizationIntensity, coverageGaps, clearCountyHoverPreview, updateCountyHoverPreview]);
 
   // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) ──
   useEffect(() => {
@@ -1189,12 +1319,15 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         interactive: true,
       });
 
-      geoLayer.on('mouseover', () => {
-        onEntityHoverRef.current?.({ type: 'county', county: metrics.county });
+      geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => {
+        updateCountyHoverPreview(metrics.county, event);
         geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.06, 0.5), weight: weight + 0.5 });
       });
+      geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => {
+        updateCountyHoverPreview(metrics.county, event);
+      });
       geoLayer.on('mouseout', () => {
-        onEntityHoverRef.current?.(null);
+        clearCountyHoverPreview();
         geoLayer.setStyle({ fillOpacity, weight });
       });
       geoLayer.on('click', (event: L.LeafletEvent) => {
@@ -1252,8 +1385,9 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         },
         interactive: true,
       });
-      geoLayer.on('mouseover', () => onEntityHoverRef.current?.({ type: 'county', county: result.county }));
-      geoLayer.on('mouseout', () => onEntityHoverRef.current?.(null));
+      geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
+      geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
+      geoLayer.on('mouseout', () => clearCountyHoverPreview());
       geoLayer.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
         onEntityClickRef.current?.({ type: 'county', county: result.county });
@@ -1272,12 +1406,34 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
       });
       L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapLabelRef.current!);
     });
-  }, [engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers]);
+  }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, updateCountyHoverPreview]);
 
 
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
       <div ref={containerRef} className="h-full w-full" />
+      {countyHoverPreview && countyHoverPreviewStyle && (
+        <div
+          className="pointer-events-none absolute z-[1100] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm"
+          style={countyHoverPreviewStyle}
+        >
+          <p className="text-sm font-semibold text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
+          <div className="mt-2 space-y-1">
+            {typeof countyHoverPreview.totalMembers === 'number' && (
+              <CountyHoverMetricRow label="Total members" value={numberFormatter.format(countyHoverPreview.totalMembers)} />
+            )}
+            {typeof countyHoverPreview.unengagedMembers === 'number' && (
+              <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
+            )}
+            {typeof countyHoverPreview.providerCount === 'number' && (
+              <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
+            )}
+            {typeof countyHoverPreview.coverageGapPercent === 'number' && (
+              <CountyHoverMetricRow label="Coverage gap" value={`${countyHoverPreview.coverageGapPercent}%`} />
+            )}
+          </div>
+        </div>
+      )}
       {DEBUG_ENABLED && (
         <MapDebugPanel
           open={debugOpen}
