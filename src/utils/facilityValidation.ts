@@ -1,4 +1,4 @@
-import { Facility } from '@/data/facilities';
+import { DataConfidence, Facility, getFacilityClassification } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 
 export type FacilityCoordinateSource =
@@ -32,6 +32,36 @@ export interface FacilityValidationSummary {
   correctedCount: number;
   manualReviewCount: number;
 }
+
+export const getDataConfidenceFromValidation = (
+  facility: Facility,
+  confidence: FacilityValidationConfidence,
+  issues: string[],
+): DataConfidence => {
+  const classification = getFacilityClassification(facility);
+
+  if (!Number.isFinite(facility.lat) || !Number.isFinite(facility.lng) || facility.lat === 0 || facility.lng === 0) {
+    return 'Unverified';
+  }
+
+  if (classification === 'facility') {
+    return 'Unverified';
+  }
+
+  if (confidence === 'manual_review') {
+    return 'Unverified';
+  }
+
+  if (issues.some((issue) => issue.includes('outside the expected county') || issue.includes('may be reversed') || issue.includes('outside Nevada bounds'))) {
+    return 'Unverified';
+  }
+
+  if (confidence === 'verified') {
+    return 'Verified';
+  }
+
+  return 'Likely Accurate';
+};
 
 interface FacilityValidationOverride {
   sourceAddress?: string;
@@ -290,6 +320,7 @@ export const buildFacilityValidationIndex = (facilities: Facility[]) => {
     }
 
     const uniqueIssues = override?.issueOverrides ?? Array.from(new Set(issues));
+    facility.dataConfidence = getDataConfidenceFromValidation(facility, confidence, uniqueIssues);
 
     records.set(facility.id, {
       facilityId: facility.id,
