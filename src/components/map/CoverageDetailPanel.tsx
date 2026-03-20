@@ -3,7 +3,7 @@ import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital } from '@/data/facilities';
+import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
@@ -1107,6 +1107,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const coverageArea = getCountyArea(facility.county);
   const countyData = nevadaCounties.find(c => c.name === facility.county);
   const isCah = isCriticalAccessHospital(facility);
+  const isMember = isNRHPMember(facility);
 
   return (
     <>
@@ -1134,12 +1135,14 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
           <>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Building2 className="w-3 h-3 flex-shrink-0" />
-              <span>{isCah ? 'Critical Access Hospital (CAH)' : 'Facility'}</span>
+              <span>{isCah ? 'Critical Access Hospital (CAH)' : 'Hospital'}</span>
             </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Shield className="w-3 h-3 flex-shrink-0" />
-              <span>NRHP Member</span>
-            </div>
+            {isMember && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Shield className="w-3 h-3 flex-shrink-0" />
+                <span>NRHP Member</span>
+              </div>
+            )}
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MapIcon className="w-3 h-3 flex-shrink-0" />
               <span>{COVERAGE_AREA_LABELS[coverageArea]}</span>
