@@ -6,6 +6,29 @@ import { Facility, defaultFacilities } from '@/data/facilities';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
+const TOGGLE_DIAGNOSTICS = {
+  counties: {
+    toggleName: 'County Boundaries',
+    layerIds: ['county-hit-areas', 'county-borders', 'county-labels'],
+  },
+  services: {
+    toggleName: 'Service Network',
+    layerIds: ['service-network-markers'],
+  },
+  serviceLocations: {
+    toggleName: 'Provider Locations',
+    layerIds: ['facility-markers'],
+  },
+  coverageRadius: {
+    toggleName: 'Provider Coverage Radius',
+    layerIds: ['drive-radius-overlay'],
+  },
+  coverageGaps: {
+    toggleName: 'Access Gaps (Outside Coverage Radius)',
+    layerIds: ['coverage-gap-overlay'],
+  },
+} as const;
+
 interface LayerState {
   counties: boolean;
   services: boolean;
@@ -88,28 +111,36 @@ const Index = () => {
       });
   }, [facilities, filters]);
 
+  const logToggleDiagnostic = useCallback((stateKey: keyof typeof TOGGLE_DIAGNOSTICS, visible: boolean) => {
+    if (!import.meta.env.DEV) return;
+    const config = TOGGLE_DIAGNOSTICS[stateKey];
+    console.info('[Map Toggle Diagnostic]', {
+      toggleName: config.toggleName,
+      stateKey,
+      affectedLayerIds: config.layerIds,
+      visibility: visible ? 'visible' : 'hidden',
+    });
+  }, []);
 
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
       const next = { ...prev, [layer]: !prev[layer] };
-      if (layer === 'serviceLocations' && !next.serviceLocations) {
-        setCoverageRadius(false);
+      if (layer in TOGGLE_DIAGNOSTICS) {
+        logToggleDiagnostic(layer as keyof typeof TOGGLE_DIAGNOSTICS, next[layer as keyof LayerState]);
       }
       return next;
     });
-  }, []);
+  }, [logToggleDiagnostic]);
 
   const handleCoverageRadiusChange = useCallback((checked: boolean) => {
     setCoverageRadius(checked);
-  }, []);
+    logToggleDiagnostic('coverageRadius', checked);
+  }, [logToggleDiagnostic]);
 
   const handleCoverageGapsChange = useCallback((checked: boolean) => {
     setCoverageGaps(checked);
-    if (checked) {
-      setLayers(prev => ({ ...prev, serviceLocations: true }));
-      setCoverageRadius(true);
-    }
-  }, []);
+    logToggleDiagnostic('coverageGaps', checked);
+  }, [logToggleDiagnostic]);
 
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
     setFacilities(prev => [...prev, ...newFacilities]);

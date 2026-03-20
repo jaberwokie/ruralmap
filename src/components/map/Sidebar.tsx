@@ -697,7 +697,7 @@ const Sidebar = ({
           {accessOpen && (
             <div className="space-y-1 mt-0.5">
               {/* Coverage Radius */}
-              <div className={!layers.serviceLocations ? 'opacity-50 pointer-events-none' : ''}>
+              <div>
                 <div className="flex items-center">
                   <button onClick={() => onCoverageRadiusChange(!coverageRadius)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                     <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
