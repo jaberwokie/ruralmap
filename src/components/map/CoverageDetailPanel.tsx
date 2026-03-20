@@ -8,7 +8,7 @@ import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
-import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -797,6 +797,53 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
   );
 };
 
+const EngagementPriorityCard = ({ county }: { county: string }) => {
+  const metrics = getCountyEngagementMetrics(county);
+
+  if (metrics.totalMembers <= 0) return null;
+
+  const engagementRatePercent = (metrics.engagementRate * 100).toFixed(1);
+  const highlight = metrics.isTop5Unengaged;
+
+  return (
+    <div className="mt-2 mb-2">
+      <div className="flex items-center gap-1.5 mb-1">
+        <AlertTriangle className={`w-3 h-3 flex-shrink-0 ${highlight ? 'text-destructive' : 'text-foreground'}`} />
+        <span className={`text-[10px] font-bold uppercase tracking-wide ${highlight ? 'text-destructive' : 'text-foreground'}`}>Engagement Priority</span>
+      </div>
+      <div className={`rounded-md border px-2 py-1.5 space-y-0.5 ${highlight ? 'border-destructive/25 bg-destructive/10' : 'border-border bg-secondary/60'}`}>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground">Rank</span>
+          <span className={`font-bold ${highlight ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank} highest gap</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground">Total Members</span>
+          <span className="font-bold text-foreground tabular-nums">{metrics.totalMembers.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground">Engaged Members</span>
+          <span className="font-bold text-foreground tabular-nums">{metrics.engagedMembers.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground">Unengaged Members</span>
+          <span className={`font-bold tabular-nums ${highlight ? 'text-destructive' : 'text-foreground'}`}>{metrics.unengagedMembers.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[11px]">
+          <span className="text-muted-foreground">Engagement Rate</span>
+          <span className={`font-bold tabular-nums ${metrics.engagementRate < 0.2 ? 'text-destructive' : 'text-foreground'}`}>{engagementRatePercent}%</span>
+        </div>
+        <p className={`pt-1 mt-1 border-t text-[10px] italic leading-relaxed ${highlight ? 'border-destructive/15 text-destructive' : 'border-border text-muted-foreground'}`}>
+          {highlight
+            ? 'Top 5 county by unengaged population — prioritize outreach and field deployment.'
+            : metrics.engagementRate < 0.2
+            ? 'Below the 20% engagement threshold — consider targeted outreach planning.'
+            : 'Use alongside utilization gap signals to prioritize outreach sequencing.'}
+        </p>
+      </div>
+    </div>
+  );
+};
+
 /** Field Capacity section — aggregates all FTEs serving a county */
 const FieldCapacitySection = ({ county }: { county: string }) => {
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
@@ -1021,6 +1068,7 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       {/* 1. Member Volume */}
       {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+      <EngagementPriorityCard county={county} />
       {/* 2. Coverage Breakdown */}
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       {/* 3. Field Capacity */}
@@ -1158,6 +1206,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       <MemberVolumeSection county={county} />
+      <EngagementPriorityCard county={county} />
       <div className="text-xs text-foreground/80 space-y-1">
         <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
       </div>
@@ -1188,6 +1237,7 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
       <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
       <GapContextAlerts county={county} serviceCount={services.length} />
       {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+      <EngagementPriorityCard county={county} />
       <UtilizationEngagementSection county={county} />
       <UtilizationMetricsCard county={county} />
 

@@ -1,6 +1,9 @@
 import { providerUtilizationData, getProviderUtilization, ProviderUtilization } from '@/data/provider-utilization';
 import { defaultFacilities, Facility } from '@/data/facilities';
 import { fteCapacityData } from '@/data/fte-capacity';
+import { memberVolumeData } from '@/data/member-volume';
+import { engagedMemberVolumeData } from '@/data/engaged-member-volume';
+import { nevadaCounties } from '@/data/nevada-counties';
 
 // ── Provider-level utilization for facility pins ──
 
@@ -34,6 +37,7 @@ export const WASHOE_URBAN_RURAL_LAT = 39.60;
 
 /** Excluded from all engagement gap logic */
 const ENGAGEMENT_GAP_EXCLUDED_COUNTIES = new Set(['Carson City']);
+const NEVADA_COUNTY_NAMES = new Set(nevadaCounties.map((county) => county.name));
 
 export function isUrbanWashoe(facility: Facility): boolean {
   return facility.county === 'Washoe' && facility.lat <= WASHOE_URBAN_RURAL_LAT;
@@ -61,6 +65,16 @@ export interface CountyUtilization {
   engagementEarlySignal: boolean;
 }
 
+export interface CountyEngagementMetrics {
+  county: string;
+  totalMembers: number;
+  engagedMembers: number;
+  unengagedMembers: number;
+  engagementRate: number;
+  rank: number;
+  isTop5Unengaged: boolean;
+}
+
 // Counties with CCC/CHW/field engagement presence (based on FTE field assignments)
 function countyHasEngagementSupport(county: string): boolean {
   return fteCapacityData
@@ -86,6 +100,8 @@ function computeOperationalRead(
 }
 
 const _countyUtilCache = new Map<string, CountyUtilization>();
+let _countyEngagementRankingsCache: CountyEngagementMetrics[] | null = null;
+const _countyEngagementCache = new Map<string, CountyEngagementMetrics>();
 
 export function getCountyUtilization(county: string): CountyUtilization {
   if (_countyUtilCache.has(county)) return _countyUtilCache.get(county)!;
@@ -133,6 +149,102 @@ export function getCountyUtilization(county: string): CountyUtilization {
   };
   _countyUtilCache.set(county, result);
   return result;
+}
+
+function buildCountyEngagementRankings(): CountyEngagementMetrics[] {
+  if (_countyEngagementRankingsCache) return _countyEngagementRankingsCache;
+
+  const totalMembersByCounty = new Map(
+    memberVolumeData
+      .filter(({ county }) => NEVADA_COUNTY_NAMES.has(county))
+      .map(({ county, memberCount }) => [county, memberCount]),
+  );
+
+  const engagedMembersByCounty = new Map(
+    engagedMemberVolumeData
+      .filter(({ county }) => NEVADA_COUNTY_NAMES.has(county))
+      .map(({ county, memberCount }) => [county, memberCount]),
+  );
+
+  const rankings = nevadaCounties
+    .map(({ name }) => {
+      const totalMembers = totalMembersByCounty.get(name) ?? 0;
+      const engagedMembers = Math.min(engagedMembersByCounty.get(name) ?? 0, totalMembers);
+      const unengagedMembers = Math.max(totalMembers - engagedMembers, 0);
+      const engagementRate = totalMembers > 0 ? engagedMembers / totalMembers : 0;
+
+      return {
+        county: name,
+        totalMembers,
+        engagedMembers,
+        unengagedMembers,
+        engagementRate,
+      };
+    })
+    .sort((left, right) => {
+      if (right.unengagedMembers !== left.unengagedMembers) {
+        return right.unengagedMembers - left.unengagedMembers;
+      }
+
+      const leftRate = left.totalMembers > 0 ? left.engagementRate : Number.POSITIVE_INFINITY;
+      const rightRate = right.totalMembers > 0 ? right.engagementRate : Number.POSITIVE_INFINITY;
+      if (leftRate !== rightRate) {
+        return leftRate - rightRate;
+      }
+
+      return left.county.localeCompare(right.county);
+    })
+    .map((metrics, index) => ({
+      ...metrics,
+      rank: index + 1,
+      isTop5Unengaged: index < 5,
+    } satisfies CountyEngagementMetrics));
+
+  _countyEngagementCache.clear();
+  rankings.forEach((metrics) => {
+    _countyEngagementCache.set(metrics.county, metrics);
+  });
+
+  _countyEngagementRankingsCache = rankings;
+  return rankings;
+}
+
+export function getCountyEngagementMetrics(county: string): CountyEngagementMetrics {
+  if (_countyEngagementCache.has(county)) return _countyEngagementCache.get(county)!;
+
+  buildCountyEngagementRankings();
+
+  return _countyEngagementCache.get(county) ?? {
+    county,
+    totalMembers: 0,
+    engagedMembers: 0,
+    unengagedMembers: 0,
+    engagementRate: 0,
+    rank: 0,
+    isTop5Unengaged: false,
+  };
+}
+
+export function getCountyEngagementRankings(): CountyEngagementMetrics[] {
+  return buildCountyEngagementRankings();
+}
+
+export function getTopUnengagedCounties(limit = 5): CountyEngagementMetrics[] {
+  return buildCountyEngagementRankings()
+    .filter((metrics) => metrics.totalMembers > 0)
+    .slice(0, limit);
+}
+
+export function getFilteredEngagementPriorityCounties(
+  options: { belowRateThreshold?: number } = {},
+): CountyEngagementMetrics[] {
+  const { belowRateThreshold } = options;
+
+  return buildCountyEngagementRankings().filter((metrics) => {
+    if (metrics.totalMembers <= 0) return false;
+    if (belowRateThreshold == null) return true;
+    return metrics.engagementRate < belowRateThreshold;
+  });
 }
 
 // ── Utilization intensity tier ──

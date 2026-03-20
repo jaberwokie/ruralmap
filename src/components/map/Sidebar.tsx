@@ -8,7 +8,7 @@ import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { nevadaCounties } from '@/data/nevada-counties';
-import { getEngagementGapResults } from '@/utils/utilizationAggregation';
+import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 
 interface LayerState {
   counties: boolean;
@@ -42,6 +42,8 @@ interface SidebarProps {
   onCoverageRadiusKmChange?: (km: number) => void;
   topProvidersOnly: boolean;
   onTopProvidersOnlyChange: (checked: boolean) => void;
+  engagementRateBelow20Only: boolean;
+  onEngagementRateBelow20OnlyChange: (checked: boolean) => void;
   onHelpEnter?: (key: string) => void;
   onHelpLeave?: () => void;
 }
@@ -78,6 +80,8 @@ const Sidebar = ({
   onCoverageRadiusKmChange,
   topProvidersOnly,
   onTopProvidersOnlyChange,
+  engagementRateBelow20Only,
+  onEngagementRateBelow20OnlyChange,
   onHelpEnter,
   onHelpLeave,
 }: SidebarProps) => {
@@ -536,6 +540,11 @@ const Sidebar = ({
                   )}
                   {key === 'engagementGap' && layers.engagementGap && (() => {
                     const results = getEngagementGapResults();
+                    const rankedPriorityCounties = engagementRateBelow20Only
+                      ? getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).slice(0, 5)
+                      : getTopUnengagedCounties(5);
+                    const belowThresholdCount = getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).length;
+                    const rankedCountyTotal = getCountyEngagementRankings().filter((metrics) => metrics.totalMembers > 0).length;
                     const gapCounties = results.filter((r: any) => r.tier === 'gap');
                     const watchCounties = results.filter((r: any) => r.tier === 'watchlist');
                     const earlyCounties = results.filter((r: any) => r.tier === 'early-signal');
@@ -543,6 +552,48 @@ const Sidebar = ({
 
                     return (
                       <div className="px-2 pb-2 pt-1 space-y-1.5">
+                        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1.5 space-y-1.5">
+                          <div className="flex items-center justify-between gap-2">
+                            <div>
+                              <p className="text-[10px] font-semibold uppercase tracking-wide text-destructive">Outreach Priority</p>
+                              <p className="text-[10px] text-muted-foreground">Ranked by highest unengaged members, then lowest engagement rate.</p>
+                            </div>
+                            <button onClick={() => onEngagementRateBelow20OnlyChange(!engagementRateBelow20Only)} className="flex items-center gap-2 px-1 py-1 rounded text-[11px] transition-colors duration-200 hover:bg-background/70">
+                              <div className={`w-6 h-3.5 rounded-full transition-colors duration-200 ${engagementRateBelow20Only ? 'bg-destructive' : 'bg-input'} relative`}>
+                                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${engagementRateBelow20Only ? 'left-3' : 'left-0.5'}`} />
+                              </div>
+                              <span className={`${engagementRateBelow20Only ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>Rate &lt; 20%</span>
+                            </button>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="text-muted-foreground">Counties below 20% engagement</span>
+                            <span className="font-semibold text-foreground tabular-nums">{belowThresholdCount} of {rankedCountyTotal}</span>
+                          </div>
+
+                          {rankedPriorityCounties.length > 0 ? (
+                            <div className="space-y-1">
+                              <p className="text-[10px] font-semibold text-destructive">
+                                Top 5 unengaged counties{engagementRateBelow20Only ? ' (filtered)' : ''}
+                              </p>
+                              {rankedPriorityCounties.map((metrics) => (
+                                <div key={metrics.county} className="flex items-center justify-between gap-2 text-[10px]">
+                                  <div className="min-w-0">
+                                    <span className={`font-semibold ${metrics.isTop5Unengaged ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank}</span>{' '}
+                                    <span className="text-foreground">{metrics.county}</span>
+                                  </div>
+                                  <div className="text-right leading-tight">
+                                    <div className="font-semibold text-foreground tabular-nums">{metrics.unengagedMembers.toLocaleString()}</div>
+                                    <div className="text-muted-foreground tabular-nums">{(metrics.engagementRate * 100).toFixed(1)}%</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground italic">No counties match the current engagement-rate filter.</p>
+                          )}
+                        </div>
+
                         <p className="text-[10px] text-muted-foreground leading-relaxed">
                           <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (&gt;15 VPM).{' '}
                           <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15).{' '}
