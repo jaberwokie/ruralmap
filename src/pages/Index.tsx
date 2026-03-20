@@ -3,7 +3,7 @@ import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailPanel';
 import MapTutorialOverlay from '@/components/map/MapTutorialOverlay';
-import { Facility, defaultFacilities } from '@/data/facilities';
+import { auditFacilityClassifications, Facility, defaultFacilities } from '@/data/facilities';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 import { MAP_TUTORIAL_STORAGE_KEY, MAP_TUTORIAL_STEPS, MapTutorialStepKey } from '@/data/map-tutorial';
@@ -129,6 +129,11 @@ const Index = () => {
         return true;
       });
   }, [facilities, filters]);
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    console.info('[Facility Classification Audit]', auditFacilityClassifications(facilities));
+  }, [facilities]);
 
   const logToggleDiagnostic = useCallback((stateKey: keyof typeof TOGGLE_DIAGNOSTICS, visible: boolean) => {
     if (!import.meta.env.DEV) return;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Info } from 'lucide-react';
-import { Facility, getFacilityTypeLabel } from '@/data/facilities';
+import { Facility, getFacilityClassification, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { ruralServices } from '@/data/rural-services';
@@ -1157,7 +1157,10 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
       });
 
-      const typeLabel = facility.type === 'hospital' ? getFacilityTypeLabel(facility) : facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic';
+      const classification = getFacilityClassification(facility);
+      const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
+        ? 'Clinic / Community Provider'
+        : getFacilityTypeLabel(facility);
       const utilHtml = showUtilization && util
         ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
             <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
