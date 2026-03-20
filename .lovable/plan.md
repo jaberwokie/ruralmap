@@ -1,83 +1,90 @@
 
-Goal: keep the current utilization-based Engagement Gap view, and add a second operational decision-support layer within that same feature so NBH can quickly see where the largest unengaged populations live and prioritize outreach.
+Goal
 
-1. Extend the engagement-gap data model
-- Update `src/utils/utilizationAggregation.ts` to add a county engagement metrics pipeline based on:
-  - `memberVolumeData` = Total Members
-  - `engagedMemberVolumeData` = Engaged Members
-  - `Unengaged Members = Total - Engaged`
-  - `Engagement Rate = Engaged / Total`
-- Limit ranking scope to mapped Nevada counties only.
-- Add rank logic:
-  - primary sort: highest unengaged members
-  - secondary sort: lowest engagement rate
-- Add flags:
-  - `isTop5Unengaged`
-  - `showBelow20PercentOnly`
-- Keep the existing utilization-based tiering (`gap`, `watchlist`, `early-signal`) intact as a separate signal.
+Make the current “Service Network” layer create an obvious visual change while keeping it truthful. Based on the audit, the right outcome is B: rename it to match what it actually shows.
 
-2. Add reusable selectors/helpers
-- Create helpers such as:
-  - `getCountyEngagementMetrics(county)`
-  - `getCountyEngagementRankings()`
-  - `getTopUnengagedCounties(limit = 5)`
-  - `getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 })`
-- Use memoized maps so calculations stay lightweight and do not impact performance when the layer is off.
+What the audit found
 
-3. Refine the Engagement Gap map rendering
-- In `src/components/map/MapView.tsx`, keep the current engagement-gap overlay behavior, but change styling so the new operational priority signal is visible when the layer is on.
-- Use stronger red emphasis for counties with the largest unengaged populations, with the darkest/strongest treatment for top-ranked counties.
-- Preserve clear distinction between:
-  - existing utilization-based engagement warning logic
-  - new member-based outreach priority intensity
-- Keep this county-only and Nevada-only so the map remains operationally readable.
+- The current layer is not a true network.
+- It renders point markers only, not lines or polygons.
+- Those points come from `src/data/rural-services.ts`, which is a county/city/category service directory dataset.
+- The dataset has no relationship fields, no edges, no referral links, and no coordination structure to support real network lines.
+- The layer is rendered in the same marker pane as Provider Locations (`MAP_PANES.facilityMarkers`), so it competes visually with facility pins.
+- Current styling is subtle: small blue circle markers (`radius: 4.5`) that visually read like another set of provider dots.
+- Result: the toggle is technically working, but the change is easy to miss and semantically overlaps with Provider Locations.
 
-4. Add the new filter toggle
-- Add a new sidebar control under the Engagement Gap section in `src/components/map/Sidebar.tsx`:
-  - “Show only counties with Engagement Rate < 20%”
-- This should only affect the engagement-priority rendering/filtering, not the rest of the map.
-- Wire the state from `src/pages/Index.tsx` into `Sidebar` and `MapView`.
+Recommended implementation
 
-5. Upgrade the engagement-gap sidebar summary
-- Expand the existing Engagement Gap section in `Sidebar.tsx` so it also shows:
-  - Top 5 counties with largest unengaged populations
-  - count of counties below 20% engagement
-  - clear explanation that this is outreach/deployment prioritization
-- Keep the current utilization-gap summary copy, but visually separate the new “population engagement priority” summary from the old tier summary.
+1. Rename the layer everywhere from “Service Network” to “Service Presence”
+- Update sidebar label
+- Update tooltip/help copy
+- Update tutorial step copy that references this layer
+- Update any diagnostic labels so naming stays consistent
 
-6. Add county detail-panel metrics
-- In `src/components/map/CoverageDetailPanel.tsx`, add an “Engagement Gap” or “Engagement Priority” card for county-based views.
-- Include exactly:
-  - Rank (`#1 highest gap`)
-  - Total Members
-  - Engaged Members
-  - Unengaged Members
-  - Engagement Rate
-- Show a stronger alert style for Top 5 unengaged counties.
-- Reuse the same card in all county interaction paths (`CountyContent`, `MemberVolumeContent`, `RuralServiceGroupContent`) to maintain panel parity.
+2. Replace duplicate-looking service points with a distinct distribution visualization
+- Stop rendering rural services as individual point markers in the same visual language as provider locations
+- Instead render county-level service presence halos or clustered county service presence markers derived from real `ruralServices` counts
+- Use county-centered or service-cluster-centered visuals sized by real service count, with soft fill and thin outline
+- Keep them visually separate from provider pins: lighter, larger-area presence cues rather than dot markers
 
-7. Interaction behavior
-- When a county is clicked from the engagement-gap layer, the detail panel should reflect the new ranking metrics immediately.
-- If the `<20%` filter is active, counties outside the threshold should not be emphasized/rendered in the engagement-priority view.
-- Do not add any extra visible public UI beyond the requested toggle and panel/map updates.
+3. Keep truthfulness
+- Do not introduce connecting lines or arcs, because the data does not support relationships
+- Keep county detail panel behavior tied to real rural services data so clicking/hovering still opens the existing county resource context
+- If needed, use grouped county entities (`ruralServiceGroup`) rather than individual service pins
 
-8. QA after implementation
-- Verify sort order manually for several counties to confirm:
-  - unengaged count drives ranking
-  - engagement rate correctly breaks ties
-- Verify Top 5 counties receive the strongest red treatment.
-- Verify county details are identical whether opened from county boundary, member-volume, or rural-service interactions.
-- Verify the `<20%` filter updates both map emphasis and sidebar summaries.
-- Test end-to-end on desktop with the current viewport and confirm no regressions in the existing utilization-based engagement tiers.
+4. Make the toggle obviously visible but clean
+- Put the presence layer above county/base overlays and below hover UI/highlights
+- Use a dedicated pane or clearly different styling so it does not disappear under other layers
+- Tune radius/opacity/stroke for normal zoom readability without clutter in Carson/Douglas/Washoe
 
-Technical notes
-- Best fit is to evolve `utilizationAggregation.ts` into a shared county intelligence module for both utilization and member-engagement metrics, rather than scattering logic across components.
-- Current code already centralizes:
-  - engagement-gap summaries in `Sidebar.tsx`
-  - overlay rendering in `MapView.tsx`
-  - county details in `CoverageDetailPanel.tsx`
-  so this can be added cleanly without changing the app structure.
-- Existing data already supports this directly:
-  - `src/data/member-volume.ts`
-  - `src/data/engaged-member-volume.ts`
-- Out-of-state rows in the member baseline (`Mohave`, `Salt Lake`) should be excluded from the new ranking because you selected Nevada-only scope and the map only renders Nevada counties.
+5. Preserve performance and current map behavior
+- Precompute grouped service presence by county
+- Reuse existing `filteredRuralServices` / county filter logic
+- Avoid per-service heavy geometry work
+- Do not touch unrelated layers, county hover metrics, or debug exposure
+
+Likely file changes
+
+- `src/components/map/MapView.tsx`
+  - Replace per-service circle markers with county/service-presence visualization
+  - Keep hover/click wiring to existing county service detail behavior
+  - Optionally move this layer to its own pane for visibility
+- `src/components/map/Sidebar.tsx`
+  - Rename toggle label to “Service Presence”
+- `src/data/help-tooltips.ts`
+  - Rename/update help text to describe presence/distribution, not network relationships
+- `src/pages/Index.tsx`
+  - Update toggle diagnostics naming
+- `src/data/map-tutorial.ts`
+  - Update walkthrough wording if it still says “Service Network”
+
+Technical design
+
+```text
+Current:
+ruralServices -> many small point markers -> same pane/look family as provider locations
+
+Planned:
+ruralServices -> group by county / visible service clusters -> distinct presence halos
+             -> click/hover county resource group -> existing detail panel
+```
+
+Visualization choice
+
+- Chosen approach: service presence distribution layer
+- Not chosen: network lines/arcs, because that would invent relationships not present in the data
+
+Acceptance criteria this plan targets
+
+- Toggling the layer creates an obvious visible change
+- The layer no longer looks like duplicate provider locations
+- The name matches the real data
+- Dense counties remain readable
+- No fake network relationships are introduced
+
+Implementation report I will provide after approval
+
+- What the current layer was actually showing
+- Whether it duplicated provider points visually
+- What replacement visualization was implemented
+- Whether the layer name was changed to “Service Presence”
