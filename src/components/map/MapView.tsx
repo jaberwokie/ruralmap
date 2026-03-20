@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Info } from 'lucide-react';
-import { Facility } from '@/data/facilities';
+import { Facility, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { ruralServices } from '@/data/rural-services';
@@ -1143,7 +1143,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         const validationHtml = `
           <div style="padding: 8px 12px; font-size: 12px; width: 260px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
             <div style="font-weight: 700; margin-bottom: 4px;">${facility.name}</div>
-            <div style="color: hsl(240, 4%, 46%); margin-bottom: 6px;">${facility.type === 'hospital' ? 'Hospital' : 'Clinic / Provider'} · ${facility.county} County</div>
+            <div style="color: hsl(240, 4%, 46%); margin-bottom: 6px;">${getFacilityTypeLabel(facility)} · ${facility.county} County</div>
             <div><strong>Source address:</strong> ${validation.sourceAddress}</div>
             <div><strong>Latitude:</strong> ${facility.lat.toFixed(4)}</div>
             <div><strong>Longitude:</strong> ${facility.lng.toFixed(4)}</div>
@@ -1157,7 +1157,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
       });
 
-      const typeLabel = facility.type === 'hospital' ? 'Hospital' : facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic';
+      const typeLabel = facility.type === 'hospital' ? getFacilityTypeLabel(facility) : facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic';
       const utilHtml = showUtilization && util
         ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
             <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
