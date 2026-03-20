@@ -902,7 +902,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
   }, [selectedCounty]);
 
-  // Draw individual service presence points as subtle hollow rings with faint density halos.
+  // Draw individual service presence points as subtle background dots with minimal density halos.
   useEffect(() => {
     if (!servicePresenceRef.current) return;
     servicePresenceRef.current.clearLayers();
@@ -924,22 +924,18 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
       const marker = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 2.2,
-        color: 'hsl(var(--service-presence) / 0.5)',
-        weight: 1,
-        fillColor: 'hsl(var(--service-presence) / 0.04)',
-        fillOpacity: 1,
-        opacity: 0.82,
+        radius: 1.8,
+        stroke: false,
+        fillColor: 'hsl(var(--service-presence))',
+        fillOpacity: 0.68,
       });
 
       const halo = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 6.6,
-        color: 'transparent',
-        weight: 0,
-        fillColor: 'hsl(var(--service-presence) / 0.12)',
+        radius: 4.8,
+        stroke: false,
+        fillColor: 'hsl(var(--service-presence) / 0.1)',
         fillOpacity: 1,
-        opacity: 0.9,
         interactive: false,
       });
 
