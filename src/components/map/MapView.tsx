@@ -53,12 +53,60 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
+const MAP_PANES = {
+  stateOutline: 'state-outline-pane',
+  countyPolygons: 'county-polygons-pane',
+  countyBorders: 'county-borders-pane',
+  operationalAreas: 'operational-areas-pane',
+  driveRadii: 'drive-radii-pane',
+  gapOverlays: 'gap-overlays-pane',
+  facilityMarkers: 'facility-markers-pane',
+  labels: 'labels-pane',
+  highlights: 'highlights-pane',
+} as const;
+
+const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> = {
+  [MAP_PANES.stateOutline]: 320,
+  [MAP_PANES.countyPolygons]: 330,
+  [MAP_PANES.countyBorders]: 340,
+  [MAP_PANES.operationalAreas]: 350,
+  [MAP_PANES.driveRadii]: 360,
+  [MAP_PANES.gapOverlays]: 370,
+  [MAP_PANES.facilityMarkers]: 620,
+  [MAP_PANES.labels]: 630,
+  [MAP_PANES.highlights]: 640,
+};
+
+const NEVADA_FEATURE: Feature<Polygon> = {
+  type: 'Feature',
+  properties: {},
+  geometry: nevadaBoundaryGeoJSON,
+};
+
+const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>(
+  nevadaCounties.flatMap((county) => {
+    const merged = mergePolygons([county.boundaries]);
+    const clipped = merged ? clipPolygon(merged, NEVADA_FEATURE) : null;
+    return clipped ? [[county.name, clipped] as [string, Feature<Polygon | MultiPolygon>]] : [];
+  })
+);
+
+const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
+
+const createGeoJsonLayer = (
+  geometry: Feature<Polygon | MultiPolygon> | Feature<Polygon>,
+  pane: (typeof MAP_PANES)[keyof typeof MAP_PANES],
+  style: L.PathOptions,
+  interactive = false,
+) => L.geoJSON(geometry as any, { pane, style, interactive });
+
 
 const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
-  const countiesRef = useRef<L.LayerGroup | null>(null);
+  const countyFillRef = useRef<L.LayerGroup | null>(null);
+  const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
@@ -68,7 +116,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
-  const fteServiceAreaRef = useRef<L.LayerGroup | null>(null);
+  const highlightsRef = useRef<L.LayerGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
@@ -106,19 +154,29 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       maxZoom: 19,
     }).addTo(map);
 
-    // Create layers in visual stacking order (bottom to top)
-    stateBoundaryRef.current = L.layerGroup().addTo(map);       // 0. State boundary
-    coverageGreyRef.current = L.layerGroup().addTo(map);        // 0.5 Grey overlay (no same-day)
-    utilizationRef.current = L.layerGroup().addTo(map);         // 1.3 Utilization intensity
-    operationalCoverageRef.current = L.layerGroup().addTo(map); // 1.5 Operational coverage
-    countiesRef.current = L.layerGroup().addTo(map);            // 2. County boundaries
-    engagementGapRef.current = L.layerGroup().addTo(map);       // 3. Engagement gap outlines
-    fteServiceAreaRef.current = L.layerGroup().addTo(map);     // 3.5 FTE service area highlight
-    labelsRef.current = L.layerGroup().addTo(map);              // 4. County labels
-    gapsRef.current = L.layerGroup().addTo(map);                // 5. Coverage gaps
-    radiusRef.current = L.layerGroup().addTo(map);              // 6. Coverage radii
-    markersRef.current = L.layerGroup().addTo(map);             // 7. Facility markers
-    fteCapacityRef.current = L.layerGroup().addTo(map);          // 9. FTE hub indicators (top)
+    // Strict pane hierarchy prevents path/marker draw-order drift as layers toggle on/off.
+    Object.entries(PANE_Z_INDEX).forEach(([paneName, zIndex]) => {
+      const pane = map.createPane(paneName);
+      pane.style.zIndex = String(zIndex);
+      pane.style.pointerEvents = paneName === MAP_PANES.labels ? 'none' : 'auto';
+    });
+
+    // Rendering hierarchy:
+    // Base map → state outline → county polygons → county borders → operational areas
+    // → drive radii → gap/engagement overlays → markers → labels → highlights.
+    stateBoundaryRef.current = L.layerGroup().addTo(map);
+    countyFillRef.current = L.layerGroup().addTo(map);
+    utilizationRef.current = L.layerGroup().addTo(map);
+    countyBorderRef.current = L.layerGroup().addTo(map);
+    coverageGreyRef.current = L.layerGroup().addTo(map);
+    operationalCoverageRef.current = L.layerGroup().addTo(map);
+    radiusRef.current = L.layerGroup().addTo(map);
+    gapsRef.current = L.layerGroup().addTo(map);
+    engagementGapRef.current = L.layerGroup().addTo(map);
+    markersRef.current = L.layerGroup().addTo(map);
+    fteCapacityRef.current = L.layerGroup().addTo(map);
+    labelsRef.current = L.layerGroup().addTo(map);
+    highlightsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
 
@@ -136,71 +194,69 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     if (!stateBoundaryRef.current) return;
     stateBoundaryRef.current.clearLayers();
 
-    const geoLayer = L.geoJSON(
-      { type: "Feature", geometry: nevadaBoundaryGeoJSON, properties: {} } as GeoJSON.Feature,
+    const geoLayer = createGeoJsonLayer(
+      NEVADA_FEATURE,
+      MAP_PANES.stateOutline,
       {
-        style: {
-          color: 'hsl(240, 5%, 55%)',
-          weight: 2,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          interactive: false,
-        },
-      }
+        color: 'hsl(240, 5%, 55%)',
+        weight: 2,
+        fillColor: 'transparent',
+        fillOpacity: 0,
+      },
+      false,
     );
     stateBoundaryRef.current.addLayer(geoLayer);
   }, []);
 
-  // Update county boundary visibility
+  // County polygons are rendered as invisible hit areas plus separate border strokes.
+  // This keeps toggle ownership clean: county toggle controls county-only layers.
   useEffect(() => {
-    if (!countiesRef.current) return;
-    countiesRef.current.clearLayers();
+    if (!countyFillRef.current || !countyBorderRef.current) return;
+    countyFillRef.current.clearLayers();
+    countyBorderRef.current.clearLayers();
     labelsRef.current?.clearLayers();
     if (!layers.counties) return;
 
-    const nevadaClip = {
-      type: "Feature" as const,
-      properties: {},
-      geometry: nevadaBoundaryGeoJSON,
-    };
-
     nevadaCounties.forEach(county => {
-      
-
-      const merged = mergePolygons([county.boundaries]);
-      if (!merged) return;
-      const clipped = clipPolygon(merged, nevadaClip as any);
+      const clipped = getCountyFeature(county.name);
       if (!clipped) return;
 
-      const isSelected = selectedCounty === county.name;
-
-      const geoLayer = L.geoJSON(clipped, {
+      const hitArea = L.geoJSON(clipped, {
+        pane: MAP_PANES.countyPolygons,
         style: {
-          color: isSelected ? 'hsl(200, 60%, 50%)' : 'hsl(240, 5%, 75%)',
-          weight: isSelected ? 2.5 : 1,
-          fillColor: isSelected ? 'hsla(200, 60%, 50%, 0.08)' : 'transparent',
-          fillOpacity: isSelected ? 1 : 0,
-          dashArray: isSelected ? undefined : '4 4',
+          color: 'transparent',
+          weight: 0,
+          fillColor: 'hsla(200, 40%, 65%, 0.01)',
+          fillOpacity: 1,
         },
+        interactive: true,
       });
 
-      // Subtle hover cue only — no informational output
-      geoLayer.on('mouseover', () => {
-        if (!isSelected) {
-          geoLayer.setStyle({ color: 'hsl(200, 40%, 65%)', weight: 1.5 });
-        }
+      hitArea.on('mouseover', () => {
+        hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.06)' });
       });
-      geoLayer.on('mouseout', () => {
-        if (!isSelected) {
-          geoLayer.setStyle({ color: 'hsl(240, 5%, 75%)', weight: 1 });
-        }
+      hitArea.on('mouseout', () => {
+        hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
       });
-      geoLayer.on('click', (e: L.LeafletEvent) => {
+      hitArea.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
         onEntityClickRef.current?.({ type: 'county', county: county.name });
       });
+      countyFillRef.current!.addLayer(hitArea);
 
-      countiesRef.current!.addLayer(geoLayer);
+      const borderLayer = createGeoJsonLayer(
+        clipped,
+        MAP_PANES.countyBorders,
+        {
+          color: 'hsl(240, 5%, 75%)',
+          weight: 1,
+          fillColor: 'transparent',
+          fillOpacity: 0,
+          dashArray: '4 4',
+        },
+        false,
+      );
+      countyBorderRef.current!.addLayer(borderLayer);
 
       const label = L.divIcon({
         className: 'county-label',
@@ -217,9 +273,60 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
       });
-      L.marker(county.center, { icon: label, interactive: false }).addTo(labelsRef.current!);
+      L.marker(county.center, {
+        icon: label,
+        interactive: false,
+        pane: MAP_PANES.labels,
+      }).addTo(labelsRef.current!);
     });
-  }, [layers.counties, selectedCounty]);
+  }, [layers.counties]);
+
+  useEffect(() => {
+    if (!highlightsRef.current) return;
+    highlightsRef.current.clearLayers();
+
+    if (selectedCounty) {
+      const selectedCountyFeature = getCountyFeature(selectedCounty);
+      if (selectedCountyFeature) {
+        const selectedLayer = createGeoJsonLayer(
+          selectedCountyFeature,
+          MAP_PANES.highlights,
+          {
+            color: 'hsl(200, 60%, 50%)',
+            weight: 2.5,
+            fillColor: 'hsla(200, 60%, 50%, 0.08)',
+            fillOpacity: 1,
+          },
+          false,
+        );
+        highlightsRef.current.addLayer(selectedLayer);
+      }
+    }
+
+    if (!layers.fteCapacity || !selectedFteId) return;
+    const fte = fteCapacityData.find(f => f.id === selectedFteId);
+    if (!fte || !fte.hubLocation) return;
+
+    const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
+    fte.counties.forEach((countyName) => {
+      const countyFeature = getCountyFeature(countyName);
+      if (!countyFeature) return;
+
+      const serviceAreaLayer = createGeoJsonLayer(
+        countyFeature,
+        MAP_PANES.highlights,
+        {
+          color: roleColor,
+          weight: 2,
+          dashArray: '6 4',
+          fillColor: roleColor,
+          fillOpacity: 0.08,
+        },
+        false,
+      );
+      highlightsRef.current!.addLayer(serviceAreaLayer);
+    });
+  }, [layers.fteCapacity, selectedCounty, selectedFteId]);
 
   // Draw coverage radii
   useEffect(() => {
@@ -234,6 +341,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         const colors = RADIUS_COLORS;
 
         const halo = L.circle([facility.lat, facility.lng], {
+          pane: MAP_PANES.driveRadii,
           radius: radiusKm * 1000,
           color: 'hsla(0, 0%, 100%, 0.7)',
           weight: 4,
@@ -244,6 +352,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         radiusRef.current!.addLayer(halo);
 
         const circle = L.circle([facility.lat, facility.lng], {
+          pane: MAP_PANES.driveRadii,
           radius: radiusKm * 1000,
           color: colors.stroke,
           weight: 2.5,
@@ -319,7 +428,10 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         iconAnchor: [scaledSize / 2, scaledSize / 2],
       });
 
-      const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], { icon });
+      const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], {
+        icon,
+        pane: MAP_PANES.facilityMarkers,
+      });
       marker.on('click', () => onFacilityClick(facility));
 
       const typeLabel = facility.type === 'hospital' ? 'Hospital' : facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic';
@@ -399,6 +511,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
       if (gapGeometry) {
         const geoLayer = L.geoJSON(gapGeometry as any, {
+          pane: MAP_PANES.gapOverlays,
           style: {
             color: 'hsla(0, 84%, 60%, 0.13)',
             weight: 0,
@@ -415,7 +528,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [facilities, coverageGaps, coverageRadius, radiusKm]);
+  }, [facilities, coverageGaps, radiusKm]);
 
   // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
   useEffect(() => {
@@ -426,80 +539,50 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     if (!layers.operationalCoverage || coverageGaps) return;
 
     const activeZone = getActiveCoverageZone(coverageRadiusKm);
-    const nevadaFeat: Feature<Polygon> = { type: 'Feature', properties: {}, geometry: nevadaBoundaryGeoJSON };
+    const inactiveArea = activeZone
+      ? difference(featureCollection([NEVADA_FEATURE, activeZone]) as any)
+      : NEVADA_FEATURE;
 
-    // 1. Full-state grey overlay (single polygon, no gaps possible)
-    const greyAll = L.geoJSON(nevadaFeat as any, {
-      style: {
-        color: 'transparent',
-        weight: 0,
-        fillColor: 'hsl(220, 10%, 50%)',
-        fillOpacity: 0.30,
-      },
-      interactive: false,
-    });
-    coverageGreyRef.current.addLayer(greyAll);
+    if (inactiveArea) {
+      const greyNonServiceArea = L.geoJSON(inactiveArea as any, {
+        pane: MAP_PANES.operationalAreas,
+        style: {
+          color: 'transparent',
+          weight: 0,
+          fillColor: 'hsl(220, 10%, 50%)',
+          fillOpacity: 0.24,
+        },
+        interactive: false,
+      });
+      coverageGreyRef.current.addLayer(greyNonServiceArea);
+    }
 
     if (!activeZone) return;
 
-    // 2. Active field coverage — opaque cut-out on top of grey
-    //    White base fill masks the grey beneath, then a subtle teal tint on top
-    const activeCutout = L.geoJSON(activeZone, {
+    // Active service geometry renders directly with clipped county/state layers beneath it.
+    const activeFill = L.geoJSON(activeZone, {
+      pane: MAP_PANES.operationalAreas,
       style: {
-        color: 'hsla(174, 50%, 40%, 0.30)',
+        color: 'hsla(174, 50%, 40%, 0.35)',
         weight: 1.5,
-        fillColor: 'hsl(0, 0%, 98%)',
+        fillColor: 'hsla(174, 50%, 45%, 0.16)',
         fillOpacity: 1,
       },
       interactive: false,
     });
-    operationalCoverageRef.current.addLayer(activeCutout);
+    operationalCoverageRef.current.addLayer(activeFill);
 
-    // Teal tint layer on top of the white cutout
-    const activeTint = L.geoJSON(activeZone, {
+    const activeOutline = L.geoJSON(activeZone, {
+      pane: MAP_PANES.operationalAreas,
       style: {
-        color: 'transparent',
-        weight: 0,
-        fillColor: 'hsla(174, 50%, 45%, 0.08)',
-        fillOpacity: 1,
+        color: 'hsla(174, 50%, 40%, 0.55)',
+        weight: 2,
+        fillColor: 'transparent',
+        fillOpacity: 0,
       },
       interactive: false,
     });
-    operationalCoverageRef.current.addLayer(activeTint);
-
-    // 3. Scheduled outreach — partial cut-out (lighter grey, not fully clear)
-    try {
-      const fc = featureCollection([nevadaFeat, activeZone]);
-      const scheduledArea = difference(fc as any);
-      if (scheduledArea) {
-        // Lighten the scheduled zone by overlaying a semi-transparent white
-        const scheduledLighten = L.geoJSON(scheduledArea as any, {
-          style: {
-            color: 'transparent',
-            weight: 0,
-            fillColor: 'hsl(0, 0%, 98%)',
-            fillOpacity: 0.35,
-          },
-          interactive: false,
-        });
-        coverageGreyRef.current.addLayer(scheduledLighten);
-
-        // Dashed outline for scheduled zone
-        const scheduledOutline = L.geoJSON(scheduledArea as any, {
-          style: {
-            color: 'hsla(174, 40%, 50%, 0.22)',
-            weight: 1.5,
-            fillColor: 'transparent',
-            fillOpacity: 0,
-            dashArray: '8 5',
-          },
-          interactive: false,
-        });
-        operationalCoverageRef.current.addLayer(scheduledOutline);
-      }
-    } catch (e) {
-      console.error('Scheduled zone computation error:', e);
-    }
+    operationalCoverageRef.current.addLayer(activeOutline);
   }, [layers.operationalCoverage, coverageRadiusKm, coverageGaps]);
 
   // ── FTE Capacity hub indicators ──
@@ -537,6 +620,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
 
       const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000 });
+      marker.options.pane = MAP_PANES.highlights;
       marker.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
         onFteHubClickRef.current?.(fte.id);
@@ -545,50 +629,22 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.fteCapacity, selectedFteId]);
 
-  // ── FTE service-area highlight (field FTEs only — remote has no geographic footprint) ──
-  useEffect(() => {
-    if (!fteServiceAreaRef.current) return;
-    fteServiceAreaRef.current.clearLayers();
-
-    if (!selectedFteId) return;
-    const fte = fteCapacityData.find(f => f.id === selectedFteId);
-    if (!fte || !fte.hubLocation) return; // skip remote FTE — no territorial polygon
-
-    const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
-    const servedSet = new Set(fte.counties);
-
-    nevadaCounties.forEach(county => {
-      if (!servedSet.has(county.name)) return;
-      const polygon = L.polygon(county.boundaries, {
-        color: roleColor,
-        weight: 2,
-        dashArray: '6 4',
-        fillColor: roleColor,
-        fillOpacity: 0.08,
-        interactive: false,
-      });
-      fteServiceAreaRef.current!.addLayer(polygon);
-    });
-  }, [selectedFteId]);
-
   // ── Utilization Intensity choropleth (purple ramp) ──
   useEffect(() => {
     if (!utilizationRef.current) return;
     utilizationRef.current.clearLayers();
-    if (!layers.utilizationIntensity) return;
+    if (!layers.utilizationIntensity || coverageGaps) return;
 
     nevadaCounties.forEach(county => {
       const util = getCountyUtilization(county.name);
       const tier = getUtilizationTier(util.avgVisitsPerMember);
       const colors = UTILIZATION_COLORS[tier];
 
-      const merged = mergePolygons([county.boundaries]);
-      if (!merged) return;
-      const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
-      const clipped = clipPolygon(merged, nevadaClip as any);
+      const clipped = getCountyFeature(county.name);
       if (!clipped) return;
 
       const geoLayer = L.geoJSON(clipped, {
+        pane: MAP_PANES.countyPolygons,
         style: {
           color: colors.border,
           weight: 1,
@@ -598,11 +654,12 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'county', county: county.name });
+        const memberCount = memberVolumeData.find(entry => entry.county === county.name)?.memberCount ?? util.totalMembers;
+        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount });
       });
       utilizationRef.current!.addLayer(geoLayer);
     });
-  }, [layers.utilizationIntensity]);
+  }, [layers.utilizationIntensity, coverageGaps]);
 
   // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) ──
   useEffect(() => {
@@ -625,7 +682,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       let geoJson: any;
 
       if (result.subZone === 'northern-washoe') {
-        const merged = mergePolygons([county.boundaries]);
+        const merged = getCountyFeature(county.name);
         if (!merged) return;
         const clipNorth = {
           type: "Feature" as const,
@@ -643,15 +700,13 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         };
         geoJson = clipPolygon(merged, clipNorth as any);
       } else {
-        const merged = mergePolygons([county.boundaries]);
-        if (!merged) return;
-        const nevadaClip = { type: "Feature" as const, properties: {}, geometry: nevadaBoundaryGeoJSON };
-        geoJson = clipPolygon(merged, nevadaClip as any);
+        geoJson = getCountyFeature(county.name);
       }
       if (!geoJson) return;
 
       const s = TIER_STYLES[result.tier];
       const geoLayer = L.geoJSON(geoJson, {
+        pane: MAP_PANES.gapOverlays,
         style: {
           color: s.color,
           weight: s.weight,
@@ -673,7 +728,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         iconSize: [16, 16],
         iconAnchor: [8, 8],
       });
-      L.marker(iconCenter, { icon: warnIcon, interactive: false }).addTo(engagementGapRef.current!);
+      L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapRef.current!);
     });
   }, [layers.engagementGap]);
 
