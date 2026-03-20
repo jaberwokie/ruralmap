@@ -924,22 +924,22 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
       const marker = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 3,
-        color: 'hsl(var(--card))',
-        weight: 1.25,
+        radius: 2.6,
+        color: 'hsla(var(--service-presence), 0.42)',
+        weight: 0.75,
         fillColor: 'hsl(var(--service-presence))',
-        fillOpacity: 0.82,
-        opacity: 0.9,
+        fillOpacity: 0.74,
+        opacity: 0.72,
       });
 
       const halo = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 8,
-        color: 'hsla(var(--service-presence), 0.12)',
-        weight: 1.5,
+        radius: 7,
+        color: 'transparent',
+        weight: 0,
         fillColor: 'hsla(var(--service-presence), 0.12)',
         fillOpacity: 1,
-        opacity: 0.8,
+        opacity: 0.68,
         interactive: false,
       });
 
