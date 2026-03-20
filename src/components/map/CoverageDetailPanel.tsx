@@ -3,7 +3,7 @@ import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { Facility, defaultFacilities, getFacilityClassification, getFacilityTypeLabel, isCriticalAccessHospital } from '@/data/facilities';
+import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
@@ -1099,6 +1099,7 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
 const FacilityContent = ({ facility }: { facility: Facility }) => {
   const isHighUtilClinic = facility.tier === 'tier1';
   const classification = getFacilityClassification(facility);
+  const dataConfidence = getFacilityDataConfidence(facility);
   const typeLabel = classification === 'clinic_provider' && isHighUtilClinic
     ? 'Clinic / Community Provider (High Utilization)'
     : getFacilityTypeLabel(facility);
@@ -1173,6 +1174,9 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
           <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
           <span>{facility.lat.toFixed(4)}, {facility.lng.toFixed(4)}</span>
+        </div>
+        <div className="text-[11px] text-muted-foreground/80 pt-1">
+          Data Confidence: {dataConfidence}
         </div>
       </div>
       <FacilityUtilizationSection facility={facility} />

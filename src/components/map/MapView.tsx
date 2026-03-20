@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Info } from 'lucide-react';
-import { Facility, getFacilityClassification, getFacilityTypeLabel } from '@/data/facilities';
+import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { ruralServices } from '@/data/rural-services';
@@ -1084,7 +1084,9 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
       const util = getFacilityUtilization(facility);
       const validation = facilityValidation.records.get(facility.id);
+      const dataConfidence = getFacilityDataConfidence(facility);
       const scaledSize = showUtilization && util ? getScaledPinSize(pin.size, util.totalVisits) : pin.size;
+      const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
 
       const isHospital = facility.type === 'hospital';
       const isDiamond = pin.shape === 'diamond';
@@ -1108,6 +1110,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
             height: ${scaledSize}px;
             background: ${pin.bg};
             border: ${validationBorder};
+            opacity: ${markerOpacity};
             box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${validationRing};
             transform: rotate(45deg);
             cursor: pointer;
@@ -1119,6 +1122,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
             border-radius: 50%;
             background: ${pin.bg};
             border: ${validationBorder};
+            opacity: ${markerOpacity};
             box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${isHospital ? ', 0 0 6px hsla(0, 72%, 51%, 0.4)' : ''}${validationRing};
             cursor: pointer;
             transition: background 150ms ease;
@@ -1172,6 +1176,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
           <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
           <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
+          <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 4px;">Data Confidence: ${dataConfidence}</div>
           ${utilHtml}
         </div>
       `;

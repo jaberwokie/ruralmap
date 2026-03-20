@@ -2,12 +2,14 @@ export type FacilityType = 'hospital' | 'clinic' | 'tier1';
 export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
 export type AccessType = 'Frontier' | 'Rural' | 'Near-Urban';
 export type FacilityClassification = 'hospital' | 'cah' | 'clinic_provider' | 'facility';
+export type DataConfidence = 'Verified' | 'Likely Accurate' | 'Unverified';
 
 export interface Facility {
   id: string;
   name: string;
   type: FacilityType;
   classification?: FacilityClassification;
+  dataConfidence?: DataConfidence;
   city: string;
   county: string;
   address?: string;
@@ -75,13 +77,58 @@ export const FACILITY_CLASSIFICATION_LABELS: Record<FacilityClassification, stri
   facility: 'Facility',
 };
 
+export const DATA_CONFIDENCE_LABELS: Record<DataConfidence, DataConfidence> = {
+  Verified: 'Verified',
+  'Likely Accurate': 'Likely Accurate',
+  Unverified: 'Unverified',
+};
+
 export const getFacilityClassification = (facility: Facility): FacilityClassification =>
   facility.classification ?? (facility.type === 'hospital' ? 'hospital' : 'clinic_provider');
+
+export const getFacilityDataConfidence = (facility: Facility): DataConfidence => {
+  if (facility.dataConfidence) return facility.dataConfidence;
+  if (!Number.isFinite(facility.lat) || !Number.isFinite(facility.lng) || facility.lat === 0 || facility.lng === 0) return 'Unverified';
+  if (getFacilityClassification(facility) === 'facility') return 'Unverified';
+  if (facility.address) return 'Verified';
+  return 'Likely Accurate';
+};
 
 export const isCriticalAccessHospital = (facility: Facility) =>
   getFacilityClassification(facility) === 'cah';
 
 export const getFacilityTypeLabel = (facility: Facility) => FACILITY_CLASSIFICATION_LABELS[getFacilityClassification(facility)];
+
+export const auditFacilityConfidence = (facilities: Facility[]) => {
+  const missingConfidence = facilities
+    .filter((facility) => !facility.dataConfidence)
+    .map((facility) => facility.name);
+
+  const counts = facilities.reduce<Record<DataConfidence, number>>((acc, facility) => {
+    acc[getFacilityDataConfidence(facility)] += 1;
+    return acc;
+  }, {
+    Verified: 0,
+    'Likely Accurate': 0,
+    Unverified: 0,
+  });
+
+  const unverifiedFacilities = facilities
+    .filter((facility) => getFacilityDataConfidence(facility) === 'Unverified')
+    .map((facility) => ({
+      id: facility.id,
+      name: facility.name,
+      classification: getFacilityClassification(facility),
+      county: facility.county,
+    }));
+
+  return {
+    total: facilities.length,
+    counts,
+    missingConfidence,
+    unverifiedFacilities,
+  };
+};
 
 export const auditFacilityClassifications = (facilities: Facility[]) => {
   const duplicateNameMap = new Map<string, Set<FacilityClassification>>();
