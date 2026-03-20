@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { MAP_TUTORIAL_STEPS } from '@/data/map-tutorial';
 
 interface HighlightRect {
@@ -6,6 +7,19 @@ interface HighlightRect {
   left: number;
   width: number;
   height: number;
+}
+
+interface ViewportSize {
+  width: number;
+  height: number;
+}
+
+interface CardLayout {
+  top: number;
+  left: number;
+  width: number;
+  maxHeight: number;
+  placement: 'bottom-center' | 'above-highlight' | 'below-highlight' | 'centered-modal';
 }
 
 interface MapTutorialOverlayProps {
@@ -18,9 +32,20 @@ interface MapTutorialOverlayProps {
   onBack: () => void;
 }
 
-const PADDING = 12;
+const HIGHLIGHT_PADDING = 12;
+const VIEWPORT_PADDING = 20;
+const CARD_MAX_WIDTH = 460;
+const CARD_MIN_WIDTH = 280;
+const CARD_MAX_HEIGHT = 420;
+const GAP = 16;
+const FALLBACK_CARD_HEIGHT = 300;
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const getViewportSize = (): ViewportSize => ({
+  width: window.innerWidth,
+  height: window.innerHeight,
+});
 
 const getHighlightRect = (selectors: string[]): HighlightRect | null => {
   const elements = selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)) as HTMLElement[]);
@@ -46,19 +71,113 @@ const getHighlightRect = (selectors: string[]): HighlightRect | null => {
   );
 
   return {
-    top: clamp(bounds.top - PADDING, 8, window.innerHeight - 24),
-    left: clamp(bounds.left - PADDING, 8, window.innerWidth - 24),
-    width: clamp(bounds.right - bounds.left + PADDING * 2, 120, window.innerWidth - 16),
-    height: clamp(bounds.bottom - bounds.top + PADDING * 2, 64, window.innerHeight - 16),
+    top: clamp(bounds.top - HIGHLIGHT_PADDING, 8, window.innerHeight - 24),
+    left: clamp(bounds.left - HIGHLIGHT_PADDING, 8, window.innerWidth - 24),
+    width: clamp(bounds.right - bounds.left + HIGHLIGHT_PADDING * 2, 120, window.innerWidth - 16),
+    height: clamp(bounds.bottom - bounds.top + HIGHLIGHT_PADDING * 2, 64, window.innerHeight - 16),
+  };
+};
+
+const getCardLayout = (
+  viewport: ViewportSize,
+  highlightRect: HighlightRect | null,
+  measuredHeight: number,
+): CardLayout => {
+  const availableWidth = Math.max(CARD_MIN_WIDTH, viewport.width - VIEWPORT_PADDING * 2);
+  const width = Math.min(CARD_MAX_WIDTH, availableWidth);
+  const maxHeight = Math.min(CARD_MAX_HEIGHT, viewport.height - VIEWPORT_PADDING * 2);
+  const cardHeight = Math.min(Math.max(measuredHeight, FALLBACK_CARD_HEIGHT), maxHeight);
+  const centeredLeft = clamp((viewport.width - width) / 2, VIEWPORT_PADDING, viewport.width - width - VIEWPORT_PADDING);
+  const centeredTop = clamp((viewport.height - cardHeight) / 2, VIEWPORT_PADDING, viewport.height - cardHeight - VIEWPORT_PADDING);
+  const isCompactViewport = viewport.width < 900 || viewport.height < 720;
+
+  if (isCompactViewport) {
+    return {
+      top: centeredTop,
+      left: centeredLeft,
+      width,
+      maxHeight,
+      placement: 'centered-modal',
+    };
+  }
+
+  const defaultTop = clamp(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING, viewport.height - cardHeight - VIEWPORT_PADDING);
+
+  if (!highlightRect) {
+    return {
+      top: defaultTop,
+      left: centeredLeft,
+      width,
+      maxHeight,
+      placement: 'bottom-center',
+    };
+  }
+
+  const aboveTop = highlightRect.top - cardHeight - GAP;
+  const belowTop = highlightRect.top + highlightRect.height + GAP;
+  const canPlaceAbove = aboveTop >= VIEWPORT_PADDING;
+  const canPlaceBelow = belowTop + cardHeight <= viewport.height - VIEWPORT_PADDING;
+  const alignedLeft = clamp(
+    highlightRect.left + highlightRect.width / 2 - width / 2,
+    VIEWPORT_PADDING,
+    viewport.width - width - VIEWPORT_PADDING,
+  );
+
+  if (canPlaceBelow) {
+    return {
+      top: belowTop,
+      left: alignedLeft,
+      width,
+      maxHeight,
+      placement: 'below-highlight',
+    };
+  }
+
+  if (canPlaceAbove) {
+    return {
+      top: aboveTop,
+      left: alignedLeft,
+      width,
+      maxHeight,
+      placement: 'above-highlight',
+    };
+  }
+
+  return {
+    top: defaultTop,
+    left: centeredLeft,
+    width,
+    maxHeight,
+    placement: 'bottom-center',
   };
 };
 
 const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, onSkip, onNext, onBack }: MapTutorialOverlayProps) => {
   const step = MAP_TUTORIAL_STEPS[stepIndex];
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const [mounted, setMounted] = useState(false);
   const [highlightRect, setHighlightRect] = useState<HighlightRect | null>(null);
+  const [viewport, setViewport] = useState<ViewportSize>({ width: 0, height: 0 });
+  const [cardHeight, setCardHeight] = useState(FALLBACK_CARD_HEIGHT);
 
   useEffect(() => {
-    if (!walkthroughOpen || !step) return;
+    setMounted(true);
+    setViewport(getViewportSize());
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
+    const updateViewport = () => setViewport(getViewportSize());
+
+    updateViewport();
+    window.addEventListener('resize', updateViewport);
+
+    return () => window.removeEventListener('resize', updateViewport);
+  }, [mounted]);
+
+  useEffect(() => {
+    if (!mounted || !walkthroughOpen || !step) return;
 
     let frame = 0;
     const updateRect = () => {
@@ -77,7 +196,7 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
       window.removeEventListener('resize', updateRect);
       window.removeEventListener('scroll', updateRect, true);
     };
-  }, [step, walkthroughOpen]);
+  }, [mounted, step, walkthroughOpen]);
 
   useEffect(() => {
     if (!introOpen && !walkthroughOpen) return;
@@ -93,60 +212,74 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [introOpen, onBack, onNext, onSkip, walkthroughOpen]);
 
-  const cardStyle = useMemo(() => {
-    const cardWidth = Math.min(320, window.innerWidth - 32);
+  useLayoutEffect(() => {
+    if (!mounted || !cardRef.current || (!introOpen && !walkthroughOpen)) return;
 
-    if (!highlightRect) {
-      return {
-        width: cardWidth,
-        top: Math.max(16, window.innerHeight - 220),
-        left: 16,
-      };
-    }
+    const element = cardRef.current;
+    const updateHeight = () => setCardHeight(element.getBoundingClientRect().height || FALLBACK_CARD_HEIGHT);
 
-    const preferredTop = highlightRect.top > 220
-      ? highlightRect.top - 176
-      : highlightRect.top + highlightRect.height + 16;
+    updateHeight();
 
-    return {
-      width: cardWidth,
-      top: clamp(preferredTop, 16, window.innerHeight - 196),
-      left: clamp(highlightRect.left + highlightRect.width / 2 - cardWidth / 2, 16, window.innerWidth - cardWidth - 16),
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(element);
+    window.addEventListener('resize', updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', updateHeight);
     };
-  }, [highlightRect]);
+  }, [introOpen, mounted, stepIndex, walkthroughOpen]);
 
-  if (!introOpen && (!walkthroughOpen || !step)) return null;
+  const cardLayout = useMemo(() => {
+    if (!mounted || viewport.width === 0 || viewport.height === 0) return null;
+    return getCardLayout(viewport, highlightRect, cardHeight);
+  }, [cardHeight, highlightRect, mounted, viewport]);
+
+  if (!mounted || (!introOpen && (!walkthroughOpen || !step))) return null;
 
   if (introOpen) {
-    return (
-      <div className="fixed inset-0 z-[1400] flex items-center justify-center bg-foreground/45 px-4 backdrop-blur-[1px]">
-        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 text-card-foreground shadow-2xl">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">First-time walkthrough</p>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">How to Read This Map</h2>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Understand access, coverage, and gaps across rural Nevada</p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={onStart}
-              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
-            >
-              Start Walkthrough
-            </button>
-            <button
-              type="button"
-              onClick={onSkip}
-              className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary active:scale-[0.98]"
-            >
-              Skip
-            </button>
+    return createPortal(
+      <div className="fixed inset-0 z-[2200] flex items-center justify-center bg-foreground/45 px-4 backdrop-blur-[1px]">
+        <div
+          ref={cardRef}
+          className="flex w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl"
+          style={{ maxHeight: 'calc(100vh - 32px)' }}
+        >
+          <div className="shrink-0 border-b border-border px-6 py-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">First-time walkthrough</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-tight text-balance">How to Read This Map</h2>
+          </div>
+          <div className="min-h-0 overflow-y-auto px-6 py-4">
+            <p className="text-sm leading-relaxed text-muted-foreground">Understand access, coverage, and gaps across rural Nevada</p>
+          </div>
+          <div className="shrink-0 border-t border-border px-6 py-4">
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={onStart}
+                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
+              >
+                Start Walkthrough
+              </button>
+              <button
+                type="button"
+                onClick={onSkip}
+                className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary active:scale-[0.98]"
+              >
+                Skip
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   }
 
-  return (
-    <div className="fixed inset-0 z-[1400] pointer-events-none">
+  if (!cardLayout || !step) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 z-[2200] pointer-events-none">
       <div className="absolute inset-0 bg-transparent" />
       {highlightRect && (
         <div
@@ -162,49 +295,62 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
       )}
 
       <div
-        className="pointer-events-auto absolute rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-2xl transition-[top,left] duration-300 ease-out"
-        style={cardStyle}
+        ref={cardRef}
+        className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl transition-[top,left,width,max-height] duration-300 ease-out"
+        style={{
+          top: cardLayout.top,
+          left: cardLayout.left,
+          width: cardLayout.width,
+          maxHeight: cardLayout.maxHeight,
+        }}
       >
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            Step {stepIndex + 1} of {MAP_TUTORIAL_STEPS.length}
-          </p>
-          <button
-            type="button"
-            onClick={onSkip}
-            className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground active:scale-[0.98]"
-          >
-            Skip
-          </button>
+        <div className="shrink-0 border-b border-border px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Step {stepIndex + 1} of {MAP_TUTORIAL_STEPS.length}
+            </p>
+            <button
+              type="button"
+              onClick={onSkip}
+              className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground active:scale-[0.98]"
+            >
+              Skip
+            </button>
+          </div>
+          <h3 className="mt-2 text-base font-semibold text-balance">{step.title}</h3>
         </div>
 
-        <h3 className="mt-2 text-base font-semibold text-balance">{step.title}</h3>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{step.text}</p>
-        {step.footer && (
-          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground">
-            {step.footer}
-          </p>
-        )}
+        <div className="min-h-0 overflow-y-auto px-4 py-3">
+          <p className="text-sm leading-relaxed text-muted-foreground">{step.text}</p>
+          {step.footer && (
+            <p className="mt-3 border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground">
+              {step.footer}
+            </p>
+          )}
+        </div>
 
-        <div className="mt-4 flex items-center justify-between gap-3">
-          <button
-            type="button"
-            onClick={onBack}
-            disabled={stepIndex === 0}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
-          >
-            {stepIndex === MAP_TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next'}
-          </button>
+        <div className="shrink-0 border-t border-border px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={onBack}
+              disabled={stepIndex === 0}
+              className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              onClick={onNext}
+              className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
+            >
+              {stepIndex === MAP_TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next'}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 };
 
