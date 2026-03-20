@@ -56,7 +56,7 @@ interface SidebarProps {
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
-  { key: 'services' as const, label: 'Service Network', color: 'bg-primary' },
+  { key: 'services' as const, label: 'Service Presence', color: 'bg-primary' },
   { key: 'serviceLocations' as const, label: 'Provider Locations', color: 'bg-foreground' },
   { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-teal-600' },
   { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', color: 'bg-amber-500' },

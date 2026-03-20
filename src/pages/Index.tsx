@@ -14,8 +14,8 @@ const TOGGLE_DIAGNOSTICS = {
     layerIds: ['county-hit-areas', 'county-borders', 'county-labels'],
   },
   services: {
-    toggleName: 'Service Network',
-    layerIds: ['service-network-markers'],
+    toggleName: 'Service Presence',
+    layerIds: ['service-presence-markers'],
   },
   serviceLocations: {
     toggleName: 'Provider Locations',

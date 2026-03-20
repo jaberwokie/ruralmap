@@ -43,8 +43,8 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   },
   {
     key: 'serviceNetwork',
-    title: 'Service network',
-    text: 'This shows how providers are connected. Weak connections lead to gaps.',
+    title: 'Service presence',
+    text: 'These county halos show where community services are concentrated, separate from provider site pins.',
     selectors: ['[data-tutorial="toggle-services"]', '[data-tutorial="map-region"]'],
   },
   {
