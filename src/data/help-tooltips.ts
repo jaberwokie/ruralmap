@@ -39,7 +39,7 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   engagementGap: {
     label: 'Engagement Gap',
     explanation:
-      'Flags counties where clinical utilization is relatively high but no active CCC, CHW, or field engagement support is currently assigned. This highlights places where treatment may be happening without relational infrastructure around it.',
+      'Highlights where members are not being reached by behavioral health services. This layer compares total Medicaid members to those with at least one behavioral health encounter, showing where large unengaged populations exist. It helps identify counties where outreach and engagement efforts should be prioritized.',
   },
   coverageRadius: {
     label: 'Provider Coverage Radius',
