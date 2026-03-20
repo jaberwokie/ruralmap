@@ -659,6 +659,24 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     });
   }, [layers.fteCapacity, selectedCounty, selectedFteId]);
 
+  useEffect(() => {
+    if (!mapRef.current || !selectedCounty) return;
+
+    const selectedCountyFeature = getCountyFeature(selectedCounty);
+    if (!selectedCountyFeature) return;
+
+    const focusLayer = L.geoJSON(selectedCountyFeature as any);
+    const bounds = focusLayer.getBounds();
+    if (!bounds.isValid()) return;
+
+    mapRef.current.fitBounds(bounds, {
+      animate: true,
+      duration: 0.4,
+      padding: [48, 48],
+      maxZoom: 8,
+    });
+  }, [selectedCounty]);
+
   // Draw coverage radii
   useEffect(() => {
     if (!radiusRef.current) return;

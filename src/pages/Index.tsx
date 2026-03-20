@@ -118,6 +118,12 @@ const Index = () => {
     setLockedEntity(entity);
   }, []);
 
+  const handleCountySelect = useCallback((county: string) => {
+    setSelectedFteId(null);
+    setLockedEntity({ type: 'county', county });
+    setMobileSidebarOpen(false);
+  }, []);
+
   const handleEntityHover = useCallback((entity: MapEntity | null) => {
     setHoverEntity(entity);
   }, []);
@@ -188,6 +194,7 @@ const Index = () => {
           onTopProvidersOnlyChange={setTopProvidersOnly}
           engagementRateBelow20Only={engagementRateBelow20Only}
           onEngagementRateBelow20OnlyChange={setEngagementRateBelow20Only}
+          onCountySelect={handleCountySelect}
           onHelpEnter={handleHelpEnter}
           onHelpLeave={handleHelpLeave}
         />
