@@ -31,12 +31,12 @@ export const defaultFacilities: Facility[] = [
   { id: "h8", name: "Mount Grant General Hospital", type: "hospital", city: "Hawthorne", county: "Mineral", address: "200 S A St", lat: 38.5166, lng: -118.6274, notes: "Frontier", accessType: "Frontier" },
   { id: "h9", name: "Humboldt General Hospital", type: "hospital", city: "Winnemucca", county: "Humboldt", address: "118 E Haskell St", lat: 40.9711, lng: -117.7265, notes: "True rural hub", accessType: "Rural" },
   // Additional NRHP hospitals
-  { id: "h10", name: "Grover C. Dils Medical Center", type: "hospital", city: "Caliente", county: "Lincoln", address: "700 N Spring St", lat: 37.6147, lng: -114.5119, notes: "Frontier coverage", accessType: "Frontier" },
-  { id: "h11", name: "Pershing General Hospital", type: "hospital", city: "Lovelock", county: "Pershing", address: "855 6th St", lat: 40.1793, lng: -118.4734, notes: "Rural access", accessType: "Rural" },
-  { id: "h12", name: "Boulder City Hospital", type: "hospital", city: "Boulder City", county: "Clark", address: "901 Adams Blvd", lat: 35.9787, lng: -114.8325, notes: "Near-urban access", accessType: "Near-Urban" },
-  { id: "h13", name: "Mesa View Regional Hospital", type: "hospital", city: "Mesquite", county: "Clark", address: "1299 Bertha Howe Ave", lat: 36.8055, lng: -114.0672, notes: "Near-urban access", accessType: "Near-Urban" },
+  { id: "h10", name: "Grover C. Dils Medical Center", type: "hospital", city: "Caliente", county: "Lincoln", address: "700 N Spring St", lat: 37.6226, lng: -114.5136, notes: "Frontier coverage", accessType: "Frontier" },
+  { id: "h11", name: "Pershing General Hospital", type: "hospital", city: "Lovelock", county: "Pershing", address: "855 6th St", lat: 40.1762, lng: -118.4818, notes: "Rural access", accessType: "Rural" },
+  { id: "h12", name: "Boulder City Hospital", type: "hospital", city: "Boulder City", county: "Clark", address: "901 Adams Blvd", lat: 35.9674, lng: -114.8427, notes: "Near-urban access", accessType: "Near-Urban" },
+  { id: "h13", name: "Mesa View Regional Hospital", type: "hospital", city: "Mesquite", county: "Clark", address: "1299 Bertha Howe Ave", lat: 36.8098, lng: -114.1161, notes: "Near-urban access", accessType: "Near-Urban" },
   { id: "h14", name: "Carson Valley Health", type: "hospital", city: "Gardnerville", county: "Douglas", address: "1107 Hwy 395 N", lat: 38.9413, lng: -119.7496, notes: "Near-urban access", accessType: "Near-Urban" },
-  { id: "h15", name: "Incline Village Community Hospital", type: "hospital", city: "Incline Village", county: "Washoe", address: "880 Alder Ave", lat: 39.2516, lng: -119.9531, notes: "Near-urban access", accessType: "Near-Urban" },
+  { id: "h15", name: "Incline Village Community Hospital", type: "hospital", city: "Incline Village", county: "Washoe", address: "880 Alder Ave", lat: 39.2516, lng: -119.9541, notes: "Near-urban access", accessType: "Near-Urban" },
 
   // Clinics
   { id: "c1", name: "Nevada Health Centers Pahrump", type: "clinic", city: "Pahrump", county: "Nye", address: "1430 E Calvada Blvd", lat: 36.1943, lng: -115.9664, notes: "FQHC" },

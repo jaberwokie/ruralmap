@@ -18,6 +18,7 @@ import { point as turfPoint, featureCollection, polygon as turfPolygon } from '@
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
 import MapDebugPanel from '@/components/map/MapDebugPanel';
 import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGroup, type DebugLayerDefinition } from '@/components/map/mapDiagnostics';
+import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -286,6 +287,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
   const highlightsRef = useRef<L.LayerGroup | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [debugOpen, setDebugOpen] = useState(false);
+  const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
@@ -310,6 +312,8 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     }
     return result;
   }, [facilities, searchQuery]);
+
+  const facilityValidation = useMemo(() => buildFacilityValidationIndex(facilities), [facilities]);
 
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
@@ -488,6 +492,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
   useEffect(() => {
     if (debugOpen) return;
     clearDebugIsolation();
+    setFacilityValidationMode(false);
   }, [clearDebugIsolation, debugOpen]);
 
   // Initialize map
@@ -847,17 +852,32 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
 
       const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
       const util = getFacilityUtilization(facility);
+      const validation = facilityValidation.records.get(facility.id);
       const scaledSize = showUtilization && util ? getScaledPinSize(pin.size, util.totalVisits) : pin.size;
 
       const isHospital = facility.type === 'hospital';
       const isDiamond = pin.shape === 'diamond';
+      const validationRing = !facilityValidationMode
+        ? ''
+        : validation?.confidence === 'verified'
+          ? ', 0 0 0 3px hsla(142, 60%, 45%, 0.28)'
+          : validation?.confidence === 'manual_review'
+            ? ', 0 0 0 3px hsla(0, 72%, 51%, 0.38)'
+            : ', 0 0 0 3px hsla(38, 92%, 50%, 0.35)';
+      const validationBorder = !facilityValidationMode
+        ? '2px solid white'
+        : validation?.confidence === 'verified'
+          ? '2px solid white'
+          : validation?.confidence === 'manual_review'
+            ? '2px dashed hsl(0, 72%, 51%)'
+            : '2px dashed hsl(38, 92%, 50%)';
       const markerHtml = isDiamond
         ? `<div style="
             width: ${scaledSize}px;
             height: ${scaledSize}px;
             background: ${pin.bg};
-            border: 2px solid white;
-            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35);
+            border: ${validationBorder};
+            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${validationRing};
             transform: rotate(45deg);
             cursor: pointer;
             transition: background 150ms ease;
@@ -867,8 +887,8 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
             height: ${scaledSize}px;
             border-radius: 50%;
             background: ${pin.bg};
-            border: 2px solid white;
-            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${isHospital ? ', 0 0 6px hsla(0, 72%, 51%, 0.4)' : ''};
+            border: ${validationBorder};
+            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${isHospital ? ', 0 0 6px hsla(0, 72%, 51%, 0.4)' : ''}${validationRing};
             cursor: pointer;
             transition: background 150ms ease;
           " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`;
@@ -884,7 +904,27 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         icon,
         pane: MAP_PANES.facilityMarkers,
       });
-      marker.on('click', () => onFacilityClick(facility));
+      marker.on('click', () => {
+        onFacilityClick(facility);
+
+        if (!facilityValidationMode || !validation) return;
+
+        const validationHtml = `
+          <div style="padding: 8px 12px; font-size: 12px; width: 260px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+            <div style="font-weight: 700; margin-bottom: 4px;">${facility.name}</div>
+            <div style="color: hsl(240, 4%, 46%); margin-bottom: 6px;">${facility.type === 'hospital' ? 'Hospital' : 'Clinic / Provider'} · ${facility.county} County</div>
+            <div><strong>Source address:</strong> ${validation.sourceAddress}</div>
+            <div><strong>Latitude:</strong> ${facility.lat.toFixed(4)}</div>
+            <div><strong>Longitude:</strong> ${facility.lng.toFixed(4)}</div>
+            <div><strong>Geocoding source:</strong> ${getFacilityCoordinateSourceLabel(validation.coordinateSource)}</div>
+            <div><strong>Confidence:</strong> ${validation.confidence === 'verified' ? 'Verified' : validation.confidence === 'manual_review' ? 'Approximate — manual review' : 'Approximate'}</div>
+            ${validation.notes ? `<div style="margin-top: 6px; color: hsl(240, 4%, 46%);">${validation.notes}</div>` : ''}
+            ${validation.issues.length > 0 ? `<div style="margin-top: 6px;"><strong>Checks:</strong><ul style="margin: 4px 0 0 18px; padding: 0;">${validation.issues.map((issue) => `<li>${issue}</li>`).join('')}</ul></div>` : ''}
+          </div>
+        `;
+
+        marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
+      });
 
       const typeLabel = facility.type === 'hospital' ? 'Hospital' : facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic';
       const utilHtml = showUtilization && util
@@ -909,7 +949,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
 
       markersRef.current!.addLayer(marker);
     });
-  }, [filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
+  }, [facilityValidation, facilityValidationMode, filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
@@ -1244,10 +1284,13 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
           warnings={geometryWarnings.warnings}
           isolatedLayerId={isolatedLayerId}
           isolatedGroup={isolatedGroup}
+          facilityValidationEnabled={facilityValidationMode}
+          facilityValidationSummary={facilityValidation.summary}
           onToggleLayer={toggleDebugLayer}
           onIsolateLayer={isolateDebugLayer}
           onIsolateGroup={isolateDebugGroup}
           onClearIsolation={clearDebugIsolation}
+          onToggleFacilityValidation={() => setFacilityValidationMode((current) => !current)}
         />
       )}
     </div>
