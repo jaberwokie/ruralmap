@@ -169,6 +169,16 @@ const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
     geometryKind: 'point',
   },
   {
+    id: 'service-presence-halos',
+    name: 'Service Presence Halos',
+    source: 'rural-services',
+    controllingToggle: 'layers.services',
+    drawOrder: 609,
+    group: 'markers',
+    filterKey: 'filtered-rural-services-halos',
+    geometryKind: 'point',
+  },
+  {
     id: 'service-presence-markers',
     name: 'Service Presence Points',
     source: 'rural-services',
@@ -338,7 +348,8 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
-  const servicePresenceRef = useRef<L.LayerGroup | null>(null);
+  const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
+  const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
   const countyFillRef = useRef<L.LayerGroup | null>(null);
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
@@ -536,7 +547,8 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       'drive-radius-overlay': radiusRef.current,
       'coverage-gap-overlay': gapsRef.current,
       'engagement-gap-overlay': engagementGapRef.current,
-      'service-presence-markers': servicePresenceRef.current,
+      'service-presence-halos': servicePresenceHaloRef.current,
+      'service-presence-markers': servicePresenceMarkerRef.current,
       'facility-markers': markersRef.current,
       'county-labels': labelsRef.current,
       'engagement-gap-labels': engagementGapLabelRef.current,
@@ -555,6 +567,34 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     },
     [isolatedGroup, isolatedLayerId, layerVisibilityOverrides],
   );
+
+  const isLayerEnabledByToggle = useCallback((definition: DebugLayerDefinition) => {
+    switch (definition.controllingToggle) {
+      case 'layers.counties':
+        return layers.counties;
+      case 'layers.services':
+        return layers.services;
+      case 'layers.serviceLocations':
+        return layers.serviceLocations;
+      case 'layers.operationalCoverage':
+        return layers.operationalCoverage;
+      case 'layers.fteCapacity':
+        return layers.fteCapacity;
+      case 'layers.utilizationIntensity':
+        return layers.utilizationIntensity;
+      case 'layers.engagementGap':
+        return layers.engagementGap;
+      case 'coverageRadius':
+        return coverageRadius;
+      case 'coverageGaps':
+        return coverageGaps;
+      case 'selectedCounty / selectedFteId':
+        return Boolean(selectedCounty || selectedFteId);
+      case 'always-on':
+      default:
+        return true;
+    }
+  }, [coverageGaps, coverageRadius, layers.counties, layers.engagementGap, layers.fteCapacity, layers.operationalCoverage, layers.serviceLocations, layers.services, layers.utilizationIntensity, selectedCounty, selectedFteId]);
 
   const geometryWarnings = useMemo(() => {
     if (!DEBUG_ENABLED || !debugOpen) {
@@ -703,7 +743,8 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
-    servicePresenceRef.current = L.layerGroup().addTo(map);
+    servicePresenceHaloRef.current = L.layerGroup().addTo(map);
+    servicePresenceMarkerRef.current = L.layerGroup().addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
@@ -827,7 +868,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       const group = layerGroups[definition.id as keyof typeof layerGroups];
       if (!group) return;
 
-      const shouldAttach = !debugOpen || isLayerVisibleInDebug(definition);
+      const shouldAttach = isLayerEnabledByToggle(definition) && (!debugOpen || isLayerVisibleInDebug(definition));
       if (shouldAttach && !mapRef.current!.hasLayer(group)) {
         group.addTo(mapRef.current!);
       }
@@ -835,7 +876,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         mapRef.current!.removeLayer(group);
       }
     });
-  }, [debugOpen, isLayerVisibleInDebug, layerGroups, mapReady]);
+  }, [debugOpen, isLayerEnabledByToggle, isLayerVisibleInDebug, layerGroups, mapReady]);
 
   useEffect(() => {
     if (!highlightsRef.current) return;
@@ -904,8 +945,9 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
   // Draw individual service presence points as subtle background dots with minimal density halos.
   useEffect(() => {
-    if (!servicePresenceRef.current) return;
-    servicePresenceRef.current.clearLayers();
+    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current) return;
+    servicePresenceHaloRef.current.clearLayers();
+    servicePresenceMarkerRef.current.clearLayers();
 
     if (!layers.services) return;
 
@@ -965,8 +1007,8 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         }
       );
 
-      servicePresenceRef.current!.addLayer(halo);
-      servicePresenceRef.current!.addLayer(marker);
+      servicePresenceHaloRef.current!.addLayer(halo);
+      servicePresenceMarkerRef.current!.addLayer(marker);
     });
   }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
 
