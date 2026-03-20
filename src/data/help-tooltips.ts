@@ -20,8 +20,8 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   services: {
     label: 'Service Presence',
     explanation:
-      'Shows each mapped community service as an individual point across Nevada. The lighter, smaller markers separate broader service presence from Provider Locations while preserving the true geographic spread of the service dataset.',
-    shortExplanation: 'Shows each mapped community service as its own point, separate from Provider Locations.',
+      'Shows each mapped community service as an individual point across Nevada, with subtle overlapping halos that make dense service areas read heavier at a glance. The layer stays lighter and softer than Provider Locations so it reads as service field presence rather than primary anchors.',
+    shortExplanation: 'Shows each service point plus a soft density halo so concentration and scarcity read quickly.',
   },
   operationalCoverage: {
     label: 'Response Capability',

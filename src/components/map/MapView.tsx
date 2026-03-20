@@ -124,6 +124,7 @@ const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>
 );
 
 const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
+const SERVICE_PRESENCE_LABEL_MAX_ZOOM = 7;
 
 const DEBUG_ENABLED = import.meta.env.DEV;
 
@@ -356,6 +357,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
   const [debugOpen, setDebugOpen] = useState(false);
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
+  const [mapZoom, setMapZoom] = useState(7);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
@@ -503,6 +505,21 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
     return grouped;
   }, []);
+
+  const servicePresenceCountySummaries = useMemo(() => {
+    return nevadaCounties
+      .flatMap((county) => {
+        const services = filteredRuralServices.filter((service) => service.county === county.name);
+        if (!services.length) return [];
+
+        return [{
+          county: county.name,
+          center: county.center,
+          count: services.length,
+        }];
+      })
+      .sort((left, right) => right.count - left.count || left.county.localeCompare(right.county));
+  }, [filteredRuralServices]);
 
   const activeCoverageZone = useMemo(() => {
     if (!layers.operationalCoverage || coverageGaps) return null;
@@ -702,9 +719,11 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     highlightsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
+    setMapZoom(map.getZoom());
     setMapReady(true);
 
     map.on('click', () => onMapClickRef.current?.());
+    map.on('zoomend', () => setMapZoom(map.getZoom()));
 
     return () => {
       map.remove();
@@ -893,7 +912,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
   }, [selectedCounty]);
 
-  // Draw individual service presence points with subtle separation from provider markers.
+  // Draw individual service presence points with soft density halos and optional zoomed-out count labels.
   useEffect(() => {
     if (!servicePresenceRef.current) return;
     servicePresenceRef.current.clearLayers();
@@ -915,22 +934,22 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
       const marker = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 3.5,
+        radius: 3,
         color: 'hsl(var(--card))',
-        weight: 1.5,
+        weight: 1.25,
         fillColor: 'hsl(var(--service-presence))',
-        fillOpacity: 0.86,
-        opacity: 0.95,
+        fillOpacity: 0.82,
+        opacity: 0.9,
       });
 
       const halo = L.circleMarker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 6.5,
-        color: 'hsla(var(--service-presence), 0.18)',
-        weight: 2,
-        fillColor: 'hsla(var(--service-presence), 0.08)',
+        radius: 8,
+        color: 'hsla(var(--service-presence), 0.12)',
+        weight: 1.5,
+        fillColor: 'hsla(var(--service-presence), 0.12)',
         fillOpacity: 1,
-        opacity: 1,
+        opacity: 0.8,
         interactive: false,
       });
 
@@ -963,7 +982,26 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       servicePresenceRef.current!.addLayer(halo);
       servicePresenceRef.current!.addLayer(marker);
     });
-  }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
+
+    if (mapZoom <= SERVICE_PRESENCE_LABEL_MAX_ZOOM) {
+      servicePresenceCountySummaries.forEach((summary) => {
+        const label = L.divIcon({
+          className: '',
+          html: `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:999px;background:hsla(var(--background), 0.82);color:hsla(var(--muted-foreground), 0.95);font-size:10px;font-weight:600;letter-spacing:0.04em;white-space:nowrap;box-shadow:0 1px 2px hsla(var(--foreground), 0.08);backdrop-filter:blur(2px);">${summary.count} services</span>`,
+          iconSize: [64, 18],
+          iconAnchor: [32, -10],
+        });
+
+        const labelMarker = L.marker(summary.center, {
+          icon: label,
+          pane: MAP_PANES.labels,
+          interactive: false,
+        });
+
+        servicePresenceRef.current!.addLayer(labelMarker);
+      });
+    }
+  }, [filteredRuralServices, layers.services, mapZoom, ruralServicesByCounty, servicePresenceCountySummaries]);
 
   // Draw coverage radii
   useEffect(() => {
