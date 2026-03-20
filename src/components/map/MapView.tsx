@@ -385,6 +385,20 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(facilities), [facilities]);
 
+  const filteredRuralServices = useMemo(() => {
+    let result = ruralServices;
+
+    if (countyFilters && countyFilters.size > 0) {
+      result = result.filter((service) => countyFilters.has(service.county));
+    }
+
+    if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
+      result = result.filter((service) => serviceCategoryFilters.has(service.category));
+    }
+
+    return result;
+  }, [countyFilters, serviceCategoryFilters]);
+
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();
     const providerCountByCounty = providerFacilities.reduce((acc, facility) => {
@@ -488,20 +502,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       top: Math.min(Math.max(countyHoverPreview.y + 16, 12), Math.max(containerHeight - height - 12, 12)),
     };
   }, [countyHoverPreview]);
-
-  const filteredRuralServices = useMemo(() => {
-    let result = ruralServices;
-
-    if (countyFilters && countyFilters.size > 0) {
-      result = result.filter((service) => countyFilters.has(service.county));
-    }
-
-    if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
-      result = result.filter((service) => serviceCategoryFilters.has(service.category));
-    }
-
-    return result;
-  }, [countyFilters, serviceCategoryFilters]);
 
   const ruralServicesByCounty = useMemo(() => {
     const grouped = new Map<string, typeof ruralServices>();
