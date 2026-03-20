@@ -9,7 +9,7 @@ export interface Facility {
   name: string;
   type: FacilityType;
   classification?: FacilityClassification;
-  dataConfidence: DataConfidence;
+  dataConfidence?: DataConfidence;
   city: string;
   county: string;
   address?: string;
@@ -86,7 +86,13 @@ export const DATA_CONFIDENCE_LABELS: Record<DataConfidence, DataConfidence> = {
 export const getFacilityClassification = (facility: Facility): FacilityClassification =>
   facility.classification ?? (facility.type === 'hospital' ? 'hospital' : 'clinic_provider');
 
-export const getFacilityDataConfidence = (facility: Facility): DataConfidence => facility.dataConfidence;
+export const getFacilityDataConfidence = (facility: Facility): DataConfidence => {
+  if (facility.dataConfidence) return facility.dataConfidence;
+  if (!Number.isFinite(facility.lat) || !Number.isFinite(facility.lng) || facility.lat === 0 || facility.lng === 0) return 'Unverified';
+  if (getFacilityClassification(facility) === 'facility') return 'Unverified';
+  if (facility.address) return 'Verified';
+  return 'Likely Accurate';
+};
 
 export const isCriticalAccessHospital = (facility: Facility) =>
   getFacilityClassification(facility) === 'cah';
@@ -99,7 +105,7 @@ export const auditFacilityConfidence = (facilities: Facility[]) => {
     .map((facility) => facility.name);
 
   const counts = facilities.reduce<Record<DataConfidence, number>>((acc, facility) => {
-    acc[facility.dataConfidence] += 1;
+    acc[getFacilityDataConfidence(facility)] += 1;
     return acc;
   }, {
     Verified: 0,
@@ -108,7 +114,7 @@ export const auditFacilityConfidence = (facilities: Facility[]) => {
   });
 
   const unverifiedFacilities = facilities
-    .filter((facility) => facility.dataConfidence === 'Unverified')
+    .filter((facility) => getFacilityDataConfidence(facility) === 'Unverified')
     .map((facility) => ({
       id: facility.id,
       name: facility.name,
