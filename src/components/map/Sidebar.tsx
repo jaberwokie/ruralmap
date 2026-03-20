@@ -294,7 +294,7 @@ const Sidebar = ({
     return (
       <Tooltip>
         <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent side="top" className="max-w-[16rem] text-[11px] leading-relaxed">
+        <TooltipContent side="right" align="start" sideOffset={10} className="text-[11px] leading-relaxed">
           {tooltip}
         </TooltipContent>
       </Tooltip>
@@ -713,9 +713,7 @@ const Sidebar = ({
                         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
                       </div>
                     </button>
-                    <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.(key)} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.(key)}>
-                      <HelpCircle className="w-3 h-3" />
-                    </span>
+                    {renderHelpIcon(key)}
                   </div>
                   {layers.utilizationIntensity && (
                     <div className="px-2 pb-2 pt-1.5 space-y-1.5">
