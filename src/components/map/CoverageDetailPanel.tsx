@@ -3,7 +3,7 @@ import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { Facility, defaultFacilities, getFacilityTypeLabel, isCriticalAccessHospital } from '@/data/facilities';
+import { Facility, defaultFacilities, getFacilityClassification, getFacilityTypeLabel, isCriticalAccessHospital } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
@@ -1098,9 +1098,10 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
 // ── Facility ──
 const FacilityContent = ({ facility }: { facility: Facility }) => {
   const isHighUtilClinic = facility.tier === 'tier1';
-  const typeLabel = facility.type === 'hospital'
-    ? getFacilityTypeLabel(facility)
-    : isHighUtilClinic ? 'Clinic / Provider (High Utilization)' : 'Clinic / FQHC';
+  const classification = getFacilityClassification(facility);
+  const typeLabel = classification === 'clinic_provider' && isHighUtilClinic
+    ? 'Clinic / Community Provider (High Utilization)'
+    : getFacilityTypeLabel(facility);
   const typeColor = facility.type === 'hospital' ? 'bg-red-500' : 'bg-blue-500';
   const coverageArea = getCountyArea(facility.county);
   const countyData = nevadaCounties.find(c => c.name === facility.county);
