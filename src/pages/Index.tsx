@@ -8,6 +8,7 @@ import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 interface LayerState {
   counties: boolean;
+  services: boolean;
   serviceLocations: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
@@ -34,6 +35,7 @@ const Index = () => {
   const [engagementRateBelow20Only, setEngagementRateBelow20Only] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
+    services: true,
     serviceLocations: true,
     operationalCoverage: false,
     fteCapacity: false,
@@ -204,6 +206,8 @@ const Index = () => {
         <MapView
           facilities={filteredFacilities}
           layers={layers}
+          countyFilters={filters.counties}
+          serviceCategoryFilters={filters.serviceCategories}
           onFacilityClick={(facility) => handleEntityClick({ type: 'facility', facility })}
           onMapClick={handleMapClick}
           searchQuery={searchQuery}

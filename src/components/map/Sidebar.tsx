@@ -12,6 +12,7 @@ import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngage
 
 interface LayerState {
   counties: boolean;
+  services: boolean;
   serviceLocations: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
@@ -51,6 +52,7 @@ interface SidebarProps {
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
+  { key: 'services' as const, label: 'Services', color: 'bg-primary' },
   { key: 'serviceLocations' as const, label: 'Service Locations', color: 'bg-foreground' },
   { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-teal-600' },
   { key: 'fteCapacity' as const, label: 'FTE Capacity & Load', color: 'bg-amber-500' },
@@ -388,7 +390,7 @@ const Sidebar = ({
           </button>
           {coreMapOpen && (
             <div className="space-y-1 mt-0.5">
-              {LAYER_CONFIG.filter(l => l.key === 'counties' || l.key === 'serviceLocations').map(({ key, label, color }) => (
+              {LAYER_CONFIG.filter(l => l.key === 'counties' || l.key === 'services' || l.key === 'serviceLocations').map(({ key, label, color }) => (
                 <div key={key} className="flex items-center">
                   <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                     <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
