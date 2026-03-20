@@ -44,6 +44,7 @@ interface SidebarProps {
   onTopProvidersOnlyChange: (checked: boolean) => void;
   engagementRateBelow20Only: boolean;
   onEngagementRateBelow20OnlyChange: (checked: boolean) => void;
+  onCountySelect?: (county: string) => void;
   onHelpEnter?: (key: string) => void;
   onHelpLeave?: () => void;
 }
@@ -82,6 +83,7 @@ const Sidebar = ({
   onTopProvidersOnlyChange,
   engagementRateBelow20Only,
   onEngagementRateBelow20OnlyChange,
+  onCountySelect,
   onHelpEnter,
   onHelpLeave,
 }: SidebarProps) => {
@@ -577,13 +579,18 @@ const Sidebar = ({
                                 Top 5 unengaged counties{engagementRateBelow20Only ? ' (filtered)' : ''}
                               </p>
                               {rankedPriorityCounties.map((metrics) => (
-                                <p key={metrics.county} className="text-[10px] leading-relaxed text-foreground">
+                                <button
+                                  key={metrics.county}
+                                  type="button"
+                                  onClick={() => onCountySelect?.(metrics.county)}
+                                  className="w-full rounded-sm px-1 py-0.5 text-left text-[10px] leading-relaxed text-foreground transition-colors duration-150 hover:bg-background/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
                                   <span className={`font-semibold ${metrics.isTop5Unengaged ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank}</span>{' '}
                                   <span className="font-medium">{metrics.county}</span>
                                   <span className="text-muted-foreground"> — </span>
                                   <span className="font-semibold tabular-nums">{metrics.unengagedMembers.toLocaleString()}</span>{' '}
                                   <span className="text-muted-foreground">unengaged</span>
-                                </p>
+                                </button>
                               ))}
                             </div>
                           ) : (
