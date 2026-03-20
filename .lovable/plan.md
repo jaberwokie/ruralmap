@@ -1,90 +1,74 @@
 
 Goal
 
-Make the current “Service Network” layer create an obvious visual change while keeping it truthful. Based on the audit, the right outcome is B: rename it to match what it actually shows.
+Fix the actual styling bug and redesign Service Presence so it reads as a soft background field using hollow ring markers, not heavy black debug-looking dots.
 
-What the audit found
+What I found
 
-- The current layer is not a true network.
-- It renders point markers only, not lines or polygons.
-- Those points come from `src/data/rural-services.ts`, which is a county/city/category service directory dataset.
-- The dataset has no relationship fields, no edges, no referral links, and no coordination structure to support real network lines.
-- The layer is rendered in the same marker pane as Provider Locations (`MAP_PANES.facilityMarkers`), so it competes visually with facility pins.
-- Current styling is subtle: small blue circle markers (`radius: 4.5`) that visually read like another set of provider dots.
-- Result: the toggle is technically working, but the change is easy to miss and semantically overlaps with Provider Locations.
+- The current Service Presence layer is still being drawn from `MapView.tsx` as individual Leaflet `circleMarker`s with a halo.
+- The screenshot matches a real implementation bug: the layer uses strings like `hsla(var(--service-presence), 0.42)` and `hsla(var(--service-presence), 0.12)`.
+- That syntax is not valid for the space-separated CSS variable value in `index.css` (`--service-presence: 210 28% 62%`), so Leaflet/SVG falls back to black in some cases.
+- Result: the Service Presence layer still gets harsh black rings and looks like debug artifacts instead of a soft support layer.
 
-Recommended implementation
+Implementation plan
 
-1. Rename the layer everywhere from “Service Network” to “Service Presence”
-- Update sidebar label
-- Update tooltip/help copy
-- Update tutorial step copy that references this layer
-- Update any diagnostic labels so naming stays consistent
+1. Fix the color syntax bug at the source
+- Update Service Presence marker/halo colors in `src/components/map/MapView.tsx` to valid color strings.
+- Use modern `hsl(210 28% 62% / 0.42)`-style syntax or explicit resolved color constants.
+- Remove every invalid `hsla(var(--service-presence), ...)` usage for this layer.
 
-2. Replace duplicate-looking service points with a distinct distribution visualization
-- Stop rendering rural services as individual point markers in the same visual language as provider locations
-- Instead render county-level service presence halos or clustered county service presence markers derived from real `ruralServices` counts
-- Use county-centered or service-cluster-centered visuals sized by real service count, with soft fill and thin outline
-- Keep them visually separate from provider pins: lighter, larger-area presence cues rather than dot markers
+2. Redesign Service Presence as hollow ring markers
+- Switch the point styling from a filled dot emphasis to a small hollow ring:
+  - transparent or near-transparent center
+  - thin muted stroke
+  - no black border
+  - slightly smaller than Provider Locations
+- Keep the marker visually quiet so Provider Locations and Hospitals stay dominant.
 
-3. Keep truthfulness
-- Do not introduce connecting lines or arcs, because the data does not support relationships
-- Keep county detail panel behavior tied to real rural services data so clicking/hovering still opens the existing county resource context
-- If needed, use grouped county entities (`ruralServiceGroup`) rather than individual service pins
+3. Keep a faint density halo behind each ring
+- Preserve individual points at all zoom levels.
+- Keep a very soft halo behind each Service Presence point so overlap still communicates density.
+- Lower halo opacity enough that dense areas read heavier without becoming blotchy.
 
-4. Make the toggle obviously visible but clean
-- Put the presence layer above county/base overlays and below hover UI/highlights
-- Use a dedicated pane or clearly different styling so it does not disappear under other layers
-- Tune radius/opacity/stroke for normal zoom readability without clutter in Carson/Douglas/Washoe
+4. Preserve current interaction behavior
+- Keep individual service tooltips and click behavior.
+- Keep county-level service count in the hover panel only, not as map labels.
+- Do not change Provider Locations styling or logic.
 
-5. Preserve performance and current map behavior
-- Precompute grouped service presence by county
-- Reuse existing `filteredRuralServices` / county filter logic
-- Avoid per-service heavy geometry work
-- Do not touch unrelated layers, county hover metrics, or debug exposure
+5. Tune for dense counties
+- Keep the existing deterministic overlap offset logic.
+- Slightly reduce service ring radius if needed after the color fix so Carson/Douglas/Washoe stay readable.
+- Ensure rural counties still show sparse presence clearly.
 
 Likely file changes
 
 - `src/components/map/MapView.tsx`
-  - Replace per-service circle markers with county/service-presence visualization
-  - Keep hover/click wiring to existing county service detail behavior
-  - Optionally move this layer to its own pane for visibility
-- `src/components/map/Sidebar.tsx`
-  - Rename toggle label to “Service Presence”
-- `src/data/help-tooltips.ts`
-  - Rename/update help text to describe presence/distribution, not network relationships
-- `src/pages/Index.tsx`
-  - Update toggle diagnostics naming
-- `src/data/map-tutorial.ts`
-  - Update walkthrough wording if it still says “Service Network”
+  - Replace invalid Service Presence color strings
+  - Restyle Service Presence markers as hollow rings with subtle halos
+  - Keep current individual-point rendering and interactions
+- `src/index.css`
+  - Optionally refine `--service-presence` to a softer muted tone if the current hue still feels too strong after the syntax fix
 
-Technical design
+Technical details
 
 ```text
-Current:
-ruralServices -> many small point markers -> same pane/look family as provider locations
+Current bug:
+hsla(var(--service-presence), 0.42)
+var(--service-presence) = "210 28% 62%"
+This expands to invalid CSS for hsla(...), causing fallback rendering.
 
-Planned:
-ruralServices -> group by county / visible service clusters -> distinct presence halos
-             -> click/hover county resource group -> existing detail panel
+Planned fix:
+Use valid color strings such as:
+hsl(var(--service-presence) / 0.42)
+or explicit constants like:
+hsl(210 28% 62% / 0.42)
 ```
 
-Visualization choice
+Acceptance criteria
 
-- Chosen approach: service presence distribution layer
-- Not chosen: network lines/arcs, because that would invent relationships not present in the data
-
-Acceptance criteria this plan targets
-
-- Toggling the layer creates an obvious visible change
-- The layer no longer looks like duplicate provider locations
-- The name matches the real data
-- Dense counties remain readable
-- No fake network relationships are introduced
-
-Implementation report I will provide after approval
-
-- What the current layer was actually showing
-- Whether it duplicated provider points visually
-- What replacement visualization was implemented
-- Whether the layer name was changed to “Service Presence”
+- No black ring effect anywhere on Service Presence markers
+- Service Presence reads as a soft supporting layer, not a primary anchor
+- Provider Locations remain sharper and visually dominant
+- Dense counties are calmer and easier to scan
+- Rural gaps remain obvious
+- No clustering, count bubbles, or persistent map labels return
