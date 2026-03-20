@@ -1,7 +1,8 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity, Headphones, HelpCircle } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
+import { MapTutorialStepKey } from '@/data/map-tutorial';
 import { toast } from 'sonner';
 import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
@@ -9,6 +10,7 @@ import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS,
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface LayerState {
   counties: boolean;
@@ -48,6 +50,8 @@ interface SidebarProps {
   onCountySelect?: (county: string) => void;
   onHelpEnter?: (key: string) => void;
   onHelpLeave?: () => void;
+  onReplayTutorial?: () => void;
+  tutorialStepKey?: MapTutorialStepKey | null;
 }
 
 const LAYER_CONFIG = [
@@ -88,23 +92,34 @@ const Sidebar = ({
   onCountySelect,
   onHelpEnter,
   onHelpLeave,
+  onReplayTutorial,
+  tutorialStepKey,
 }: SidebarProps) => {
   const usePersistToggle = (key: string, defaultOpen = false) => {
     const [open, setOpen] = useState(() => {
       try { const v = localStorage.getItem(key); return v === null ? defaultOpen : v === 'true'; } catch { return defaultOpen; }
     });
-    const toggle = () => setOpen(prev => { const next = !prev; try { localStorage.setItem(key, String(next)); } catch {} return next; });
-    return [open, toggle] as const;
+    useEffect(() => {
+      try { localStorage.setItem(key, String(open)); } catch {}
+    }, [key, open]);
+    const toggle = () => setOpen(prev => !prev);
+    return [open, toggle, setOpen] as const;
   };
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
   const [filtersOpen, toggleFilters] = usePersistToggle('sidebar_filters');
-  const [coreMapOpen, toggleCoreMap] = usePersistToggle('sidebar_layer_core');
-  const [operationsOpen, toggleOperations] = usePersistToggle('sidebar_layer_ops');
+  const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core');
+  const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
-  const [accessOpen, toggleAccess] = usePersistToggle('sidebar_layer_access');
+  const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (tutorialStepKey === 'serviceNetwork') setCoreMapOpen(true);
+    if (tutorialStepKey === 'engagementGap') setOperationsOpen(true);
+    if (tutorialStepKey === 'coverageRadius') setAccessOpen(true);
+  }, [setAccessOpen, setCoreMapOpen, setOperationsOpen, tutorialStepKey]);
 
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
@@ -257,12 +272,55 @@ const Sidebar = ({
       )
     : facilities;
 
+  const renderHelpIcon = (key: string) => {
+    const tooltip = HELP_TOOLTIPS[key]?.shortExplanation;
+
+    const button = (
+      <button
+        type="button"
+        className="p-1 text-muted-foreground/40 transition-colors hover:text-muted-foreground active:scale-[0.98]"
+        onMouseEnter={() => onHelpEnter?.(key)}
+        onMouseLeave={() => onHelpLeave?.()}
+        onTouchStart={() => onHelpEnter?.(key)}
+        onClick={() => onHelpEnter?.(key)}
+        aria-label={`More information about ${HELP_TOOLTIPS[key]?.label ?? key}`}
+      >
+        <HelpCircle className="w-3 h-3" />
+      </button>
+    );
+
+    if (!tooltip) return button;
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="top" className="max-w-[16rem] text-[11px] leading-relaxed">
+          {tooltip}
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
   return (
-    <div className="w-full md:w-80 h-full bg-card flex flex-col overflow-y-auto" style={{ boxShadow: 'var(--shadow-panel)' }}>
+    <TooltipProvider delayDuration={120}>
+    <div data-tutorial="sidebar" className="w-full md:w-80 h-full bg-card flex flex-col overflow-y-auto" style={{ boxShadow: 'var(--shadow-panel)' }}>
       {/* Header */}
       <div className="p-4 pb-3">
-        <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
+          </div>
+          {onReplayTutorial && (
+            <button
+              type="button"
+              onClick={onReplayTutorial}
+              className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary active:scale-[0.98]"
+            >
+              Replay Tutorial
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Stats Bar */}
@@ -391,7 +449,7 @@ const Sidebar = ({
           {coreMapOpen && (
             <div className="space-y-1 mt-0.5">
               {LAYER_CONFIG.filter(l => l.key === 'counties' || l.key === 'services' || l.key === 'serviceLocations').map(({ key, label, color }) => (
-                <div key={key} className="flex items-center">
+                <div key={key} className="flex items-center" data-tutorial={key === 'services' ? 'toggle-services' : undefined}>
                   <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                     <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
                     <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
@@ -399,9 +457,7 @@ const Sidebar = ({
                       <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
                     </div>
                   </button>
-                  <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.(key)} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.(key)}>
-                    <HelpCircle className="w-3 h-3" />
-                  </span>
+                  {renderHelpIcon(key)}
                 </div>
               ))}
             </div>
@@ -418,7 +474,7 @@ const Sidebar = ({
             <div className="space-y-1 mt-0.5">
               {LAYER_CONFIG.filter(l => l.key === 'operationalCoverage' || l.key === 'fteCapacity' || l.key === 'engagementGap').map(({ key, label, color }) => (
                 <div key={key}>
-                  <div className="flex items-center">
+                  <div className="flex items-center" data-tutorial={key === 'engagementGap' ? 'toggle-engagement-gap' : undefined}>
                     <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                       <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
                       <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
@@ -426,9 +482,7 @@ const Sidebar = ({
                         <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
                       </div>
                     </button>
-                    <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.(key)} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.(key)}>
-                      <HelpCircle className="w-3 h-3" />
-                    </span>
+                    {renderHelpIcon(key)}
                   </div>
                   {key === 'operationalCoverage' && layers.operationalCoverage && (() => {
                     const radius = coverageRadiusKm ?? 120;
@@ -697,7 +751,7 @@ const Sidebar = ({
           {accessOpen && (
             <div className="space-y-1 mt-0.5">
               {/* Coverage Radius */}
-              <div>
+              <div data-tutorial="toggle-coverage-radius">
                 <div className="flex items-center">
                   <button onClick={() => onCoverageRadiusChange(!coverageRadius)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
                     <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
@@ -706,9 +760,7 @@ const Sidebar = ({
                       <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
                     </div>
                   </button>
-                  <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.('coverageRadius')} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.('coverageRadius')}>
-                    <HelpCircle className="w-3 h-3" />
-                  </span>
+                  {renderHelpIcon('coverageRadius')}
                 </div>
                 {coverageRadius && (
                   <div className="px-2 pb-1 pt-0.5">
@@ -730,9 +782,7 @@ const Sidebar = ({
                       <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
                     </div>
                   </button>
-                  <span className="p-1 cursor-help text-muted-foreground/40 hover:text-muted-foreground transition-colors" onMouseEnter={() => onHelpEnter?.('coverageGaps')} onMouseLeave={() => onHelpLeave?.()} onTouchStart={() => onHelpEnter?.('coverageGaps')}>
-                    <HelpCircle className="w-3 h-3" />
-                  </span>
+                  {renderHelpIcon('coverageGaps')}
                 </div>
                 {coverageGaps && (
                   <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.</p>
@@ -745,7 +795,7 @@ const Sidebar = ({
       </div>
 
       {/* Legend */}
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-3" data-tutorial="legend">
         <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
           Legend
         </div>
@@ -875,6 +925,7 @@ const Sidebar = ({
         )}
       </div>
     </div>
+    </TooltipProvider>
   );
 };
 

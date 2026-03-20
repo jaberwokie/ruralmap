@@ -3,6 +3,7 @@
 export interface HelpTooltip {
   label: string;
   explanation: string;
+  shortExplanation?: string;
 }
 
 export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
@@ -20,6 +21,7 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     label: 'Service Network',
     explanation:
       'Shows the broader community service network across Nevada so users can compare service presence against member volume, utilization, and engagement gaps. Use the detail panel for county-level service context and supporting resource detail.',
+    shortExplanation: 'Shows the provider network and how service presence is distributed across the map.',
   },
   operationalCoverage: {
     label: 'Response Capability',
@@ -40,11 +42,13 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     label: 'Engagement Gap',
     explanation:
       'Highlights where members are not being reached by behavioral health services. This layer compares total Medicaid members to those with at least one behavioral health encounter, showing where large unengaged populations exist. It helps identify counties where outreach and engagement efforts should be prioritized.',
+    shortExplanation: 'Shows where people are not being reached, even when services may exist nearby.',
   },
   coverageRadius: {
     label: 'Provider Coverage Radius',
     explanation:
       'Shows a geographic radius around mapped provider locations to illustrate approximate access reach. This visual represents distance-based coverage, not confirmed appointment availability or operational engagement assignment.',
+    shortExplanation: 'Shows the approximate distance providers can realistically cover from their location.',
   },
   coverageGaps: {
     label: 'Access Gaps (Outside Coverage Radius)',

@@ -47,6 +47,7 @@ interface MapViewProps {
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
+  tutorialStepKey?: string | null;
 }
 
 // Haversine distance in km
@@ -1275,7 +1276,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
 
 
   return (
-    <div className="relative h-full w-full">
+    <div className="relative h-full w-full" data-tutorial="map-region">
       <div ref={containerRef} className="h-full w-full" />
       {DEBUG_ENABLED && (
         <MapDebugPanel

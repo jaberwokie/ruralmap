@@ -1,10 +1,12 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailPanel';
+import MapTutorialOverlay from '@/components/map/MapTutorialOverlay';
 import { Facility, defaultFacilities } from '@/data/facilities';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
+import { MAP_TUTORIAL_STORAGE_KEY, MAP_TUTORIAL_STEPS, MapTutorialStepKey } from '@/data/map-tutorial';
 
 const TOGGLE_DIAGNOSTICS = {
   counties: {
@@ -81,6 +83,23 @@ const Index = () => {
     helpTimeoutRef.current = setTimeout(() => setActiveHelp(null), 120);
   }, []);
   const [selectedFteId, setSelectedFteId] = useState<string | null>(null);
+  const [tutorialIntroOpen, setTutorialIntroOpen] = useState(false);
+  const [tutorialOpen, setTutorialOpen] = useState(false);
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
+  const tutorialSnapshotRef = useRef<{
+    layers: LayerState;
+    coverageRadius: boolean;
+    coverageGaps: boolean;
+  } | null>(null);
+
+  useEffect(() => {
+    try {
+      const completed = localStorage.getItem(MAP_TUTORIAL_STORAGE_KEY) === 'true';
+      if (!completed) setTutorialIntroOpen(true);
+    } catch {
+      setTutorialIntroOpen(true);
+    }
+  }, []);
 
   // Derive selected county from locked entity for map highlight
   const selectedCounty = useMemo(() => {
@@ -170,6 +189,91 @@ const Index = () => {
     setSelectedFteId(null);
   }, []);
 
+  const tutorialStepKey = tutorialOpen ? MAP_TUTORIAL_STEPS[tutorialStepIndex]?.key ?? null : null;
+
+  const markTutorialComplete = useCallback(() => {
+    try {
+      localStorage.setItem(MAP_TUTORIAL_STORAGE_KEY, 'true');
+    } catch {}
+  }, []);
+
+  const restoreTutorialSnapshot = useCallback(() => {
+    const snapshot = tutorialSnapshotRef.current;
+    if (!snapshot) return;
+    setLayers(snapshot.layers);
+    setCoverageRadius(snapshot.coverageRadius);
+    setCoverageGaps(snapshot.coverageGaps);
+    tutorialSnapshotRef.current = null;
+  }, []);
+
+  const startTutorial = useCallback(() => {
+    tutorialSnapshotRef.current = {
+      layers,
+      coverageRadius,
+      coverageGaps,
+    };
+    setTutorialIntroOpen(false);
+    setMobileSidebarOpen(false);
+    setTutorialStepIndex(0);
+    setTutorialOpen(true);
+  }, [coverageGaps, coverageRadius, layers]);
+
+  const closeTutorial = useCallback((markComplete = true) => {
+    setTutorialIntroOpen(false);
+    setTutorialOpen(false);
+    setTutorialStepIndex(0);
+    restoreTutorialSnapshot();
+    if (markComplete) markTutorialComplete();
+  }, [markTutorialComplete, restoreTutorialSnapshot]);
+
+  const replayTutorial = useCallback(() => {
+    if (!tutorialOpen) {
+      tutorialSnapshotRef.current = {
+        layers,
+        coverageRadius,
+        coverageGaps,
+      };
+    }
+    setTutorialIntroOpen(false);
+    setMobileSidebarOpen(false);
+    setTutorialStepIndex(0);
+    setTutorialOpen(true);
+  }, [coverageGaps, coverageRadius, layers, tutorialOpen]);
+
+  const goToNextTutorialStep = useCallback(() => {
+    setTutorialStepIndex((current) => {
+      if (current >= MAP_TUTORIAL_STEPS.length - 1) {
+        window.setTimeout(() => closeTutorial(true), 0);
+        return current;
+      }
+      return current + 1;
+    });
+  }, [closeTutorial]);
+
+  const goToPreviousTutorialStep = useCallback(() => {
+    setTutorialStepIndex((current) => Math.max(0, current - 1));
+  }, []);
+
+  useEffect(() => {
+    if (!tutorialOpen) return;
+
+    const stepKey = MAP_TUTORIAL_STEPS[tutorialStepIndex]?.key as MapTutorialStepKey | undefined;
+    if (!stepKey) return;
+
+    if (stepKey === 'coverageRadius') {
+      setCoverageRadius(true);
+      setCoverageGaps(false);
+    }
+
+    if (stepKey === 'engagementGap') {
+      setLayers((current) => ({ ...current, engagementGap: true }));
+    }
+
+    if (stepKey === 'serviceNetwork') {
+      setLayers((current) => ({ ...current, services: true }));
+    }
+  }, [tutorialOpen, tutorialStepIndex]);
+
   const handleFteHubClick = useCallback((fteId: string) => {
     const isAlready = selectedFteId === fteId;
     setSelectedFteId(isAlready ? null : fteId);
@@ -230,6 +334,8 @@ const Index = () => {
           onCountySelect={handleCountySelect}
           onHelpEnter={handleHelpEnter}
           onHelpLeave={handleHelpLeave}
+          onReplayTutorial={replayTutorial}
+          tutorialStepKey={tutorialStepKey}
         />
       </div>
 
@@ -253,6 +359,7 @@ const Index = () => {
           coverageRadiusKm={coverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
           engagementRateBelow20Only={engagementRateBelow20Only}
+          tutorialStepKey={tutorialStepKey}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
@@ -261,6 +368,15 @@ const Index = () => {
           coverageRadiusKm={coverageRadiusKm}
           memberVolumeLayerOn={true}
           activeHelp={activeHelp}
+        />
+        <MapTutorialOverlay
+          introOpen={tutorialIntroOpen}
+          walkthroughOpen={tutorialOpen}
+          stepIndex={tutorialStepIndex}
+          onStart={startTutorial}
+          onSkip={() => closeTutorial(true)}
+          onNext={goToNextTutorialStep}
+          onBack={goToPreviousTutorialStep}
         />
       </div>
     </div>
