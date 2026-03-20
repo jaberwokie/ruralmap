@@ -9,7 +9,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
-import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties } from '@/utils/utilizationAggregation';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import union from '@turf/union';
@@ -41,6 +41,7 @@ interface MapViewProps {
   selectedFteId?: string | null;
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
+  engagementRateBelow20Only?: boolean;
 }
 
 // Haversine distance in km
@@ -251,7 +252,7 @@ const createGeoJsonLayer = (
 ) => L.geoJSON(geometry as any, { pane, style, interactive });
 
 
-const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false }: MapViewProps) => {
+const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
@@ -299,6 +300,13 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     if (!layers.operationalCoverage || coverageGaps) return null;
     return getActiveCoverageZone(coverageRadiusKm);
   }, [layers.operationalCoverage, coverageGaps, coverageRadiusKm]);
+
+  const engagementPriorityCounties = useMemo(
+    () => getFilteredEngagementPriorityCounties(engagementRateBelow20Only ? { belowRateThreshold: 0.2 } : {}),
+    [engagementRateBelow20Only],
+  );
+
+  const maxPriorityUnengagedMembers = engagementPriorityCounties[0]?.unengagedMembers ?? 0;
 
   const layerGroups = useMemo(
     () => ({
@@ -992,6 +1000,48 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     if (!layers.engagementGap) return;
 
     const results = getEngagementGapResults();
+    const priorityColor = 'hsl(var(--destructive))';
+
+    engagementPriorityCounties.forEach((metrics) => {
+      const geoJson = getCountyFeature(metrics.county);
+      if (!geoJson) return;
+
+      const normalizedPriority = maxPriorityUnengagedMembers > 0
+        ? metrics.unengagedMembers / maxPriorityUnengagedMembers
+        : 0;
+      const fillOpacity = metrics.isTop5Unengaged
+        ? 0.18 + normalizedPriority * 0.22
+        : 0.06 + normalizedPriority * 0.12;
+      const strokeOpacity = metrics.isTop5Unengaged ? 0.95 : 0.55;
+      const weight = metrics.isTop5Unengaged ? 2 : 1;
+
+      const geoLayer = L.geoJSON(geoJson, {
+        pane: MAP_PANES.gapOverlays,
+        style: {
+          color: priorityColor,
+          opacity: strokeOpacity,
+          weight,
+          fillColor: priorityColor,
+          fillOpacity,
+        },
+        interactive: true,
+      });
+
+      geoLayer.on('mouseover', () => {
+        onEntityHoverRef.current?.({ type: 'county', county: metrics.county });
+        geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.06, 0.5), weight: weight + 0.5 });
+      });
+      geoLayer.on('mouseout', () => {
+        onEntityHoverRef.current?.(null);
+        geoLayer.setStyle({ fillOpacity, weight });
+      });
+      geoLayer.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        onEntityClickRef.current?.({ type: 'county', county: metrics.county });
+      });
+
+      engagementGapRef.current!.addLayer(geoLayer);
+    });
 
     const TIER_STYLES: Record<string, { color: string; fill: string; fillOpacity: number; weight: number; dash: string; icon: string; title: string }> = {
       gap:            { color: 'hsl(30, 90%, 50%)',  fill: 'transparent',            fillOpacity: 0,    weight: 2.5, dash: '6 3', icon: '⚠', title: 'Engagement Gap: High utilization, no field support' },
@@ -1038,7 +1088,13 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
           fillOpacity: s.fillOpacity,
           dashArray: s.dash,
         },
-        interactive: false,
+        interactive: true,
+      });
+      geoLayer.on('mouseover', () => onEntityHoverRef.current?.({ type: 'county', county: result.county }));
+      geoLayer.on('mouseout', () => onEntityHoverRef.current?.(null));
+      geoLayer.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        onEntityClickRef.current?.({ type: 'county', county: result.county });
       });
       engagementGapRef.current!.addLayer(geoLayer);
 
@@ -1054,7 +1110,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       });
       L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapLabelRef.current!);
     });
-  }, [layers.engagementGap]);
+  }, [engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers]);
 
 
   return (

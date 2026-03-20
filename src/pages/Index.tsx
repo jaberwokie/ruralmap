@@ -31,6 +31,7 @@ const Index = () => {
   const [coverageGaps, setCoverageGaps] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [topProvidersOnly, setTopProvidersOnly] = useState(false);
+  const [engagementRateBelow20Only, setEngagementRateBelow20Only] = useState(false);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     serviceLocations: true,
@@ -185,6 +186,8 @@ const Index = () => {
           onCoverageRadiusKmChange={setCoverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
           onTopProvidersOnlyChange={setTopProvidersOnly}
+          engagementRateBelow20Only={engagementRateBelow20Only}
+          onEngagementRateBelow20OnlyChange={setEngagementRateBelow20Only}
           onHelpEnter={handleHelpEnter}
           onHelpLeave={handleHelpLeave}
         />
@@ -207,6 +210,7 @@ const Index = () => {
           selectedFteId={activeFteId}
           coverageRadiusKm={coverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
+          engagementRateBelow20Only={engagementRateBelow20Only}
         />
         <CoverageDetailPanel
           entity={lockedEntity}
