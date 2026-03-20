@@ -305,13 +305,20 @@ const getCoverageGapSeverity = (coverageGapPercent: number): CoverageGapSeverity
 };
 
 const CoverageGapInfoButton = () => {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Tooltip>
+    <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger asChild>
         <button
           type="button"
           className="pointer-events-auto inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          onClick={(event) => event.stopPropagation()}
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen((current) => !current);
+          }}
           aria-label="Explain coverage gap"
         >
           <Info className="h-3 w-3" />

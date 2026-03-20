@@ -64,6 +64,62 @@ const LAYER_CONFIG = [
   { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-orange-500' },
 ];
 
+const HelpIconTooltip = ({
+  helpKey,
+  onHelpEnter,
+  onHelpLeave,
+}: {
+  helpKey: string;
+  onHelpEnter?: (key: string) => void;
+  onHelpLeave?: () => void;
+}) => {
+  const tooltip = HELP_TOOLTIPS[helpKey]?.shortExplanation;
+  const [open, setOpen] = useState(false);
+
+  const showTooltip = () => {
+    setOpen(true);
+    onHelpEnter?.(helpKey);
+  };
+
+  const hideTooltip = () => {
+    setOpen(false);
+    onHelpLeave?.();
+  };
+
+  const button = (
+    <button
+      type="button"
+      className="p-1 text-muted-foreground/40 transition-colors hover:text-muted-foreground active:scale-[0.98]"
+      onMouseEnter={showTooltip}
+      onMouseLeave={hideTooltip}
+      onTouchStart={showTooltip}
+      onClick={(event) => {
+        event.stopPropagation();
+        setOpen((current) => {
+          const next = !current;
+          if (next) onHelpEnter?.(helpKey);
+          else onHelpLeave?.();
+          return next;
+        });
+      }}
+      aria-label={`More information about ${HELP_TOOLTIPS[helpKey]?.label ?? helpKey}`}
+    >
+      <HelpCircle className="w-3 h-3" />
+    </button>
+  );
+
+  if (!tooltip) return button;
+
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="right" align="start" sideOffset={10} className="text-[11px] leading-relaxed">
+        {tooltip}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
+
 const Sidebar = ({
   layers,
   onToggleLayer,
@@ -272,34 +328,9 @@ const Sidebar = ({
       )
     : facilities;
 
-  const renderHelpIcon = (key: string) => {
-    const tooltip = HELP_TOOLTIPS[key]?.shortExplanation;
-
-    const button = (
-      <button
-        type="button"
-        className="p-1 text-muted-foreground/40 transition-colors hover:text-muted-foreground active:scale-[0.98]"
-        onMouseEnter={() => onHelpEnter?.(key)}
-        onMouseLeave={() => onHelpLeave?.()}
-        onTouchStart={() => onHelpEnter?.(key)}
-        onClick={() => onHelpEnter?.(key)}
-        aria-label={`More information about ${HELP_TOOLTIPS[key]?.label ?? key}`}
-      >
-        <HelpCircle className="w-3 h-3" />
-      </button>
-    );
-
-    if (!tooltip) return button;
-
-    return (
-      <Tooltip>
-        <TooltipTrigger asChild>{button}</TooltipTrigger>
-        <TooltipContent side="right" align="start" sideOffset={10} className="text-[11px] leading-relaxed">
-          {tooltip}
-        </TooltipContent>
-      </Tooltip>
-    );
-  };
+  const renderHelpIcon = (key: string) => (
+    <HelpIconTooltip helpKey={key} onHelpEnter={onHelpEnter} onHelpLeave={onHelpLeave} />
+  );
 
   return (
     <TooltipProvider delayDuration={120}>
