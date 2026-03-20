@@ -28,7 +28,7 @@ export const defaultFacilities: Facility[] = [
   { id: "h1", name: "Desert View Hospital", type: "hospital", classification: "cah", city: "Pahrump", county: "Nye", address: "360 S Lola Ln", lat: 36.2142, lng: -116.0248, notes: "Primary Nye discharge point", accessType: "Near-Urban" },
   { id: "h2", name: "Banner Churchill Community Hospital", type: "hospital", classification: "cah", city: "Fallon", county: "Churchill", address: "801 E Williams Ave", lat: 39.4762, lng: -118.7662, notes: "Regional hospital", accessType: "Rural" },
   { id: "h3", name: "Carson Tahoe Regional Medical Center", type: "hospital", classification: "hospital", city: "Carson City", county: "Carson City", address: "1600 Medical Pkwy", lat: 39.2011, lng: -119.7841, notes: "Primary Carson hub" },
-  { id: "h4", name: "Northeastern Nevada Regional Hospital", type: "hospital", classification: "facility", city: "Elko", county: "Elko", address: "2001 Errecart Blvd", lat: 40.8230, lng: -115.7314, notes: "True rural hub" },
+  { id: "h4", name: "Northeastern Nevada Regional Hospital", type: "hospital", classification: "hospital", city: "Elko", county: "Elko", address: "2001 Errecart Blvd", lat: 40.8230, lng: -115.7314, notes: "True rural hub" },
   { id: "h5", name: "William Bee Ririe Hospital", type: "hospital", classification: "cah", city: "Ely", county: "White Pine", address: "1500 Avenue H", lat: 39.2556, lng: -114.8596, notes: "Frontier coverage", accessType: "Frontier" },
   { id: "h6", name: "Battle Mountain General Hospital", type: "hospital", classification: "cah", city: "Battle Mountain", county: "Lander", address: "535 S Humboldt St", lat: 40.6399, lng: -116.9407, notes: "Low-density area", accessType: "Frontier" },
   { id: "h7", name: "South Lyon Medical Center", type: "hospital", classification: "cah", city: "Yerington", county: "Lyon", address: "213 S Whitacre St", lat: 38.9841, lng: -119.1674, notes: "Rural access point", accessType: "Rural" },
@@ -95,6 +95,9 @@ export const getFacilityDataConfidence = (facility: Facility): DataConfidence =>
 };
 
 export const isCriticalAccessHospital = (facility: Facility) =>
+  getFacilityClassification(facility) === 'cah';
+
+export const isNRHPMember = (facility: Facility) =>
   getFacilityClassification(facility) === 'cah';
 
 export const getFacilityTypeLabel = (facility: Facility) => FACILITY_CLASSIFICATION_LABELS[getFacilityClassification(facility)];
