@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
@@ -15,6 +15,8 @@ import difference from '@turf/difference';
 import union from '@turf/union';
 import { point as turfPoint, featureCollection, polygon as turfPolygon } from '@turf/helpers';
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
+import MapDebugPanel from '@/components/map/MapDebugPanel';
+import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGroup, type DebugLayerDefinition } from '@/components/map/mapDiagnostics';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -94,6 +96,153 @@ const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>
 
 const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
 
+const DEBUG_ENABLED = import.meta.env.DEV;
+
+const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
+  {
+    id: 'selection-highlights',
+    name: 'Selection Highlights',
+    source: 'clipped-counties',
+    controllingToggle: 'selectedCounty / selectedFteId',
+    drawOrder: 640,
+    group: 'highlights',
+    filterKey: 'selected-county-or-fte-service-area',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'fte-capacity-hubs',
+    name: 'FTE Capacity Hubs',
+    source: 'fte-capacity-hubs',
+    controllingToggle: 'layers.fteCapacity',
+    drawOrder: 635,
+    group: 'markers',
+    filterKey: 'all-fte-hubs',
+    geometryKind: 'point',
+  },
+  {
+    id: 'engagement-gap-labels',
+    name: 'Engagement Gap Labels',
+    source: 'engagement-gap-results',
+    controllingToggle: 'layers.engagementGap',
+    drawOrder: 632,
+    group: 'engagement',
+    filterKey: 'engagement-gap-label-icons',
+    geometryKind: 'point',
+  },
+  {
+    id: 'county-labels',
+    name: 'County Labels',
+    source: 'nevada-counties',
+    controllingToggle: 'layers.counties',
+    drawOrder: 630,
+    group: 'counties',
+    filterKey: 'county-centroids',
+    geometryKind: 'point',
+  },
+  {
+    id: 'facility-markers',
+    name: 'Facility Markers',
+    source: 'facilities',
+    controllingToggle: 'layers.serviceLocations',
+    drawOrder: 620,
+    group: 'markers',
+    filterKey: 'filtered-facilities',
+    geometryKind: 'point',
+  },
+  {
+    id: 'engagement-gap-overlay',
+    name: 'Engagement Gap Overlay',
+    source: 'engagement-gap-results',
+    controllingToggle: 'layers.engagementGap',
+    drawOrder: 370,
+    group: 'engagement',
+    filterKey: 'engagement-gap-polygons',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'coverage-gap-overlay',
+    name: 'Coverage Gap Overlay',
+    source: 'coverage-gap-analysis',
+    controllingToggle: 'coverageGaps',
+    drawOrder: 365,
+    group: 'engagement',
+    filterKey: 'hospital-radius-gap-mask',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'drive-radius-overlay',
+    name: 'Drive Radius Overlay',
+    source: 'hospital-drive-radius',
+    controllingToggle: 'coverageRadius',
+    drawOrder: 360,
+    group: 'drive',
+    filterKey: 'hospitals-only',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'operational-service-area',
+    name: 'Operational Service Area',
+    source: 'active-coverage-zone',
+    controllingToggle: 'layers.operationalCoverage',
+    drawOrder: 350,
+    group: 'operational',
+    filterKey: 'active-coverage-zone',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'non-service-mask',
+    name: 'Non-service Grey Mask',
+    source: 'active-coverage-zone',
+    controllingToggle: 'layers.operationalCoverage',
+    drawOrder: 349,
+    group: 'operational',
+    filterKey: 'inactive-coverage-area',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'county-borders',
+    name: 'County Borders',
+    source: 'clipped-counties',
+    controllingToggle: 'layers.counties',
+    drawOrder: 340,
+    group: 'counties',
+    filterKey: 'all-counties',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'utilization-choropleth',
+    name: 'Utilization Choropleth',
+    source: 'clipped-counties',
+    controllingToggle: 'layers.utilizationIntensity',
+    drawOrder: 335,
+    group: 'counties',
+    filterKey: 'all-counties',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'county-hit-areas',
+    name: 'County Hit Areas',
+    source: 'clipped-counties',
+    controllingToggle: 'layers.counties',
+    drawOrder: 330,
+    group: 'counties',
+    filterKey: 'all-counties',
+    geometryKind: 'polygon',
+  },
+  {
+    id: 'state-outline',
+    name: 'State Outline',
+    source: 'nevada-boundary',
+    controllingToggle: 'always-on',
+    drawOrder: 320,
+    group: 'state',
+    filterKey: 'state-outline',
+    geometryKind: 'polygon',
+  },
+];
+
+const LAYER_CONFLICTS = createLayerConflictMaps(DEBUG_LAYER_DEFINITIONS);
+
 const createGeoJsonLayer = (
   geometry: Feature<Polygon | MultiPolygon> | Feature<Polygon>,
   pane: (typeof MAP_PANES)[keyof typeof MAP_PANES],
@@ -117,7 +266,13 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
+  const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+  const [debugOpen, setDebugOpen] = useState(false);
+  const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
+  const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
+  const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
   const onMapClickRef = useRef(onMapClick);
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
@@ -139,6 +294,153 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     }
     return result;
   }, [facilities, searchQuery]);
+
+  const activeCoverageZone = useMemo(() => {
+    if (!layers.operationalCoverage || coverageGaps) return null;
+    return getActiveCoverageZone(coverageRadiusKm);
+  }, [layers.operationalCoverage, coverageGaps, coverageRadiusKm]);
+
+  const layerGroups = useMemo(
+    () => ({
+      'state-outline': stateBoundaryRef.current,
+      'county-hit-areas': countyFillRef.current,
+      'utilization-choropleth': utilizationRef.current,
+      'county-borders': countyBorderRef.current,
+      'non-service-mask': coverageGreyRef.current,
+      'operational-service-area': operationalCoverageRef.current,
+      'drive-radius-overlay': radiusRef.current,
+      'coverage-gap-overlay': gapsRef.current,
+      'engagement-gap-overlay': engagementGapRef.current,
+      'facility-markers': markersRef.current,
+      'county-labels': labelsRef.current,
+      'engagement-gap-labels': engagementGapLabelRef.current,
+      'fte-capacity-hubs': fteCapacityRef.current,
+      'selection-highlights': highlightsRef.current,
+    }),
+    [mapReady],
+  );
+
+  const isLayerVisibleInDebug = useCallback(
+    (definition: DebugLayerDefinition) => {
+      const manualVisible = layerVisibilityOverrides[definition.id] ?? true;
+      const isolatedLayerVisible = !isolatedLayerId || isolatedLayerId === definition.id;
+      const isolatedGroupVisible = !isolatedGroup || isolatedGroup === definition.group;
+      return manualVisible && isolatedLayerVisible && isolatedGroupVisible;
+    },
+    [isolatedGroup, isolatedLayerId, layerVisibilityOverrides],
+  );
+
+  const geometryWarnings = useMemo(() => {
+    if (!DEBUG_ENABLED || !debugOpen) {
+      return { warnings: [], overlappingSources: new Set<string>() };
+    }
+
+    return collectGeometryWarnings(
+      [
+        { source: 'nevada-boundary', features: [NEVADA_FEATURE], allowOverlap: true },
+        { source: 'clipped-counties', features: Array.from(CLIPPED_COUNTY_FEATURES.values()) },
+        {
+          source: 'active-coverage-zone',
+          features: activeCoverageZone ? [activeCoverageZone] : [],
+          allowOverlap: true,
+        },
+        {
+          source: 'fte-capacity-hubs',
+          features: fteCapacityData
+            .filter((fte) => !!fte.hubLocation)
+            .map((fte) => ({
+              type: 'Feature' as const,
+              properties: { id: fte.id },
+              geometry: {
+                type: 'Point' as const,
+                coordinates: [fte.hubLocation!.lng, fte.hubLocation!.lat],
+              },
+            })),
+          allowOverlap: true,
+        },
+        {
+          source: 'facilities',
+          features: facilities.map((facility) => ({
+            type: 'Feature' as const,
+            properties: { id: facility.id },
+            geometry: {
+              type: 'Point' as const,
+              coordinates: [facility.lng, facility.lat],
+            },
+          })),
+          allowOverlap: true,
+        },
+      ],
+      NEVADA_FEATURE,
+    );
+  }, [activeCoverageZone, debugOpen, facilities]);
+
+  const debugLayers = useMemo(() => {
+    if (!DEBUG_ENABLED || !debugOpen || !mapRef.current) return [];
+
+    return [...DEBUG_LAYER_DEFINITIONS]
+      .sort((left, right) => right.drawOrder - left.drawOrder)
+      .map((definition) => {
+        const group = layerGroups[definition.id as keyof typeof layerGroups];
+        const rendered = !!group && group.getLayers().length > 0;
+        const visible = !!group && mapRef.current ? mapRef.current.hasLayer(group) : false;
+
+        return {
+          ...definition,
+          visible,
+          rendered,
+          duplicateSource: LAYER_CONFLICTS.duplicateSources.has(definition.source),
+          duplicateFilter: LAYER_CONFLICTS.duplicateFilters.has(`${definition.source}::${definition.filterKey}`),
+          geometryConflict: geometryWarnings.overlappingSources.has(definition.source),
+        };
+      });
+  }, [debugOpen, geometryWarnings.overlappingSources, layerGroups]);
+
+  const toggleDebugLayer = useCallback((layerId: string) => {
+    setLayerVisibilityOverrides((current) => ({
+      ...current,
+      [layerId]: !(current[layerId] ?? true),
+    }));
+  }, []);
+
+  const isolateDebugLayer = useCallback((layerId: string) => {
+    setIsolatedGroup(null);
+    setIsolatedLayerId((current) => (current === layerId ? null : layerId));
+  }, []);
+
+  const isolateDebugGroup = useCallback((group: DebugIsolationGroup) => {
+    setIsolatedLayerId(null);
+    setIsolatedGroup((current) => (current === group ? null : group));
+  }, []);
+
+  const clearDebugIsolation = useCallback(() => {
+    setLayerVisibilityOverrides({});
+    setIsolatedLayerId(null);
+    setIsolatedGroup(null);
+  }, []);
+
+  useEffect(() => {
+    if (!DEBUG_ENABLED) return;
+
+    const handleKeydown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const isTypingTarget = target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+      if (isTypingTarget) return;
+
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault();
+        setDebugOpen((current) => !current);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    return () => window.removeEventListener('keydown', handleKeydown);
+  }, []);
+
+  useEffect(() => {
+    if (debugOpen) return;
+    clearDebugIsolation();
+  }, [clearDebugIsolation, debugOpen]);
 
   // Initialize map
   useEffect(() => {
@@ -177,15 +479,18 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
     markersRef.current = L.layerGroup().addTo(map);
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
+    engagementGapLabelRef.current = L.layerGroup().addTo(map);
     highlightsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
+    setMapReady(true);
 
     map.on('click', () => onMapClickRef.current?.());
 
     return () => {
       map.remove();
       mapRef.current = null;
+      setMapReady(false);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -281,6 +586,23 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       }).addTo(labelsRef.current!);
     });
   }, [layers.counties]);
+
+  useEffect(() => {
+    if (!DEBUG_ENABLED || !mapRef.current || !mapReady) return;
+
+    DEBUG_LAYER_DEFINITIONS.forEach((definition) => {
+      const group = layerGroups[definition.id as keyof typeof layerGroups];
+      if (!group) return;
+
+      const shouldAttach = !debugOpen || isLayerVisibleInDebug(definition);
+      if (shouldAttach && !mapRef.current!.hasLayer(group)) {
+        group.addTo(mapRef.current!);
+      }
+      if (!shouldAttach && mapRef.current!.hasLayer(group)) {
+        mapRef.current!.removeLayer(group);
+      }
+    });
+  }, [debugOpen, isLayerVisibleInDebug, layerGroups, mapReady]);
 
   useEffect(() => {
     if (!highlightsRef.current) return;
@@ -539,7 +861,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
 
     if (!layers.operationalCoverage || coverageGaps) return;
 
-    const activeZone = getActiveCoverageZone(coverageRadiusKm);
+    const activeZone = activeCoverageZone;
     const inactiveArea = activeZone
       ? difference(featureCollection([NEVADA_FEATURE, activeZone]) as any)
       : NEVADA_FEATURE;
@@ -584,7 +906,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
       interactive: false,
     });
     operationalCoverageRef.current.addLayer(activeOutline);
-  }, [layers.operationalCoverage, coverageRadiusKm, coverageGaps]);
+  }, [activeCoverageZone, layers.operationalCoverage, coverageGaps]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {
@@ -666,6 +988,7 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
   useEffect(() => {
     if (!engagementGapRef.current) return;
     engagementGapRef.current.clearLayers();
+    engagementGapLabelRef.current?.clearLayers();
     if (!layers.engagementGap) return;
 
     const results = getEngagementGapResults();
@@ -729,12 +1052,29 @@ const MapView = ({ facilities, layers, onFacilityClick, onMapClick, searchQuery,
         iconSize: [16, 16],
         iconAnchor: [8, 8],
       });
-      L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapRef.current!);
+      L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapLabelRef.current!);
     });
   }, [layers.engagementGap]);
 
 
-  return <div ref={containerRef} className="w-full h-full" />;
+  return (
+    <div className="relative h-full w-full">
+      <div ref={containerRef} className="h-full w-full" />
+      {DEBUG_ENABLED && (
+        <MapDebugPanel
+          open={debugOpen}
+          layers={debugLayers}
+          warnings={geometryWarnings.warnings}
+          isolatedLayerId={isolatedLayerId}
+          isolatedGroup={isolatedGroup}
+          onToggleLayer={toggleDebugLayer}
+          onIsolateLayer={isolateDebugLayer}
+          onIsolateGroup={isolateDebugGroup}
+          onClearIsolation={clearDebugIsolation}
+        />
+      )}
+    </div>
+  );
 };
 
 export default MapView;
