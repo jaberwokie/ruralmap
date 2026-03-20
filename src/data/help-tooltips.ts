@@ -16,6 +16,11 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'Shows mapped hospitals, clinics, and provider locations across the rural network. These pins represent known service access points, not necessarily active field engagement coverage.',
   },
+  services: {
+    label: 'Services',
+    explanation:
+      'Shows mapped community services across Nevada so users can compare local support presence against member volume, utilization, and engagement gaps. Use the detail panel for county-level service context and supporting resource detail.',
+  },
   operationalCoverage: {
     label: 'Operational Coverage Model',
     explanation:
