@@ -1,11 +1,13 @@
 export type FacilityType = 'hospital' | 'clinic' | 'tier1';
 export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
 export type AccessType = 'Frontier' | 'Rural' | 'Near-Urban';
+export type FacilityClassification = 'cah' | 'facility';
 
 export interface Facility {
   id: string;
   name: string;
   type: FacilityType;
+  classification?: FacilityClassification;
   city: string;
   county: string;
   address?: string;
@@ -24,7 +26,7 @@ export const defaultFacilities: Facility[] = [
   { id: "h1", name: "Desert View Hospital", type: "hospital", city: "Pahrump", county: "Nye", address: "360 S Lola Ln", lat: 36.2142, lng: -116.0248, notes: "Primary Nye discharge point", accessType: "Near-Urban" },
   { id: "h2", name: "Banner Churchill Community Hospital", type: "hospital", city: "Fallon", county: "Churchill", address: "801 E Williams Ave", lat: 39.4762, lng: -118.7662, notes: "Regional hospital", accessType: "Rural" },
   { id: "h3", name: "Carson Tahoe Regional Medical Center", type: "hospital", city: "Carson City", county: "Carson City", address: "1600 Medical Pkwy", lat: 39.2011, lng: -119.7841, notes: "Primary Carson hub" },
-  { id: "h4", name: "Northeastern Nevada Regional Hospital", type: "hospital", city: "Elko", county: "Elko", address: "2001 Errecart Blvd", lat: 40.8230, lng: -115.7314, notes: "True rural hub" },
+  { id: "h4", name: "Northeastern Nevada Regional Hospital", type: "hospital", classification: "facility", city: "Elko", county: "Elko", address: "2001 Errecart Blvd", lat: 40.8230, lng: -115.7314, notes: "True rural hub" },
   { id: "h5", name: "William Bee Ririe Hospital", type: "hospital", city: "Ely", county: "White Pine", address: "1500 Avenue H", lat: 39.2556, lng: -114.8596, notes: "Frontier coverage", accessType: "Frontier" },
   { id: "h6", name: "Battle Mountain General Hospital", type: "hospital", city: "Battle Mountain", county: "Lander", address: "535 S Humboldt St", lat: 40.6399, lng: -116.9407, notes: "Low-density area", accessType: "Frontier" },
   { id: "h7", name: "South Lyon Medical Center", type: "hospital", city: "Yerington", county: "Lyon", address: "213 S Whitacre St", lat: 38.9841, lng: -119.1674, notes: "Rural access point", accessType: "Rural" },
@@ -65,3 +67,14 @@ export const defaultFacilities: Facility[] = [
   { id: "t14", name: "Dr. Ronald Pak, PsyD LLC", type: "clinic", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 1086, tier: "tier1" },
   { id: "t15", name: "Serenity Counseling LLC", type: "clinic", city: "Las Vegas", county: "Clark", lat: 36.1699, lng: -115.1398, service: "BH", volume: 991, tier: "tier1" },
 ];
+
+export const isCriticalAccessHospital = (facility: Facility) =>
+  facility.type === 'hospital' && facility.classification !== 'facility';
+
+export const getFacilityTypeLabel = (facility: Facility) => {
+  if (facility.type === 'hospital') {
+    return isCriticalAccessHospital(facility) ? 'Critical Access Hospital (CAH)' : 'Facility';
+  }
+
+  return facility.tier === 'tier1' ? 'Clinic / Provider' : 'Clinic / FQHC';
+};
