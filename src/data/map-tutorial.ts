@@ -44,7 +44,7 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   {
     key: 'serviceNetwork',
     title: 'Service presence',
-    text: 'These county halos show where community services are concentrated, separate from provider site pins.',
+    text: 'These lighter point markers show individual community services without grouping them into counts or clusters.',
     selectors: ['[data-tutorial="toggle-services"]', '[data-tutorial="map-region"]'],
   },
   {
