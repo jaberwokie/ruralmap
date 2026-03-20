@@ -22,6 +22,7 @@ import type { Feature, Polygon, MultiPolygon } from 'geojson';
 import MapDebugPanel from '@/components/map/MapDebugPanel';
 import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGroup, type DebugLayerDefinition } from '@/components/map/mapDiagnostics';
 import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -307,24 +308,26 @@ const CoverageGapInfoButton = () => {
   const [open, setOpen] = useState(false);
 
   return (
-    <button
-      type="button"
-      className="pointer-events-auto relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      onMouseEnter={() => setOpen(true)}
-      onMouseLeave={() => setOpen(false)}
-      onClick={(event) => {
-        event.stopPropagation();
-        setOpen((current) => !current);
-      }}
-      aria-label="Explain coverage gap"
-    >
-      <Info className="h-3 w-3" />
-      {open && (
-        <div className="absolute bottom-full right-0 z-[1110] mb-2 w-52 rounded-md border border-border bg-popover px-3 py-2 text-left text-[11px] leading-relaxed text-popover-foreground shadow-md">
-          Percent of county area outside provider coverage radius based on current radius setting.
-        </div>
-      )}
-    </button>
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className="pointer-events-auto inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setOpen((current) => !current);
+          }}
+          aria-label="Explain coverage gap"
+        >
+          <Info className="h-3 w-3" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="right" align="start" sideOffset={10} className="text-[11px] leading-relaxed">
+        Percent of county area outside provider coverage radius based on current radius setting.
+      </TooltipContent>
+    </Tooltip>
   );
 };
 
@@ -1446,39 +1449,41 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
       <div ref={containerRef} className="h-full w-full" />
-      {countyHoverPreview && countyHoverPreviewStyle && (
-        <div
-          className="pointer-events-none absolute z-[1100] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm"
-          style={countyHoverPreviewStyle}
-        >
-          <p className="text-sm font-semibold text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
-          <div className="mt-2 space-y-1">
-            {typeof countyHoverPreview.unengagedMembers === 'number' && (
-              <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
-            )}
-            {typeof countyHoverPreview.providerCount === 'number' && (
-              <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
-            )}
-            {typeof countyHoverPreview.coverageGapPercent === 'number' && (
-              <div className="space-y-1">
-                <div className="flex items-baseline justify-between gap-3 text-[11px] leading-relaxed">
-                  <span className="flex items-center gap-1 text-muted-foreground">
-                    Coverage gap
-                    <CoverageGapInfoButton />
-                  </span>
-                  <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
+      <TooltipProvider delayDuration={120}>
+        {countyHoverPreview && countyHoverPreviewStyle && (
+          <div
+            className="pointer-events-none absolute z-[1100] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm"
+            style={countyHoverPreviewStyle}
+          >
+            <p className="text-sm font-semibold text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
+            <div className="mt-2 space-y-1">
+              {typeof countyHoverPreview.unengagedMembers === 'number' && (
+                <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
+              )}
+              {typeof countyHoverPreview.providerCount === 'number' && (
+                <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
+              )}
+              {typeof countyHoverPreview.coverageGapPercent === 'number' && (
+                <div className="space-y-1">
+                  <div className="flex items-baseline justify-between gap-3 text-[11px] leading-relaxed">
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      Coverage gap
+                      <CoverageGapInfoButton />
+                    </span>
+                    <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
+                  </div>
                 </div>
-                <div className="text-[11px] text-muted-foreground">
-                  Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
-                </div>
-              </div>
-            )}
+              )}
+            </div>
+            <p className="mt-3 border-t border-border pt-2 text-[11px] leading-relaxed text-muted-foreground">
+              Consider outreach or resource expansion.
+            </p>
           </div>
-          <p className="mt-3 border-t border-border pt-2 text-[11px] leading-relaxed text-muted-foreground">
-            Consider outreach or resource expansion.
-          </p>
-        </div>
-      )}
+        )}
+      </TooltipProvider>
       {DEBUG_ENABLED && (
         <MapDebugPanel
           open={debugOpen}
