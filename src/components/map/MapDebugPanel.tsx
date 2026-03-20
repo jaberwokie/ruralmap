@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import type { DebugIsolationGroup, LayerDebugRecord, SourceWarning } from '@/components/map/mapDiagnostics';
+import type { FacilityValidationSummary } from '@/utils/facilityValidation';
 
 interface MapDebugPanelProps {
   open: boolean;
@@ -7,10 +8,13 @@ interface MapDebugPanelProps {
   warnings: SourceWarning[];
   isolatedLayerId: string | null;
   isolatedGroup: DebugIsolationGroup | null;
+  facilityValidationEnabled: boolean;
+  facilityValidationSummary: FacilityValidationSummary;
   onToggleLayer: (layerId: string) => void;
   onIsolateLayer: (layerId: string) => void;
   onIsolateGroup: (group: DebugIsolationGroup) => void;
   onClearIsolation: () => void;
+  onToggleFacilityValidation: () => void;
 }
 
 const GROUPS: Array<{ key: DebugIsolationGroup; label: string }> = [
@@ -29,10 +33,13 @@ const MapDebugPanel = ({
   warnings,
   isolatedLayerId,
   isolatedGroup,
+  facilityValidationEnabled,
+  facilityValidationSummary,
   onToggleLayer,
   onIsolateLayer,
   onIsolateGroup,
   onClearIsolation,
+  onToggleFacilityValidation,
 }: MapDebugPanelProps) => {
   return (
     <div className="pointer-events-none absolute inset-y-0 right-0 z-[1000] flex w-full justify-end overflow-hidden">
@@ -60,6 +67,50 @@ const MapDebugPanel = ({
             </div>
 
             <div className="mt-4 space-y-2">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/40 px-3 py-3">
+                <div>
+                  <p className="text-xs font-medium text-foreground">Facility validation mode</p>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    Dev-only pin audit view for verified vs approximate facility locations.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onToggleFacilityValidation}
+                  className={cn(
+                    'rounded-md border px-3 py-1.5 text-xs font-medium transition-colors active:scale-[0.98]',
+                    facilityValidationEnabled
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-border bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  {facilityValidationEnabled ? 'Validation on' : 'Validation off'}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2">
+                  <div className="text-muted-foreground">Reviewed</div>
+                  <div className="mt-1 font-semibold text-foreground">{facilityValidationSummary.totalFacilitiesReviewed}</div>
+                </div>
+                <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2">
+                  <div className="text-muted-foreground">Verified</div>
+                  <div className="mt-1 font-semibold text-foreground">{facilityValidationSummary.verifiedCount}</div>
+                </div>
+                <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2">
+                  <div className="text-muted-foreground">Approximate</div>
+                  <div className="mt-1 font-semibold text-foreground">{facilityValidationSummary.approximateCount}</div>
+                </div>
+                <div className="rounded-lg border border-border bg-secondary/30 px-3 py-2">
+                  <div className="text-muted-foreground">Corrected</div>
+                  <div className="mt-1 font-semibold text-foreground">{facilityValidationSummary.correctedCount}</div>
+                </div>
+                <div className="col-span-2 rounded-lg border border-border bg-secondary/30 px-3 py-2">
+                  <div className="text-muted-foreground">Manual review</div>
+                  <div className="mt-1 font-semibold text-foreground">{facilityValidationSummary.manualReviewCount}</div>
+                </div>
+              </div>
+
               <p className="text-xs font-medium text-foreground">Group isolation</p>
               <div className="flex flex-wrap gap-2">
                 {GROUPS.map((group) => {
