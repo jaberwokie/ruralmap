@@ -505,16 +505,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     return result;
   }, [countyFilters, serviceCategoryFilters]);
 
-  const ruralServicesByCounty = useMemo(() => {
-    const grouped = new Map<string, typeof ruralServices>();
-    ruralServices.forEach((service) => {
-      const current = grouped.get(service.county) ?? [];
-      current.push(service);
-      grouped.set(service.county, current);
-    });
-    return grouped;
-  }, []);
-
   const servicePresenceCounties = useMemo<ServicePresenceCountySummary[]>(() => {
     const grouped = filteredRuralServices.reduce((acc, service) => {
       const countyServices = acc.get(service.county) ?? [];
