@@ -897,16 +897,6 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
 /** Local Resource Network section — rural services for a county */
 const LocalResourcesSection = ({ county }: { county: string }) => {
   const services = useMemo(() => ruralServices.filter(s => s.county === county), [county]);
-
-  if (services.length === 0) {
-    return (
-      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Local Resource Network</div>
-        <p className="text-[11px] text-muted-foreground italic">No known community resources mapped for this county.</p>
-      </div>
-    );
-  }
-
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
@@ -916,6 +906,15 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
     });
     return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
   }, [services]);
+
+  if (services.length === 0) {
+    return (
+      <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
+        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Local Resource Network</div>
+        <p className="text-[11px] text-muted-foreground italic">No known community resources mapped for this county.</p>
+      </div>
+    );
+  }
 
   const categoryCount = grouped.length;
   const total = services.length;
