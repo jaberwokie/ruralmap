@@ -60,6 +60,7 @@ interface CountyHoverMetrics {
   totalMembers?: number;
   unengagedMembers?: number;
   providerCount?: number;
+  serviceCount?: number;
   coverageGapPercent?: number;
 }
 
@@ -124,8 +125,6 @@ const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>
 );
 
 const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
-const SERVICE_PRESENCE_LABEL_MAX_ZOOM = 7;
-
 const DEBUG_ENABLED = import.meta.env.DEV;
 
 const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
@@ -357,7 +356,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
   const [debugOpen, setDebugOpen] = useState(false);
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
-  const [mapZoom, setMapZoom] = useState(7);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
@@ -387,10 +385,28 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(facilities), [facilities]);
 
+  const filteredRuralServices = useMemo(() => {
+    let result = ruralServices;
+
+    if (countyFilters && countyFilters.size > 0) {
+      result = result.filter((service) => countyFilters.has(service.county));
+    }
+
+    if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
+      result = result.filter((service) => serviceCategoryFilters.has(service.category));
+    }
+
+    return result;
+  }, [countyFilters, serviceCategoryFilters]);
+
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();
     const providerCountByCounty = providerFacilities.reduce((acc, facility) => {
       acc.set(facility.county, (acc.get(facility.county) ?? 0) + 1);
+      return acc;
+    }, new Map<string, number>());
+    const serviceCountByCounty = filteredRuralServices.reduce((acc, service) => {
+      acc.set(service.county, (acc.get(service.county) ?? 0) + 1);
       return acc;
     }, new Map<string, number>());
 
@@ -427,6 +443,11 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         metric.providerCount = providerCount;
       }
 
+       const serviceCount = serviceCountByCounty.get(name);
+       if (typeof serviceCount === 'number') {
+         metric.serviceCount = serviceCount;
+       }
+
       const countyFeature = getCountyFeature(name);
       if (countyFeature) {
         const countyArea = turfArea(countyFeature as any);
@@ -451,7 +472,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
 
     return metricsByCounty;
-  }, [providerFacilities, radiusKm]);
+  }, [filteredRuralServices, providerFacilities, radiusKm]);
 
   const updateCountyHoverPreview = useCallback((county: string, event: L.LeafletMouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -482,20 +503,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     };
   }, [countyHoverPreview]);
 
-  const filteredRuralServices = useMemo(() => {
-    let result = ruralServices;
-
-    if (countyFilters && countyFilters.size > 0) {
-      result = result.filter((service) => countyFilters.has(service.county));
-    }
-
-    if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
-      result = result.filter((service) => serviceCategoryFilters.has(service.category));
-    }
-
-    return result;
-  }, [countyFilters, serviceCategoryFilters]);
-
   const ruralServicesByCounty = useMemo(() => {
     const grouped = new Map<string, typeof ruralServices>();
     ruralServices.forEach((service) => {
@@ -505,21 +512,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
     return grouped;
   }, []);
-
-  const servicePresenceCountySummaries = useMemo(() => {
-    return nevadaCounties
-      .flatMap((county) => {
-        const services = filteredRuralServices.filter((service) => service.county === county.name);
-        if (!services.length) return [];
-
-        return [{
-          county: county.name,
-          center: county.center,
-          count: services.length,
-        }];
-      })
-      .sort((left, right) => right.count - left.count || left.county.localeCompare(right.county));
-  }, [filteredRuralServices]);
 
   const activeCoverageZone = useMemo(() => {
     if (!layers.operationalCoverage || coverageGaps) return null;
@@ -719,11 +711,9 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     highlightsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
-    setMapZoom(map.getZoom());
     setMapReady(true);
 
     map.on('click', () => onMapClickRef.current?.());
-    map.on('zoomend', () => setMapZoom(map.getZoom()));
 
     return () => {
       map.remove();
@@ -912,7 +902,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
   }, [selectedCounty]);
 
-  // Draw individual service presence points with soft density halos and optional zoomed-out count labels.
+  // Draw individual service presence points with soft density halos.
   useEffect(() => {
     if (!servicePresenceRef.current) return;
     servicePresenceRef.current.clearLayers();
@@ -982,26 +972,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       servicePresenceRef.current!.addLayer(halo);
       servicePresenceRef.current!.addLayer(marker);
     });
-
-    if (mapZoom <= SERVICE_PRESENCE_LABEL_MAX_ZOOM) {
-      servicePresenceCountySummaries.forEach((summary) => {
-        const label = L.divIcon({
-          className: '',
-          html: `<span style="display:inline-flex;align-items:center;justify-content:center;padding:2px 6px;border-radius:999px;background:hsla(var(--background), 0.82);color:hsla(var(--muted-foreground), 0.95);font-size:10px;font-weight:600;letter-spacing:0.04em;white-space:nowrap;box-shadow:0 1px 2px hsla(var(--foreground), 0.08);backdrop-filter:blur(2px);">${summary.count} services</span>`,
-          iconSize: [64, 18],
-          iconAnchor: [32, -10],
-        });
-
-        const labelMarker = L.marker(summary.center, {
-          icon: label,
-          pane: MAP_PANES.labels,
-          interactive: false,
-        });
-
-        servicePresenceRef.current!.addLayer(labelMarker);
-      });
-    }
-  }, [filteredRuralServices, layers.services, mapZoom, ruralServicesByCounty, servicePresenceCountySummaries]);
+  }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
 
   // Draw coverage radii
   useEffect(() => {
@@ -1516,6 +1487,9 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
               )}
               {typeof countyHoverPreview.providerCount === 'number' && (
                 <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
+              )}
+              {typeof countyHoverPreview.serviceCount === 'number' && (
+                <CountyHoverMetricRow label="Services" value={numberFormatter.format(countyHoverPreview.serviceCount)} />
               )}
               {typeof countyHoverPreview.coverageGapPercent === 'number' && (
                 <div className="space-y-1">
