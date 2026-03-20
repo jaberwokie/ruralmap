@@ -342,6 +342,7 @@ const Index = () => {
       <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 relative h-[calc(100vh-52px)] md:h-full`}>
         <MapView
           facilities={filteredFacilities}
+          allFacilities={facilities}
           layers={layers}
           countyFilters={filters.counties}
           serviceCategoryFilters={filters.serviceCategories}
