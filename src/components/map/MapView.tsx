@@ -4,6 +4,7 @@ import 'leaflet/dist/leaflet.css';
 import { Facility } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
+import { ruralServices } from '@/data/rural-services';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
@@ -144,6 +145,16 @@ const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
     geometryKind: 'point',
   },
   {
+    id: 'service-network-markers',
+    name: 'Service Network Markers',
+    source: 'rural-services',
+    controllingToggle: 'layers.services',
+    drawOrder: 619,
+    group: 'markers',
+    filterKey: 'filtered-rural-services',
+    geometryKind: 'point',
+  },
+  {
     id: 'facility-markers',
     name: 'Facility Markers',
     source: 'facilities',
@@ -259,6 +270,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
+  const serviceNetworkRef = useRef<L.LayerGroup | null>(null);
   const countyFillRef = useRef<L.LayerGroup | null>(null);
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
@@ -299,6 +311,30 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     return result;
   }, [facilities, searchQuery]);
 
+  const filteredRuralServices = useMemo(() => {
+    let result = ruralServices;
+
+    if (countyFilters && countyFilters.size > 0) {
+      result = result.filter((service) => countyFilters.has(service.county));
+    }
+
+    if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
+      result = result.filter((service) => serviceCategoryFilters.has(service.category));
+    }
+
+    return result;
+  }, [countyFilters, serviceCategoryFilters]);
+
+  const ruralServicesByCounty = useMemo(() => {
+    const grouped = new Map<string, typeof ruralServices>();
+    ruralServices.forEach((service) => {
+      const current = grouped.get(service.county) ?? [];
+      current.push(service);
+      grouped.set(service.county, current);
+    });
+    return grouped;
+  }, []);
+
   const activeCoverageZone = useMemo(() => {
     if (!layers.operationalCoverage || coverageGaps) return null;
     return getActiveCoverageZone(coverageRadiusKm);
@@ -322,6 +358,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
       'drive-radius-overlay': radiusRef.current,
       'coverage-gap-overlay': gapsRef.current,
       'engagement-gap-overlay': engagementGapRef.current,
+      'service-network-markers': serviceNetworkRef.current,
       'facility-markers': markersRef.current,
       'county-labels': labelsRef.current,
       'engagement-gap-labels': engagementGapLabelRef.current,
@@ -487,6 +524,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
+    serviceNetworkRef.current = L.layerGroup().addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
@@ -680,23 +718,79 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     });
   }, [selectedCounty]);
 
+  // Draw Service Network markers
+  useEffect(() => {
+    if (!serviceNetworkRef.current) return;
+    serviceNetworkRef.current.clearLayers();
+
+    if (!layers.services) return;
+
+    const locationCounts = new Map<string, number>();
+
+    filteredRuralServices.forEach((service) => {
+      const key = `${service.lat.toFixed(4)},${service.lng.toFixed(4)}`;
+      const count = locationCounts.get(key) ?? 0;
+      locationCounts.set(key, count + 1);
+
+      const offsetLat = count * 0.0025;
+      const offsetLng = count * 0.0025;
+
+      const marker = L.circleMarker([service.lat + offsetLat, service.lng + offsetLng], {
+        pane: MAP_PANES.facilityMarkers,
+        radius: 4.5,
+        color: 'hsl(var(--primary-foreground))',
+        weight: 1.5,
+        fillColor: 'hsl(var(--primary))',
+        fillOpacity: 0.95,
+      });
+
+      const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
+
+      marker.on('mouseover', () => {
+        onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+      });
+      marker.on('mouseout', () => {
+        onEntityHoverRef.current?.(null);
+      });
+      marker.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+      });
+
+      marker.bindTooltip(
+        `
+          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+            <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
+            <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${service.city}, ${service.county} County</div>
+            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${service.category}</div>
+          </div>
+        `,
+        {
+          direction: 'top',
+          offset: [0, -8],
+          className: 'facility-tooltip',
+        }
+      );
+
+      serviceNetworkRef.current!.addLayer(marker);
+    });
+  }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
+
   // Draw coverage radii
   useEffect(() => {
     if (!radiusRef.current) return;
     radiusRef.current.clearLayers();
 
-    if (!coverageRadius && !layers.services) return;
+    if (!coverageRadius) return;
 
     const visibleFacilities = topProvidersOnly
       ? filteredFacilities.filter(f => isTopProvider(f.name))
       : filteredFacilities;
 
     visibleFacilities.forEach(facility => {
-        const colors = layers.services
-          ? facility.type === 'hospital'
-            ? { stroke: 'hsla(0, 72%, 51%, 0.55)', fill: 'hsla(0, 72%, 51%, 0.10)' }
-            : { stroke: 'hsla(217, 91%, 60%, 0.38)', fill: 'hsla(217, 91%, 60%, 0.08)' }
-          : RADIUS_COLORS;
+        const colors = facility.type === 'hospital'
+          ? { stroke: 'hsla(0, 72%, 51%, 0.55)', fill: 'hsla(0, 72%, 51%, 0.10)' }
+          : { stroke: 'hsla(217, 91%, 60%, 0.38)', fill: 'hsla(217, 91%, 60%, 0.08)' };
 
         const halo = L.circle([facility.lat, facility.lng], {
           pane: MAP_PANES.driveRadii,
@@ -721,7 +815,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, layers.services, radiusKm, topProvidersOnly]);
+  }, [filteredFacilities, coverageRadius, radiusKm, topProvidersOnly]);
 
   // Pin color by facility type
   const PIN_COLORS: Record<string, { bg: string; hover: string; size: number; shape: 'circle' | 'diamond' }> = {
@@ -735,7 +829,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
     if (!markersRef.current || !mapRef.current) return;
     markersRef.current.clearLayers();
 
-    if (!layers.serviceLocations && !layers.services) return;
+    if (!layers.serviceLocations) return;
 
     const showUtilization = layers.utilizationIntensity;
     const locationCounts = new Map<string, number>();
@@ -815,7 +909,7 @@ const MapView = ({ facilities, layers, countyFilters, serviceCategoryFilters, on
 
       markersRef.current!.addLayer(marker);
     });
-  }, [filteredFacilities, layers.serviceLocations, layers.services, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
+  }, [filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
