@@ -7,7 +7,13 @@ import { auditFacilityClassifications, auditFacilityConfidence, Facility, defaul
 import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
-import { MAP_TUTORIAL_STORAGE_KEY, MAP_TUTORIAL_STEPS, MapTutorialStepKey } from '@/data/map-tutorial';
+import {
+  isMapTutorialCompleted,
+  MAP_TUTORIAL_COMPLETION_VALUE,
+  MAP_TUTORIAL_STORAGE_KEY,
+  MAP_TUTORIAL_STEPS,
+  MapTutorialStepKey,
+} from '@/data/map-tutorial';
 
 const TOGGLE_DIAGNOSTICS = {
   counties: {
@@ -95,7 +101,7 @@ const Index = () => {
 
   useEffect(() => {
     try {
-      const completed = localStorage.getItem(MAP_TUTORIAL_STORAGE_KEY) === 'true';
+      const completed = isMapTutorialCompleted(localStorage.getItem(MAP_TUTORIAL_STORAGE_KEY));
       if (!completed) setTutorialIntroOpen(true);
     } catch {
       setTutorialIntroOpen(true);
@@ -201,7 +207,7 @@ const Index = () => {
 
   const markTutorialComplete = useCallback(() => {
     try {
-      localStorage.setItem(MAP_TUTORIAL_STORAGE_KEY, 'true');
+      localStorage.setItem(MAP_TUTORIAL_STORAGE_KEY, MAP_TUTORIAL_COMPLETION_VALUE);
     } catch {}
   }, []);
 
@@ -226,7 +232,7 @@ const Index = () => {
     setTutorialOpen(true);
   }, [coverageGaps, coverageRadius, layers]);
 
-  const closeTutorial = useCallback((markComplete = true) => {
+  const closeTutorial = useCallback((markComplete = false) => {
     setTutorialIntroOpen(false);
     setTutorialOpen(false);
     setTutorialStepIndex(0);
@@ -383,7 +389,7 @@ const Index = () => {
           walkthroughOpen={tutorialOpen}
           stepIndex={tutorialStepIndex}
           onStart={startTutorial}
-          onSkip={() => closeTutorial(true)}
+            onSkip={() => closeTutorial(false)}
           onNext={goToNextTutorialStep}
           onBack={goToPreviousTutorialStep}
         />
