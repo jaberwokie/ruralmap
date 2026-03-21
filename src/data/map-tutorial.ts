@@ -15,6 +15,10 @@ export interface MapTutorialStep {
 }
 
 export const MAP_TUTORIAL_STORAGE_KEY = 'rural-operations-map-tutorial-complete';
+export const MAP_TUTORIAL_STORAGE_VERSION = 'v2';
+export const MAP_TUTORIAL_COMPLETION_VALUE = `completed:${MAP_TUTORIAL_STORAGE_VERSION}`;
+
+export const isMapTutorialCompleted = (value: string | null) => value === MAP_TUTORIAL_COMPLETION_VALUE;
 
 export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   {
