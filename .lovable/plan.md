@@ -1,103 +1,58 @@
 
 Goal
 
-Add a lightweight “Data Confidence” layer for facilities so users can see whether a facility record is Verified, Likely Accurate, or Unverified in the facility detail/hover experience, without changing the map’s visual hierarchy.
+Make the tutorial prompt appear reliably again, and change completion behavior so skipping does not suppress future prompts.
 
-What I found
+What’s happening now
 
-- Facility data lives in `src/data/facilities.ts` and already has a clean classification system.
-- The map and detail panel already centralize facility labels through helpers like `getFacilityClassification()` and `getFacilityTypeLabel()`.
-- There is already a separate internal validation utility in `src/utils/facilityValidation.ts` with location-quality signals:
-  - `verified`
-  - `approximate`
-  - `manual_review`
-- Facility markers already consume that validation utility in `MapView.tsx`, but only for dev-mode validation styling/popup behavior.
-- The sidebar filter system currently supports only:
-  - type
-  - county
-  - service category
-- You chose: no sidebar confidence filter for now.
+- `src/pages/Index.tsx` opens the intro only when `localStorage.getItem(MAP_TUTORIAL_STORAGE_KEY) !== 'true'`.
+- The current skip wiring marks the tutorial as complete:
+  - intro skip uses `onSkip={() => closeTutorial(true)}`
+  - walkthrough skip also uses `closeTutorial(true)`
+- Result: if the tutorial was ever skipped or finished in this browser, the prompt will not appear again.
+- There is also no versioning/reset path for older stored values, so prior behavior keeps blocking the prompt.
 
-Implementation plan
+Plan
 
-1. Add a public-facing confidence field to the facility model
-- Extend `Facility` in `src/data/facilities.ts` with:
-  - `dataConfidence: 'Verified' | 'Likely Accurate' | 'Unverified'`
-- Add a shared label/type helper so UI uses one consistent source.
+1. Replace the boolean completion model with explicit tutorial status
+- In `src/data/map-tutorial.ts`, add a small storage model:
+  - version constant
+  - statuses like `completed` and `dismissed`/`seen` only if needed
+- Keep the stored value simple and stable so it can be checked safely from `Index.tsx`.
 
-2. Auto-assign initial confidence using existing validation signals
-- Reuse the logic already encoded in `src/utils/facilityValidation.ts` instead of inventing a second audit system.
-- Map current validation signals into the new public confidence tiers:
-  - `verified` + exact/trusted record context → `Verified`
-  - `approximate` / street-level / reasonable address-based records → `Likely Accurate`
-  - `manual_review`, generic facility classification, shared city-center fallback coordinates, malformed/conflicting location signals → `Unverified`
-- Add a small helper in the facility data layer so assignments are deterministic and easy to update later.
+2. Change prompt logic so only Finish counts as complete
+- In `src/pages/Index.tsx`:
+  - only write completion state when the user reaches Finish
+  - do not write completion state when the user skips from intro or walkthrough
+- Keep skip as a close action only.
 
-3. Ensure every facility gets a confidence value
-- Populate `defaultFacilities` through the new helper or explicitly attach confidence on every record.
-- Keep this separate from visual facility classification so “type” and “confidence” do not get conflated.
+3. Re-show the tutorial for users affected by the old behavior
+- Add a versioned storage key or versioned payload so old `true` values do not permanently suppress the prompt.
+- On load:
+  - if current version is not marked `completed`, open the intro
+  - this cleanly resets browsers that were marked complete by the old skip behavior
 
-4. Surface confidence in the UI subtly
-- Update facility tooltip content in `src/components/map/MapView.tsx` to add:
-  - `Data Confidence: Verified | Likely Accurate | Unverified`
-- Update `FacilityContent` in `src/components/map/CoverageDetailPanel.tsx` to show the same line in small muted text.
-- Keep styling neutral:
-  - no icons
-  - no bright warning colors
-  - no source-detail exposure
+4. Keep replay behavior unchanged
+- The sidebar replay control should still open the walkthrough directly.
+- Replay should not overwrite completion unless the user actually finishes.
 
-5. Keep map impact minimal
-- Do not add map labels, badges, or new symbols.
-- Optional implementation detail:
-  - only slightly reduce opacity for `Unverified` provider markers if it can be done subtly and consistently
-  - otherwise leave map markers unchanged and keep confidence purely in tooltip/detail UI
-
-6. Add audit support for internal review
-- Extend the existing audit utilities in `src/data/facilities.ts` and/or `src/utils/facilityValidation.ts` to summarize:
-  - total facilities
-  - counts by confidence level
-  - list of unverified facility names/ids
-  - any missing confidence assignments
-- Log the summary in dev mode from `src/pages/Index.tsx`, similar to the current classification audit.
-
-7. Preserve current architecture
-- No change to service presence, hospital/provider layer toggles, legends, or clustering.
-- No public exposure of source-address or validation-notes details beyond the single confidence label.
+5. Preserve current overlay and positioning work
+- No changes to the portal, spotlight, sizing, or clipping fix in `MapTutorialOverlay.tsx`
+- This is a state/trigger fix, not a layout rewrite
 
 Likely file changes
 
-- `src/data/facilities.ts`
-  - add `DataConfidence` type and helpers
-  - assign/derive `dataConfidence`
-  - add confidence audit helper
-- `src/utils/facilityValidation.ts`
-  - optionally add a mapper from internal validation confidence to public data confidence
-- `src/components/map/MapView.tsx`
-  - add `Data Confidence` line to facility tooltip
-  - optionally apply a very subtle unverified opacity adjustment
-- `src/components/map/CoverageDetailPanel.tsx`
-  - add `Data Confidence` row to facility detail panel
+- `src/data/map-tutorial.ts`
+  - add tutorial storage version/status helpers
 - `src/pages/Index.tsx`
-  - log dev-only confidence audit summary
-
-Technical details
-
-```text
-Recommended mapping:
-- verified -> Verified
-- approximate -> Likely Accurate
-- manual_review -> Unverified
-
-Additional rule overrides:
-- classification === 'facility' -> Unverified
-- malformed / outside-county / shared fallback city-center patterns -> Unverified
-```
+  - replace the current boolean localStorage check
+  - change skip vs finish behavior
+  - wire Finish to mark complete, Skip to close only
 
 Acceptance criteria
 
-- Every facility has a confidence level
-- Facility tooltip shows Data Confidence
-- Facility detail panel shows Data Confidence
-- No new visual clutter is added to the map
-- Unverified records are easy to identify in the panel, but not alarmist
-- Dev audit can list unverified facilities for future cleanup
+- On a browser without a current completed tutorial state, the intro prompt appears on page load
+- Clicking Skip closes the tutorial but does not prevent it from appearing next visit
+- Clicking Finish prevents it from auto-opening again
+- Older browsers previously suppressed by the old skip logic are prompted again once under the new versioned state
+- Replay from the sidebar still works
