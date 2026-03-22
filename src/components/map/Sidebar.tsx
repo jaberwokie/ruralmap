@@ -97,7 +97,7 @@ const SECTION_META = {
 } as const;
 
 const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
-const ROW_CLASSNAME = 'group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-secondary';
+const ROW_CLASSNAME = 'group flex min-h-8 items-center gap-2.5 rounded-md px-2 py-1 transition-colors duration-150 hover:bg-secondary';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
 const LEGEND_LABEL_CLASSNAME = 'text-[11px] text-muted-foreground';
 const LEGEND_BLOCK_CLASSNAME = 'mt-2 space-y-1.5 border-t border-border/60 pt-2';
@@ -161,7 +161,7 @@ const HelpIconTooltip = ({
       <PopoverTrigger asChild>
     <button
       type="button"
-      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      className="flex h-5 w-5 items-center justify-center rounded-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       onMouseEnter={showPopover}
       onMouseLeave={hidePopover}
       onTouchStart={(event) => {
@@ -468,7 +468,7 @@ const Sidebar = ({
         {leadingVisual ?? renderLayerIcon(icon, iconClassName, !checked)}
         <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
       </button>
-      <div className="flex items-center gap-1">
+      <div className="ml-2 flex w-[3.75rem] shrink-0 items-center justify-end gap-0.5">
         {helpKey ? renderHelpIcon(helpKey) : null}
         <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
       </div>
@@ -497,8 +497,10 @@ const Sidebar = ({
     <div className={`flex items-center gap-2 px-2 py-0.5 ${dimmed ? 'opacity-60' : ''}`}>
       {leadingVisual ?? renderLayerIcon(icon, iconClassName, dimmed)}
       <span className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</span>
-      {helpKey ? renderHelpIcon(helpKey) : null}
-      <div className={sampleClassName ?? 'flex h-4 w-10 flex-shrink-0 items-center justify-end'}>{sample}</div>
+      <div className="ml-2 flex w-[5.75rem] shrink-0 items-center justify-end gap-1">
+        {helpKey ? renderHelpIcon(helpKey) : <span className="h-5 w-5" aria-hidden="true" />}
+        <div className={sampleClassName ?? 'flex h-4 w-10 flex-shrink-0 items-center justify-end'}>{sample}</div>
+      </div>
     </div>
   );
 
@@ -525,7 +527,9 @@ const Sidebar = ({
       <div className="flex items-center gap-2">
         {renderLayerIcon(icon, iconClassName, dimmed)}
         <div className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</div>
-        {helpKey ? renderHelpIcon(helpKey) : null}
+        <div className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center">
+          {helpKey ? renderHelpIcon(helpKey) : null}
+        </div>
       </div>
       <div className="ml-6 mt-1.5 h-2 w-[calc(100%-1.5rem)] rounded-sm" style={gradientStyle} />
       <div className="ml-6 mt-1 flex justify-between text-[9px] text-muted-foreground">
