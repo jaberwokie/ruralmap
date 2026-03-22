@@ -346,6 +346,7 @@ const Index = () => {
           facilities={filteredFacilities}
           allFacilities={facilities}
           layers={layers}
+          typeFilters={filters.types}
           countyFilters={filters.counties}
           serviceCategoryFilters={filters.serviceCategories}
           onFacilityClick={(facility) => handleEntityClick({ type: 'facility', facility })}

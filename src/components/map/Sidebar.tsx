@@ -626,6 +626,7 @@ const Sidebar = ({
                   {[
                     { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
                     { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
+                    { value: 'service', label: 'Service', color: 'bg-service-presence' },
                   ].map(({ value, label, color }) => {
                     const active = filters.types.has(value);
                     return (

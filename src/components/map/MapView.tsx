@@ -38,6 +38,7 @@ interface MapViewProps {
     utilizationIntensity: boolean;
     engagementGap: boolean;
   };
+  typeFilters?: Set<string>;
   countyFilters?: Set<string>;
   serviceCategoryFilters?: Set<string>;
   onFacilityClick: (facility: Facility) => void;
@@ -438,7 +439,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
@@ -495,6 +496,10 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
 
+    if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service')) {
+      return [];
+    }
+
     if (countyFilters && countyFilters.size > 0) {
       result = result.filter((service) => countyFilters.has(service.county));
     }
@@ -504,7 +509,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     }
 
     return result;
-  }, [countyFilters, serviceCategoryFilters]);
+  }, [countyFilters, serviceCategoryFilters, typeFilters]);
 
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();
