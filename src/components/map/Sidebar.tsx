@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
+import { useState, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
@@ -100,10 +100,7 @@ const SECTION_META = {
 
 const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
 const TOGGLE_ROW_CLASSNAME = 'group flex min-h-9 items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:border-border/70 hover:bg-secondary/70';
-const LEGEND_ROW_CLASSNAME = 'flex items-center gap-2 rounded-md px-2 py-1 text-muted-foreground';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
-const LEGEND_LABEL_CLASSNAME = 'text-[11px] text-muted-foreground';
-const LEGEND_BLOCK_CLASSNAME = 'mt-2 space-y-1 border-t border-border/60 pt-2';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
   <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-60' : ''}`}>
@@ -133,6 +130,19 @@ const renderProviderTypeVisual = (dimmed = false, size = 12) => (
   <span className={`flex items-center gap-0.5 ${dimmed ? 'opacity-60' : ''}`} aria-hidden="true">
     {renderPinVisual({ pin: 'providerLocations', size, color: 'hsl(var(--hospital))' })}
     {renderPinVisual({ pin: 'providerLocations', size, color: 'hsl(var(--clinic))' })}
+  </span>
+);
+
+const renderProviderLocationsInlineLegend = (dimmed = false) => (
+  <span className={`hidden items-center gap-2 text-[10px] text-muted-foreground lg:flex ${dimmed ? 'opacity-60' : ''}`}>
+    <span className="flex items-center gap-1">
+      <span className="h-1.5 w-1.5 rounded-full bg-hospital" />
+      <span>Hospital</span>
+    </span>
+    <span className="flex items-center gap-1">
+      <span className="h-1.5 w-1.5 rounded-full bg-clinic" />
+      <span>Clinic</span>
+    </span>
   </span>
 );
 
@@ -448,7 +458,7 @@ const Sidebar = ({
     onCheckedChange,
     helpKey,
     dataTutorial,
-    leadingVisual,
+    inlineLegend,
   }: {
     label: string;
     icon: LucideIcon;
@@ -457,7 +467,7 @@ const Sidebar = ({
     onCheckedChange: (checked: boolean) => void;
     helpKey?: string;
     dataTutorial?: string;
-    leadingVisual?: ReactNode;
+    inlineLegend?: ReactNode;
   }) => (
     <div
       className={TOGGLE_ROW_CLASSNAME}
@@ -468,76 +478,13 @@ const Sidebar = ({
         onClick={() => onCheckedChange(!checked)}
         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
       >
-        {leadingVisual ?? renderLayerIcon(icon, iconClassName, !checked)}
+        {renderLayerIcon(icon, iconClassName, !checked)}
         <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
       </button>
-      <div className="ml-2 flex w-[3.75rem] shrink-0 items-center justify-end gap-0.5">
+      {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
+      <div className="ml-2 flex shrink-0 items-center justify-end gap-0.5">
         {helpKey ? renderHelpIcon(helpKey) : null}
         <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
-      </div>
-    </div>
-  );
-
-  const renderLegendRow = ({
-    label,
-    icon,
-    iconClassName,
-    sample,
-    helpKey,
-    dimmed = false,
-    leadingVisual,
-    sampleClassName,
-  }: {
-    label: string;
-    icon: LucideIcon;
-    iconClassName: string;
-    sample: ReactNode;
-    helpKey?: string;
-    dimmed?: boolean;
-    leadingVisual?: ReactNode;
-    sampleClassName?: string;
-  }) => (
-    <div className={`${LEGEND_ROW_CLASSNAME} ${dimmed ? 'opacity-60' : ''}`}>
-      {leadingVisual ?? renderLayerIcon(icon, iconClassName, dimmed)}
-      <span className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</span>
-      <div className="ml-2 flex w-[5.75rem] shrink-0 items-center justify-end gap-1">
-        {helpKey ? renderHelpIcon(helpKey) : <span className="h-5 w-5" aria-hidden="true" />}
-        <div className={sampleClassName ?? 'flex h-4 w-10 flex-shrink-0 items-center justify-end'}>{sample}</div>
-      </div>
-    </div>
-  );
-
-  const renderLegendGradient = ({
-    label,
-    icon,
-    iconClassName,
-    gradientStyle,
-    low,
-    high,
-    helpKey,
-    dimmed = false,
-  }: {
-    label: string;
-    icon: LucideIcon;
-    iconClassName: string;
-    gradientStyle: CSSProperties;
-    low: string;
-    high: string;
-    helpKey?: string;
-    dimmed?: boolean;
-  }) => (
-    <div className={`${dimmed ? 'opacity-60' : ''} rounded-md px-2 py-1 text-muted-foreground`}>
-      <div className="flex items-center gap-2">
-        {renderLayerIcon(icon, iconClassName, dimmed)}
-        <div className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</div>
-        <div className="ml-2 flex h-5 w-5 shrink-0 items-center justify-center">
-          {helpKey ? renderHelpIcon(helpKey) : null}
-        </div>
-      </div>
-      <div className="ml-6 mt-1.5 h-2 w-[calc(100%-1.5rem)] rounded-sm" style={gradientStyle} />
-      <div className="ml-6 mt-1 flex justify-between text-[9px] text-muted-foreground">
-        <span>{low}</span>
-        <span>{high}</span>
       </div>
     </div>
   );
@@ -698,69 +645,9 @@ const Sidebar = ({
                               : key === 'behavioralHealth'
                                 ? 'toggle-behavioral-health'
                                 : undefined,
+                          inlineLegend: key === 'serviceLocations' ? renderProviderLocationsInlineLegend(!layers.serviceLocations) : undefined,
                         });
                       })}
-
-                      <div className={LEGEND_BLOCK_CLASSNAME}>
-                        {(() => {
-                          const counties = getLayerConfig('counties');
-                          const services = getLayerConfig('services');
-                          const behavioralHealth = getLayerConfig('behavioralHealth');
-                          const providerLocations = getLayerConfig('serviceLocations');
-
-                          return (
-                            <>
-                              {renderLegendRow({
-                                label: counties.label,
-                                icon: counties.icon,
-                                iconClassName: counties.colorClassName,
-                                helpKey: 'countiesLegend',
-                                dimmed: !layers.counties,
-                                sample: <div className="h-px w-8 bg-muted-foreground" />,
-                              })}
-                              {renderLegendRow({
-                                label: services.label,
-                                icon: services.icon,
-                                iconClassName: services.colorClassName,
-                                helpKey: 'servicesLegend',
-                                dimmed: !layers.services,
-                                sample: renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services }),
-                                sampleClassName: 'flex flex-shrink-0 items-center justify-end',
-                              })}
-                              {renderLegendRow({
-                                label: behavioralHealth.label,
-                                icon: behavioralHealth.icon,
-                                iconClassName: behavioralHealth.colorClassName,
-                                helpKey: 'behavioralHealthLegend',
-                                dimmed: !layers.behavioralHealth,
-                                sample: renderPinVisual({ pin: 'behavioralHealth', dimmed: !layers.behavioralHealth }),
-                                sampleClassName: 'flex flex-shrink-0 items-center justify-end',
-                              })}
-                              {renderLegendRow({
-                                label: providerLocations.label,
-                                icon: providerLocations.icon,
-                                iconClassName: providerLocations.colorClassName,
-                                helpKey: 'serviceLocationsLegend',
-                                dimmed: !layers.serviceLocations,
-                                sample: (
-                                  <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
-                                    <span className="flex items-center gap-0.5">
-                                      {renderPinVisual({ pin: 'providerLocations', size: 11, color: 'hsl(var(--hospital))', dimmed: !layers.serviceLocations })}
-                                      <span>Hospital</span>
-                                    </span>
-                                    <span className="flex items-center gap-0.5">
-                                      {renderPinVisual({ pin: 'providerLocations', size: 11, color: 'hsl(var(--clinic))', dimmed: !layers.serviceLocations })}
-                                      <span>Clinic</span>
-                                    </span>
-                                  </div>
-                                ),
-                                leadingVisual: renderProviderTypeVisual(!layers.serviceLocations),
-                                sampleClassName: 'flex flex-shrink-0 items-center justify-end',
-                              })}
-                            </>
-                          );
-                        })()}
-                      </div>
                     </div>
                   )}
                 </div>
@@ -999,57 +886,6 @@ const Sidebar = ({
                           </div>
                         );
                       })}
-
-                      <div className={LEGEND_BLOCK_CLASSNAME}>
-                        {(() => {
-                          const response = getLayerConfig('operationalCoverage');
-                          const staffing = getLayerConfig('fteCapacity');
-                          const engagement = getLayerConfig('engagementGap');
-
-                          return (
-                            <>
-                              {renderLegendRow({
-                                label: response.label,
-                                icon: response.icon,
-                                iconClassName: response.colorClassName,
-                                helpKey: 'operationalCoverageLegend',
-                                dimmed: !layers.operationalCoverage,
-                                sample: (
-                                  <div className="flex items-center gap-1">
-                                    <span className="h-3 w-3 rounded-sm border border-response-active/60 bg-response-active/25" />
-                                    <span className="h-3 w-3 rounded-sm border border-dashed border-response-scheduled/50 bg-response-scheduled/10" />
-                                    <span className="h-3 w-3 rounded-sm border border-dashed border-response-remote/40 bg-response-remote/10" />
-                                  </div>
-                                ),
-                              })}
-                              {renderLegendRow({
-                                label: staffing.label,
-                                icon: staffing.icon,
-                                iconClassName: staffing.colorClassName,
-                                helpKey: 'fteCapacityLegend',
-                                dimmed: !layers.fteCapacity,
-                                sample: (
-                                  <div className="flex items-end gap-1">
-                                    <span className="h-2 w-1 rounded-sm bg-staffing-low" />
-                                    <span className="h-3 w-1 rounded-sm bg-staffing-medium" />
-                                    <span className="h-4 w-1 rounded-sm bg-staffing-high" />
-                                  </div>
-                                ),
-                              })}
-                              {renderLegendGradient({
-                                label: engagement.label,
-                                icon: engagement.icon,
-                                iconClassName: engagement.colorClassName,
-                                helpKey: 'engagementGapLegend',
-                                dimmed: !layers.engagementGap,
-                                gradientStyle: { background: 'linear-gradient(to right, hsl(var(--engagement-early)), hsl(var(--engagement-watch)), hsl(var(--engagement-gap)))' },
-                                low: 'Low',
-                                high: 'High',
-                              })}
-                            </>
-                          );
-                        })()}
-                      </div>
                     </div>
                   )}
                 </div>
@@ -1090,24 +926,6 @@ const Sidebar = ({
                                 </button>
                               </div>
                             )}
-                          </div>
-                        );
-                      })()}
-
-                      {(() => {
-                        const utilization = getLayerConfig('utilizationIntensity');
-                        return (
-                          <div className={LEGEND_BLOCK_CLASSNAME}>
-                            {renderLegendGradient({
-                              label: utilization.label,
-                              icon: utilization.icon,
-                              iconClassName: utilization.colorClassName,
-                              helpKey: 'utilizationIntensityLegend',
-                              dimmed: !layers.utilizationIntensity,
-                              gradientStyle: { background: 'linear-gradient(to right, hsl(var(--utilization-low) / 0.5), hsl(var(--utilization-mid) / 0.7), hsl(var(--utilization-high) / 0.9))' },
-                              low: 'Low',
-                              high: 'High',
-                            })}
                           </div>
                         );
                       })()}
@@ -1160,29 +978,6 @@ const Sidebar = ({
                         </p>
                       )}
                       <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
-
-                      <div className={LEGEND_BLOCK_CLASSNAME}>
-                        {renderLegendRow({
-                          label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
-                          icon: ACCESS_LAYER_CONFIG.coverageRadius.icon,
-                          iconClassName: ACCESS_LAYER_CONFIG.coverageRadius.colorClassName,
-                          helpKey: 'coverageRadiusLegend',
-                          dimmed: !coverageRadius,
-                          sample: (
-                            <div className="relative h-4 w-8">
-                              <span className="absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-radius-stroke/60 bg-radius-stroke/10" />
-                            </div>
-                          ),
-                        })}
-                        {renderLegendRow({
-                          label: ACCESS_LAYER_CONFIG.coverageGaps.label,
-                          icon: ACCESS_LAYER_CONFIG.coverageGaps.icon,
-                          iconClassName: ACCESS_LAYER_CONFIG.coverageGaps.colorClassName,
-                          helpKey: 'coverageGapsLegend',
-                          dimmed: !coverageGaps,
-                          sample: <span className="h-3 w-6 rounded-sm border border-destructive/30 bg-destructive/15" />,
-                        })}
-                      </div>
                     </div>
                   )}
                 </div>
