@@ -1,58 +1,98 @@
 
-Goal
+Goal: make Behavioral Health visible as a true first-class category. Right now it is missing because the codebase has not actually implemented that feature yet.
 
-Make the tutorial prompt appear reliably again, and change completion behavior so skipping does not suppress future prompts.
+What I found
+- The current map still has only 3 point categories in code:
+  - Provider Locations
+  - Service Presence
+  - County Boundaries
+- There are no Behavioral Health tokens or marker definitions in the repo right now.
+- `MapView.tsx` renders all `ruralServices` as the same green `servicePresence` marker.
+- The Type filter only has `hospital`, `clinic`, and `service`.
+- Sidebar legend/toggles still show only Service Presence + Provider Locations.
+- Help text and tutorial are still on the older 3-color model.
+- So your report is correct: Behavioral Health is currently neither added to the UI nor separated on the map.
 
-What’s happening now
+Plan to implement
+1. Add Behavioral Health classification layer
+- Create a small utility that classifies `ruralServices` into:
+  - general Service
+  - Behavioral Health
+- Use explicit source-based rules from the existing data:
+  - `Mental Health`
+  - `Substance Use`
+- Keep the remaining rural service categories as green Service.
 
-- `src/pages/Index.tsx` opens the intro only when `localStorage.getItem(MAP_TUTORIAL_STORAGE_KEY) !== 'true'`.
-- The current skip wiring marks the tutorial as complete:
-  - intro skip uses `onSkip={() => closeTutorial(true)}`
-  - walkthrough skip also uses `closeTutorial(true)`
-- Result: if the tutorial was ever skipped or finished in this browser, the prompt will not appear again.
-- There is also no versioning/reset path for older stored values, so prior behavior keeps blocking the prompt.
+2. Extend the shared visual system
+- Add a purple Behavioral Health color token to the existing design token system.
+- Extend `pinVisuals.ts` so shared marker visuals support:
+  - hospital = red
+  - clinic = blue
+  - service = green
+  - behavioral health = purple
+- Keep shape language consistent across sidebar, legend, map, and grouped states.
 
-Plan
+3. Update sidebar controls
+- In Core Map, add a distinct Behavioral Health row/toggle alongside:
+  - Provider Locations
+  - Service Presence / Service
+  - Behavioral Health
+- Update the Type filter chips to:
+  - Hospital
+  - Clinic
+  - Service
+  - Behavioral Health
+- Make each chip filter only its own category.
 
-1. Replace the boolean completion model with explicit tutorial status
-- In `src/data/map-tutorial.ts`, add a small storage model:
-  - version constant
-  - statuses like `completed` and `dismissed`/`seen` only if needed
-- Keep the stored value simple and stable so it can be checked safely from `Index.tsx`.
+4. Update map rendering logic
+- Split current `filteredRuralServices` into two filtered sets:
+  - community services
+  - behavioral health services
+- Render community services in green.
+- Render behavioral health in purple.
+- Ensure the existing layer behavior remains intact:
+  - Provider Locations toggle still gates hospitals/clinics
+  - Service toggle still gates green services
+  - Behavioral Health toggle gates purple BH points
 
-2. Change prompt logic so only Finish counts as complete
-- In `src/pages/Index.tsx`:
-  - only write completion state when the user reaches Finish
-  - do not write completion state when the user skips from intro or walkthrough
-- Keep skip as a close action only.
+5. Preserve grouped/cluster meaning
+- Update cluster composition logic so purple BH markers are represented distinctly in mixed groups.
+- Prevent clusters from collapsing BH back into generic green service semantics.
+- Keep hover/selected emphasis while preserving base category identity.
 
-3. Re-show the tutorial for users affected by the old behavior
-- Add a versioned storage key or versioned payload so old `true` values do not permanently suppress the prompt.
-- On load:
-  - if current version is not marked `completed`, open the intro
-  - this cleanly resets browsers that were marked complete by the old skip behavior
+6. Update legend, help, and tutorial
+- Inline legend becomes:
+  - County Boundaries
+  - Service (green)
+  - Behavioral Health (purple)
+  - Provider Locations → Hospital (red) + Clinic (blue)
+- Update help tooltip copy so Service and Behavioral Health are clearly separated.
+- Update tutorial text and likely bump tutorial storage version so returning users see the new 4-color explanation.
 
-4. Keep replay behavior unchanged
-- The sidebar replay control should still open the walkthrough directly.
-- Replay should not overwrite completion unless the user actually finishes.
+7. Fix the related sidebar popover warning
+- There is also a current runtime warning in `HelpIconTooltip` about refs with the popover trigger/content path.
+- I would clean that up during this pass so the updated help UI stays stable while adding the new Behavioral Health explanations.
 
-5. Preserve current overlay and positioning work
-- No changes to the portal, spotlight, sizing, or clipping fix in `MapTutorialOverlay.tsx`
-- This is a state/trigger fix, not a layout rewrite
-
-Likely file changes
-
-- `src/data/map-tutorial.ts`
-  - add tutorial storage version/status helpers
+Files likely involved
+- `src/components/map/MapView.tsx`
+- `src/components/map/Sidebar.tsx`
 - `src/pages/Index.tsx`
-  - replace the current boolean localStorage check
-  - change skip vs finish behavior
-  - wire Finish to mark complete, Skip to close only
+- `src/components/map/pinVisuals.ts`
+- `src/data/help-tooltips.ts`
+- `src/data/map-tutorial.ts`
+- `src/index.css`
+- `tailwind.config.ts`
+- new utility such as `src/utils/ruralServiceClassification.ts`
 
-Acceptance criteria
+QA checklist
+- Behavioral Health appears as purple on the map.
+- Behavioral Health has its own sidebar toggle.
+- Behavioral Health has its own Type chip.
+- Green Service no longer includes purple Behavioral Health visually.
+- Mixed filter combinations work correctly.
+- Legend exactly matches live markers.
+- Grouped/clustered states still preserve category meaning.
+- Tutorial/help text matches the final 4-color system.
 
-- On a browser without a current completed tutorial state, the intro prompt appears on page load
-- Clicking Skip closes the tutorial but does not prevent it from appearing next visit
-- Clicking Finish prevents it from auto-opening again
-- Older browsers previously suppressed by the old skip logic are prompted again once under the new versioned state
-- Replay from the sidebar still works
+Technical note
+The main reason you cannot see Behavioral Health now is not a small bug; it is that the current code still routes all rural-service points through one green “service presence” pathway and has no BH-specific token, filter, legend entry, or render branch yet.
