@@ -51,6 +51,7 @@ export default {
         clinic: "hsl(var(--clinic))",
         tier1: "hsl(var(--tier1))",
         "service-presence": "hsl(var(--service-presence))",
+        "behavioral-health": "hsl(var(--behavioral-health))",
         "response-active": "hsl(var(--response-active))",
         "response-scheduled": "hsl(var(--response-scheduled))",
         "response-remote": "hsl(var(--response-remote))",

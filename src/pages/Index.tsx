@@ -21,8 +21,12 @@ const TOGGLE_DIAGNOSTICS = {
     layerIds: ['county-hit-areas', 'county-borders', 'county-labels'],
   },
   services: {
-    toggleName: 'Service Presence',
+    toggleName: 'Service',
     layerIds: ['service-presence-halos', 'service-presence-markers'],
+  },
+  behavioralHealth: {
+    toggleName: 'Behavioral Health',
+    layerIds: ['behavioral-health-halos', 'behavioral-health-markers'],
   },
   serviceLocations: {
     toggleName: 'Provider Locations',
@@ -41,6 +45,7 @@ const TOGGLE_DIAGNOSTICS = {
 interface LayerState {
   counties: boolean;
   services: boolean;
+  behavioralHealth: boolean;
   serviceLocations: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
@@ -68,6 +73,7 @@ const Index = () => {
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     services: true,
+    behavioralHealth: true,
     serviceLocations: true,
     operationalCoverage: false,
     fteCapacity: false,
@@ -274,7 +280,7 @@ const Index = () => {
     }
 
     if (stepKey === 'serviceNetwork') {
-      setLayers((current) => ({ ...current, services: true }));
+      setLayers((current) => ({ ...current, services: true, behavioralHealth: true }));
     }
   }, [tutorialOpen, tutorialStepIndex]);
 

@@ -28,15 +28,26 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
       'The Provider Locations legend groups both provider types in one row: red pins represent hospitals and blue pins represent clinics. Both symbols mark clinical provider sites at their mapped positions.',
   },
   services: {
-    label: 'Service Presence',
+    label: 'Service',
     explanation:
-      'Represents community-based service locations, separate from clinical provider sites. Each location is shown as an individual green point, with subtle overlapping halos that make dense service areas read heavier at a glance.',
-    shortExplanation: 'Shows community-based service locations as separate green points with a soft density halo.',
+      'Represents general community support locations from the service provider database. These green points are separate from clinical provider sites and separate from behavioral health locations.',
+    shortExplanation: 'Shows general community support locations as separate green points.',
   },
   servicesLegend: {
-    label: 'Service Presence Legend',
+    label: 'Service Legend',
     explanation:
-      'The green pin sample shows the symbol used for mapped service-presence points. It marks community-based service locations on the map, separate from hospital and clinic provider site pins.',
+      'The green marker sample shows the symbol used for general community support locations. It is distinct from both clinical provider locations and behavioral health locations.',
+  },
+  behavioralHealth: {
+    label: 'Behavioral Health',
+    explanation:
+      'Shows behavioral health-related locations from the service provider database. These purple points are identified using source categories such as Mental Health and Substance Use, and are shown separately from general community support locations.',
+    shortExplanation: 'Shows behavioral health-related locations as separate purple points.',
+  },
+  behavioralHealthLegend: {
+    label: 'Behavioral Health Legend',
+    explanation:
+      'The purple marker sample shows the symbol used for behavioral health locations. It marks behavioral health-related infrastructure from the service provider database and is intentionally separate from general service locations.',
   },
   operationalCoverage: {
     label: 'Response Capability',
