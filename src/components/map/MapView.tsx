@@ -365,6 +365,71 @@ const getDeclutterRadiusByZoom = (zoom: number) => {
 
 const getClusterBadgeLabel = (count: number) => (count > 99 ? '99+' : String(count));
 
+const OVERLAP_DECLUTTER_ZOOM = 11;
+const NEARBY_MARKER_THRESHOLD = 0.00035;
+const OVERLAP_OFFSET_RADIUS = 0.00018;
+
+type PointRenderCandidate = {
+  id: string;
+  lat: number;
+  lng: number;
+  sortKey: string;
+};
+
+const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => {
+  const coordinates = new Map<string, [number, number]>();
+
+  if (zoom < OVERLAP_DECLUTTER_ZOOM) {
+    points.forEach((point) => {
+      coordinates.set(point.id, [point.lat, point.lng]);
+    });
+    return coordinates;
+  }
+
+  const groups: PointRenderCandidate[][] = [];
+
+  [...points]
+    .sort((left, right) => left.lat - right.lat || left.lng - right.lng || left.sortKey.localeCompare(right.sortKey))
+    .forEach((point) => {
+      const existingGroup = groups.find((group) => {
+        const anchor = group[0];
+        return Math.abs(anchor.lat - point.lat) <= NEARBY_MARKER_THRESHOLD
+          && Math.abs(anchor.lng - point.lng) <= NEARBY_MARKER_THRESHOLD;
+      });
+
+      if (existingGroup) {
+        existingGroup.push(point);
+        return;
+      }
+
+      groups.push([point]);
+    });
+
+  groups.forEach((group) => {
+    if (group.length === 1) {
+      const [point] = group;
+      coordinates.set(point.id, [point.lat, point.lng]);
+      return;
+    }
+
+    const centerLat = group.reduce((sum, point) => sum + point.lat, 0) / group.length;
+    const centerLng = group.reduce((sum, point) => sum + point.lng, 0) / group.length;
+    const radius = Math.min(OVERLAP_OFFSET_RADIUS + Math.max(group.length - 2, 0) * 0.00002, 0.00032);
+
+    [...group]
+      .sort((left, right) => left.sortKey.localeCompare(right.sortKey))
+      .forEach((point, index) => {
+        const angle = (-Math.PI / 2) + (index * (2 * Math.PI / group.length));
+        coordinates.set(point.id, [
+          centerLat + Math.sin(angle) * radius,
+          centerLng + Math.cos(angle) * radius,
+        ]);
+      });
+  });
+
+  return coordinates;
+};
+
 const createPointClusterIcon = (markers: L.Marker[]) => {
   const pointMarkers = markers as MapPointMarker[];
   const providerMarkers = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations');
@@ -476,6 +541,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [mapZoom, setMapZoom] = useState(7);
   const [debugOpen, setDebugOpen] = useState(false);
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
@@ -909,7 +975,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: true,
-      removeOutsideVisibleBounds: true,
+      removeOutsideVisibleBounds: false,
       animate: true,
       animateAddingMarkers: false,
       spiderfyDistanceMultiplier: 0.85,
@@ -928,9 +994,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     highlightsRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
+    setMapZoom(map.getZoom());
     setMapReady(true);
 
     map.on('click', () => onMapClickRef.current?.());
+    map.on('zoomend', () => setMapZoom(map.getZoom()));
 
     return () => {
       map.remove();
@@ -1133,6 +1201,33 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!layers.services && !layers.behavioralHealth && !layers.serviceLocations) return;
 
     const nextMarkers: L.Layer[] = [];
+    const visibleFacilities = layers.serviceLocations
+      ? (topProvidersOnly ? filteredFacilities.filter((facility) => isTopProvider(facility.name)) : filteredFacilities)
+      : [];
+    const displayCoordinates = getDisplayCoordinates([
+      ...(layers.services
+        ? filteredCommunityServices.map((service) => ({
+            id: `service:${service.id}`,
+            lat: service.lat,
+            lng: service.lng,
+            sortKey: `service:${service.id}`,
+          }))
+        : []),
+      ...(layers.behavioralHealth
+        ? filteredBehavioralHealthServices.map((service) => ({
+            id: `behavioral-health:${service.id}`,
+            lat: service.lat,
+            lng: service.lng,
+            sortKey: `behavioral-health:${service.id}`,
+          }))
+        : []),
+      ...visibleFacilities.map((facility) => ({
+        id: `facility:${facility.id}`,
+        lat: facility.lat,
+        lng: facility.lng,
+        sortKey: `provider:${facility.type}:${facility.id}`,
+      })),
+    ], mapZoom);
 
     const applyMarkerPriority = (marker: MapPointMarker, state: 'default' | 'hovered' | 'selected') => {
       const baseOffset = marker.__baseZIndexOffset ?? POINT_MARKER_PRIORITY.base;
@@ -1176,8 +1271,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       filteredCommunityServices.forEach((service) => {
         const countyServices = communityServicesByCounty.get(service.county) ?? [service];
+        const [displayLat, displayLng] = displayCoordinates.get(`service:${service.id}`) ?? [service.lat, service.lng];
 
-        const marker = L.marker([service.lat, service.lng], {
+        const marker = L.marker([displayLat, displayLng], {
           pane: MAP_PANES.servicePresence,
           icon: servicePresenceIcon,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
@@ -1232,8 +1328,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       filteredBehavioralHealthServices.forEach((service) => {
         const countyServices = behavioralHealthServicesByCounty.get(service.county) ?? [service];
+        const [displayLat, displayLng] = displayCoordinates.get(`behavioral-health:${service.id}`) ?? [service.lat, service.lng];
 
-        const marker = L.marker([service.lat, service.lng], {
+        const marker = L.marker([displayLat, displayLng], {
           pane: MAP_PANES.behavioralHealth,
           icon: behavioralHealthIcon,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
@@ -1278,14 +1375,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (layers.serviceLocations) {
       const showUtilization = layers.utilizationIntensity;
-      const visibleFacilities = topProvidersOnly
-        ? filteredFacilities.filter(f => isTopProvider(f.name))
-        : filteredFacilities;
 
       visibleFacilities.forEach(facility => {
         const util = getFacilityUtilization(facility);
         const validation = facilityValidation.records.get(facility.id);
         const dataConfidence = getFacilityDataConfidence(facility);
+        const [displayLat, displayLng] = displayCoordinates.get(`facility:${facility.id}`) ?? [facility.lat, facility.lng];
         const scaledSize = showUtilization && util
           ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
           : MAP_PIN_VISUALS.providerLocations.size;
@@ -1303,7 +1398,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           tooltipAnchor: [0, -scaledSize],
         });
 
-        const marker = L.marker([facility.lat, facility.lng], {
+        const marker = L.marker([displayLat, displayLng], {
           icon,
           pane: MAP_PANES.facilityMarkers,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
@@ -1376,7 +1471,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (nextMarkers.length > 0) {
       pointClusterRef.current.addLayers(nextMarkers);
     }
-  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, filteredFacilities, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, onFacilityClick, topProvidersOnly]);
+  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, filteredFacilities, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, mapZoom, onFacilityClick, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {
