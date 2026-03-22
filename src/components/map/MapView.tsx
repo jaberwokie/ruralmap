@@ -23,6 +23,7 @@ import MapDebugPanel from '@/components/map/MapDebugPanel';
 import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGroup, type DebugLayerDefinition } from '@/components/map/mapDiagnostics';
 import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -104,10 +105,10 @@ const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> =
   [MAP_PANES.operationalAreas]: 350,
   [MAP_PANES.driveRadii]: 360,
   [MAP_PANES.gapOverlays]: 370,
-  [MAP_PANES.servicePresence]: 610,
-  [MAP_PANES.facilityMarkers]: 620,
-  [MAP_PANES.labels]: 630,
-  [MAP_PANES.highlights]: 640,
+  [MAP_PANES.servicePresence]: 710,
+  [MAP_PANES.facilityMarkers]: 720,
+  [MAP_PANES.labels]: 730,
+  [MAP_PANES.highlights]: 740,
 };
 
 const NEVADA_FEATURE: Feature<Polygon> = {
@@ -943,13 +944,22 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
   }, [selectedCounty]);
 
-  // Draw individual service presence points as subtle background dots with minimal density halos.
+  // Draw individual service presence points.
   useEffect(() => {
     if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current) return;
     servicePresenceHaloRef.current.clearLayers();
     servicePresenceMarkerRef.current.clearLayers();
 
     if (!layers.services) return;
+
+    const markerSize = MAP_PIN_VISUALS.servicePresence.size;
+    const servicePresenceIcon = L.divIcon({
+      className: '',
+      html: getSharedPinSvgMarkup('servicePresence', markerSize),
+      iconSize: [markerSize, markerSize],
+      iconAnchor: [markerSize / 2, markerSize],
+      tooltipAnchor: [0, -markerSize],
+    });
 
     const locationCounts = new Map<string, number>();
 
@@ -964,21 +974,10 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       const lng = service.lng + Math.cos(angle) * offsetDistance;
       const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
 
-      const marker = L.circleMarker([lat, lng], {
+      const marker = L.marker([lat, lng], {
         pane: MAP_PANES.servicePresence,
-        radius: 1.8,
-        stroke: false,
-        fillColor: 'hsl(var(--service-presence))',
-        fillOpacity: 0.68,
-      });
-
-      const halo = L.circleMarker([lat, lng], {
-        pane: MAP_PANES.servicePresence,
-        radius: 4.8,
-        stroke: false,
-        fillColor: 'hsl(var(--service-presence) / 0.1)',
-        fillOpacity: 1,
-        interactive: false,
+        icon: servicePresenceIcon,
+        zIndexOffset: 1800,
       });
 
       marker.on('mouseover', () => {
@@ -1007,7 +1006,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         }
       );
 
-      servicePresenceHaloRef.current!.addLayer(halo);
       servicePresenceMarkerRef.current!.addLayer(marker);
     });
   }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
@@ -1053,13 +1051,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       });
   }, [filteredFacilities, coverageRadius, radiusKm, topProvidersOnly]);
 
-  // Pin color by facility type
-  const PIN_COLORS: Record<string, { bg: string; hover: string; size: number; shape: 'circle' | 'diamond' }> = {
-    hospital: { bg: 'hsl(0, 72%, 51%)', hover: 'hsl(0, 72%, 60%)', size: 15, shape: 'circle' },
-    clinic:   { bg: 'hsl(217, 91%, 60%)', hover: 'hsl(217, 91%, 70%)', size: 10, shape: 'circle' },
-    tier1:    { bg: 'hsl(45, 93%, 47%)', hover: 'hsl(45, 93%, 57%)', size: 11, shape: 'diamond' },
-  };
-
   // Draw service point markers
   useEffect(() => {
     if (!markersRef.current || !mapRef.current) return;
@@ -1081,63 +1072,29 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       const offsetLat = count * 0.003;
       const offsetLng = count * 0.003;
 
-      const pin = PIN_COLORS[facility.type] ?? PIN_COLORS.clinic;
       const util = getFacilityUtilization(facility);
       const validation = facilityValidation.records.get(facility.id);
       const dataConfidence = getFacilityDataConfidence(facility);
-      const scaledSize = showUtilization && util ? getScaledPinSize(pin.size, util.totalVisits) : pin.size;
+      const scaledSize = showUtilization && util
+        ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
+        : MAP_PIN_VISUALS.providerLocations.size;
       const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
-
-      const isHospital = facility.type === 'hospital';
-      const isDiamond = pin.shape === 'diamond';
-      const validationRing = !facilityValidationMode
-        ? ''
-        : validation?.confidence === 'verified'
-          ? ', 0 0 0 3px hsla(142, 60%, 45%, 0.28)'
-          : validation?.confidence === 'manual_review'
-            ? ', 0 0 0 3px hsla(0, 72%, 51%, 0.38)'
-            : ', 0 0 0 3px hsla(38, 92%, 50%, 0.35)';
-      const validationBorder = !facilityValidationMode
-        ? '2px solid white'
-        : validation?.confidence === 'verified'
-          ? '2px solid white'
-          : validation?.confidence === 'manual_review'
-            ? '2px dashed hsl(0, 72%, 51%)'
-            : '2px dashed hsl(38, 92%, 50%)';
-      const markerHtml = isDiamond
-        ? `<div style="
-            width: ${scaledSize}px;
-            height: ${scaledSize}px;
-            background: ${pin.bg};
-            border: ${validationBorder};
-            opacity: ${markerOpacity};
-            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${validationRing};
-            transform: rotate(45deg);
-            cursor: pointer;
-            transition: background 150ms ease;
-          " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`
-        : `<div style="
-            width: ${scaledSize}px;
-            height: ${scaledSize}px;
-            border-radius: 50%;
-            background: ${pin.bg};
-            border: ${validationBorder};
-            opacity: ${markerOpacity};
-            box-shadow: 0 0 0 1px hsla(0, 0%, 0%, 0.2), 0 1px 4px hsla(0, 0%, 0%, 0.35)${isHospital ? ', 0 0 6px hsla(0, 72%, 51%, 0.4)' : ''}${validationRing};
-            cursor: pointer;
-            transition: background 150ms ease;
-          " onmouseover="this.style.background='${pin.hover}'" onmouseout="this.style.background='${pin.bg}'"></div>`;
+      const markerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
+        opacity: markerOpacity,
+      });
 
       const icon = L.divIcon({
         className: '',
         html: markerHtml,
         iconSize: [scaledSize, scaledSize],
-        iconAnchor: [scaledSize / 2, scaledSize / 2],
+        iconAnchor: [scaledSize / 2, scaledSize],
+        tooltipAnchor: [0, -scaledSize],
       });
 
       const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], {
         icon,
         pane: MAP_PANES.facilityMarkers,
+        zIndexOffset: 2000,
       });
       marker.on('click', () => {
         onFacilityClick(facility);
