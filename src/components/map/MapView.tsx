@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import 'leaflet.markercluster';
 import { Info } from 'lucide-react';
 import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
@@ -300,6 +301,70 @@ const createGeoJsonLayer = (
   interactive = false,
 ) => L.geoJSON(geometry as any, { pane, style, interactive });
 
+type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 'servicePresence'>;
+
+type MapPointMarker = L.Marker & {
+  __pointKind?: PointMarkerKind;
+};
+
+type MarkerClusterGroupLike = L.LayerGroup & {
+  addLayers: (layers: L.Layer[]) => void;
+  clearLayers: () => void;
+};
+
+const markerClusterFactory = (L as typeof L & {
+  markerClusterGroup?: (options?: Record<string, unknown>) => MarkerClusterGroupLike & {
+    getAllChildMarkers?: () => L.Marker[];
+  };
+}).markerClusterGroup;
+
+const getDeclutterRadiusByZoom = (zoom: number) => {
+  if (zoom <= 7) return 26;
+  if (zoom === 8) return 22;
+  if (zoom === 9) return 18;
+  if (zoom === 10) return 14;
+  if (zoom === 11) return 10;
+  return 6;
+};
+
+const getClusterBadgeLabel = (count: number) => (count > 99 ? '99+' : String(count));
+
+const createPointClusterIcon = (markers: L.Marker[]) => {
+  const pointMarkers = markers as MapPointMarker[];
+  const providerCount = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations').length;
+  const serviceCount = pointMarkers.filter((marker) => marker.__pointKind === 'servicePresence').length;
+  const totalCount = providerCount + serviceCount;
+  const isMixed = providerCount > 0 && serviceCount > 0;
+  const primaryKind: PointMarkerKind = serviceCount > providerCount ? 'servicePresence' : 'providerLocations';
+  const iconSize = isMixed ? 28 : 24;
+  const primaryPin = getSharedPinSvgMarkup(primaryKind, 14);
+  const secondaryPin = isMixed
+    ? getSharedPinSvgMarkup(primaryKind === 'providerLocations' ? 'servicePresence' : 'providerLocations', 14, { opacity: 0.94 })
+    : '';
+
+  const html = isMixed
+    ? `
+      <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:flex;align-items:flex-end;justify-content:center;">
+        <span style="position:absolute;left:3px;bottom:2px;display:flex;">${secondaryPin}</span>
+        <span style="position:absolute;right:3px;bottom:0;display:flex;">${primaryPin}</span>
+        <span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:10px;font-weight:600;line-height:14px;text-align:center;box-shadow:0 1px 2px hsl(var(--foreground) / 0.08);">${getClusterBadgeLabel(totalCount)}</span>
+      </div>
+    `.trim()
+    : `
+      <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:flex;align-items:flex-end;justify-content:center;">
+        <span style="display:flex;">${primaryPin}</span>
+        <span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:10px;font-weight:600;line-height:14px;text-align:center;box-shadow:0 1px 2px hsl(var(--foreground) / 0.08);">${getClusterBadgeLabel(totalCount)}</span>
+      </div>
+    `.trim();
+
+  return L.divIcon({
+    className: '',
+    html,
+    iconSize: [iconSize, iconSize],
+    iconAnchor: [iconSize / 2, iconSize],
+  });
+};
+
 const numberFormatter = new Intl.NumberFormat();
 
 const getCountyDisplayName = (county: string) => county === 'Carson City' ? county : `${county} County`;
@@ -348,6 +413,7 @@ const CoverageGapInfoButton = () => {
 const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
@@ -747,6 +813,24 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     servicePresenceHaloRef.current = L.layerGroup().addTo(map);
     servicePresenceMarkerRef.current = L.layerGroup().addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
+    pointClusterRef.current = markerClusterFactory?.({
+      maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      spiderfyOnMaxZoom: true,
+      removeOutsideVisibleBounds: true,
+      animate: true,
+      animateAddingMarkers: false,
+      spiderfyDistanceMultiplier: 0.85,
+      clusterPane: MAP_PANES.facilityMarkers,
+      spiderLegPolylineOptions: {
+        color: 'hsl(var(--border))',
+        weight: 1,
+        opacity: 0.85,
+      },
+      iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
+    }) ?? null;
+    pointClusterRef.current?.addTo(map);
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
     engagementGapLabelRef.current = L.layerGroup().addTo(map);
@@ -944,71 +1028,158 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     });
   }, [selectedCounty]);
 
-  // Draw individual service presence points.
+  // Draw zoom-aware decluttered point markers.
   useEffect(() => {
-    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current) return;
+    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !markersRef.current || !pointClusterRef.current) return;
     servicePresenceHaloRef.current.clearLayers();
     servicePresenceMarkerRef.current.clearLayers();
+    markersRef.current.clearLayers();
+    pointClusterRef.current.clearLayers();
 
-    if (!layers.services) return;
+    if (!layers.services && !layers.serviceLocations) return;
 
-    const markerSize = MAP_PIN_VISUALS.servicePresence.size;
-    const servicePresenceIcon = L.divIcon({
-      className: '',
-      html: getSharedPinSvgMarkup('servicePresence', markerSize),
-      iconSize: [markerSize, markerSize],
-      iconAnchor: [markerSize / 2, markerSize],
-      tooltipAnchor: [0, -markerSize],
-    });
+    const nextMarkers: L.Layer[] = [];
 
-    const locationCounts = new Map<string, number>();
-
-    filteredRuralServices.forEach((service) => {
-      const key = `${service.lat.toFixed(4)},${service.lng.toFixed(4)}`;
-      const overlapCount = locationCounts.get(key) ?? 0;
-      locationCounts.set(key, overlapCount + 1);
-
-      const angle = overlapCount * 0.9;
-      const offsetDistance = overlapCount === 0 ? 0 : 0.0014 + overlapCount * 0.00008;
-      const lat = service.lat + Math.sin(angle) * offsetDistance;
-      const lng = service.lng + Math.cos(angle) * offsetDistance;
-      const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
-
-      const marker = L.marker([lat, lng], {
-        pane: MAP_PANES.servicePresence,
-        icon: servicePresenceIcon,
-        zIndexOffset: 1800,
+    if (layers.services) {
+      const markerSize = MAP_PIN_VISUALS.servicePresence.size;
+      const servicePresenceIcon = L.divIcon({
+        className: '',
+        html: getSharedPinSvgMarkup('servicePresence', markerSize),
+        iconSize: [markerSize, markerSize],
+        iconAnchor: [markerSize / 2, markerSize],
+        tooltipAnchor: [0, -markerSize],
       });
 
-      marker.on('mouseover', () => {
-        onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
-      });
-      marker.on('mouseout', () => {
-        onEntityHoverRef.current?.(null);
-      });
-      marker.on('click', (event: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(event as any);
-        onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
-      });
+      filteredRuralServices.forEach((service) => {
+        const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
 
-      marker.bindTooltip(
-        `
+        const marker = L.marker([service.lat, service.lng], {
+          pane: MAP_PANES.servicePresence,
+          icon: servicePresenceIcon,
+          zIndexOffset: 1800,
+        }) as MapPointMarker;
+
+        marker.__pointKind = 'servicePresence';
+
+        marker.on('mouseover', () => {
+          onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+        });
+        marker.on('mouseout', () => {
+          onEntityHoverRef.current?.(null);
+        });
+        marker.on('click', (event: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(event as any);
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+        });
+
+        marker.bindTooltip(
+          `
+            <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+              <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
+              <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
+              <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
+            </div>
+          `,
+          {
+            direction: 'top',
+            offset: [0, -8],
+            className: 'facility-tooltip',
+          }
+        );
+
+        nextMarkers.push(marker);
+      });
+    }
+
+    if (layers.serviceLocations) {
+      const showUtilization = layers.utilizationIntensity;
+      const visibleFacilities = topProvidersOnly
+        ? filteredFacilities.filter(f => isTopProvider(f.name))
+        : filteredFacilities;
+
+      visibleFacilities.forEach(facility => {
+        const util = getFacilityUtilization(facility);
+        const validation = facilityValidation.records.get(facility.id);
+        const dataConfidence = getFacilityDataConfidence(facility);
+        const scaledSize = showUtilization && util
+          ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
+          : MAP_PIN_VISUALS.providerLocations.size;
+        const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
+        const markerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
+          opacity: markerOpacity,
+        });
+
+        const icon = L.divIcon({
+          className: '',
+          html: markerHtml,
+          iconSize: [scaledSize, scaledSize],
+          iconAnchor: [scaledSize / 2, scaledSize],
+          tooltipAnchor: [0, -scaledSize],
+        });
+
+        const marker = L.marker([facility.lat, facility.lng], {
+          icon,
+          pane: MAP_PANES.facilityMarkers,
+          zIndexOffset: 2000,
+        }) as MapPointMarker;
+
+        marker.__pointKind = 'providerLocations';
+
+        marker.on('click', () => {
+          onFacilityClick(facility);
+
+          if (!facilityValidationMode || !validation) return;
+
+          const validationHtml = `
+            <div style="padding: 8px 12px; font-size: 12px; width: 260px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+              <div style="font-weight: 700; margin-bottom: 4px;">${facility.name}</div>
+              <div style="color: hsl(240, 4%, 46%); margin-bottom: 6px;">${getFacilityTypeLabel(facility)} · ${facility.county} County</div>
+              <div><strong>Source address:</strong> ${validation.sourceAddress}</div>
+              <div><strong>Latitude:</strong> ${facility.lat.toFixed(4)}</div>
+              <div><strong>Longitude:</strong> ${facility.lng.toFixed(4)}</div>
+              <div><strong>Geocoding source:</strong> ${getFacilityCoordinateSourceLabel(validation.coordinateSource)}</div>
+              <div><strong>Confidence:</strong> ${validation.confidence === 'verified' ? 'Verified' : validation.confidence === 'manual_review' ? 'Approximate — manual review' : 'Approximate'}</div>
+              ${validation.notes ? `<div style="margin-top: 6px; color: hsl(240, 4%, 46%);">${validation.notes}</div>` : ''}
+              ${validation.issues.length > 0 ? `<div style="margin-top: 6px;"><strong>Checks:</strong><ul style="margin: 4px 0 0 18px; padding: 0;">${validation.issues.map((issue) => `<li>${issue}</li>`).join('')}</ul></div>` : ''}
+            </div>
+          `;
+
+          marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
+        });
+
+        const classification = getFacilityClassification(facility);
+        const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
+          ? 'Clinic / Community Provider'
+          : getFacilityTypeLabel(facility);
+        const utilHtml = showUtilization && util
+          ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
+              <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
+              <div>Visits/Member: ${util.visitsPerMember} · Rank #${util.rank}</div>
+            </div>`
+          : '';
+        const tooltipContent = `
           <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-            <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
-            <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
-            <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
+            <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
+            <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
+            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
+            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 4px;">Data Confidence: ${dataConfidence}</div>
+            ${utilHtml}
           </div>
-        `,
-        {
+        `;
+        marker.bindTooltip(tooltipContent, {
           direction: 'top',
           offset: [0, -8],
           className: 'facility-tooltip',
-        }
-      );
+        });
 
-      servicePresenceMarkerRef.current!.addLayer(marker);
-    });
-  }, [filteredRuralServices, layers.services, ruralServicesByCounty]);
+        nextMarkers.push(marker);
+      });
+    }
+
+    if (nextMarkers.length > 0) {
+      pointClusterRef.current.addLayers(nextMarkers);
+    }
+  }, [facilityValidation, facilityValidationMode, filteredFacilities, filteredRuralServices, layers.serviceLocations, layers.services, layers.utilizationIntensity, onFacilityClick, ruralServicesByCounty, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {
@@ -1050,102 +1221,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         radiusRef.current!.addLayer(circle);
       });
   }, [filteredFacilities, coverageRadius, radiusKm, topProvidersOnly]);
-
-  // Draw service point markers
-  useEffect(() => {
-    if (!markersRef.current || !mapRef.current) return;
-    markersRef.current.clearLayers();
-
-    if (!layers.serviceLocations) return;
-
-    const showUtilization = layers.utilizationIntensity;
-    const locationCounts = new Map<string, number>();
-
-    const visibleFacilities = topProvidersOnly
-      ? filteredFacilities.filter(f => isTopProvider(f.name))
-      : filteredFacilities;
-
-    visibleFacilities.forEach(facility => {
-      const key = `${facility.lat.toFixed(4)},${facility.lng.toFixed(4)}`;
-      const count = locationCounts.get(key) ?? 0;
-      locationCounts.set(key, count + 1);
-      const offsetLat = count * 0.003;
-      const offsetLng = count * 0.003;
-
-      const util = getFacilityUtilization(facility);
-      const validation = facilityValidation.records.get(facility.id);
-      const dataConfidence = getFacilityDataConfidence(facility);
-      const scaledSize = showUtilization && util
-        ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
-        : MAP_PIN_VISUALS.providerLocations.size;
-      const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
-      const markerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
-        opacity: markerOpacity,
-      });
-
-      const icon = L.divIcon({
-        className: '',
-        html: markerHtml,
-        iconSize: [scaledSize, scaledSize],
-        iconAnchor: [scaledSize / 2, scaledSize],
-        tooltipAnchor: [0, -scaledSize],
-      });
-
-      const marker = L.marker([facility.lat + offsetLat, facility.lng + offsetLng], {
-        icon,
-        pane: MAP_PANES.facilityMarkers,
-        zIndexOffset: 2000,
-      });
-      marker.on('click', () => {
-        onFacilityClick(facility);
-
-        if (!facilityValidationMode || !validation) return;
-
-        const validationHtml = `
-          <div style="padding: 8px 12px; font-size: 12px; width: 260px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-            <div style="font-weight: 700; margin-bottom: 4px;">${facility.name}</div>
-            <div style="color: hsl(240, 4%, 46%); margin-bottom: 6px;">${getFacilityTypeLabel(facility)} · ${facility.county} County</div>
-            <div><strong>Source address:</strong> ${validation.sourceAddress}</div>
-            <div><strong>Latitude:</strong> ${facility.lat.toFixed(4)}</div>
-            <div><strong>Longitude:</strong> ${facility.lng.toFixed(4)}</div>
-            <div><strong>Geocoding source:</strong> ${getFacilityCoordinateSourceLabel(validation.coordinateSource)}</div>
-            <div><strong>Confidence:</strong> ${validation.confidence === 'verified' ? 'Verified' : validation.confidence === 'manual_review' ? 'Approximate — manual review' : 'Approximate'}</div>
-            ${validation.notes ? `<div style="margin-top: 6px; color: hsl(240, 4%, 46%);">${validation.notes}</div>` : ''}
-            ${validation.issues.length > 0 ? `<div style="margin-top: 6px;"><strong>Checks:</strong><ul style="margin: 4px 0 0 18px; padding: 0;">${validation.issues.map((issue) => `<li>${issue}</li>`).join('')}</ul></div>` : ''}
-          </div>
-        `;
-
-        marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
-      });
-
-      const classification = getFacilityClassification(facility);
-      const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
-        ? 'Clinic / Community Provider'
-        : getFacilityTypeLabel(facility);
-      const utilHtml = showUtilization && util
-        ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
-            <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
-            <div>Visits/Member: ${util.visitsPerMember} · Rank #${util.rank}</div>
-          </div>`
-        : '';
-      const tooltipContent = `
-        <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-          <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
-          <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
-          <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
-          <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 4px;">Data Confidence: ${dataConfidence}</div>
-          ${utilHtml}
-        </div>
-      `;
-      marker.bindTooltip(tooltipContent, {
-        direction: 'top',
-        offset: [0, -8],
-        className: 'facility-tooltip',
-      });
-
-      markersRef.current!.addLayer(marker);
-    });
-  }, [facilityValidation, facilityValidationMode, filteredFacilities, layers.serviceLocations, layers.utilizationIntensity, topProvidersOnly, onFacilityClick]);
 
   // Draw coverage gap overlays
   useEffect(() => {
