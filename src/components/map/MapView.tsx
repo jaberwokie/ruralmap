@@ -1060,7 +1060,6 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
       marker.__priorityState = state;
       marker.setZIndexOffset(resolvedOffset);
-      if (state !== 'default') marker.bringToFront();
     };
 
     const prioritizeOnHover = (marker: MapPointMarker) => {
