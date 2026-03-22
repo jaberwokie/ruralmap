@@ -12,6 +12,7 @@ import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 
 interface LayerState {
   counties: boolean;
@@ -668,10 +669,11 @@ const Sidebar = ({
                                 iconClassName: services.colorClassName,
                                 dimmed: !layers.services,
                                 sample: (
-                                  <div className="relative h-4 w-8">
-                                    <span className="absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-service-presence/20" />
-                                    <span className="absolute right-4 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-service-presence" />
-                                  </div>
+                                  <span
+                                    aria-hidden="true"
+                                    className={MAP_PIN_VISUALS.servicePresence.colorClassName}
+                                    dangerouslySetInnerHTML={{ __html: getSharedPinSvgMarkup('servicePresence', 12) }}
+                                  />
                                 ),
                               })}
                               {renderLegendRow({
@@ -680,10 +682,11 @@ const Sidebar = ({
                                 iconClassName: providerLocations.colorClassName,
                                 dimmed: !layers.serviceLocations,
                                 sample: (
-                                  <div className="flex items-center gap-1 text-muted-foreground">
-                                    <MapPin className="h-3 w-3 stroke-[1.75] text-hospital" />
-                                    <MapPin className="h-3 w-3 stroke-[1.75] text-clinic" />
-                                  </div>
+                                  <span
+                                    aria-hidden="true"
+                                    className={MAP_PIN_VISUALS.providerLocations.colorClassName}
+                                    dangerouslySetInnerHTML={{ __html: getSharedPinSvgMarkup('providerLocations', 12) }}
+                                  />
                                 ),
                               })}
                             </>
