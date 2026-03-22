@@ -445,6 +445,7 @@ const Sidebar = ({
     onCheckedChange,
     helpKey,
     dataTutorial,
+    leadingVisual,
   }: {
     label: string;
     icon: LucideIcon;
