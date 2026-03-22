@@ -15,17 +15,18 @@ type SharedPinName = keyof typeof MAP_PIN_VISUALS;
 
 export const getSharedPinSvgMarkup = (
   pin: SharedPinName,
-  size = MAP_PIN_VISUALS[pin].size,
+  size?: number,
   options?: { color?: string; opacity?: number },
 ) => {
+  const resolvedSize = size ?? MAP_PIN_VISUALS[pin].size;
   const color = options?.color ?? MAP_PIN_VISUALS[pin].colorValue;
   const opacity = options?.opacity ?? 1;
 
   return `
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width="${size}"
-      height="${size}"
+      width="${resolvedSize}"
+      height="${resolvedSize}"
       viewBox="0 0 24 24"
       fill="none"
       stroke="${color}"
