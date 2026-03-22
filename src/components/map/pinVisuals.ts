@@ -9,6 +9,11 @@ export const MAP_PIN_VISUALS = {
     colorValue: 'hsl(var(--service-presence))',
     size: 14,
   },
+  behavioralHealth: {
+    colorClassName: 'text-behavioral-health',
+    colorValue: 'hsl(var(--behavioral-health))',
+    size: 14,
+  },
 } as const;
 
 type SharedPinName = keyof typeof MAP_PIN_VISUALS;

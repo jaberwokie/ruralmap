@@ -7,6 +7,7 @@ import { Facility, getFacilityClassification, getFacilityDataConfidence, getFaci
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { ruralServices } from '@/data/rural-services';
+import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
@@ -32,6 +33,7 @@ interface MapViewProps {
   layers: {
     counties: boolean;
     services: boolean;
+    behavioralHealth: boolean;
     serviceLocations: boolean;
     operationalCoverage: boolean;
     fteCapacity: boolean;
@@ -96,6 +98,7 @@ const MAP_PANES = {
   gapOverlays: 'gap-overlays-pane',
   groupedMarkers: 'grouped-markers-pane',
   servicePresence: 'service-presence-pane',
+  behavioralHealth: 'behavioral-health-pane',
   facilityMarkers: 'facility-markers-pane',
   labels: 'labels-pane',
   highlights: 'highlights-pane',
@@ -110,6 +113,7 @@ const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> =
   [MAP_PANES.gapOverlays]: 370,
   [MAP_PANES.groupedMarkers]: 705,
   [MAP_PANES.servicePresence]: 710,
+  [MAP_PANES.behavioralHealth]: 711,
   [MAP_PANES.facilityMarkers]: 720,
   [MAP_PANES.labels]: 730,
   [MAP_PANES.highlights]: 740,
@@ -191,6 +195,26 @@ const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
     drawOrder: 610,
     group: 'markers',
     filterKey: 'filtered-rural-services',
+    geometryKind: 'point',
+  },
+  {
+    id: 'behavioral-health-halos',
+    name: 'Behavioral Health Halos',
+    source: 'rural-services',
+    controllingToggle: 'layers.behavioralHealth',
+    drawOrder: 611,
+    group: 'markers',
+    filterKey: 'filtered-behavioral-health-services-halos',
+    geometryKind: 'point',
+  },
+  {
+    id: 'behavioral-health-markers',
+    name: 'Behavioral Health Points',
+    source: 'rural-services',
+    controllingToggle: 'layers.behavioralHealth',
+    drawOrder: 612,
+    group: 'markers',
+    filterKey: 'filtered-behavioral-health-services',
     geometryKind: 'point',
   },
   {
@@ -304,7 +328,7 @@ const createGeoJsonLayer = (
   interactive = false,
 ) => L.geoJSON(geometry as any, { pane, style, interactive });
 
-type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 'servicePresence'>;
+type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 'servicePresence' | 'behavioralHealth'>;
 
 type MapPointMarker = L.Marker & {
   __pointKind?: PointMarkerKind;
@@ -346,34 +370,23 @@ const createPointClusterIcon = (markers: L.Marker[]) => {
   const providerMarkers = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations');
   const providerCount = providerMarkers.length;
   const serviceCount = pointMarkers.filter((marker) => marker.__pointKind === 'servicePresence').length;
+  const behavioralHealthCount = pointMarkers.filter((marker) => marker.__pointKind === 'behavioralHealth').length;
   const hospitalCount = providerMarkers.filter((marker) => marker.__providerType === 'hospital').length;
   const clinicCount = providerMarkers.filter((marker) => marker.__providerType === 'clinic').length;
-  const totalCount = providerCount + serviceCount;
-  const providerMixed = hospitalCount > 0 && clinicCount > 0;
-  const isMixed = providerCount > 0 && serviceCount > 0;
+  const totalCount = providerCount + serviceCount + behavioralHealthCount;
   const iconSize = 24;
-  const primaryPinColor = serviceCount > 0 && providerCount === 0
-    ? 'hsl(var(--service-presence))'
-    : hospitalCount > 0 && clinicCount === 0
-      ? 'hsl(var(--hospital))'
-      : clinicCount > 0 && hospitalCount === 0
-        ? 'hsl(var(--clinic))'
-        : serviceCount >= providerCount
-          ? 'hsl(var(--service-presence))'
-          : 'hsl(var(--clinic))';
+  const categoryCounts = [
+    { color: 'hsl(var(--hospital))', count: hospitalCount },
+    { color: 'hsl(var(--clinic))', count: clinicCount },
+    { color: 'hsl(var(--service-presence))', count: serviceCount },
+    { color: 'hsl(var(--behavioral-health))', count: behavioralHealthCount },
+  ].filter((entry) => entry.count > 0);
+  const primaryPinColor = [...categoryCounts].sort((left, right) => right.count - left.count)[0]?.color ?? 'hsl(var(--clinic))';
   const primaryPin = getSharedPinSvgMarkup('providerLocations', 14, { color: primaryPinColor });
-  const compositionAccent = isMixed
+  const compositionAccent = categoryCounts.length > 1
     ? `
       <span style="position:absolute;left:1px;bottom:2px;display:inline-flex;align-items:center;gap:2px;padding:1px 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));z-index:2;">
-        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--clinic));display:block;"></span>
-        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--service-presence));display:block;"></span>
-      </span>
-    `.trim()
-    : providerMixed
-      ? `
-      <span style="position:absolute;left:1px;bottom:2px;display:inline-flex;align-items:center;gap:2px;padding:1px 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));z-index:2;">
-        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--hospital));display:block;"></span>
-        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--clinic));display:block;"></span>
+        ${categoryCounts.map(({ color }) => `<span style="width:4px;height:4px;border-radius:999px;background:${color};display:block;"></span>`).join('')}
       </span>
     `.trim()
     : '';
@@ -447,6 +460,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const markersRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
+  const behavioralHealthHaloRef = useRef<L.LayerGroup | null>(null);
+  const behavioralHealthMarkerRef = useRef<L.LayerGroup | null>(null);
   const countyFillRef = useRef<L.LayerGroup | null>(null);
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
@@ -496,7 +511,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
 
-    if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service')) {
+    if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service') && !typeFilters.has('behavioralHealth')) {
       return [];
     }
 
@@ -510,6 +525,22 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     return result;
   }, [countyFilters, serviceCategoryFilters, typeFilters]);
+
+  const filteredCommunityServices = useMemo(() => {
+    if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service')) {
+      return [];
+    }
+
+    return filteredRuralServices.filter(isCommunitySupportService);
+  }, [filteredRuralServices, typeFilters]);
+
+  const filteredBehavioralHealthServices = useMemo(() => {
+    if (typeFilters && typeFilters.size > 0 && !typeFilters.has('behavioralHealth')) {
+      return [];
+    }
+
+    return filteredRuralServices.filter(isBehavioralHealthService);
+  }, [filteredRuralServices, typeFilters]);
 
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();
@@ -625,6 +656,26 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     return grouped;
   }, []);
 
+  const communityServicesByCounty = useMemo(() => {
+    const grouped = new Map<string, typeof ruralServices>();
+    filteredCommunityServices.forEach((service) => {
+      const current = grouped.get(service.county) ?? [];
+      current.push(service);
+      grouped.set(service.county, current);
+    });
+    return grouped;
+  }, [filteredCommunityServices]);
+
+  const behavioralHealthServicesByCounty = useMemo(() => {
+    const grouped = new Map<string, typeof ruralServices>();
+    filteredBehavioralHealthServices.forEach((service) => {
+      const current = grouped.get(service.county) ?? [];
+      current.push(service);
+      grouped.set(service.county, current);
+    });
+    return grouped;
+  }, [filteredBehavioralHealthServices]);
+
   const activeCoverageZone = useMemo(() => {
     if (!layers.operationalCoverage || coverageGaps) return null;
     return getActiveCoverageZone(coverageRadiusKm);
@@ -650,6 +701,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       'engagement-gap-overlay': engagementGapRef.current,
       'service-presence-halos': servicePresenceHaloRef.current,
       'service-presence-markers': servicePresenceMarkerRef.current,
+      'behavioral-health-halos': behavioralHealthHaloRef.current,
+      'behavioral-health-markers': behavioralHealthMarkerRef.current,
       'facility-markers': markersRef.current,
       'county-labels': labelsRef.current,
       'engagement-gap-labels': engagementGapLabelRef.current,
@@ -675,6 +728,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         return layers.counties;
       case 'layers.services':
         return layers.services;
+      case 'layers.behavioralHealth':
+        return layers.behavioralHealth;
       case 'layers.serviceLocations':
         return layers.serviceLocations;
       case 'layers.operationalCoverage':
@@ -695,7 +750,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       default:
         return true;
     }
-  }, [coverageGaps, coverageRadius, layers.counties, layers.engagementGap, layers.fteCapacity, layers.operationalCoverage, layers.serviceLocations, layers.services, layers.utilizationIntensity, selectedCounty, selectedFteId]);
+  }, [coverageGaps, coverageRadius, layers.behavioralHealth, layers.counties, layers.engagementGap, layers.fteCapacity, layers.operationalCoverage, layers.serviceLocations, layers.services, layers.utilizationIntensity, selectedCounty, selectedFteId]);
 
   const geometryWarnings = useMemo(() => {
     if (!DEBUG_ENABLED || !debugOpen) {
@@ -846,6 +901,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     engagementGapRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.layerGroup().addTo(map);
     servicePresenceMarkerRef.current = L.layerGroup().addTo(map);
+    behavioralHealthHaloRef.current = L.layerGroup().addTo(map);
+    behavioralHealthMarkerRef.current = L.layerGroup().addTo(map);
     markersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
@@ -1064,14 +1121,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   // Draw zoom-aware decluttered point markers.
   useEffect(() => {
-    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !markersRef.current || !pointClusterRef.current) return;
+    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !behavioralHealthHaloRef.current || !behavioralHealthMarkerRef.current || !markersRef.current || !pointClusterRef.current) return;
     servicePresenceHaloRef.current.clearLayers();
     servicePresenceMarkerRef.current.clearLayers();
+    behavioralHealthHaloRef.current.clearLayers();
+    behavioralHealthMarkerRef.current.clearLayers();
     markersRef.current.clearLayers();
     pointClusterRef.current.clearLayers();
     selectedPointMarkerRef.current = null;
 
-    if (!layers.services && !layers.serviceLocations) return;
+    if (!layers.services && !layers.behavioralHealth && !layers.serviceLocations) return;
 
     const nextMarkers: L.Layer[] = [];
 
@@ -1115,11 +1174,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         tooltipAnchor: [0, -markerSize],
       });
 
-      filteredRuralServices.forEach((service) => {
-        const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
+      filteredCommunityServices.forEach((service) => {
+        const countyServices = communityServicesByCounty.get(service.county) ?? [service];
 
         const marker = L.marker([service.lat, service.lng], {
-          pane: MAP_PANES.facilityMarkers,
+          pane: MAP_PANES.servicePresence,
           icon: servicePresenceIcon,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
         }) as MapPointMarker;
@@ -1148,6 +1207,62 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
               <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
               <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
               <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
+            </div>
+          `,
+          {
+            direction: 'top',
+            offset: [0, -8],
+            className: 'facility-tooltip',
+          }
+        );
+
+        nextMarkers.push(marker);
+      });
+    }
+
+    if (layers.behavioralHealth) {
+      const markerSize = MAP_PIN_VISUALS.behavioralHealth.size;
+      const behavioralHealthIcon = L.divIcon({
+        className: '',
+        html: getSharedPinSvgMarkup('behavioralHealth', markerSize),
+        iconSize: [markerSize, markerSize],
+        iconAnchor: [markerSize / 2, markerSize],
+        tooltipAnchor: [0, -markerSize],
+      });
+
+      filteredBehavioralHealthServices.forEach((service) => {
+        const countyServices = behavioralHealthServicesByCounty.get(service.county) ?? [service];
+
+        const marker = L.marker([service.lat, service.lng], {
+          pane: MAP_PANES.behavioralHealth,
+          icon: behavioralHealthIcon,
+          zIndexOffset: POINT_MARKER_PRIORITY.base,
+        }) as MapPointMarker;
+
+        marker.__pointKind = 'behavioralHealth';
+        marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
+        applyMarkerPriority(marker, 'default');
+
+        marker.on('mouseover', () => {
+          prioritizeOnHover(marker);
+          onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+        });
+        marker.on('mouseout', () => {
+          resetHoverPriority(marker);
+          onEntityHoverRef.current?.(null);
+        });
+        marker.on('click', (event: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(event as any);
+          prioritizeOnSelection(marker);
+          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+        });
+
+        marker.bindTooltip(
+          `
+            <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+              <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
+              <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
+              <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">Behavioral Health · ${service.category}</div>
             </div>
           `,
           {
@@ -1261,7 +1376,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (nextMarkers.length > 0) {
       pointClusterRef.current.addLayers(nextMarkers);
     }
-  }, [facilityValidation, facilityValidationMode, filteredFacilities, filteredRuralServices, layers.serviceLocations, layers.services, layers.utilizationIntensity, onFacilityClick, ruralServicesByCounty, topProvidersOnly]);
+  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, filteredFacilities, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, onFacilityClick, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {

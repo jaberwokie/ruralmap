@@ -15,7 +15,7 @@ export interface MapTutorialStep {
 }
 
 export const MAP_TUTORIAL_STORAGE_KEY = 'rural-operations-map-tutorial-complete';
-export const MAP_TUTORIAL_STORAGE_VERSION = 'v2';
+export const MAP_TUTORIAL_STORAGE_VERSION = 'v3';
 export const MAP_TUTORIAL_COMPLETION_VALUE = `completed:${MAP_TUTORIAL_STORAGE_VERSION}`;
 
 export const isMapTutorialCompleted = (value: string | null) => value === MAP_TUTORIAL_COMPLETION_VALUE;
@@ -29,8 +29,8 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   },
   {
     key: 'legend',
-    title: 'Facility types',
-    text: 'Red = Hospitals. Blue = Clinics and community-based providers.',
+    title: 'Mapped categories',
+    text: 'Red = hospital. Blue = clinic. Green = service. Purple = behavioral health.',
     selectors: ['[data-tutorial="legend"]'],
   },
   {
@@ -47,9 +47,9 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   },
   {
     key: 'serviceNetwork',
-    title: 'Service presence',
-    text: 'These lighter point markers show individual community services without grouping them into counts or clusters.',
-    selectors: ['[data-tutorial="toggle-services"]', '[data-tutorial="map-region"]'],
+    title: 'Service and behavioral health',
+    text: 'Green markers show general community support locations. Purple markers show behavioral health locations drawn separately from the same source database.',
+    selectors: ['[data-tutorial="toggle-services"]', '[data-tutorial="toggle-behavioral-health"]', '[data-tutorial="map-region"]'],
   },
   {
     key: 'usingMap',

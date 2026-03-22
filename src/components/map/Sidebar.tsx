@@ -17,6 +17,7 @@ import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisu
 interface LayerState {
   counties: boolean;
   services: boolean;
+  behavioralHealth: boolean;
   serviceLocations: boolean;
   operationalCoverage: boolean;
   fteCapacity: boolean;
@@ -56,7 +57,8 @@ interface SidebarProps {
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', colorClassName: 'text-muted-foreground', icon: MapIcon },
-  { key: 'services' as const, label: 'Service Presence', colorClassName: 'text-service-presence', icon: Layers3 },
+  { key: 'services' as const, label: 'Service', colorClassName: 'text-service-presence', icon: Layers3 },
+  { key: 'behavioralHealth' as const, label: 'Behavioral Health', colorClassName: 'text-behavioral-health', icon: Headphones },
   { key: 'serviceLocations' as const, label: 'Provider Locations', colorClassName: 'text-foreground', icon: MapPin },
   { key: 'operationalCoverage' as const, label: 'Response Capability', colorClassName: 'text-response-active', icon: Radio },
   { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', colorClassName: 'text-staffing-medium', icon: Users },
@@ -627,6 +629,7 @@ const Sidebar = ({
                     { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
                     { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
                     { value: 'service', label: 'Service', color: 'bg-service-presence' },
+                    { value: 'behavioralHealth', label: 'Behavioral Health', color: 'bg-behavioral-health' },
                   ].map(({ value, label, color }) => {
                     const active = filters.types.has(value);
                     return (
@@ -679,7 +682,7 @@ const Sidebar = ({
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
                       {renderSectionIntro(SECTION_META.coreMap.question, SECTION_META.coreMap.helper)}
-                      {(['counties', 'services', 'serviceLocations'] as const).map((key) => {
+                      {(['counties', 'services', 'behavioralHealth', 'serviceLocations'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         return renderLayerToggleRow({
                           label,
@@ -688,10 +691,17 @@ const Sidebar = ({
                           checked: layers[key],
                           onCheckedChange: () => onToggleLayer(key),
                           helpKey: key,
-                          dataTutorial: key === 'services' ? 'toggle-services' : undefined,
+                          dataTutorial:
+                            key === 'services'
+                              ? 'toggle-services'
+                              : key === 'behavioralHealth'
+                                ? 'toggle-behavioral-health'
+                                : undefined,
                           leadingVisual:
                             key === 'services'
                               ? renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services })
+                              : key === 'behavioralHealth'
+                                ? renderPinVisual({ pin: 'behavioralHealth', dimmed: !layers.behavioralHealth })
                               : key === 'serviceLocations'
                                 ? renderProviderTypeVisual(!layers.serviceLocations)
                                 : undefined,
@@ -702,6 +712,7 @@ const Sidebar = ({
                         {(() => {
                           const counties = getLayerConfig('counties');
                           const services = getLayerConfig('services');
+                          const behavioralHealth = getLayerConfig('behavioralHealth');
                           const providerLocations = getLayerConfig('serviceLocations');
 
                           return (
@@ -721,6 +732,16 @@ const Sidebar = ({
                                 helpKey: 'servicesLegend',
                                 dimmed: !layers.services,
                                 leadingVisual: renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services }),
+                                sample: null,
+                                sampleClassName: 'hidden',
+                              })}
+                              {renderLegendRow({
+                                label: behavioralHealth.label,
+                                icon: behavioralHealth.icon,
+                                iconClassName: behavioralHealth.colorClassName,
+                                helpKey: 'behavioralHealthLegend',
+                                dimmed: !layers.behavioralHealth,
+                                leadingVisual: renderPinVisual({ pin: 'behavioralHealth', dimmed: !layers.behavioralHealth }),
                                 sample: null,
                                 sampleClassName: 'hidden',
                               })}
