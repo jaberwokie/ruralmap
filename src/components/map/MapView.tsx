@@ -1190,7 +1190,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         }) as MapPointMarker;
 
         marker.__pointKind = 'providerLocations';
-        marker.__providerType = facility.type;
+        marker.__providerType = facility.type === 'hospital' ? 'hospital' : 'clinic';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
         applyMarkerPriority(marker, 'default');
 
