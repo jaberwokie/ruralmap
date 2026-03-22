@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode, type MouseEvent, type KeyboardEvent } from 'react';
+import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
@@ -76,7 +76,7 @@ const HelpIconTooltip = ({
   const helpData = HELP_TOOLTIPS[helpKey];
   const [open, setOpen] = useState(false);
 
-  const stopSidebarHelpEvent = (event: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLButtonElement>) => {
+  const stopSidebarHelpEvent = (event: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
   };
