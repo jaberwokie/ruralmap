@@ -1,8 +1,9 @@
+import type { RefObject } from 'react';
 import { MAP_TUTORIAL_STEPS, type MapTutorialStep } from '@/data/map-tutorial';
 import { type CardLayout, type HighlightRect, getArrowStyle } from '@/components/map/tutorial/tutorialLayout';
 
 interface MapTutorialCardProps {
-  cardRef: React.RefObject<HTMLDivElement>;
+  cardRef: RefObject<HTMLDivElement>;
   layout: CardLayout;
   highlightRect: HighlightRect | null;
   step: MapTutorialStep;

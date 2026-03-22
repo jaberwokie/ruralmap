@@ -262,7 +262,7 @@ const Sidebar = ({
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, toggleFilters] = usePersistToggle('sidebar_filters');
+  const [filtersOpen, toggleFilters, setFiltersOpen] = usePersistToggle('sidebar_filters');
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
@@ -270,10 +270,9 @@ const Sidebar = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (tutorialStepKey === 'serviceNetwork') setCoreMapOpen(true);
-    if (tutorialStepKey === 'engagementGap') setOperationsOpen(true);
-    if (tutorialStepKey === 'coverageRadius') setAccessOpen(true);
-  }, [setAccessOpen, setCoreMapOpen, setOperationsOpen, tutorialStepKey]);
+    if (tutorialStepKey === 'facilityFilters') setFiltersOpen(true);
+    if (tutorialStepKey === 'coreMap' || tutorialStepKey === 'providerLocations') setCoreMapOpen(true);
+  }, [setCoreMapOpen, setFiltersOpen, tutorialStepKey]);
 
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
@@ -526,7 +525,7 @@ const Sidebar = ({
       </div>
 
       {/* Search */}
-      <div className="px-4 pb-3">
+      <div className="px-4 pb-3" data-tutorial="search-bar">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
@@ -570,7 +569,7 @@ const Sidebar = ({
         {filtersOpen && (
           <div className="space-y-3">
             <div className="space-y-3">
-              <div>
+              <div data-tutorial="facility-filters">
                 <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Facility Type</div>
                 <div className="grid grid-cols-2 gap-1.5">
                   {[
@@ -625,7 +624,7 @@ const Sidebar = ({
 
             <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
-                <div>
+                <div data-tutorial="section-core-map">
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
@@ -644,7 +643,9 @@ const Sidebar = ({
                               ? 'toggle-services'
                               : key === 'behavioralHealth'
                                 ? 'toggle-behavioral-health'
-                                : undefined,
+                                : key === 'serviceLocations'
+                                  ? 'toggle-provider-locations'
+                                  : undefined,
                           inlineLegend: key === 'serviceLocations' ? renderProviderLocationsInlineLegend(!layers.serviceLocations) : undefined,
                         });
                       })}

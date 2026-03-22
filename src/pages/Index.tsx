@@ -230,6 +230,9 @@ const Index = () => {
     };
     setTutorialIntroOpen(false);
     setMobileSidebarOpen(false);
+    setLockedEntity(null);
+    setHoverEntity(null);
+    setSelectedFteId(null);
     setTutorialStepIndex(0);
     setTutorialOpen(true);
   }, [coverageGaps, coverageRadius, layers]);
@@ -238,23 +241,27 @@ const Index = () => {
     setTutorialIntroOpen(false);
     setTutorialOpen(false);
     setTutorialStepIndex(0);
+    setHoverEntity(null);
     restoreTutorialSnapshot();
     if (markComplete) markTutorialComplete();
   }, [markTutorialComplete, restoreTutorialSnapshot]);
 
   const replayTutorial = useCallback(() => {
-    if (!tutorialOpen) {
-      tutorialSnapshotRef.current = {
-        layers,
-        coverageRadius,
-        coverageGaps,
-      };
-    }
+    const nextSnapshot = tutorialSnapshotRef.current ?? {
+      layers,
+      coverageRadius,
+      coverageGaps,
+    };
+    restoreTutorialSnapshot();
+    tutorialSnapshotRef.current = nextSnapshot;
     setTutorialIntroOpen(false);
     setMobileSidebarOpen(false);
+    setLockedEntity(null);
+    setHoverEntity(null);
+    setSelectedFteId(null);
     setTutorialStepIndex(0);
     setTutorialOpen(true);
-  }, [coverageGaps, coverageRadius, layers, tutorialOpen]);
+  }, [coverageGaps, coverageRadius, layers, restoreTutorialSnapshot]);
 
   const goToNextTutorialStep = useCallback(() => {
     setTutorialStepIndex((current) => {
@@ -276,18 +283,19 @@ const Index = () => {
     const stepKey = MAP_TUTORIAL_STEPS[tutorialStepIndex]?.key as MapTutorialStepKey | undefined;
     if (!stepKey) return;
 
-    if (stepKey === 'coverageRadius') {
-      setCoverageRadius(true);
-      setCoverageGaps(false);
-    }
-
-    if (stepKey === 'engagementGap') {
-      setLayers((current) => ({ ...current, engagementGap: true }));
-    }
-
-    if (stepKey === 'serviceNetwork') {
+    if (stepKey === 'coreMap' || stepKey === 'providerLocations') {
       setLayers((current) => ({ ...current, services: true, behavioralHealth: true }));
     }
+  }, [tutorialOpen, tutorialStepIndex]);
+
+  useEffect(() => {
+    if (!tutorialOpen || window.innerWidth >= 768) return;
+
+    const stepKey = MAP_TUTORIAL_STEPS[tutorialStepIndex]?.key as MapTutorialStepKey | undefined;
+    if (!stepKey) return;
+
+    const sidebarSteps = new Set<MapTutorialStepKey>(['search', 'facilityFilters', 'coreMap', 'providerLocations']);
+    setMobileSidebarOpen(sidebarSteps.has(stepKey));
   }, [tutorialOpen, tutorialStepIndex]);
 
   const handleFteHubClick = useCallback((fteId: string) => {
