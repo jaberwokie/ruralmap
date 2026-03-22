@@ -380,6 +380,44 @@ const Sidebar = ({
     </div>
   );
 
+  const renderLegendRow = ({
+    label,
+    sample,
+    dimmed = false,
+  }: {
+    label: string;
+    sample: React.ReactNode;
+    dimmed?: boolean;
+  }) => (
+    <div className={`flex items-center gap-2 px-2 py-1 ${dimmed ? 'opacity-45' : 'opacity-100'}`}>
+      <div className="flex h-4 w-10 items-center justify-start">{sample}</div>
+      <span className="text-[11px] text-muted-foreground">{label}</span>
+    </div>
+  );
+
+  const renderLegendGradient = ({
+    label,
+    gradient,
+    low,
+    high,
+    dimmed = false,
+  }: {
+    label: string;
+    gradient: string;
+    low: string;
+    high: string;
+    dimmed?: boolean;
+  }) => (
+    <div className={`${dimmed ? 'opacity-45' : 'opacity-100'} px-2 py-1`}>
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="mt-1.5 h-2 w-full rounded-sm" style={{ background: gradient }} />
+      <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
+        <span>{low}</span>
+        <span>{high}</span>
+      </div>
+    </div>
+  );
+
   return (
     <TooltipProvider delayDuration={120}>
     <div data-tutorial="sidebar" className="w-full md:w-80 h-full bg-card flex flex-col overflow-y-auto" style={{ boxShadow: 'var(--shadow-panel)' }}>
@@ -858,48 +896,116 @@ const Sidebar = ({
 
       {/* Legend */}
       <div className="px-4 pb-3" data-tutorial="legend">
-        <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
           Legend
         </div>
         <div className="space-y-2.5 text-xs">
-          {/* Facility Types */}
           <div>
-            <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Facility Types</div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ background: 'hsl(0, 72%, 51%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15), 0 0 5px hsla(0, 72%, 51%, 0.35)' }} />
-                <span className="text-muted-foreground">Hospital</span>
+            {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
+            {coreMapOpen && (
+              <div className="mt-0.5 space-y-0.5">
+                {renderLegendRow({
+                  label: 'County Boundaries',
+                  dimmed: !layers.counties,
+                  sample: <div className="h-px w-8 bg-muted-foreground" />,
+                })}
+                {renderLegendRow({
+                  label: 'Service Presence',
+                  dimmed: !layers.services,
+                  sample: (
+                    <div className="relative h-4 w-8">
+                      <span className="absolute left-1 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full" style={{ background: 'hsla(210, 28%, 62%, 0.18)' }} />
+                      <span className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full" style={{ background: 'hsl(var(--service-presence))' }} />
+                    </div>
+                  ),
+                })}
+                {renderLegendRow({
+                  label: 'Provider Locations',
+                  dimmed: !layers.serviceLocations,
+                  sample: (
+                    <div className="flex items-center gap-1">
+                      <span className="h-3.5 w-3.5 rounded-full" style={{ background: 'hsl(0, 72%, 51%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15), 0 0 5px hsla(0, 72%, 51%, 0.35)' }} />
+                      <span className="h-3 w-3 rounded-full" style={{ background: 'hsl(217, 91%, 60%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
+                    </div>
+                  ),
+                })}
               </div>
-              <div className="flex items-center gap-2 px-2">
-                <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: 'hsl(217, 91%, 60%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
-                <span className="text-muted-foreground">Clinic / Provider</span>
-              </div>
-            </div>
+            )}
           </div>
-          {/* Operational Coverage */}
-          {layers.operationalCoverage && (
-            <div>
-              <div className="text-[10px] text-muted-foreground font-medium mb-1 px-2">Response Capability</div>
-              <div className="space-y-1">
-                <div className="flex items-center gap-2 px-2">
-                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(174, 50%, 45%, 0.25)', border: '1.5px solid hsla(174, 50%, 40%, 0.6)' }} />
-                  <span className="text-muted-foreground">Same-Day Field</span>
-                </div>
-                <div className="flex items-center gap-2 px-2">
-                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(174, 40%, 55%, 0.12)', border: '1.5px dashed hsla(174, 40%, 50%, 0.45)' }} />
-                  <span className="text-muted-foreground">Planned Field</span>
-                </div>
-                <div className="flex items-center gap-2 px-2">
-                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(220, 10%, 70%, 0.10)', border: '1.5px dashed hsla(220, 10%, 60%, 0.25)' }} />
-                  <span className="text-muted-foreground">Remote Only</span>
-                </div>
-                <div className="flex items-center gap-2 px-2 mt-1.5 pt-1.5 border-t border-border">
-                  <div className="w-3 h-3 rounded-sm" style={{ background: 'hsla(220, 10%, 50%, 0.30)', border: '1px solid hsla(220, 10%, 50%, 0.15)' }} />
-                  <span className="text-muted-foreground">Greyed Area = No Same-Day Field Response</span>
-                </div>
+
+          <div>
+            {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
+            {operationsOpen && (
+              <div className="mt-0.5 space-y-0.5">
+                {renderLegendRow({
+                  label: 'Response Capability',
+                  dimmed: !layers.operationalCoverage,
+                  sample: (
+                    <div className="flex items-center gap-1">
+                      <span className="h-3 w-3 rounded-sm" style={{ background: 'hsla(174, 50%, 45%, 0.25)', border: '1px solid hsla(174, 50%, 40%, 0.6)' }} />
+                      <span className="h-3 w-3 rounded-sm" style={{ background: 'hsla(174, 40%, 55%, 0.12)', border: '1px dashed hsla(174, 40%, 50%, 0.45)' }} />
+                      <span className="h-3 w-3 rounded-sm" style={{ background: 'hsla(220, 10%, 70%, 0.10)', border: '1px dashed hsla(220, 10%, 60%, 0.25)' }} />
+                    </div>
+                  ),
+                })}
+                {renderLegendRow({
+                  label: 'Staffing Capacity & Load',
+                  dimmed: !layers.fteCapacity,
+                  sample: (
+                    <div className="flex items-center gap-1">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'hsl(24, 95%, 53%)' }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'hsl(44, 96%, 61%)' }} />
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'hsl(142, 71%, 45%)' }} />
+                    </div>
+                  ),
+                })}
+                {renderLegendGradient({
+                  label: 'Engagement Gap',
+                  dimmed: !layers.engagementGap,
+                  gradient: 'linear-gradient(to right, hsl(200, 70%, 55%), hsl(48, 90%, 50%), hsl(30, 90%, 50%))',
+                  low: 'Low',
+                  high: 'High',
+                })}
               </div>
-            </div>
-          )}
+            )}
+          </div>
+
+          <div>
+            {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
+            {utilizationOpen && (
+              <div className="mt-0.5 space-y-0.5">
+                {renderLegendGradient({
+                  label: 'Service Utilization Intensity',
+                  dimmed: !layers.utilizationIntensity,
+                  gradient: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))',
+                  low: 'Low',
+                  high: 'High',
+                })}
+              </div>
+            )}
+          </div>
+
+          <div>
+            {renderSectionHeader('ACCESS', accessOpen, toggleAccess)}
+            {accessOpen && (
+              <div className="mt-0.5 space-y-0.5">
+                {renderLegendRow({
+                  label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
+                  dimmed: !coverageRadius,
+                  sample: (
+                    <div className="relative h-4 w-8">
+                      <span className="absolute left-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full" style={{ background: 'hsla(200, 50%, 50%, 0.10)', border: '1px solid hsla(200, 50%, 50%, 0.6)' }} />
+                    </div>
+                  ),
+                })}
+                {renderLegendRow({
+                  label: 'Access Gaps (Outside Coverage Radius)',
+                  dimmed: !coverageGaps,
+                  sample: <span className="h-3 w-6 rounded-sm" style={{ background: 'hsla(0, 84%, 60%, 0.14)', border: '1px solid hsla(0, 84%, 60%, 0.3)' }} />,
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
