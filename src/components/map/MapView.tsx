@@ -93,6 +93,7 @@ const MAP_PANES = {
   operationalAreas: 'operational-areas-pane',
   driveRadii: 'drive-radii-pane',
   gapOverlays: 'gap-overlays-pane',
+  groupedMarkers: 'grouped-markers-pane',
   servicePresence: 'service-presence-pane',
   facilityMarkers: 'facility-markers-pane',
   labels: 'labels-pane',
@@ -106,6 +107,7 @@ const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> =
   [MAP_PANES.operationalAreas]: 350,
   [MAP_PANES.driveRadii]: 360,
   [MAP_PANES.gapOverlays]: 370,
+  [MAP_PANES.groupedMarkers]: 705,
   [MAP_PANES.servicePresence]: 710,
   [MAP_PANES.facilityMarkers]: 720,
   [MAP_PANES.labels]: 730,
@@ -305,6 +307,8 @@ type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 
 
 type MapPointMarker = L.Marker & {
   __pointKind?: PointMarkerKind;
+  __baseZIndexOffset?: number;
+  __priorityState?: 'default' | 'hovered' | 'selected';
 };
 
 type MarkerClusterGroupLike = L.LayerGroup & {
@@ -317,6 +321,12 @@ const markerClusterFactory = (L as typeof L & {
     getAllChildMarkers?: () => L.Marker[];
   };
 }).markerClusterGroup;
+
+const POINT_MARKER_PRIORITY = {
+  base: 2000,
+  hoveredBoost: 1100,
+  selectedBoost: 2200,
+} as const;
 
 const getDeclutterRadiusByZoom = (zoom: number) => {
   if (zoom <= 7) return 26;
@@ -336,26 +346,24 @@ const createPointClusterIcon = (markers: L.Marker[]) => {
   const totalCount = providerCount + serviceCount;
   const isMixed = providerCount > 0 && serviceCount > 0;
   const primaryKind: PointMarkerKind = serviceCount > providerCount ? 'servicePresence' : 'providerLocations';
-  const iconSize = isMixed ? 28 : 24;
+  const iconSize = 24;
   const primaryPin = getSharedPinSvgMarkup(primaryKind, 14);
-  const secondaryPin = isMixed
-    ? getSharedPinSvgMarkup(primaryKind === 'providerLocations' ? 'servicePresence' : 'providerLocations', 14, { opacity: 0.94 })
+  const mixedTypeAccent = isMixed
+    ? `
+      <span style="position:absolute;left:1px;bottom:2px;display:inline-flex;align-items:center;gap:2px;padding:1px 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));z-index:2;">
+        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--clinic));display:block;"></span>
+        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--hospital));display:block;"></span>
+      </span>
+    `.trim()
     : '';
 
-  const html = isMixed
-    ? `
-      <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:flex;align-items:flex-end;justify-content:center;">
-        <span style="position:absolute;left:3px;bottom:2px;display:flex;">${secondaryPin}</span>
-        <span style="position:absolute;right:3px;bottom:0;display:flex;">${primaryPin}</span>
-        <span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:10px;font-weight:600;line-height:14px;text-align:center;box-shadow:0 1px 2px hsl(var(--foreground) / 0.08);">${getClusterBadgeLabel(totalCount)}</span>
-      </div>
-    `.trim()
-    : `
-      <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:flex;align-items:flex-end;justify-content:center;">
-        <span style="display:flex;">${primaryPin}</span>
-        <span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:10px;font-weight:600;line-height:14px;text-align:center;box-shadow:0 1px 2px hsl(var(--foreground) / 0.08);">${getClusterBadgeLabel(totalCount)}</span>
-      </div>
-    `.trim();
+  const html = `
+    <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:block;">
+      <span style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;z-index:1;">${primaryPin}</span>
+      ${mixedTypeAccent}
+      <span style="position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:9px;font-weight:600;line-height:1;display:inline-flex;align-items:center;justify-content:center;text-align:center;z-index:3;">${getClusterBadgeLabel(totalCount)}</span>
+    </div>
+  `.trim();
 
   return L.divIcon({
     className: '',
@@ -414,6 +422,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
+  const selectedPointMarkerRef = useRef<MapPointMarker | null>(null);
   const markersRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
@@ -800,7 +809,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
 
     // Rendering hierarchy:
     // Base map → state outline → county polygons → county borders → operational areas
-    // → drive radii → gap/engagement overlays → markers → labels → highlights.
+    // → drive radii → gap/engagement overlays → grouped markers → individual markers → labels → highlights.
     stateBoundaryRef.current = L.layerGroup().addTo(map);
     countyFillRef.current = L.layerGroup().addTo(map);
     utilizationRef.current = L.layerGroup().addTo(map);
@@ -822,7 +831,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
       animate: true,
       animateAddingMarkers: false,
       spiderfyDistanceMultiplier: 0.85,
-      clusterPane: MAP_PANES.facilityMarkers,
+      clusterPane: MAP_PANES.groupedMarkers,
       spiderLegPolylineOptions: {
         color: 'hsl(var(--border))',
         weight: 1,
@@ -1035,10 +1044,41 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
     servicePresenceMarkerRef.current.clearLayers();
     markersRef.current.clearLayers();
     pointClusterRef.current.clearLayers();
+    selectedPointMarkerRef.current = null;
 
     if (!layers.services && !layers.serviceLocations) return;
 
     const nextMarkers: L.Layer[] = [];
+
+    const applyMarkerPriority = (marker: MapPointMarker, state: 'default' | 'hovered' | 'selected') => {
+      const baseOffset = marker.__baseZIndexOffset ?? POINT_MARKER_PRIORITY.base;
+      const resolvedOffset = state === 'selected'
+        ? baseOffset + POINT_MARKER_PRIORITY.selectedBoost
+        : state === 'hovered'
+          ? baseOffset + POINT_MARKER_PRIORITY.hoveredBoost
+          : baseOffset;
+
+      marker.__priorityState = state;
+      marker.setZIndexOffset(resolvedOffset);
+    };
+
+    const prioritizeOnHover = (marker: MapPointMarker) => {
+      if (marker.__priorityState === 'selected') return;
+      applyMarkerPriority(marker, 'hovered');
+    };
+
+    const resetHoverPriority = (marker: MapPointMarker) => {
+      if (marker.__priorityState === 'selected') return;
+      applyMarkerPriority(marker, 'default');
+    };
+
+    const prioritizeOnSelection = (marker: MapPointMarker) => {
+      if (selectedPointMarkerRef.current && selectedPointMarkerRef.current !== marker) {
+        applyMarkerPriority(selectedPointMarkerRef.current, 'default');
+      }
+      selectedPointMarkerRef.current = marker;
+      applyMarkerPriority(marker, 'selected');
+    };
 
     if (layers.services) {
       const markerSize = MAP_PIN_VISUALS.servicePresence.size;
@@ -1054,21 +1094,26 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         const countyServices = ruralServicesByCounty.get(service.county) ?? [service];
 
         const marker = L.marker([service.lat, service.lng], {
-          pane: MAP_PANES.servicePresence,
+          pane: MAP_PANES.facilityMarkers,
           icon: servicePresenceIcon,
-          zIndexOffset: 1800,
+          zIndexOffset: POINT_MARKER_PRIORITY.base,
         }) as MapPointMarker;
 
         marker.__pointKind = 'servicePresence';
+        marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
+        applyMarkerPriority(marker, 'default');
 
         marker.on('mouseover', () => {
+          prioritizeOnHover(marker);
           onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
         });
         marker.on('mouseout', () => {
+          resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
+          prioritizeOnSelection(marker);
           onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
         });
 
@@ -1120,12 +1165,22 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         const marker = L.marker([facility.lat, facility.lng], {
           icon,
           pane: MAP_PANES.facilityMarkers,
-          zIndexOffset: 2000,
+          zIndexOffset: POINT_MARKER_PRIORITY.base,
         }) as MapPointMarker;
 
         marker.__pointKind = 'providerLocations';
+        marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
+        applyMarkerPriority(marker, 'default');
+
+        marker.on('mouseover', () => {
+          prioritizeOnHover(marker);
+        });
+        marker.on('mouseout', () => {
+          resetHoverPriority(marker);
+        });
 
         marker.on('click', () => {
+          prioritizeOnSelection(marker);
           onFacilityClick(facility);
 
           if (!facilityValidationMode || !validation) return;
