@@ -600,7 +600,6 @@ const Sidebar = ({
                     <div className="mt-0.5 space-y-0.5">
                       {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
                         const { label, color } = getLayerConfig(key);
-
                         return (
                           <div key={key}>
                             {renderLayerToggleRow({
@@ -624,7 +623,7 @@ const Sidebar = ({
                               });
 
                               return (
-                                <div className="px-2 pb-2 pt-1.5 space-y-2.5">
+                                <div className="space-y-2.5 px-2 pb-2 pt-1.5">
                                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                                     <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Field Coverage Status</div>
                                     <div className="space-y-0.5 text-[10px] text-muted-foreground">
@@ -650,7 +649,15 @@ const Sidebar = ({
                                         ~{Math.round((radius / 80) * 60)} min (~{kmToMiles(radius)} mi)
                                       </span>
                                     </div>
-                                    <input type="range" min={40} max={200} step={10} value={radius} onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))} className="h-1.5 w-full cursor-pointer accent-teal-600" />
+                                    <input
+                                      type="range"
+                                      min={40}
+                                      max={200}
+                                      step={10}
+                                      value={radius}
+                                      onChange={(e) => onCoverageRadiusKmChange?.(Number(e.target.value))}
+                                      className="h-1.5 w-full cursor-pointer accent-teal-600"
+                                    />
                                     <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground">
                                       <span>~30 min (~25 mi)</span>
                                       <span>~150 min (~124 mi)</span>
@@ -684,7 +691,7 @@ const Sidebar = ({
 
                             {key === 'fteCapacity' && layers.fteCapacity && (
                               <div className="space-y-2 px-2 pb-2 pt-1.5">
-                                {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
+                                {fteCapacityData.filter((fte) => fte.hubLocation !== null).map((fte) => {
                                   const role = FTE_ROLE_COLORS[fte.id];
                                   const isSelected = selectedFteId === fte.id;
                                   const isDimmed = selectedFteId != null && !isSelected;
@@ -705,7 +712,7 @@ const Sidebar = ({
                                 })}
 
                                 {(() => {
-                                  const remote = fteCapacityData.find(f => f.hubLocation === null);
+                                  const remote = fteCapacityData.find((f) => f.hubLocation === null);
                                   if (!remote) return null;
 
                                   const role = FTE_ROLE_COLORS[remote.id];
@@ -791,9 +798,7 @@ const Sidebar = ({
                                     <span className="font-medium" style={{ color: 'hsl(200, 70%, 55%)' }}>Blue</span> = Early Signal (6–10).
                                   </p>
 
-                                  {!hasAny && (
-                                    <p className="text-[10px] italic text-muted-foreground/60">No counties currently meet Engagement Gap or Early Signal thresholds.</p>
-                                  )}
+                                  {!hasAny && <p className="text-[10px] italic text-muted-foreground/60">No counties currently meet Engagement Gap or Early Signal thresholds.</p>}
 
                                   {gapCounties.length > 0 && (
                                     <div>
@@ -814,9 +819,7 @@ const Sidebar = ({
                                     </div>
                                   )}
 
-                                  <p className="text-[10px] italic leading-relaxed text-muted-foreground/70">
-                                    Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.
-                                  </p>
+                                  <p className="text-[10px] italic leading-relaxed text-muted-foreground/70">Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.</p>
                                 </div>
                               );
                             })()}
@@ -843,12 +846,12 @@ const Sidebar = ({
                               helpKey: key,
                             })}
                             {layers.utilizationIntensity && (
-                              <div className="px-2 pb-2 pt-1.5 space-y-1.5">
-                                <p className="text-[10px] text-muted-foreground leading-relaxed">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
+                              <div className="space-y-1.5 px-2 pb-2 pt-1.5">
+                                <p className="text-[10px] leading-relaxed text-muted-foreground">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
                                 <div className="flex items-center gap-1.5">
-                                  <div className="flex-1 h-2.5 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
+                                  <div className="h-2.5 flex-1 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
                                 </div>
-                                <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                                <div className="flex justify-between font-mono text-[9px] text-muted-foreground">
                                   <span>Low (&lt;10)</span>
                                   <span>Mod (10–18)</span>
                                   <span>High (&gt;18)</span>
@@ -909,14 +912,13 @@ const Sidebar = ({
                           Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
                         </p>
                       )}
-                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">
-                        Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).
-                      </p>
+                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
                     </div>
                   )}
                 </div>
               </div>
-                  <div className="border-t border-border pt-3" data-tutorial="legend">
+
+              <div className="border-t border-border pt-3" data-tutorial="legend">
                 {renderLegendGroup({
                   title: 'CORE MAP',
                   open: coreMapOpen,
