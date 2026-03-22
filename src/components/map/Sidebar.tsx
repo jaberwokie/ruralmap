@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, Filter, X, Activity, Headphones, HelpCircle } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -10,6 +10,7 @@ import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS,
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
+import { Switch } from '@/components/ui/switch';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface LayerState {
@@ -165,7 +166,7 @@ const Sidebar = ({
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
   const [filtersOpen, toggleFilters] = usePersistToggle('sidebar_filters');
-  const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core');
+  const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
@@ -332,6 +333,53 @@ const Sidebar = ({
     <HelpIconTooltip helpKey={key} onHelpEnter={onHelpEnter} onHelpLeave={onHelpLeave} />
   );
 
+  const getLayerConfig = (key: keyof LayerState) => LAYER_CONFIG.find((layer) => layer.key === key)!;
+
+  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+    >
+      {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+      <span>{label}</span>
+    </button>
+  );
+
+  const renderLayerToggleRow = ({
+    label,
+    indicatorClassName,
+    checked,
+    onCheckedChange,
+    helpKey,
+    dataTutorial,
+  }: {
+    label: string;
+    indicatorClassName: string;
+    checked: boolean;
+    onCheckedChange: (checked: boolean) => void;
+    helpKey?: string;
+    dataTutorial?: string;
+  }) => (
+    <div
+      className="group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/70"
+      data-tutorial={dataTutorial}
+    >
+      <button
+        type="button"
+        onClick={() => onCheckedChange(!checked)}
+        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+      >
+        <span className={`h-2.5 w-2.5 rounded-full ${indicatorClassName} ${checked ? 'opacity-100' : 'opacity-25'} transition-opacity duration-200`} />
+        <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+      </button>
+      <div className="flex items-center gap-1">
+        {helpKey ? renderHelpIcon(helpKey) : null}
+        <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
+      </div>
+    </div>
+  );
+
   return (
     <TooltipProvider delayDuration={120}>
     <div data-tutorial="sidebar" className="w-full md:w-80 h-full bg-card flex flex-col overflow-y-auto" style={{ boxShadow: 'var(--shadow-panel)' }}>
@@ -384,137 +432,124 @@ const Sidebar = ({
       </div>
 
       {/* Filter Panel */}
-      <div className="px-4 pb-3">
-        <button
-          onClick={toggleFilters}
-          className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors w-full"
-        >
-          {filtersOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          <Filter className="w-3 h-3" />
-          <span>Filters</span>
+      <div className="px-4 py-3">
+        <div className="mb-2 flex items-center gap-2">
+          <button
+            type="button"
+            onClick={toggleFilters}
+            className="flex flex-1 items-center gap-1.5 text-left text-[11px] font-semibold text-foreground transition-colors hover:text-foreground/80"
+          >
+            {filtersOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+            <span>Filters</span>
+          </button>
           {activeFilterCount > 0 && (
-            <span className="ml-auto flex items-center gap-1">
-              <span className="bg-primary text-primary-foreground text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full">
+            <div className="flex items-center gap-1">
+              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground font-mono">
                 {activeFilterCount}
               </span>
               <button
-                onClick={(e) => { e.stopPropagation(); clearFilters(); }}
-                className="p-0.5 hover:bg-secondary rounded"
+                type="button"
+                onClick={clearFilters}
+                className="rounded p-0.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                aria-label="Clear facility filters"
               >
-                <X className="w-3 h-3" />
+                <X className="h-3 w-3" />
               </button>
-            </span>
+            </div>
           )}
-        </button>
+        </div>
+
         {filtersOpen && (
           <div className="space-y-3">
-            {/* Type Filter */}
-            <div>
-              <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">Type</div>
-              <div className="flex gap-1.5">
-                {[
-                  { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
-                  { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
-                ].map(({ value, label, color }) => {
-                  const active = filters.types.has(value);
-                  return (
-                    <button
-                      key={value}
-                      onClick={() => toggleTypeFilter(value)}
-                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-[11px] transition-all duration-150 ${
-                        active
-                          ? 'bg-foreground text-background font-medium'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      <span className={`w-1.5 h-1.5 rounded-full ${color} ${!active ? 'opacity-50' : 'opacity-100'}`} />
-                      {label}
-                    </button>
-                  );
-                })}
+            <div className="space-y-3">
+              <div>
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Type</div>
+                <div className="flex gap-1.5">
+                  {[
+                    { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
+                    { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
+                  ].map(({ value, label, color }) => {
+                    const active = filters.types.has(value);
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => toggleTypeFilter(value)}
+                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-[11px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground font-medium text-background'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${color} ${active ? 'opacity-100' : 'opacity-50'}`} />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">County</div>
+                <div className="flex flex-wrap gap-1">
+                  {allCounties.map((county) => {
+                    const active = filters.counties.has(county);
+                    return (
+                      <button
+                        key={county}
+                        type="button"
+                        onClick={() => toggleCountyFilter(county)}
+                        className={`rounded px-2 py-0.5 text-[11px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground font-medium text-background'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {county}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            {/* County Filter */}
-            <div>
-              <div className="text-[10px] text-muted-foreground font-medium mb-1.5 px-1">County</div>
-              <div className="flex flex-wrap gap-1">
-                {allCounties.map(county => {
-                  const active = filters.counties.has(county);
-                  return (
-                    <button
-                      key={county}
-                      onClick={() => toggleCountyFilter(county)}
-                      className={`px-2 py-0.5 rounded text-[11px] transition-all duration-150 ${
-                        active
-                          ? 'bg-foreground text-background font-medium'
-                          : 'bg-secondary text-muted-foreground hover:text-foreground'
-                      }`}
-                    >
-                      {county}
-                    </button>
-                  );
-                })}
-            </div>
-
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="border-t border-border mx-4" />
-
-
-      {/* Layer Manager */}
-      <div className="px-4 py-3">
-        <div className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2">
-          Layers
-        </div>
-
-        {/* ── CORE MAP ── */}
-        <div className="mb-1">
-          <button onClick={toggleCoreMap} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-            {coreMapOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            <span>Core Map</span>
-          </button>
-          {coreMapOpen && (
-            <div className="space-y-1 mt-0.5">
-              {LAYER_CONFIG.filter(l => l.key === 'counties' || l.key === 'services' || l.key === 'serviceLocations').map(({ key, label, color }) => (
-                <div key={key} className="flex items-center" data-tutorial={key === 'services' ? 'toggle-services' : undefined}>
-                  <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
-                    <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                    <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
-                    <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
+            <div className="border-t border-border/70 pt-3">
+              <div className="space-y-2">
+                <div>
+                  {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
+                  {coreMapOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      {(['counties', 'services', 'serviceLocations'] as const).map((key) => {
+                        const { label, color } = getLayerConfig(key);
+                        return renderLayerToggleRow({
+                          label,
+                          indicatorClassName: color,
+                          checked: layers[key],
+                          onCheckedChange: () => onToggleLayer(key),
+                          helpKey: key,
+                          dataTutorial: key === 'services' ? 'toggle-services' : undefined,
+                        });
+                      })}
                     </div>
-                  </button>
-                  {renderHelpIcon(key)}
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* ── OPERATIONS ── */}
-        <div className="mb-1">
-          <button onClick={toggleOperations} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-            {operationsOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            <span>Operations</span>
-          </button>
-          {operationsOpen && (
-            <div className="space-y-1 mt-0.5">
-              {LAYER_CONFIG.filter(l => l.key === 'operationalCoverage' || l.key === 'fteCapacity' || l.key === 'engagementGap').map(({ key, label, color }) => (
-                <div key={key}>
-                  <div className="flex items-center" data-tutorial={key === 'engagementGap' ? 'toggle-engagement-gap' : undefined}>
-                    <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
-                      <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                      <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
-                      <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
-                      </div>
-                    </button>
-                    {renderHelpIcon(key)}
-                  </div>
+                <div>
+                  {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
+                  {operationsOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
+                        const { label, color } = getLayerConfig(key);
+                        return (
+                          <div key={key}>
+                            {renderLayerToggleRow({
+                              label,
+                              indicatorClassName: color,
+                              checked: layers[key],
+                              onCheckedChange: () => onToggleLayer(key),
+                              helpKey: key,
+                              dataTutorial: key === 'engagementGap' ? 'toggle-engagement-gap' : undefined,
+                            })}
                   {key === 'operationalCoverage' && layers.operationalCoverage && (() => {
                     const radius = coverageRadiusKm ?? 120;
                     // Dynamic county counts
@@ -726,101 +761,98 @@ const Sidebar = ({
           )}
         </div>
 
-        {/* ── UTILIZATION ── */}
-        <div className="mb-1">
-          <button onClick={toggleUtilization} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-            {utilizationOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            <span>Utilization</span>
-          </button>
-          {utilizationOpen && (
-            <div className="space-y-1 mt-0.5">
-              {LAYER_CONFIG.filter(l => l.key === 'utilizationIntensity').map(({ key, label, color }) => (
-                <div key={key}>
-                  <div className="flex items-center">
-                    <button onClick={() => onToggleLayer(key)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
-                      <div className={`w-2.5 h-2.5 rounded-sm ${color} ${!layers[key] ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                      <span className={`flex-1 text-left ${layers[key] ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
-                      <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${layers[key] ? 'bg-primary' : 'bg-input'} relative`}>
-                        <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${layers[key] ? 'left-3.5' : 'left-0.5'}`} />
-                      </div>
-                    </button>
-                    {renderHelpIcon(key)}
-                  </div>
-                  {layers.utilizationIntensity && (
-                    <div className="px-2 pb-2 pt-1.5 space-y-1.5">
-                      <p className="text-[10px] text-muted-foreground leading-relaxed">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
-                      <div className="flex items-center gap-1.5">
-                        <div className="flex-1 h-2.5 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
-                      </div>
-                      <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
-                        <span>Low (&lt;10)</span>
-                        <span>Mod (10–18)</span>
-                        <span>High (&gt;18)</span>
-                      </div>
-                      <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="w-full flex items-center gap-2 px-1 py-1 rounded text-[11px] transition-colors duration-200 hover:bg-secondary mt-1">
-                        <div className={`w-6 h-3.5 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-purple-600' : 'bg-input'} relative`}>
-                          <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
-                        </div>
-                        <span className={`${topProvidersOnly ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>Top Providers Only (Top 20)</span>
-                      </button>
+                <div>
+                  {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
+                  {utilizationOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      {(() => {
+                        const { key, label, color } = getLayerConfig('utilizationIntensity');
+                        return (
+                          <div key={key}>
+                            {renderLayerToggleRow({
+                              label,
+                              indicatorClassName: color,
+                              checked: layers.utilizationIntensity,
+                              onCheckedChange: () => onToggleLayer('utilizationIntensity'),
+                              helpKey: key,
+                            })}
+                            {layers.utilizationIntensity && (
+                              <div className="px-2 pb-2 pt-1.5 space-y-1.5">
+                                <p className="text-[10px] text-muted-foreground leading-relaxed">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="flex-1 h-2.5 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
+                                </div>
+                                <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                                  <span>Low (&lt;10)</span>
+                                  <span>Mod (10–18)</span>
+                                  <span>High (&gt;18)</span>
+                                </div>
+                                <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="mt-1 flex w-full items-center gap-2 rounded px-1 py-1 text-[11px] transition-colors duration-200 hover:bg-secondary">
+                                  <div className={`relative h-3.5 w-6 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-primary' : 'bg-input'}`}>
+                                    <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
+                                  </div>
+                                  <span className={topProvidersOnly ? 'font-medium text-foreground' : 'text-muted-foreground'}>Top Providers Only (Top 20)</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* ── ACCESS ── */}
-        <div className="mb-1">
-          <button onClick={toggleAccess} className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground hover:text-foreground transition-colors w-full py-1">
-            {accessOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-            <span>Access</span>
-          </button>
-          {accessOpen && (
-            <div className="space-y-1 mt-0.5">
-              {/* Coverage Radius */}
-              <div data-tutorial="toggle-coverage-radius">
-                <div className="flex items-center">
-                  <button onClick={() => onCoverageRadiusChange(!coverageRadius)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
-                    <div className={`w-2.5 h-2.5 rounded-sm bg-primary ${!coverageRadius ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                     <span className={`flex-1 text-left ${coverageRadius ? 'text-foreground' : 'text-muted-foreground'}`}>Provider Coverage Radius ({kmToMiles(radiusKm)} mi)</span>
-                    <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageRadius ? 'bg-primary' : 'bg-input'} relative`}>
-                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageRadius ? 'left-3.5' : 'left-0.5'}`} />
+                <div>
+                  {renderSectionHeader('ACCESS', accessOpen, toggleAccess)}
+                  {accessOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      {renderLayerToggleRow({
+                        label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
+                        indicatorClassName: 'bg-primary',
+                        checked: coverageRadius,
+                        onCheckedChange: onCoverageRadiusChange,
+                        helpKey: 'coverageRadius',
+                        dataTutorial: 'toggle-coverage-radius',
+                      })}
+                      <div className="px-2 pb-1 pt-0.5">
+                        <input
+                          type="range"
+                          min={10}
+                          max={150}
+                          step={5}
+                          value={radiusKm}
+                          onChange={(e) => onRadiusChange(Number(e.target.value))}
+                          className="h-1 w-full cursor-pointer accent-primary"
+                          aria-label="Provider coverage radius"
+                        />
+                        <div className="mt-0.5 flex justify-between font-mono text-[9px] text-muted-foreground">
+                          <span>6 mi</span>
+                          <span>93 mi</span>
+                        </div>
+                      </div>
+
+                      {renderLayerToggleRow({
+                        label: 'Access Gaps (Outside Coverage Radius)',
+                        indicatorClassName: 'bg-destructive',
+                        checked: coverageGaps,
+                        onCheckedChange: onCoverageGapsChange,
+                        helpKey: 'coverageGaps',
+                      })}
+                      {coverageGaps && (
+                        <p className="px-2 pb-1 pt-0.5 text-[10px] leading-relaxed text-muted-foreground">
+                          Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
+                        </p>
+                      )}
+                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">
+                        Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).
+                      </p>
                     </div>
-                  </button>
-                  {renderHelpIcon('coverageRadius')}
+                  )}
                 </div>
-                {coverageRadius && (
-                  <div className="px-2 pb-1 pt-0.5">
-                    <input type="range" min={10} max={150} step={5} value={radiusKm} onChange={(e) => onRadiusChange(Number(e.target.value))} className="w-full h-1 accent-primary cursor-pointer" />
-                    <div className="flex justify-between text-[9px] text-muted-foreground font-mono mt-0.5">
-                      <span>6 mi</span>
-                      <span>93 mi</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-              {/* Coverage Gaps */}
-              <div>
-                <div className="flex items-center">
-                  <button onClick={() => onCoverageGapsChange(!coverageGaps)} className="flex-1 flex items-center gap-2.5 px-2 py-1.5 rounded text-xs transition-colors duration-200 hover:bg-secondary">
-                    <div className={`w-2.5 h-2.5 rounded-sm bg-destructive ${!coverageGaps ? 'opacity-20' : ''} transition-opacity duration-200`} />
-                    <span className={`flex-1 text-left ${coverageGaps ? 'text-foreground' : 'text-muted-foreground'}`}>Access Gaps (Outside Coverage Radius)</span>
-                    <div className={`w-7 h-4 rounded-full transition-colors duration-200 ${coverageGaps ? 'bg-primary' : 'bg-input'} relative`}>
-                      <div className={`absolute top-0.5 w-3 h-3 rounded-full bg-card shadow-sm transition-all duration-200 ${coverageGaps ? 'left-3.5' : 'left-0.5'}`} />
-                    </div>
-                  </button>
-                  {renderHelpIcon('coverageGaps')}
-                </div>
-                {coverageGaps && (
-                  <p className="px-2 pb-1 pt-0.5 text-[10px] text-muted-foreground leading-relaxed">Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.</p>
-                )}
-                <p className="px-2 pb-0.5 text-[9px] text-muted-foreground/60 italic">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Legend */}
