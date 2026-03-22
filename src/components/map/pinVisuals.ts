@@ -5,8 +5,8 @@ export const MAP_PIN_VISUALS = {
     size: 14,
   },
   servicePresence: {
-    colorClassName: 'text-hospital',
-    colorValue: 'hsl(var(--hospital))',
+    colorClassName: 'text-service-presence',
+    colorValue: 'hsl(var(--service-presence))',
     size: 14,
   },
 } as const;
