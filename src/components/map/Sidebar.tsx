@@ -610,217 +610,225 @@ const Sidebar = ({
                               helpKey: key,
                               dataTutorial: key === 'engagementGap' ? 'toggle-engagement-gap' : undefined,
                             })}
-                  {key === 'operationalCoverage' && layers.operationalCoverage && (() => {
-                    const radius = coverageRadiusKm ?? 120;
-                    // Dynamic county counts
-                    const counts = { active: 0, scheduled: 0, remote: 0 };
-                    nevadaCounties.forEach(c => {
-                      const bd = getCountyCoverageBreakdown(c.name, radius);
-                      if (bd.activePercent >= 50) counts.active++;
-                      else if (bd.activePercent > 0 || bd.anchoringFtes.length > 0) counts.scheduled++;
-                      else counts.remote++;
-                    });
 
-                    return (
-                      <div className="px-2 pb-2 pt-1.5 space-y-2.5">
-                        {/* Summary strip */}
-                        <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                          <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80 mb-1">Field Coverage Status</div>
-                          <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'hsl(174, 50%, 40%)' }} />
-                              <span><span className="font-semibold text-foreground">{counts.active}</span> counties with same-day field response</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'hsl(190, 55%, 50%)' }} />
-                              <span><span className="font-semibold text-foreground">{counts.scheduled}</span> counties with scheduled outreach only</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: 'hsl(220, 10%, 70%)' }} />
-                              <span><span className="font-semibold text-foreground">{counts.remote}</span> counties with remote-only support</span>
-                            </div>
-                          </div>
-                        </div>
+                            {key === 'operationalCoverage' && layers.operationalCoverage && (() => {
+                              const radius = coverageRadiusKm ?? 120;
+                              const counts = { active: 0, scheduled: 0, remote: 0 };
 
-                        {/* Field Response Radius slider */}
-                        <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Response Radius</span>
-                            <span className="text-[11px] font-bold text-foreground tabular-nums">
-                              ~{Math.round((radius / 80) * 60)} min (~{kmToMiles(radius)} mi)
-                            </span>
-                          </div>
-                          <input type="range" min={40} max={200} step={10} value={radius} onChange={e => onCoverageRadiusKmChange?.(Number(e.target.value))} className="w-full h-1.5 accent-teal-600 cursor-pointer" />
-                          <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-                            <span>~30 min (~25 mi)</span>
-                            <span>~150 min (~124 mi)</span>
-                          </div>
-                          <p className="text-[9px] text-muted-foreground/70 mt-1 leading-relaxed">Defines the maximum same-day response range from field staff base.</p>
-                        </div>
+                              nevadaCounties.forEach((c) => {
+                                const bd = getCountyCoverageBreakdown(c.name, radius);
+                                if (bd.activePercent >= 50) counts.active++;
+                                else if (bd.activePercent > 0 || bd.anchoringFtes.length > 0) counts.scheduled++;
+                                else counts.remote++;
+                              });
 
-                        {/* Response Capability tiers */}
-                        <div className="space-y-2">
-                          <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
-                          {[
-                            { label: 'Same-Day Field Response Available', desc: 'In-person response within ~75–90 minutes of FTE base.', color: 'hsl(174, 50%, 40%)', opacity: 0.85, style: 'solid' as const },
-                            { label: 'Field Response Available (Planned)', desc: 'In-person visits require scheduling. Not same-day.', color: 'hsl(190, 55%, 50%)', opacity: 0.55, style: 'dashed' as const },
-                            { label: 'Remote Support Only', desc: 'No in-person response. Telephonic and virtual coordination only.', color: 'hsl(220, 10%, 64%)', opacity: 0.35, style: 'dashed' as const },
-                          ].map(({ label: lbl, desc, color: clr, opacity, style }) => (
-                            <div key={lbl} className="flex gap-2">
-                              <div className="flex-shrink-0 mt-0.5">
-                                <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: clr, opacity, border: style === 'dashed' ? `1.5px dashed ${clr}` : 'none' }} />
+                              return (
+                                <div className="space-y-2.5 px-2 pb-2 pt-1.5">
+                                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Field Coverage Status</div>
+                                    <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: 'hsl(174, 50%, 40%)' }} />
+                                        <span><span className="font-semibold text-foreground">{counts.active}</span> counties with same-day field response</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: 'hsl(190, 55%, 50%)' }} />
+                                        <span><span className="font-semibold text-foreground">{counts.scheduled}</span> counties with scheduled outreach only</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: 'hsl(220, 10%, 70%)' }} />
+                                        <span><span className="font-semibold text-foreground">{counts.remote}</span> counties with remote-only support</span>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                                    <div className="mb-1 flex items-center justify-between">
+                                      <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Response Radius</span>
+                                      <span className="text-[11px] font-bold tabular-nums text-foreground">
+                                        ~{Math.round((radius / 80) * 60)} min (~{kmToMiles(radius)} mi)
+                                      </span>
+                                    </div>
+                                    <input
+                                      type="range"
+                                      min={40}
+                                      max={200}
+                                      step={10}
+                                      value={radius}
+                                      onChange={(e) => onCoverageRadiusKmChange?.(Number(e.target.value))}
+                                      className="h-1.5 w-full cursor-pointer accent-teal-600"
+                                    />
+                                    <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground">
+                                      <span>~30 min (~25 mi)</span>
+                                      <span>~150 min (~124 mi)</span>
+                                    </div>
+                                    <p className="mt-1 text-[9px] leading-relaxed text-muted-foreground/70">Defines the maximum same-day response range from field staff base.</p>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
+                                    {[
+                                      { label: 'Same-Day Field Response Available', desc: 'In-person response within ~75–90 minutes of FTE base.', color: 'hsl(174, 50%, 40%)', opacity: 0.85, style: 'solid' as const },
+                                      { label: 'Field Response Available (Planned)', desc: 'In-person visits require scheduling. Not same-day.', color: 'hsl(190, 55%, 50%)', opacity: 0.55, style: 'dashed' as const },
+                                      { label: 'Remote Support Only', desc: 'No in-person response. Telephonic and virtual coordination only.', color: 'hsl(220, 10%, 64%)', opacity: 0.35, style: 'dashed' as const },
+                                    ].map(({ label: lbl, desc, color: clr, opacity, style }) => (
+                                      <div key={lbl} className="flex gap-2">
+                                        <div className="mt-0.5 flex-shrink-0">
+                                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: clr, opacity, border: style === 'dashed' ? `1.5px dashed ${clr}` : 'none' }} />
+                                        </div>
+                                        <div className="min-w-0">
+                                          <div className="text-[11px] font-medium leading-tight text-foreground" style={{ opacity }}>{lbl}</div>
+                                          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{desc}</p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+
+                                  <p className="text-[9px] italic leading-relaxed text-muted-foreground/60">Coverage is based on real travel time, not straight-line distance.</p>
+                                </div>
+                              );
+                            })()}
+
+                            {key === 'fteCapacity' && layers.fteCapacity && (
+                              <div className="space-y-2 px-2 pb-2 pt-1.5">
+                                {fteCapacityData.filter((fte) => fte.hubLocation !== null).map((fte) => {
+                                  const role = FTE_ROLE_COLORS[fte.id];
+                                  const isSelected = selectedFteId === fte.id;
+                                  const isDimmed = selectedFteId != null && !isSelected;
+                                  const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
+
+                                  return (
+                                    <button key={fte.id} onClick={() => onFteCardClick?.(fte.id)} className={`w-full cursor-pointer rounded-md border-2 px-2 py-1.5 text-left transition-all duration-200 hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}>
+                                      <div className="mb-0.5 flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                          <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: role?.primary }} />
+                                          <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
+                                        </div>
+                                      </div>
+                                      <div className="text-[10px] text-foreground/70">{coverageLabel}</div>
+                                      <div className="mt-0.5 text-[10px] text-muted-foreground">{fte.counties.length} counties served</div>
+                                    </button>
+                                  );
+                                })}
+
+                                {(() => {
+                                  const remote = fteCapacityData.find((f) => f.hubLocation === null);
+                                  if (!remote) return null;
+
+                                  const role = FTE_ROLE_COLORS[remote.id];
+                                  const isRemoteSelected = selectedFteId === remote.id;
+                                  const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
+
+                                  return (
+                                    <button onClick={() => onFteCardClick?.(remote.id)} className={`w-full cursor-pointer rounded-md border-2 border-dashed px-2 py-2 text-left transition-all duration-200 hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}>
+                                      <div className="mb-1 flex items-center gap-1.5">
+                                        <Headphones className="h-3.5 w-3.5" style={{ color: role?.primary }} />
+                                        <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
+                                      </div>
+                                      <div className="text-[10px] text-foreground/70">Remote Only</div>
+                                      <div className="mt-1 text-[9px] text-muted-foreground">Statewide telephonic and virtual coordination (no in-person response)</div>
+                                      <div className="mt-0.5 text-[10px] text-muted-foreground">{remote.counties.length} counties served</div>
+                                    </button>
+                                  );
+                                })()}
                               </div>
-                              <div className="min-w-0">
-                                <div className="text-[11px] font-medium text-foreground leading-tight" style={{ opacity }}>{lbl}</div>
-                                <p className="text-[10px] text-muted-foreground leading-relaxed mt-0.5">{desc}</p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                            )}
 
-                        <p className="text-[9px] text-muted-foreground/60 italic leading-relaxed">Coverage is based on real travel time, not straight-line distance.</p>
-                      </div>
-                    );
-                  })()}
-                  {key === 'fteCapacity' && layers.fteCapacity && (
-                    <div className="px-2 pb-2 pt-1.5 space-y-2">
-                      {fteCapacityData.filter(fte => fte.hubLocation !== null).map(fte => {
-                        const role = FTE_ROLE_COLORS[fte.id];
-                        const isSelected = selectedFteId === fte.id;
-                        const isDimmed = selectedFteId != null && !isSelected;
-                        const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
-                        return (
-                          <button key={fte.id} onClick={() => onFteCardClick?.(fte.id)} className={`w-full text-left rounded-md border-2 px-2 py-1.5 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}>
-                            <div className="flex items-center justify-between mb-0.5">
-                              <div className="flex items-center gap-1.5">
-                                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
-                                <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
-                              </div>
-                            </div>
-                            <div className="text-[10px] text-foreground/70">{coverageLabel}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">{fte.counties.length} counties served</div>
-                          </button>
+                            {key === 'engagementGap' && layers.engagementGap && (() => {
+                              const results = getEngagementGapResults();
+                              const rankedPriorityCounties = engagementRateBelow20Only
+                                ? getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).slice(0, 5)
+                                : getTopUnengagedCounties(5);
+                              const belowThresholdCount = getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).length;
+                              const rankedCountyTotal = getCountyEngagementRankings().filter((metrics) => metrics.totalMembers > 0).length;
+                              const gapCounties = results.filter((r: any) => r.tier === 'gap');
+                              const watchCounties = results.filter((r: any) => r.tier === 'watchlist');
+                              const earlyCounties = results.filter((r: any) => r.tier === 'early-signal');
+                              const hasAny = results.length > 0;
+
+                              return (
+                                <div className="space-y-1.5 px-2 pb-2 pt-1">
+                                  <div className="space-y-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1.5">
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div>
+                                        <p className="text-[10px] font-semibold uppercase tracking-wide text-destructive">Outreach Priority</p>
+                                        <p className="text-[10px] text-muted-foreground">Ranked by highest unengaged members, then lowest engagement rate.</p>
+                                      </div>
+                                      <button onClick={() => onEngagementRateBelow20OnlyChange(!engagementRateBelow20Only)} className="flex items-center gap-2 rounded px-1 py-1 text-[11px] transition-colors duration-200 hover:bg-background/70">
+                                        <div className={`relative h-3.5 w-6 rounded-full transition-colors duration-200 ${engagementRateBelow20Only ? 'bg-destructive' : 'bg-input'}`}>
+                                          <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${engagementRateBelow20Only ? 'left-3' : 'left-0.5'}`} />
+                                        </div>
+                                        <span className={engagementRateBelow20Only ? 'font-medium text-foreground' : 'text-muted-foreground'}>Rate &lt; 20%</span>
+                                      </button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between text-[10px]">
+                                      <span className="text-muted-foreground">Counties below 20% engagement</span>
+                                      <span className="tabular-nums font-semibold text-foreground">{belowThresholdCount} of {rankedCountyTotal}</span>
+                                    </div>
+
+                                    {rankedPriorityCounties.length > 0 ? (
+                                      <div className="space-y-1">
+                                        <p className="text-[10px] font-semibold text-destructive">
+                                          Top 5 unengaged counties{engagementRateBelow20Only ? ' (filtered)' : ''}
+                                        </p>
+                                        {rankedPriorityCounties.map((metrics) => (
+                                          <button
+                                            key={metrics.county}
+                                            type="button"
+                                            onClick={() => onCountySelect?.(metrics.county)}
+                                            className="w-full rounded-sm px-1 py-0.5 text-left text-[10px] leading-relaxed text-foreground transition-colors duration-150 hover:bg-background/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                          >
+                                            <span className={`font-semibold ${metrics.isTop5Unengaged ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank}</span>{' '}
+                                            <span className="font-medium">{metrics.county}</span>
+                                            <span className="text-muted-foreground"> — </span>
+                                            <span className="tabular-nums font-semibold">{metrics.unengagedMembers.toLocaleString()}</span>{' '}
+                                            <span className="text-muted-foreground">unengaged</span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <p className="text-[10px] italic text-muted-foreground">No counties match the current engagement-rate filter.</p>
+                                    )}
+                                  </div>
+
+                                  <p className="text-[10px] leading-relaxed text-muted-foreground">
+                                    <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (&gt;15 VPM).{' '}
+                                    <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15).{' '}
+                                    <span className="font-medium" style={{ color: 'hsl(200, 70%, 55%)' }}>Blue</span> = Early Signal (6–10).
+                                  </p>
+
+                                  {!hasAny && <p className="text-[10px] italic text-muted-foreground/60">No counties currently meet Engagement Gap or Early Signal thresholds.</p>}
+
+                                  {gapCounties.length > 0 && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold" style={{ color: 'hsl(30, 90%, 50%)' }}>True Gap ({gapCounties.length})</p>
+                                      <p className="text-[10px] text-muted-foreground">{gapCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
+                                    </div>
+                                  )}
+                                  {watchCounties.length > 0 && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold" style={{ color: 'hsl(48, 90%, 50%)' }}>Watchlist ({watchCounties.length})</p>
+                                      <p className="text-[10px] text-muted-foreground">{watchCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
+                                    </div>
+                                  )}
+                                  {earlyCounties.length > 0 && (
+                                    <div>
+                                      <p className="text-[10px] font-semibold" style={{ color: 'hsl(200, 70%, 55%)' }}>Early Signal ({earlyCounties.length})</p>
+                                      <p className="text-[10px] text-muted-foreground">{earlyCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
+                                    </div>
+                                  )}
+
+                                  <p className="text-[10px] italic leading-relaxed text-muted-foreground/70">Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.</p>
+                                </div>
+                              );
+                            })()}
+                          </div>
                         );
                       })}
-                      {(() => {
-                        const remote = fteCapacityData.find(f => f.hubLocation === null);
-                        if (!remote) return null;
-                        const role = FTE_ROLE_COLORS[remote.id];
-                        const isRemoteSelected = selectedFteId === remote.id;
-                        const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
-                        return (
-                          <button onClick={() => onFteCardClick?.(remote.id)} className={`w-full text-left rounded-md border-2 border-dashed px-2 py-2 transition-all duration-200 cursor-pointer hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}>
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <Headphones className="w-3.5 h-3.5" style={{ color: role?.primary }} />
-                              <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
-                            </div>
-                            <div className="text-[10px] text-foreground/70">Remote Only</div>
-                            <div className="text-[9px] text-muted-foreground mt-1">Statewide telephonic and virtual coordination (no in-person response)</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">{remote.counties.length} counties served</div>
-                          </button>
-                        );
-                      })()}
                     </div>
                   )}
-                  {key === 'engagementGap' && layers.engagementGap && (() => {
-                    const results = getEngagementGapResults();
-                    const rankedPriorityCounties = engagementRateBelow20Only
-                      ? getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).slice(0, 5)
-                      : getTopUnengagedCounties(5);
-                    const belowThresholdCount = getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).length;
-                    const rankedCountyTotal = getCountyEngagementRankings().filter((metrics) => metrics.totalMembers > 0).length;
-                    const gapCounties = results.filter((r: any) => r.tier === 'gap');
-                    const watchCounties = results.filter((r: any) => r.tier === 'watchlist');
-                    const earlyCounties = results.filter((r: any) => r.tier === 'early-signal');
-                    const hasAny = results.length > 0;
-
-                    return (
-                      <div className="px-2 pb-2 pt-1 space-y-1.5">
-                        <div className="rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1.5 space-y-1.5">
-                          <div className="flex items-center justify-between gap-2">
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-wide text-destructive">Outreach Priority</p>
-                              <p className="text-[10px] text-muted-foreground">Ranked by highest unengaged members, then lowest engagement rate.</p>
-                            </div>
-                            <button onClick={() => onEngagementRateBelow20OnlyChange(!engagementRateBelow20Only)} className="flex items-center gap-2 px-1 py-1 rounded text-[11px] transition-colors duration-200 hover:bg-background/70">
-                              <div className={`w-6 h-3.5 rounded-full transition-colors duration-200 ${engagementRateBelow20Only ? 'bg-destructive' : 'bg-input'} relative`}>
-                                <div className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${engagementRateBelow20Only ? 'left-3' : 'left-0.5'}`} />
-                              </div>
-                              <span className={`${engagementRateBelow20Only ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>Rate &lt; 20%</span>
-                            </button>
-                          </div>
-
-                          <div className="flex items-center justify-between text-[10px]">
-                            <span className="text-muted-foreground">Counties below 20% engagement</span>
-                            <span className="font-semibold text-foreground tabular-nums">{belowThresholdCount} of {rankedCountyTotal}</span>
-                          </div>
-
-                          {rankedPriorityCounties.length > 0 ? (
-                            <div className="space-y-1">
-                              <p className="text-[10px] font-semibold text-destructive">
-                                Top 5 unengaged counties{engagementRateBelow20Only ? ' (filtered)' : ''}
-                              </p>
-                              {rankedPriorityCounties.map((metrics) => (
-                                <button
-                                  key={metrics.county}
-                                  type="button"
-                                  onClick={() => onCountySelect?.(metrics.county)}
-                                  className="w-full rounded-sm px-1 py-0.5 text-left text-[10px] leading-relaxed text-foreground transition-colors duration-150 hover:bg-background/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                                >
-                                  <span className={`font-semibold ${metrics.isTop5Unengaged ? 'text-destructive' : 'text-foreground'}`}>#{metrics.rank}</span>{' '}
-                                  <span className="font-medium">{metrics.county}</span>
-                                  <span className="text-muted-foreground"> — </span>
-                                  <span className="font-semibold tabular-nums">{metrics.unengagedMembers.toLocaleString()}</span>{' '}
-                                  <span className="text-muted-foreground">unengaged</span>
-                                </button>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-[10px] text-muted-foreground italic">No counties match the current engagement-rate filter.</p>
-                          )}
-                        </div>
-
-                        <p className="text-[10px] text-muted-foreground leading-relaxed">
-                          <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (&gt;15 VPM).{' '}
-                          <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15).{' '}
-                          <span className="font-medium" style={{ color: 'hsl(200, 70%, 55%)' }}>Blue</span> = Early Signal (6–10).
-                        </p>
-
-                        {!hasAny && (
-                          <p className="text-[10px] text-muted-foreground/60 italic">No counties currently meet Engagement Gap or Early Signal thresholds.</p>
-                        )}
-
-                        {gapCounties.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-semibold" style={{ color: 'hsl(30, 90%, 50%)' }}>True Gap ({gapCounties.length})</p>
-                            <p className="text-[10px] text-muted-foreground">{gapCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
-                          </div>
-                        )}
-                        {watchCounties.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-semibold" style={{ color: 'hsl(48, 90%, 50%)' }}>Watchlist ({watchCounties.length})</p>
-                            <p className="text-[10px] text-muted-foreground">{watchCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
-                          </div>
-                        )}
-                        {earlyCounties.length > 0 && (
-                          <div>
-                            <p className="text-[10px] font-semibold" style={{ color: 'hsl(200, 70%, 55%)' }}>Early Signal ({earlyCounties.length})</p>
-                            <p className="text-[10px] text-muted-foreground">{earlyCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
-                          </div>
-                        )}
-
-                        <p className="text-[10px] text-muted-foreground/70 italic leading-relaxed">
-                          Urban Washoe (Reno/Sparks core) and Carson City are excluded. Northern Washoe is included as rural service area.
-                        </p>
-                      </div>
-                    );
-                  })()}
                 </div>
-                        );
-                      })}
-            </div>
-          )}
-        </div>
 
                 <div>
                   {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
@@ -838,12 +846,12 @@ const Sidebar = ({
                               helpKey: key,
                             })}
                             {layers.utilizationIntensity && (
-                              <div className="px-2 pb-2 pt-1.5 space-y-1.5">
-                                <p className="text-[10px] text-muted-foreground leading-relaxed">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
+                              <div className="space-y-1.5 px-2 pb-2 pt-1.5">
+                                <p className="text-[10px] leading-relaxed text-muted-foreground">County shading by avg visits per member. Purple ramp — darker = higher utilization.</p>
                                 <div className="flex items-center gap-1.5">
-                                  <div className="flex-1 h-2.5 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
+                                  <div className="h-2.5 flex-1 rounded-sm" style={{ background: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))' }} />
                                 </div>
-                                <div className="flex justify-between text-[9px] text-muted-foreground font-mono">
+                                <div className="flex justify-between font-mono text-[9px] text-muted-foreground">
                                   <span>Low (&lt;10)</span>
                                   <span>Mod (10–18)</span>
                                   <span>High (&gt;18)</span>
@@ -904,14 +912,13 @@ const Sidebar = ({
                           Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
                         </p>
                       )}
-                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">
-                        Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).
-                      </p>
+                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
                     </div>
                   )}
                 </div>
               </div>
-                  <div className="border-t border-border pt-3" data-tutorial="legend">
+
+              <div className="border-t border-border pt-3" data-tutorial="legend">
                 {renderLegendGroup({
                   title: 'CORE MAP',
                   open: coreMapOpen,
@@ -1023,6 +1030,7 @@ const Sidebar = ({
                   ),
                 })}
               </div>
+            </div>
           </div>
         )}
       </div>
