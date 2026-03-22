@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
@@ -51,7 +50,6 @@ interface CoverageDetailPanelProps {
   onClear: () => void;
   coverageRadiusKm?: number;
   memberVolumeLayerOn?: boolean;
-  activeHelp?: string | null;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -165,19 +163,18 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false, activeHelp = null }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
   const display = entity ?? hoverEntity;
   const isLocked = !!entity;
-  const helpData = activeHelp ? HELP_TOOLTIPS[activeHelp] : null;
 
   return (
     <div className="absolute top-3 right-3 z-[1000] w-64 max-h-[calc(100vh-120px)] rounded-lg border border-border bg-white/95 backdrop-blur-sm shadow-md flex flex-col select-none">
       {/* Header */}
       <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {helpData ? 'Help' : 'Details'}
+          Details
         </h3>
-        {isLocked && !helpData && (
+        {isLocked && (
           <button
             onClick={onClear}
             className="p-0.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
@@ -190,12 +187,7 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 
 
       {/* Body */}
       <div className="overflow-y-auto flex-1 px-3 pb-3">
-        {helpData ? (
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-foreground">{helpData.label}</p>
-            <p className="text-[11px] text-muted-foreground leading-relaxed">{helpData.explanation}</p>
-          </div>
-        ) : !display ? (
+        {!display ? (
           <p className="text-xs text-muted-foreground/70 italic">
             Select a map element to view details.
           </p>
