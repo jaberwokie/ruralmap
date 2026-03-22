@@ -307,6 +307,7 @@ type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 
 
 type MapPointMarker = L.Marker & {
   __pointKind?: PointMarkerKind;
+  __providerType?: 'hospital' | 'clinic';
   __baseZIndexOffset?: number;
   __priorityState?: 'default' | 'hovered' | 'selected';
 };
@@ -341,18 +342,37 @@ const getClusterBadgeLabel = (count: number) => (count > 99 ? '99+' : String(cou
 
 const createPointClusterIcon = (markers: L.Marker[]) => {
   const pointMarkers = markers as MapPointMarker[];
-  const providerCount = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations').length;
+  const providerMarkers = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations');
+  const providerCount = providerMarkers.length;
   const serviceCount = pointMarkers.filter((marker) => marker.__pointKind === 'servicePresence').length;
+  const hospitalCount = providerMarkers.filter((marker) => marker.__providerType === 'hospital').length;
+  const clinicCount = providerMarkers.filter((marker) => marker.__providerType === 'clinic').length;
   const totalCount = providerCount + serviceCount;
+  const providerMixed = hospitalCount > 0 && clinicCount > 0;
   const isMixed = providerCount > 0 && serviceCount > 0;
-  const primaryKind: PointMarkerKind = serviceCount > providerCount ? 'servicePresence' : 'providerLocations';
   const iconSize = 24;
-  const primaryPin = getSharedPinSvgMarkup(primaryKind, 14);
-  const mixedTypeAccent = isMixed
+  const primaryPinColor = serviceCount > 0 && providerCount === 0
+    ? 'hsl(var(--service-presence))'
+    : hospitalCount > 0 && clinicCount === 0
+      ? 'hsl(var(--hospital))'
+      : clinicCount > 0 && hospitalCount === 0
+        ? 'hsl(var(--clinic))'
+        : serviceCount >= providerCount
+          ? 'hsl(var(--service-presence))'
+          : 'hsl(var(--clinic))';
+  const primaryPin = getSharedPinSvgMarkup('providerLocations', 14, { color: primaryPinColor });
+  const compositionAccent = isMixed
     ? `
       <span style="position:absolute;left:1px;bottom:2px;display:inline-flex;align-items:center;gap:2px;padding:1px 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));z-index:2;">
         <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--clinic));display:block;"></span>
+        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--service-presence));display:block;"></span>
+      </span>
+    `.trim()
+    : providerMixed
+      ? `
+      <span style="position:absolute;left:1px;bottom:2px;display:inline-flex;align-items:center;gap:2px;padding:1px 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));z-index:2;">
         <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--hospital));display:block;"></span>
+        <span style="width:4px;height:4px;border-radius:999px;background:hsl(var(--clinic));display:block;"></span>
       </span>
     `.trim()
     : '';
@@ -360,7 +380,7 @@ const createPointClusterIcon = (markers: L.Marker[]) => {
   const html = `
     <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:block;">
       <span style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;z-index:1;">${primaryPin}</span>
-      ${mixedTypeAccent}
+      ${compositionAccent}
       <span style="position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:9px;font-weight:600;line-height:1;display:inline-flex;align-items:center;justify-content:center;text-align:center;z-index:3;">${getClusterBadgeLabel(totalCount)}</span>
     </div>
   `.trim();
@@ -1151,6 +1171,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
           : MAP_PIN_VISUALS.providerLocations.size;
         const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
         const markerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
+          color: facility.type === 'hospital' ? 'hsl(var(--hospital))' : 'hsl(var(--clinic))',
           opacity: markerOpacity,
         });
 
@@ -1169,6 +1190,7 @@ const MapView = ({ facilities, allFacilities, layers, countyFilters, serviceCate
         }) as MapPointMarker;
 
         marker.__pointKind = 'providerLocations';
+        marker.__providerType = facility.type === 'hospital' ? 'hospital' : 'clinic';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
         applyMarkerPriority(marker, 'default');
 
