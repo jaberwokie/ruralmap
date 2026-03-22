@@ -99,10 +99,11 @@ const SECTION_META = {
 } as const;
 
 const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
-const ROW_CLASSNAME = 'group flex min-h-8 items-center gap-2.5 rounded-md px-2 py-1 transition-colors duration-150 hover:bg-secondary';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-9 items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:border-border/70 hover:bg-secondary/70';
+const LEGEND_ROW_CLASSNAME = 'flex items-center gap-2 rounded-md px-2 py-1 text-muted-foreground';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
 const LEGEND_LABEL_CLASSNAME = 'text-[11px] text-muted-foreground';
-const LEGEND_BLOCK_CLASSNAME = 'mt-2 space-y-1.5 border-t border-border/60 pt-2';
+const LEGEND_BLOCK_CLASSNAME = 'mt-2 space-y-1 border-t border-border/60 pt-2';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
   <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-60' : ''}`}>
@@ -459,7 +460,7 @@ const Sidebar = ({
     leadingVisual?: ReactNode;
   }) => (
     <div
-      className={ROW_CLASSNAME}
+      className={TOGGLE_ROW_CLASSNAME}
       data-tutorial={dataTutorial}
     >
       <button
@@ -496,7 +497,7 @@ const Sidebar = ({
     leadingVisual?: ReactNode;
     sampleClassName?: string;
   }) => (
-    <div className={`flex items-center gap-2 px-2 py-0.5 ${dimmed ? 'opacity-60' : ''}`}>
+    <div className={`${LEGEND_ROW_CLASSNAME} ${dimmed ? 'opacity-60' : ''}`}>
       {leadingVisual ?? renderLayerIcon(icon, iconClassName, dimmed)}
       <span className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</span>
       <div className="ml-2 flex w-[5.75rem] shrink-0 items-center justify-end gap-1">
@@ -525,7 +526,7 @@ const Sidebar = ({
     helpKey?: string;
     dimmed?: boolean;
   }) => (
-    <div className={`${dimmed ? 'opacity-60' : ''} px-2 py-0.5`}>
+    <div className={`${dimmed ? 'opacity-60' : ''} rounded-md px-2 py-1 text-muted-foreground`}>
       <div className="flex items-center gap-2">
         {renderLayerIcon(icon, iconClassName, dimmed)}
         <div className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</div>
@@ -623,8 +624,8 @@ const Sidebar = ({
           <div className="space-y-3">
             <div className="space-y-3">
               <div>
-                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Type</div>
-                <div className="flex gap-1.5">
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Facility Type</div>
+                <div className="grid grid-cols-2 gap-1.5">
                   {[
                     { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
                     { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },
@@ -637,14 +638,14 @@ const Sidebar = ({
                         key={value}
                         type="button"
                         onClick={() => toggleTypeFilter(value)}
-                        className={`flex items-center gap-1.5 rounded px-2.5 py-1 text-[11px] transition-all duration-150 ${
+                        className={`flex h-7 items-center justify-start gap-1.5 rounded-md border px-2 text-[11px] transition-colors duration-150 ${
                           active
-                            ? 'bg-foreground font-medium text-background'
-                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                            ? 'border-border bg-secondary font-medium text-foreground'
+                            : 'border-transparent bg-secondary/70 text-muted-foreground hover:border-border hover:text-foreground'
                         }`}
                       >
-                        <span className={`h-1.5 w-1.5 rounded-full ${color} ${active ? 'opacity-100' : 'opacity-50'}`} />
-                        {label}
+                        <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${color} ${active ? 'opacity-100' : 'opacity-60'}`} />
+                        <span className="truncate">{label}</span>
                       </button>
                     );
                   })}
@@ -697,14 +698,6 @@ const Sidebar = ({
                               : key === 'behavioralHealth'
                                 ? 'toggle-behavioral-health'
                                 : undefined,
-                          leadingVisual:
-                            key === 'services'
-                              ? renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services })
-                              : key === 'behavioralHealth'
-                                ? renderPinVisual({ pin: 'behavioralHealth', dimmed: !layers.behavioralHealth })
-                              : key === 'serviceLocations'
-                                ? renderProviderTypeVisual(!layers.serviceLocations)
-                                : undefined,
                         });
                       })}
 
@@ -731,9 +724,8 @@ const Sidebar = ({
                                 iconClassName: services.colorClassName,
                                 helpKey: 'servicesLegend',
                                 dimmed: !layers.services,
-                                leadingVisual: renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services }),
-                                sample: null,
-                                sampleClassName: 'hidden',
+                                sample: renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services }),
+                                sampleClassName: 'flex flex-shrink-0 items-center justify-end',
                               })}
                               {renderLegendRow({
                                 label: behavioralHealth.label,
@@ -741,9 +733,8 @@ const Sidebar = ({
                                 iconClassName: behavioralHealth.colorClassName,
                                 helpKey: 'behavioralHealthLegend',
                                 dimmed: !layers.behavioralHealth,
-                                leadingVisual: renderPinVisual({ pin: 'behavioralHealth', dimmed: !layers.behavioralHealth }),
-                                sample: null,
-                                sampleClassName: 'hidden',
+                                sample: renderPinVisual({ pin: 'behavioralHealth', dimmed: !layers.behavioralHealth }),
+                                sampleClassName: 'flex flex-shrink-0 items-center justify-end',
                               })}
                               {renderLegendRow({
                                 label: providerLocations.label,
