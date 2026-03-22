@@ -20,23 +20,23 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   serviceLocations: {
     label: 'Provider Locations',
     explanation:
-      'Shows mapped hospitals, clinics, and provider sites across the rural network. These points show where providers are located on the map, not where field engagement coverage is assigned.',
+      'Shows mapped provider locations across the rural network. Includes hospitals (red) and clinics (blue). These points show where clinical provider sites are located on the map, not where field engagement coverage is assigned.',
   },
   serviceLocationsLegend: {
     label: 'Provider Locations Legend',
     explanation:
-      'The blue pin sample shows the symbol used for mapped provider sites on the map. Each pin marks a provider location at its actual mapped position.',
+      'The Provider Locations legend groups both provider types in one row: red pins represent hospitals and blue pins represent clinics. Both symbols mark clinical provider sites at their mapped positions.',
   },
   services: {
     label: 'Service Presence',
     explanation:
-      'Shows each mapped community service as an individual point across Nevada, with subtle overlapping halos that make dense service areas read heavier at a glance. The layer stays lighter and softer than Provider Locations so it reads as service field presence rather than primary anchors.',
-    shortExplanation: 'Shows each service point plus a soft density halo so concentration and scarcity read quickly.',
+      'Represents community-based service locations, separate from clinical provider sites. Each location is shown as an individual green point, with subtle overlapping halos that make dense service areas read heavier at a glance.',
+    shortExplanation: 'Shows community-based service locations as separate green points with a soft density halo.',
   },
   servicesLegend: {
     label: 'Service Presence Legend',
     explanation:
-      'The red pin sample shows the symbol used for mapped service-presence points. It marks where service activity is represented on the map, separate from provider site pins.',
+      'The green pin sample shows the symbol used for mapped service-presence points. It marks community-based service locations on the map, separate from hospital and clinic provider site pins.',
   },
   operationalCoverage: {
     label: 'Response Capability',

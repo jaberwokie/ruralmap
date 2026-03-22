@@ -108,6 +108,31 @@ const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = fals
   </span>
 );
 
+const renderPinVisual = ({
+  pin,
+  size = 12,
+  color,
+  dimmed = false,
+}: {
+  pin: keyof typeof MAP_PIN_VISUALS;
+  size?: number;
+  color?: string;
+  dimmed?: boolean;
+}) => (
+  <span
+    aria-hidden="true"
+    className={`flex items-center justify-center ${dimmed ? 'opacity-60' : ''}`}
+    dangerouslySetInnerHTML={{ __html: getSharedPinSvgMarkup(pin, size, color ? { color } : undefined) }}
+  />
+);
+
+const renderProviderTypeVisual = (dimmed = false, size = 12) => (
+  <span className={`flex items-center gap-0.5 ${dimmed ? 'opacity-60' : ''}`} aria-hidden="true">
+    {renderPinVisual({ pin: 'providerLocations', size, color: 'hsl(var(--hospital))' })}
+    {renderPinVisual({ pin: 'providerLocations', size, color: 'hsl(var(--clinic))' })}
+  </span>
+);
+
 const HelpIconTooltip = ({
   helpKey,
 }: {
@@ -428,6 +453,7 @@ const Sidebar = ({
     onCheckedChange: (checked: boolean) => void;
     helpKey?: string;
     dataTutorial?: string;
+    leadingVisual?: ReactNode;
   }) => (
     <div
       className={ROW_CLASSNAME}
@@ -438,7 +464,7 @@ const Sidebar = ({
         onClick={() => onCheckedChange(!checked)}
         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
       >
-        {renderLayerIcon(icon, iconClassName, !checked)}
+        {leadingVisual ?? renderLayerIcon(icon, iconClassName, !checked)}
         <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
       </button>
       <div className="flex items-center gap-1">
@@ -455,6 +481,8 @@ const Sidebar = ({
     sample,
     helpKey,
     dimmed = false,
+    leadingVisual,
+    sampleClassName,
   }: {
     label: string;
     icon: LucideIcon;
@@ -462,12 +490,14 @@ const Sidebar = ({
     sample: ReactNode;
     helpKey?: string;
     dimmed?: boolean;
+    leadingVisual?: ReactNode;
+    sampleClassName?: string;
   }) => (
     <div className={`flex items-center gap-2 px-2 py-0.5 ${dimmed ? 'opacity-60' : ''}`}>
-      {renderLayerIcon(icon, iconClassName, dimmed)}
+      {leadingVisual ?? renderLayerIcon(icon, iconClassName, dimmed)}
       <span className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</span>
       {helpKey ? renderHelpIcon(helpKey) : null}
-      <div className="flex h-4 w-10 flex-shrink-0 items-center justify-end">{sample}</div>
+      <div className={sampleClassName ?? 'flex h-4 w-10 flex-shrink-0 items-center justify-end'}>{sample}</div>
     </div>
   );
 
@@ -653,6 +683,12 @@ const Sidebar = ({
                           onCheckedChange: () => onToggleLayer(key),
                           helpKey: key,
                           dataTutorial: key === 'services' ? 'toggle-services' : undefined,
+                          leadingVisual:
+                            key === 'services'
+                              ? renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services })
+                              : key === 'serviceLocations'
+                                ? renderProviderTypeVisual(!layers.serviceLocations)
+                                : undefined,
                         });
                       })}
 
@@ -678,13 +714,9 @@ const Sidebar = ({
                                 iconClassName: services.colorClassName,
                                 helpKey: 'servicesLegend',
                                 dimmed: !layers.services,
-                                sample: (
-                                  <span
-                                    aria-hidden="true"
-                                    className={MAP_PIN_VISUALS.servicePresence.colorClassName}
-                                    dangerouslySetInnerHTML={{ __html: getSharedPinSvgMarkup('servicePresence', 12) }}
-                                  />
-                                ),
+                                leadingVisual: renderPinVisual({ pin: 'servicePresence', dimmed: !layers.services }),
+                                sample: null,
+                                sampleClassName: 'hidden',
                               })}
                               {renderLegendRow({
                                 label: providerLocations.label,
@@ -693,12 +725,19 @@ const Sidebar = ({
                                 helpKey: 'serviceLocationsLegend',
                                 dimmed: !layers.serviceLocations,
                                 sample: (
-                                  <span
-                                    aria-hidden="true"
-                                    className={MAP_PIN_VISUALS.providerLocations.colorClassName}
-                                    dangerouslySetInnerHTML={{ __html: getSharedPinSvgMarkup('providerLocations', 12) }}
-                                  />
+                                  <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
+                                    <span className="flex items-center gap-0.5">
+                                      {renderPinVisual({ pin: 'providerLocations', size: 11, color: 'hsl(var(--hospital))', dimmed: !layers.serviceLocations })}
+                                      <span>Hospital</span>
+                                    </span>
+                                    <span className="flex items-center gap-0.5">
+                                      {renderPinVisual({ pin: 'providerLocations', size: 11, color: 'hsl(var(--clinic))', dimmed: !layers.serviceLocations })}
+                                      <span>Clinic</span>
+                                    </span>
+                                  </div>
                                 ),
+                                leadingVisual: renderProviderTypeVisual(!layers.serviceLocations),
+                                sampleClassName: 'flex flex-shrink-0 items-center justify-end',
                               })}
                             </>
                           );
