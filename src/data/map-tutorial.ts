@@ -1,10 +1,10 @@
 export type MapTutorialStepKey =
+  | 'search'
+  | 'facilityFilters'
+  | 'coreMap'
+  | 'providerLocations'
   | 'map'
-  | 'legend'
-  | 'coverageRadius'
-  | 'engagementGap'
-  | 'serviceNetwork'
-  | 'usingMap';
+  | 'detailsPanel';
 
 export interface MapTutorialStep {
   key: MapTutorialStepKey;
@@ -15,47 +15,47 @@ export interface MapTutorialStep {
 }
 
 export const MAP_TUTORIAL_STORAGE_KEY = 'rural-operations-map-tutorial-complete';
-export const MAP_TUTORIAL_STORAGE_VERSION = 'v3';
+export const MAP_TUTORIAL_STORAGE_VERSION = 'v4';
 export const MAP_TUTORIAL_COMPLETION_VALUE = `completed:${MAP_TUTORIAL_STORAGE_VERSION}`;
 
 export const isMapTutorialCompleted = (value: string | null) => value === MAP_TUTORIAL_COMPLETION_VALUE;
 
 export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
   {
+    key: 'search',
+    title: 'Find locations quickly',
+    text: 'Use search to jump straight to a facility, city, or county without scanning the full map.',
+    selectors: ['[data-tutorial="search-bar"]'],
+  },
+  {
+    key: 'facilityFilters',
+    title: 'Filter by facility type',
+    text: 'Use these chips to narrow the map to Hospital, Clinic, Service, or Behavioral Health locations.',
+    selectors: ['[data-tutorial="facility-filters"]'],
+  },
+  {
+    key: 'coreMap',
+    title: 'Control what appears on the map',
+    text: 'This section turns major map layers on and off without changing the data underneath.',
+    selectors: ['[data-tutorial="section-core-map"]'],
+  },
+  {
+    key: 'providerLocations',
+    title: 'Turn provider locations on or off',
+    text: 'Provider Locations controls hospital and clinic pins. Red marks hospitals and blue marks clinics.',
+    selectors: ['[data-tutorial="toggle-provider-locations"]'],
+  },
+  {
     key: 'map',
-    title: 'What you’re looking at',
-    text: 'This map shows where services exist, how far they reach, and where people are not being reached.',
+    title: 'Explore clusters and locations',
+    text: 'Zoom and pan here to inspect clusters, separate nearby markers, and explore coverage across the state.',
     selectors: ['[data-tutorial="map-region"]'],
   },
   {
-    key: 'legend',
-    title: 'Mapped categories',
-    text: 'Red = hospital. Blue = clinic. Green = service. Purple = behavioral health.',
-    selectors: ['[data-tutorial="legend"]'],
-  },
-  {
-    key: 'coverageRadius',
-    title: 'Coverage radius',
-    text: 'These circles show how far providers can realistically reach. Outside them, access drops off.',
-    selectors: ['[data-tutorial="toggle-coverage-radius"]', '[data-tutorial="map-region"]'],
-  },
-  {
-    key: 'engagementGap',
-    title: 'Engagement gaps',
-    text: 'These areas show where people are not being reached, even when services are nearby.',
-    selectors: ['[data-tutorial="toggle-engagement-gap"]', '[data-tutorial="map-region"]'],
-  },
-  {
-    key: 'serviceNetwork',
-    title: 'Service and behavioral health',
-    text: 'Green markers show general community support locations. Purple markers show behavioral health locations drawn separately from the same source database.',
-    selectors: ['[data-tutorial="toggle-services"]', '[data-tutorial="toggle-behavioral-health"]', '[data-tutorial="map-region"]'],
-  },
-  {
-    key: 'usingMap',
-    title: 'Using the map',
-    text: 'Use this to decide where to deploy staff, expand services, or fix access gaps.',
-    selectors: ['[data-tutorial="sidebar"]', '[data-tutorial="map-region"]'],
+    key: 'detailsPanel',
+    title: 'Open details here',
+    text: 'When you click a marker or map layer, its details appear in this panel for closer review.',
+    selectors: ['[data-tutorial="details-panel"]'],
     footer: 'This is a decision tool, not a directory.',
   },
 ];
