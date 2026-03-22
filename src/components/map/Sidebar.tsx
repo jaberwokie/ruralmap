@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect } from 'react';
+import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
@@ -57,13 +57,18 @@ interface SidebarProps {
 
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
-  { key: 'services' as const, label: 'Service Presence', color: 'bg-primary' },
+  { key: 'services' as const, label: 'Service Presence', color: 'bg-service-presence' },
   { key: 'serviceLocations' as const, label: 'Provider Locations', color: 'bg-foreground' },
-  { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-teal-600' },
-  { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', color: 'bg-amber-500' },
-  { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', color: 'bg-purple-500' },
-  { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-orange-500' },
-];
+  { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-response-active' },
+  { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', color: 'bg-staffing-medium' },
+  { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', color: 'bg-utilization-mid' },
+  { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-engagement-gap' },
+] as const;
+
+const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
+const ROW_CLASSNAME = 'group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-secondary';
+const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
+const LEGEND_LABEL_CLASSNAME = 'text-[11px] text-muted-foreground';
 
 const HelpIconTooltip = ({
   helpKey,
@@ -90,7 +95,7 @@ const HelpIconTooltip = ({
   const button = (
     <button
       type="button"
-      className="p-1 text-muted-foreground/40 transition-colors hover:text-muted-foreground active:scale-[0.98]"
+      className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       onMouseEnter={showTooltip}
       onMouseLeave={hideTooltip}
       onTouchStart={showTooltip}
@@ -114,7 +119,7 @@ const HelpIconTooltip = ({
   return (
     <Tooltip open={open} onOpenChange={setOpen}>
       <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right" align="start" sideOffset={10} className="text-[11px] leading-relaxed">
+      <TooltipContent side="right" align="start" sideOffset={10} className="max-w-56 text-[11px] leading-relaxed">
         {tooltip}
       </TooltipContent>
     </Tooltip>
@@ -339,7 +344,7 @@ const Sidebar = ({
     <button
       type="button"
       onClick={onToggle}
-      className="flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
+      className={SECTION_HEADER_CLASSNAME}
     >
       {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
       <span>{label}</span>
@@ -362,7 +367,7 @@ const Sidebar = ({
     dataTutorial?: string;
   }) => (
     <div
-      className="group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/70"
+      className={ROW_CLASSNAME}
       data-tutorial={dataTutorial}
     >
       <button
@@ -370,7 +375,7 @@ const Sidebar = ({
         onClick={() => onCheckedChange(!checked)}
         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
       >
-        <span className={`h-2.5 w-2.5 rounded-full ${indicatorClassName} ${checked ? 'opacity-100' : 'opacity-25'} transition-opacity duration-200`} />
+        <span className={`h-2.5 w-2.5 rounded-full ${indicatorClassName} ${checked ? 'opacity-100' : 'opacity-50'} transition-opacity duration-200`} />
         <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
       </button>
       <div className="flex items-center gap-1">
@@ -386,31 +391,31 @@ const Sidebar = ({
     dimmed = false,
   }: {
     label: string;
-    sample: React.ReactNode;
+    sample: ReactNode;
     dimmed?: boolean;
   }) => (
-    <div className={`flex items-center gap-2 px-2 py-1 ${dimmed ? 'opacity-45' : 'opacity-100'}`}>
+    <div className={`flex items-center gap-2 px-2 py-1 ${dimmed ? 'opacity-60' : ''}`}>
       <div className="flex h-4 w-10 items-center justify-start">{sample}</div>
-      <span className="text-[11px] text-muted-foreground">{label}</span>
+      <span className={LEGEND_LABEL_CLASSNAME}>{label}</span>
     </div>
   );
 
   const renderLegendGradient = ({
     label,
-    gradient,
+    gradientStyle,
     low,
     high,
     dimmed = false,
   }: {
     label: string;
-    gradient: string;
+    gradientStyle: CSSProperties;
     low: string;
     high: string;
     dimmed?: boolean;
   }) => (
-    <div className={`${dimmed ? 'opacity-45' : 'opacity-100'} px-2 py-1`}>
-      <div className="text-[11px] text-muted-foreground">{label}</div>
-      <div className="mt-1.5 h-2 w-full rounded-sm" style={{ background: gradient }} />
+    <div className={`${dimmed ? 'opacity-60' : ''} px-2 py-1`}>
+      <div className={LEGEND_LABEL_CLASSNAME}>{label}</div>
+      <div className="mt-1.5 h-2 w-full rounded-sm" style={gradientStyle} />
       <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
         <span>{low}</span>
         <span>{high}</span>
@@ -418,9 +423,26 @@ const Sidebar = ({
     </div>
   );
 
+  const renderLegendGroup = ({
+    title,
+    open,
+    onToggle,
+    children,
+  }: {
+    title: string;
+    open: boolean;
+    onToggle: () => void;
+    children: ReactNode;
+  }) => (
+    <div>
+      {renderSectionHeader(title, open, onToggle)}
+      {open ? <div className={SECTION_CONTENT_CLASSNAME}>{children}</div> : null}
+    </div>
+  );
+
   return (
     <TooltipProvider delayDuration={120}>
-    <div data-tutorial="sidebar" className="w-full md:w-80 h-full bg-card flex flex-col overflow-y-auto" style={{ boxShadow: 'var(--shadow-panel)' }}>
+    <div data-tutorial="sidebar" className="flex h-full w-full flex-col overflow-y-auto bg-card shadow-[var(--shadow-panel)] md:w-80">
       {/* Header */}
       <div className="p-4 pb-3">
         <div className="flex items-start justify-between gap-3">
@@ -432,7 +454,7 @@ const Sidebar = ({
             <button
               type="button"
               onClick={onReplayTutorial}
-              className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary active:scale-[0.98]"
+              className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               Replay Tutorial
             </button>
@@ -551,7 +573,7 @@ const Sidebar = ({
               </div>
             </div>
 
-            <div className="border-t border-border/70 pt-3">
+            <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
                 <div>
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
@@ -889,127 +911,123 @@ const Sidebar = ({
                   )}
                 </div>
               </div>
-            </div>
+                  <div className="border-t border-border pt-3" data-tutorial="legend">
+                {renderLegendGroup({
+                  title: 'CORE MAP',
+                  open: coreMapOpen,
+                  onToggle: toggleCoreMap,
+                  children: (
+                    <>
+                      {renderLegendRow({
+                        label: 'County Boundaries',
+                        dimmed: !layers.counties,
+                        sample: <div className="h-px w-8 bg-muted-foreground" />,
+                      })}
+                      {renderLegendRow({
+                        label: 'Service Presence',
+                        dimmed: !layers.services,
+                        sample: (
+                          <div className="relative h-4 w-8">
+                            <span className="absolute left-1 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-service-presence/20" />
+                            <span className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-service-presence" />
+                          </div>
+                        ),
+                      })}
+                      {renderLegendRow({
+                        label: 'Provider Locations',
+                        dimmed: !layers.serviceLocations,
+                        sample: (
+                          <div className="flex items-center gap-1">
+                            <span className="h-3.5 w-3.5 rounded-full border border-background bg-hospital shadow-sm" />
+                            <span className="h-3 w-3 rounded-full border border-background bg-clinic shadow-sm" />
+                          </div>
+                        ),
+                      })}
+                    </>
+                  ),
+                })}
+
+                {renderLegendGroup({
+                  title: 'OPERATIONS',
+                  open: operationsOpen,
+                  onToggle: toggleOperations,
+                  children: (
+                    <>
+                      {renderLegendRow({
+                        label: 'Response Capability',
+                        dimmed: !layers.operationalCoverage,
+                        sample: (
+                          <div className="flex items-center gap-1">
+                            <span className="h-3 w-3 rounded-sm border border-response-active/60 bg-response-active/25" />
+                            <span className="h-3 w-3 rounded-sm border border-dashed border-response-scheduled/50 bg-response-scheduled/10" />
+                            <span className="h-3 w-3 rounded-sm border border-dashed border-response-remote/40 bg-response-remote/10" />
+                          </div>
+                        ),
+                      })}
+                      {renderLegendRow({
+                        label: 'Staffing Capacity & Load',
+                        dimmed: !layers.fteCapacity,
+                        sample: (
+                          <div className="flex items-center gap-1">
+                            <span className="h-2.5 w-2.5 rounded-full bg-staffing-low" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-staffing-medium" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-staffing-high" />
+                          </div>
+                        ),
+                      })}
+                      {renderLegendGradient({
+                        label: 'Engagement Gap',
+                        dimmed: !layers.engagementGap,
+                        gradientStyle: { background: 'linear-gradient(to right, hsl(var(--engagement-early)), hsl(var(--engagement-watch)), hsl(var(--engagement-gap)))' },
+                        low: 'Low',
+                        high: 'High',
+                      })}
+                    </>
+                  ),
+                })}
+
+                {renderLegendGroup({
+                  title: 'UTILIZATION',
+                  open: utilizationOpen,
+                  onToggle: toggleUtilization,
+                  children: renderLegendGradient({
+                    label: 'Service Utilization Intensity',
+                    dimmed: !layers.utilizationIntensity,
+                    gradientStyle: { background: 'linear-gradient(to right, hsl(var(--utilization-low) / 0.5), hsl(var(--utilization-mid) / 0.7), hsl(var(--utilization-high) / 0.9))' },
+                    low: 'Low',
+                    high: 'High',
+                  }),
+                })}
+
+                {renderLegendGroup({
+                  title: 'ACCESS',
+                  open: accessOpen,
+                  onToggle: toggleAccess,
+                  children: (
+                    <>
+                      {renderLegendRow({
+                        label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
+                        dimmed: !coverageRadius,
+                        sample: (
+                          <div className="relative h-4 w-8">
+                            <span className="absolute left-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-radius-stroke/60 bg-radius-stroke/10" />
+                          </div>
+                        ),
+                      })}
+                      {renderLegendRow({
+                        label: 'Access Gaps (Outside Coverage Radius)',
+                        dimmed: !coverageGaps,
+                        sample: <span className="h-3 w-6 rounded-sm border border-destructive/30 bg-destructive/15" />,
+                      })}
+                    </>
+                  ),
+                })}
+              </div>
           </div>
         )}
       </div>
 
-      {/* Legend */}
-      <div className="px-4 pb-3" data-tutorial="legend">
-        <div className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-          Legend
-        </div>
-        <div className="space-y-2.5 text-xs">
-          <div>
-            {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
-            {coreMapOpen && (
-              <div className="mt-0.5 space-y-0.5">
-                {renderLegendRow({
-                  label: 'County Boundaries',
-                  dimmed: !layers.counties,
-                  sample: <div className="h-px w-8 bg-muted-foreground" />,
-                })}
-                {renderLegendRow({
-                  label: 'Service Presence',
-                  dimmed: !layers.services,
-                  sample: (
-                    <div className="relative h-4 w-8">
-                      <span className="absolute left-1 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full" style={{ background: 'hsla(210, 28%, 62%, 0.18)' }} />
-                      <span className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full" style={{ background: 'hsl(var(--service-presence))' }} />
-                    </div>
-                  ),
-                })}
-                {renderLegendRow({
-                  label: 'Provider Locations',
-                  dimmed: !layers.serviceLocations,
-                  sample: (
-                    <div className="flex items-center gap-1">
-                      <span className="h-3.5 w-3.5 rounded-full" style={{ background: 'hsl(0, 72%, 51%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15), 0 0 5px hsla(0, 72%, 51%, 0.35)' }} />
-                      <span className="h-3 w-3 rounded-full" style={{ background: 'hsl(217, 91%, 60%)', border: '1.5px solid white', boxShadow: '0 0 0 1px hsla(0, 0%, 0%, 0.15)' }} />
-                    </div>
-                  ),
-                })}
-              </div>
-            )}
-          </div>
-
-          <div>
-            {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
-            {operationsOpen && (
-              <div className="mt-0.5 space-y-0.5">
-                {renderLegendRow({
-                  label: 'Response Capability',
-                  dimmed: !layers.operationalCoverage,
-                  sample: (
-                    <div className="flex items-center gap-1">
-                      <span className="h-3 w-3 rounded-sm" style={{ background: 'hsla(174, 50%, 45%, 0.25)', border: '1px solid hsla(174, 50%, 40%, 0.6)' }} />
-                      <span className="h-3 w-3 rounded-sm" style={{ background: 'hsla(174, 40%, 55%, 0.12)', border: '1px dashed hsla(174, 40%, 50%, 0.45)' }} />
-                      <span className="h-3 w-3 rounded-sm" style={{ background: 'hsla(220, 10%, 70%, 0.10)', border: '1px dashed hsla(220, 10%, 60%, 0.25)' }} />
-                    </div>
-                  ),
-                })}
-                {renderLegendRow({
-                  label: 'Staffing Capacity & Load',
-                  dimmed: !layers.fteCapacity,
-                  sample: (
-                    <div className="flex items-center gap-1">
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'hsl(24, 95%, 53%)' }} />
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'hsl(44, 96%, 61%)' }} />
-                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: 'hsl(142, 71%, 45%)' }} />
-                    </div>
-                  ),
-                })}
-                {renderLegendGradient({
-                  label: 'Engagement Gap',
-                  dimmed: !layers.engagementGap,
-                  gradient: 'linear-gradient(to right, hsl(200, 70%, 55%), hsl(48, 90%, 50%), hsl(30, 90%, 50%))',
-                  low: 'Low',
-                  high: 'High',
-                })}
-              </div>
-            )}
-          </div>
-
-          <div>
-            {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
-            {utilizationOpen && (
-              <div className="mt-0.5 space-y-0.5">
-                {renderLegendGradient({
-                  label: 'Service Utilization Intensity',
-                  dimmed: !layers.utilizationIntensity,
-                  gradient: 'linear-gradient(to right, hsla(270, 30%, 75%, 0.5), hsla(270, 45%, 55%, 0.7), hsla(270, 60%, 40%, 0.9))',
-                  low: 'Low',
-                  high: 'High',
-                })}
-              </div>
-            )}
-          </div>
-
-          <div>
-            {renderSectionHeader('ACCESS', accessOpen, toggleAccess)}
-            {accessOpen && (
-              <div className="mt-0.5 space-y-0.5">
-                {renderLegendRow({
-                  label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
-                  dimmed: !coverageRadius,
-                  sample: (
-                    <div className="relative h-4 w-8">
-                      <span className="absolute left-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full" style={{ background: 'hsla(200, 50%, 50%, 0.10)', border: '1px solid hsla(200, 50%, 50%, 0.6)' }} />
-                    </div>
-                  ),
-                })}
-                {renderLegendRow({
-                  label: 'Access Gaps (Outside Coverage Radius)',
-                  dimmed: !coverageGaps,
-                  sample: <span className="h-3 w-6 rounded-sm" style={{ background: 'hsla(0, 84%, 60%, 0.14)', border: '1px solid hsla(0, 84%, 60%, 0.3)' }} />,
-                })}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="border-t border-border mx-4" />
+      <div className="mx-4 border-t border-border" />
 
       {/* CSV Import */}
       <div className="px-4 pt-3">
