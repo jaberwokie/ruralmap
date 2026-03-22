@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -54,19 +54,58 @@ interface SidebarProps {
 }
 
 const LAYER_CONFIG = [
-  { key: 'counties' as const, label: 'County Boundaries', color: 'bg-muted-foreground' },
-  { key: 'services' as const, label: 'Service Presence', color: 'bg-service-presence' },
-  { key: 'serviceLocations' as const, label: 'Provider Locations', color: 'bg-foreground' },
-  { key: 'operationalCoverage' as const, label: 'Response Capability', color: 'bg-response-active' },
-  { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', color: 'bg-staffing-medium' },
-  { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', color: 'bg-utilization-mid' },
-  { key: 'engagementGap' as const, label: 'Engagement Gap', color: 'bg-engagement-gap' },
+  { key: 'counties' as const, label: 'County Boundaries', colorClassName: 'text-muted-foreground', icon: MapIcon },
+  { key: 'services' as const, label: 'Service Presence', colorClassName: 'text-service-presence', icon: Layers3 },
+  { key: 'serviceLocations' as const, label: 'Provider Locations', colorClassName: 'text-foreground', icon: MapPin },
+  { key: 'operationalCoverage' as const, label: 'Response Capability', colorClassName: 'text-response-active', icon: Radio },
+  { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', colorClassName: 'text-staffing-medium', icon: Users },
+  { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', colorClassName: 'text-utilization-mid', icon: Activity },
+  { key: 'engagementGap' as const, label: 'Engagement Gap', colorClassName: 'text-engagement-gap', icon: BarChart3 },
 ] as const;
+
+const ACCESS_LAYER_CONFIG = {
+  coverageRadius: {
+    label: 'Provider Coverage Radius',
+    colorClassName: 'text-primary',
+    icon: Circle,
+  },
+  coverageGaps: {
+    label: 'Access Gaps (Outside Coverage Radius)',
+    colorClassName: 'text-destructive',
+    icon: TriangleAlert,
+  },
+} as const;
+
+const SECTION_META = {
+  coreMap: {
+    question: 'What exists here?',
+    helper: 'Base geography and mapped network locations for fast orientation.',
+  },
+  operations: {
+    question: 'How can teams respond?',
+    helper: 'Operational reach, staffing deployment, and where field support is stretched.',
+  },
+  utilization: {
+    question: 'Where is care used most?',
+    helper: 'County-level intensity to show where demand is concentrating.',
+  },
+  access: {
+    question: 'Where does geographic reach fall short?',
+    helper: 'Distance-based provider access and the uncovered areas outside that range.',
+  },
+} as const;
 
 const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
 const ROW_CLASSNAME = 'group flex items-center gap-2 rounded-md px-2 py-1.5 transition-colors duration-150 hover:bg-secondary';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
 const LEGEND_LABEL_CLASSNAME = 'text-[11px] text-muted-foreground';
+const LEGEND_BLOCK_CLASSNAME = 'mt-2 space-y-1.5 border-t border-border/60 pt-2';
+
+const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
+  <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-60' : ''}`}>
+    <Icon className={`h-3.5 w-3.5 stroke-[1.75] ${colorClassName}`} />
+  </span>
+);
 
 const HelpIconTooltip = ({
   helpKey,
@@ -352,6 +391,13 @@ const Sidebar = ({
 
   const getLayerConfig = (key: keyof LayerState) => LAYER_CONFIG.find((layer) => layer.key === key)!;
 
+  const renderSectionIntro = (question: string, helper: string) => (
+    <div className="space-y-0.5 px-2 pb-1">
+      <p className="text-[11px] font-medium text-foreground">{question}</p>
+      <p className="text-[10px] leading-relaxed text-muted-foreground">{helper}</p>
+    </div>
+  );
+
   const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => (
     <button
       type="button"
@@ -365,14 +411,16 @@ const Sidebar = ({
 
   const renderLayerToggleRow = ({
     label,
-    indicatorClassName,
+    icon,
+    iconClassName,
     checked,
     onCheckedChange,
     helpKey,
     dataTutorial,
   }: {
     label: string;
-    indicatorClassName: string;
+    icon: LucideIcon;
+    iconClassName: string;
     checked: boolean;
     onCheckedChange: (checked: boolean) => void;
     helpKey?: string;
@@ -387,7 +435,7 @@ const Sidebar = ({
         onClick={() => onCheckedChange(!checked)}
         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
       >
-        <span className={`h-2.5 w-2.5 rounded-full ${indicatorClassName} ${checked ? 'opacity-100' : 'opacity-50'} transition-opacity duration-200`} />
+        {renderLayerIcon(icon, iconClassName, !checked)}
         <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
       </button>
       <div className="flex items-center gap-1">
@@ -399,56 +447,51 @@ const Sidebar = ({
 
   const renderLegendRow = ({
     label,
+    icon,
+    iconClassName,
     sample,
     dimmed = false,
   }: {
     label: string;
+    icon: LucideIcon;
+    iconClassName: string;
     sample: ReactNode;
     dimmed?: boolean;
   }) => (
-    <div className={`flex items-center gap-2 px-2 py-1 ${dimmed ? 'opacity-60' : ''}`}>
-      <div className="flex h-4 w-10 items-center justify-start">{sample}</div>
-      <span className={LEGEND_LABEL_CLASSNAME}>{label}</span>
+    <div className={`flex items-center gap-2 px-2 py-0.5 ${dimmed ? 'opacity-60' : ''}`}>
+      {renderLayerIcon(icon, iconClassName, dimmed)}
+      <span className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</span>
+      <div className="flex h-4 w-10 flex-shrink-0 items-center justify-end">{sample}</div>
     </div>
   );
 
   const renderLegendGradient = ({
     label,
+    icon,
+    iconClassName,
     gradientStyle,
     low,
     high,
     dimmed = false,
   }: {
     label: string;
+    icon: LucideIcon;
+    iconClassName: string;
     gradientStyle: CSSProperties;
     low: string;
     high: string;
     dimmed?: boolean;
   }) => (
-    <div className={`${dimmed ? 'opacity-60' : ''} px-2 py-1`}>
-      <div className={LEGEND_LABEL_CLASSNAME}>{label}</div>
-      <div className="mt-1.5 h-2 w-full rounded-sm" style={gradientStyle} />
-      <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
+    <div className={`${dimmed ? 'opacity-60' : ''} px-2 py-0.5`}>
+      <div className="flex items-center gap-2">
+        {renderLayerIcon(icon, iconClassName, dimmed)}
+        <div className={LEGEND_LABEL_CLASSNAME}>{label}</div>
+      </div>
+      <div className="ml-6 mt-1.5 h-2 w-[calc(100%-1.5rem)] rounded-sm" style={gradientStyle} />
+      <div className="ml-6 mt-1 flex justify-between text-[9px] text-muted-foreground">
         <span>{low}</span>
         <span>{high}</span>
       </div>
-    </div>
-  );
-
-  const renderLegendGroup = ({
-    title,
-    open,
-    onToggle,
-    children,
-  }: {
-    title: string;
-    open: boolean;
-    onToggle: () => void;
-    children: ReactNode;
-  }) => (
-    <div>
-      {renderSectionHeader(title, open, onToggle)}
-      {open ? <div className={SECTION_CONTENT_CLASSNAME}>{children}</div> : null}
     </div>
   );
 
@@ -590,17 +633,63 @@ const Sidebar = ({
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
+                      {renderSectionIntro(SECTION_META.coreMap.question, SECTION_META.coreMap.helper)}
                       {(['counties', 'services', 'serviceLocations'] as const).map((key) => {
-                        const { label, color } = getLayerConfig(key);
+                        const { label, colorClassName, icon } = getLayerConfig(key);
                         return renderLayerToggleRow({
                           label,
-                          indicatorClassName: color,
+                          icon,
+                          iconClassName: colorClassName,
                           checked: layers[key],
                           onCheckedChange: () => onToggleLayer(key),
                           helpKey: key,
                           dataTutorial: key === 'services' ? 'toggle-services' : undefined,
                         });
                       })}
+
+                      <div className={LEGEND_BLOCK_CLASSNAME}>
+                        {(() => {
+                          const counties = getLayerConfig('counties');
+                          const services = getLayerConfig('services');
+                          const providerLocations = getLayerConfig('serviceLocations');
+
+                          return (
+                            <>
+                              {renderLegendRow({
+                                label: counties.label,
+                                icon: counties.icon,
+                                iconClassName: counties.colorClassName,
+                                dimmed: !layers.counties,
+                                sample: <div className="h-px w-8 bg-muted-foreground" />,
+                              })}
+                              {renderLegendRow({
+                                label: services.label,
+                                icon: services.icon,
+                                iconClassName: services.colorClassName,
+                                dimmed: !layers.services,
+                                sample: (
+                                  <div className="relative h-4 w-8">
+                                    <span className="absolute right-3 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-service-presence/20" />
+                                    <span className="absolute right-4 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-service-presence" />
+                                  </div>
+                                ),
+                              })}
+                              {renderLegendRow({
+                                label: providerLocations.label,
+                                icon: providerLocations.icon,
+                                iconClassName: providerLocations.colorClassName,
+                                dimmed: !layers.serviceLocations,
+                                sample: (
+                                  <div className="flex items-center gap-1 text-muted-foreground">
+                                    <MapPin className="h-3 w-3 stroke-[1.75] text-hospital" />
+                                    <MapPin className="h-3 w-3 stroke-[1.75] text-clinic" />
+                                  </div>
+                                ),
+                              })}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -609,13 +698,15 @@ const Sidebar = ({
                   {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
                   {operationsOpen && (
                     <div className="mt-0.5 space-y-0.5">
+                      {renderSectionIntro(SECTION_META.operations.question, SECTION_META.operations.helper)}
                       {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
-                        const { label, color } = getLayerConfig(key);
+                        const { label, colorClassName, icon } = getLayerConfig(key);
                         return (
                           <div key={key}>
                             {renderLayerToggleRow({
                               label,
-                              indicatorClassName: color,
+                              icon,
+                              iconClassName: colorClassName,
                               checked: layers[key],
                               onCheckedChange: () => onToggleLayer(key),
                               helpKey: key,
@@ -837,6 +928,54 @@ const Sidebar = ({
                           </div>
                         );
                       })}
+
+                      <div className={LEGEND_BLOCK_CLASSNAME}>
+                        {(() => {
+                          const response = getLayerConfig('operationalCoverage');
+                          const staffing = getLayerConfig('fteCapacity');
+                          const engagement = getLayerConfig('engagementGap');
+
+                          return (
+                            <>
+                              {renderLegendRow({
+                                label: response.label,
+                                icon: response.icon,
+                                iconClassName: response.colorClassName,
+                                dimmed: !layers.operationalCoverage,
+                                sample: (
+                                  <div className="flex items-center gap-1">
+                                    <span className="h-3 w-3 rounded-sm border border-response-active/60 bg-response-active/25" />
+                                    <span className="h-3 w-3 rounded-sm border border-dashed border-response-scheduled/50 bg-response-scheduled/10" />
+                                    <span className="h-3 w-3 rounded-sm border border-dashed border-response-remote/40 bg-response-remote/10" />
+                                  </div>
+                                ),
+                              })}
+                              {renderLegendRow({
+                                label: staffing.label,
+                                icon: staffing.icon,
+                                iconClassName: staffing.colorClassName,
+                                dimmed: !layers.fteCapacity,
+                                sample: (
+                                  <div className="flex items-end gap-1">
+                                    <span className="h-2 w-1 rounded-sm bg-staffing-low" />
+                                    <span className="h-3 w-1 rounded-sm bg-staffing-medium" />
+                                    <span className="h-4 w-1 rounded-sm bg-staffing-high" />
+                                  </div>
+                                ),
+                              })}
+                              {renderLegendGradient({
+                                label: engagement.label,
+                                icon: engagement.icon,
+                                iconClassName: engagement.colorClassName,
+                                dimmed: !layers.engagementGap,
+                                gradientStyle: { background: 'linear-gradient(to right, hsl(var(--engagement-early)), hsl(var(--engagement-watch)), hsl(var(--engagement-gap)))' },
+                                low: 'Low',
+                                high: 'High',
+                              })}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -845,13 +984,15 @@ const Sidebar = ({
                   {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
                   {utilizationOpen && (
                     <div className="mt-0.5 space-y-0.5">
+                      {renderSectionIntro(SECTION_META.utilization.question, SECTION_META.utilization.helper)}
                       {(() => {
-                        const { key, label, color } = getLayerConfig('utilizationIntensity');
+                        const { key, label, colorClassName, icon } = getLayerConfig('utilizationIntensity');
                         return (
                           <div key={key}>
                             {renderLayerToggleRow({
                               label,
-                              indicatorClassName: color,
+                              icon,
+                              iconClassName: colorClassName,
                               checked: layers.utilizationIntensity,
                               onCheckedChange: () => onToggleLayer('utilizationIntensity'),
                               helpKey: key,
@@ -878,6 +1019,23 @@ const Sidebar = ({
                           </div>
                         );
                       })()}
+
+                      {(() => {
+                        const utilization = getLayerConfig('utilizationIntensity');
+                        return (
+                          <div className={LEGEND_BLOCK_CLASSNAME}>
+                            {renderLegendGradient({
+                              label: utilization.label,
+                              icon: utilization.icon,
+                              iconClassName: utilization.colorClassName,
+                              dimmed: !layers.utilizationIntensity,
+                              gradientStyle: { background: 'linear-gradient(to right, hsl(var(--utilization-low) / 0.5), hsl(var(--utilization-mid) / 0.7), hsl(var(--utilization-high) / 0.9))' },
+                              low: 'Low',
+                              high: 'High',
+                            })}
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
@@ -886,9 +1044,11 @@ const Sidebar = ({
                   {renderSectionHeader('ACCESS', accessOpen, toggleAccess)}
                   {accessOpen && (
                     <div className="mt-0.5 space-y-0.5">
+                      {renderSectionIntro(SECTION_META.access.question, SECTION_META.access.helper)}
                       {renderLayerToggleRow({
                         label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
-                        indicatorClassName: 'bg-primary',
+                        icon: ACCESS_LAYER_CONFIG.coverageRadius.icon,
+                        iconClassName: ACCESS_LAYER_CONFIG.coverageRadius.colorClassName,
                         checked: coverageRadius,
                         onCheckedChange: onCoverageRadiusChange,
                         helpKey: 'coverageRadius',
@@ -913,7 +1073,8 @@ const Sidebar = ({
 
                       {renderLayerToggleRow({
                         label: 'Access Gaps (Outside Coverage Radius)',
-                        indicatorClassName: 'bg-destructive',
+                        icon: ACCESS_LAYER_CONFIG.coverageGaps.icon,
+                        iconClassName: ACCESS_LAYER_CONFIG.coverageGaps.colorClassName,
                         checked: coverageGaps,
                         onCheckedChange: onCoverageGapsChange,
                         helpKey: 'coverageGaps',
@@ -924,122 +1085,30 @@ const Sidebar = ({
                         </p>
                       )}
                       <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
+
+                      <div className={LEGEND_BLOCK_CLASSNAME}>
+                        {renderLegendRow({
+                          label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
+                          icon: ACCESS_LAYER_CONFIG.coverageRadius.icon,
+                          iconClassName: ACCESS_LAYER_CONFIG.coverageRadius.colorClassName,
+                          dimmed: !coverageRadius,
+                          sample: (
+                            <div className="relative h-4 w-8">
+                              <span className="absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-radius-stroke/60 bg-radius-stroke/10" />
+                            </div>
+                          ),
+                        })}
+                        {renderLegendRow({
+                          label: ACCESS_LAYER_CONFIG.coverageGaps.label,
+                          icon: ACCESS_LAYER_CONFIG.coverageGaps.icon,
+                          iconClassName: ACCESS_LAYER_CONFIG.coverageGaps.colorClassName,
+                          dimmed: !coverageGaps,
+                          sample: <span className="h-3 w-6 rounded-sm border border-destructive/30 bg-destructive/15" />,
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="border-t border-border pt-3" data-tutorial="legend">
-                {renderLegendGroup({
-                  title: 'CORE MAP',
-                  open: coreMapOpen,
-                  onToggle: toggleCoreMap,
-                  children: (
-                    <>
-                      {renderLegendRow({
-                        label: 'County Boundaries',
-                        dimmed: !layers.counties,
-                        sample: <div className="h-px w-8 bg-muted-foreground" />,
-                      })}
-                      {renderLegendRow({
-                        label: 'Service Presence',
-                        dimmed: !layers.services,
-                        sample: (
-                          <div className="relative h-4 w-8">
-                            <span className="absolute left-1 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-service-presence/20" />
-                            <span className="absolute left-2 top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full bg-service-presence" />
-                          </div>
-                        ),
-                      })}
-                      {renderLegendRow({
-                        label: 'Provider Locations',
-                        dimmed: !layers.serviceLocations,
-                        sample: (
-                          <div className="flex items-center gap-1">
-                            <span className="h-3.5 w-3.5 rounded-full border border-background bg-hospital shadow-sm" />
-                            <span className="h-3 w-3 rounded-full border border-background bg-clinic shadow-sm" />
-                          </div>
-                        ),
-                      })}
-                    </>
-                  ),
-                })}
-
-                {renderLegendGroup({
-                  title: 'OPERATIONS',
-                  open: operationsOpen,
-                  onToggle: toggleOperations,
-                  children: (
-                    <>
-                      {renderLegendRow({
-                        label: 'Response Capability',
-                        dimmed: !layers.operationalCoverage,
-                        sample: (
-                          <div className="flex items-center gap-1">
-                            <span className="h-3 w-3 rounded-sm border border-response-active/60 bg-response-active/25" />
-                            <span className="h-3 w-3 rounded-sm border border-dashed border-response-scheduled/50 bg-response-scheduled/10" />
-                            <span className="h-3 w-3 rounded-sm border border-dashed border-response-remote/40 bg-response-remote/10" />
-                          </div>
-                        ),
-                      })}
-                      {renderLegendRow({
-                        label: 'Staffing Capacity & Load',
-                        dimmed: !layers.fteCapacity,
-                        sample: (
-                          <div className="flex items-center gap-1">
-                            <span className="h-2.5 w-2.5 rounded-full bg-staffing-low" />
-                            <span className="h-2.5 w-2.5 rounded-full bg-staffing-medium" />
-                            <span className="h-2.5 w-2.5 rounded-full bg-staffing-high" />
-                          </div>
-                        ),
-                      })}
-                      {renderLegendGradient({
-                        label: 'Engagement Gap',
-                        dimmed: !layers.engagementGap,
-                        gradientStyle: { background: 'linear-gradient(to right, hsl(var(--engagement-early)), hsl(var(--engagement-watch)), hsl(var(--engagement-gap)))' },
-                        low: 'Low',
-                        high: 'High',
-                      })}
-                    </>
-                  ),
-                })}
-
-                {renderLegendGroup({
-                  title: 'UTILIZATION',
-                  open: utilizationOpen,
-                  onToggle: toggleUtilization,
-                  children: renderLegendGradient({
-                    label: 'Service Utilization Intensity',
-                    dimmed: !layers.utilizationIntensity,
-                    gradientStyle: { background: 'linear-gradient(to right, hsl(var(--utilization-low) / 0.5), hsl(var(--utilization-mid) / 0.7), hsl(var(--utilization-high) / 0.9))' },
-                    low: 'Low',
-                    high: 'High',
-                  }),
-                })}
-
-                {renderLegendGroup({
-                  title: 'ACCESS',
-                  open: accessOpen,
-                  onToggle: toggleAccess,
-                  children: (
-                    <>
-                      {renderLegendRow({
-                        label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
-                        dimmed: !coverageRadius,
-                        sample: (
-                          <div className="relative h-4 w-8">
-                            <span className="absolute left-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-radius-stroke/60 bg-radius-stroke/10" />
-                          </div>
-                        ),
-                      })}
-                      {renderLegendRow({
-                        label: 'Access Gaps (Outside Coverage Radius)',
-                        dimmed: !coverageGaps,
-                        sample: <span className="h-3 w-6 rounded-sm border border-destructive/30 bg-destructive/15" />,
-                      })}
-                    </>
-                  ),
-                })}
               </div>
             </div>
           </div>
