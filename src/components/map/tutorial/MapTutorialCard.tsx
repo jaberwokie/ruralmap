@@ -1,9 +1,8 @@
-import type { RefObject } from 'react';
+import { forwardRef } from 'react';
 import { MAP_TUTORIAL_STEPS, type MapTutorialStep } from '@/data/map-tutorial';
 import { type CardLayout, type HighlightRect, getArrowStyle } from '@/components/map/tutorial/tutorialLayout';
 
 interface MapTutorialCardProps {
-  cardRef: RefObject<HTMLDivElement>;
   layout: CardLayout;
   highlightRect: HighlightRect | null;
   step: MapTutorialStep;
@@ -13,12 +12,12 @@ interface MapTutorialCardProps {
   onClose: () => void;
 }
 
-const MapTutorialCard = ({ cardRef, layout, highlightRect, step, stepIndex, onBack, onNext, onClose }: MapTutorialCardProps) => {
+const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layout, highlightRect, step, stepIndex, onBack, onNext, onClose }, ref) => {
   const arrowStyle = getArrowStyle(layout, highlightRect);
 
   return (
     <div
-      ref={cardRef}
+      ref={ref}
       className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl transition-[top,left,width,max-height] duration-200 ease-out"
       style={{
         top: layout.top,
@@ -89,6 +88,8 @@ const MapTutorialCard = ({ cardRef, layout, highlightRect, step, stepIndex, onBa
       </div>
     </div>
   );
-};
+});
+
+MapTutorialCard.displayName = 'MapTutorialCard';
 
 export default MapTutorialCard;

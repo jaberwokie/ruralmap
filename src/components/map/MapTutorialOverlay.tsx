@@ -173,7 +173,7 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
       )}
 
       <MapTutorialCard
-        cardRef={cardRef}
+        ref={cardRef}
         layout={cardLayout}
         highlightRect={highlightRect}
         step={step}
