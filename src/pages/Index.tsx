@@ -5,6 +5,7 @@ import CoverageDetailPanel, { MapEntity } from '@/components/map/CoverageDetailP
 import MapTutorialOverlay from '@/components/map/MapTutorialOverlay';
 import { auditFacilityClassifications, auditFacilityConfidence, Facility, defaultFacilities } from '@/data/facilities';
 import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
+import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 import {
@@ -127,7 +128,12 @@ const Index = () => {
     return facilities
       .filter(f => {
         if (!f.lat || !f.lng || isNaN(f.lat) || isNaN(f.lng)) return false;
-        if (filters.types.size > 0 && !filters.types.has(f.type)) return false;
+        if (filters.types.size > 0) {
+          const matchesPrimaryType = filters.types.has(f.type);
+          const matchesBehavioralHealth = filters.types.has('behavioralHealth') && facilityOffersBehavioralHealth(f);
+
+          if (!matchesPrimaryType && !matchesBehavioralHealth) return false;
+        }
         if (filters.counties.size > 0 && !filters.counties.has(f.county)) return false;
         return true;
       });
