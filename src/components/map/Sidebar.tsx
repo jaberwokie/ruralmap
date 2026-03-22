@@ -134,7 +134,7 @@ const renderProviderTypeVisual = (dimmed = false, size = 12) => (
 );
 
 const renderProviderLocationsInlineLegend = (dimmed = false) => (
-  <span className={`hidden items-center gap-2 text-[10px] text-muted-foreground lg:flex ${dimmed ? 'opacity-60' : ''}`}>
+  <span className={`hidden items-center gap-2 text-[10px] text-muted-foreground xl:flex ${dimmed ? 'opacity-60' : ''}`}>
     <span className="flex items-center gap-1">
       <span className="h-1.5 w-1.5 rounded-full bg-hospital" />
       <span>Hospital</span>
@@ -584,7 +584,7 @@ const Sidebar = ({
                         key={value}
                         type="button"
                         onClick={() => toggleTypeFilter(value)}
-                        className={`flex h-7 items-center justify-start gap-1.5 rounded-md border px-2 text-[11px] transition-colors duration-150 ${
+                        className={`flex h-7 min-w-0 items-center justify-start gap-1.5 rounded-md border px-2 text-[11px] transition-colors duration-150 ${
                           active
                             ? 'border-border bg-secondary font-medium text-foreground'
                             : 'border-transparent bg-secondary/70 text-muted-foreground hover:border-border hover:text-foreground'
@@ -689,15 +689,15 @@ const Sidebar = ({
                                     <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Field Coverage Status</div>
                                     <div className="space-y-0.5 text-[10px] text-muted-foreground">
                                       <div className="flex items-center gap-1.5">
-                                        <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: 'hsl(174, 50%, 40%)' }} />
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-active" />
                                         <span><span className="font-semibold text-foreground">{counts.active}</span> counties with same-day field response</span>
                                       </div>
                                       <div className="flex items-center gap-1.5">
-                                        <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: 'hsl(190, 55%, 50%)' }} />
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-scheduled" />
                                         <span><span className="font-semibold text-foreground">{counts.scheduled}</span> counties with scheduled outreach only</span>
                                       </div>
                                       <div className="flex items-center gap-1.5">
-                                        <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: 'hsl(220, 10%, 70%)' }} />
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-remote" />
                                         <span><span className="font-semibold text-foreground">{counts.remote}</span> counties with remote-only support</span>
                                       </div>
                                     </div>
@@ -717,7 +717,7 @@ const Sidebar = ({
                                       step={10}
                                       value={radius}
                                       onChange={(e) => onCoverageRadiusKmChange?.(Number(e.target.value))}
-                                      className="h-1.5 w-full cursor-pointer accent-teal-600"
+                                      className="h-1.5 w-full cursor-pointer accent-response-active"
                                     />
                                     <div className="mt-0.5 flex justify-between text-[9px] text-muted-foreground">
                                       <span>~30 min (~25 mi)</span>
@@ -729,16 +729,31 @@ const Sidebar = ({
                                   <div className="space-y-2">
                                     <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
                                     {[
-                                      { label: 'Same-Day Field Response Available', desc: 'In-person response within ~75–90 minutes of FTE base.', color: 'hsl(174, 50%, 40%)', opacity: 0.85, style: 'solid' as const },
-                                      { label: 'Field Response Available (Planned)', desc: 'In-person visits require scheduling. Not same-day.', color: 'hsl(190, 55%, 50%)', opacity: 0.55, style: 'dashed' as const },
-                                      { label: 'Remote Support Only', desc: 'No in-person response. Telephonic and virtual coordination only.', color: 'hsl(220, 10%, 64%)', opacity: 0.35, style: 'dashed' as const },
-                                    ].map(({ label: lbl, desc, color: clr, opacity, style }) => (
+                                      {
+                                        label: 'Same-Day Field Response Available',
+                                        desc: 'In-person response within ~75–90 minutes of FTE base.',
+                                        swatchClassName: 'bg-response-active opacity-85',
+                                        titleClassName: 'text-foreground/85',
+                                      },
+                                      {
+                                        label: 'Field Response Available (Planned)',
+                                        desc: 'In-person visits require scheduling. Not same-day.',
+                                        swatchClassName: 'border border-dashed border-response-scheduled bg-response-scheduled/25',
+                                        titleClassName: 'text-foreground/70',
+                                      },
+                                      {
+                                        label: 'Remote Support Only',
+                                        desc: 'No in-person response. Telephonic and virtual coordination only.',
+                                        swatchClassName: 'border border-dashed border-response-remote bg-response-remote/20',
+                                        titleClassName: 'text-foreground/60',
+                                      },
+                                    ].map(({ label: lbl, desc, swatchClassName, titleClassName }) => (
                                       <div key={lbl} className="flex gap-2">
                                         <div className="mt-0.5 flex-shrink-0">
-                                          <div className="h-3 w-3 rounded-sm" style={{ backgroundColor: clr, opacity, border: style === 'dashed' ? `1.5px dashed ${clr}` : 'none' }} />
+                                          <div className={`h-3 w-3 rounded-sm ${swatchClassName}`} />
                                         </div>
                                         <div className="min-w-0">
-                                          <div className="text-[11px] font-medium leading-tight text-foreground" style={{ opacity }}>{lbl}</div>
+                                          <div className={`text-[11px] font-medium leading-tight ${titleClassName}`}>{lbl}</div>
                                           <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{desc}</p>
                                         </div>
                                       </div>
@@ -854,28 +869,28 @@ const Sidebar = ({
                                   </div>
 
                                   <p className="text-[10px] leading-relaxed text-muted-foreground">
-                                    <span className="font-medium" style={{ color: 'hsl(30, 90%, 50%)' }}>Orange</span> = True Gap (&gt;15 VPM).{' '}
-                                    <span className="font-medium" style={{ color: 'hsl(48, 90%, 50%)' }}>Yellow</span> = Watchlist (10–15).{' '}
-                                    <span className="font-medium" style={{ color: 'hsl(200, 70%, 55%)' }}>Blue</span> = Early Signal (6–10).
+                                    <span className="font-medium text-engagement-gap">Orange</span> = True Gap (&gt;15 VPM).{' '}
+                                    <span className="font-medium text-engagement-watch">Yellow</span> = Watchlist (10–15).{' '}
+                                    <span className="font-medium text-engagement-early">Blue</span> = Early Signal (6–10).
                                   </p>
 
                                   {!hasAny && <p className="text-[10px] italic text-muted-foreground/60">No counties currently meet Engagement Gap or Early Signal thresholds.</p>}
 
                                   {gapCounties.length > 0 && (
                                     <div>
-                                      <p className="text-[10px] font-semibold" style={{ color: 'hsl(30, 90%, 50%)' }}>True Gap ({gapCounties.length})</p>
+                                      <p className="text-[10px] font-semibold text-engagement-gap">True Gap ({gapCounties.length})</p>
                                       <p className="text-[10px] text-muted-foreground">{gapCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
                                     </div>
                                   )}
                                   {watchCounties.length > 0 && (
                                     <div>
-                                      <p className="text-[10px] font-semibold" style={{ color: 'hsl(48, 90%, 50%)' }}>Watchlist ({watchCounties.length})</p>
+                                      <p className="text-[10px] font-semibold text-engagement-watch">Watchlist ({watchCounties.length})</p>
                                       <p className="text-[10px] text-muted-foreground">{watchCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
                                     </div>
                                   )}
                                   {earlyCounties.length > 0 && (
                                     <div>
-                                      <p className="text-[10px] font-semibold" style={{ color: 'hsl(200, 70%, 55%)' }}>Early Signal ({earlyCounties.length})</p>
+                                      <p className="text-[10px] font-semibold text-engagement-early">Early Signal ({earlyCounties.length})</p>
                                       <p className="text-[10px] text-muted-foreground">{earlyCounties.map((r: any) => r.subZone === 'northern-washoe' ? 'N. Washoe' : r.county).join(', ')}</p>
                                     </div>
                                   )}
@@ -1053,9 +1068,13 @@ const Sidebar = ({
                   className="w-full text-left px-2 py-2 rounded hover:bg-secondary transition-colors duration-150"
                 >
                   <div className="flex items-start gap-2">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${
-                      facility.type === 'hospital' ? 'bg-hospital' : 'bg-clinic'
-                    }`} />
+                    <div className="mt-0.5 flex-shrink-0">
+                      {renderPinVisual({
+                        pin: 'providerLocations',
+                        size: 14,
+                        color: facility.type === 'hospital' ? 'hsl(var(--hospital))' : 'hsl(var(--clinic))',
+                      })}
+                    </div>
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-foreground truncate">
                         {facility.name}
