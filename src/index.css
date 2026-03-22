@@ -43,6 +43,29 @@
     --secondary-zone: 35 92% 50%;
     --frontier-zone: 240 5% 64%;
     --service-presence: 210 28% 62%;
+    --response-active: 174 50% 40%;
+    --response-active-fill: 174 50% 45% / 0.25;
+    --response-active-border: 174 50% 40% / 0.6;
+    --response-scheduled: 190 55% 50%;
+    --response-scheduled-fill: 174 40% 55% / 0.12;
+    --response-scheduled-border: 174 40% 50% / 0.45;
+    --response-remote: 220 10% 64%;
+    --response-remote-fill: 220 10% 70% / 0.1;
+    --response-remote-border: 220 10% 60% / 0.25;
+    --staffing-low: 24 95% 53%;
+    --staffing-medium: 44 96% 61%;
+    --staffing-high: 142 71% 45%;
+    --engagement-early: 200 70% 55%;
+    --engagement-watch: 48 90% 50%;
+    --engagement-gap: 30 90% 50%;
+    --utilization-low: 270 30% 75%;
+    --utilization-mid: 270 45% 55%;
+    --utilization-high: 270 60% 40%;
+    --radius-stroke: 200 50% 50%;
+    --radius-stroke-soft: 200 50% 50% / 0.6;
+    --radius-fill: 200 50% 50% / 0.1;
+    --access-gap-fill: 0 84% 60% / 0.14;
+    --access-gap-border: 0 84% 60% / 0.3;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 10% 10%;
@@ -85,6 +108,29 @@
     --sidebar-border: 240 5% 20%;
     --sidebar-ring: 217 91% 60%;
     --service-presence: 210 22% 66%;
+    --response-active: 174 50% 45%;
+    --response-active-fill: 174 50% 45% / 0.25;
+    --response-active-border: 174 50% 40% / 0.6;
+    --response-scheduled: 190 55% 58%;
+    --response-scheduled-fill: 174 40% 55% / 0.12;
+    --response-scheduled-border: 174 40% 50% / 0.45;
+    --response-remote: 220 10% 72%;
+    --response-remote-fill: 220 10% 70% / 0.1;
+    --response-remote-border: 220 10% 60% / 0.25;
+    --staffing-low: 24 95% 58%;
+    --staffing-medium: 44 96% 66%;
+    --staffing-high: 142 71% 52%;
+    --engagement-early: 200 70% 62%;
+    --engagement-watch: 48 90% 58%;
+    --engagement-gap: 30 90% 58%;
+    --utilization-low: 270 30% 80%;
+    --utilization-mid: 270 45% 62%;
+    --utilization-high: 270 60% 48%;
+    --radius-stroke: 200 50% 58%;
+    --radius-stroke-soft: 200 50% 58% / 0.6;
+    --radius-fill: 200 50% 58% / 0.1;
+    --access-gap-fill: 0 84% 60% / 0.14;
+    --access-gap-border: 0 84% 60% / 0.3;
   }
 }
 
