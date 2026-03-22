@@ -166,7 +166,9 @@ const HelpIconTooltip = ({
         side="right"
         align="start"
         sideOffset={10}
-        className="w-64 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md"
+        avoidCollisions
+        collisionPadding={{ top: 12, right: 12, bottom: 12, left: 12 }}
+        className="z-[1700] w-72 max-w-[min(22rem,calc(100vw-1.5rem))] rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md"
         onOpenAutoFocus={(event) => event.preventDefault()}
       >
         <div className="space-y-1">
@@ -451,17 +453,20 @@ const Sidebar = ({
     icon,
     iconClassName,
     sample,
+    helpKey,
     dimmed = false,
   }: {
     label: string;
     icon: LucideIcon;
     iconClassName: string;
     sample: ReactNode;
+    helpKey?: string;
     dimmed?: boolean;
   }) => (
     <div className={`flex items-center gap-2 px-2 py-0.5 ${dimmed ? 'opacity-60' : ''}`}>
       {renderLayerIcon(icon, iconClassName, dimmed)}
       <span className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</span>
+      {helpKey ? renderHelpIcon(helpKey) : null}
       <div className="flex h-4 w-10 flex-shrink-0 items-center justify-end">{sample}</div>
     </div>
   );
@@ -473,6 +478,7 @@ const Sidebar = ({
     gradientStyle,
     low,
     high,
+    helpKey,
     dimmed = false,
   }: {
     label: string;
@@ -481,12 +487,14 @@ const Sidebar = ({
     gradientStyle: CSSProperties;
     low: string;
     high: string;
+    helpKey?: string;
     dimmed?: boolean;
   }) => (
     <div className={`${dimmed ? 'opacity-60' : ''} px-2 py-0.5`}>
       <div className="flex items-center gap-2">
         {renderLayerIcon(icon, iconClassName, dimmed)}
-        <div className={LEGEND_LABEL_CLASSNAME}>{label}</div>
+        <div className={`min-w-0 flex-1 ${LEGEND_LABEL_CLASSNAME}`}>{label}</div>
+        {helpKey ? renderHelpIcon(helpKey) : null}
       </div>
       <div className="ml-6 mt-1.5 h-2 w-[calc(100%-1.5rem)] rounded-sm" style={gradientStyle} />
       <div className="ml-6 mt-1 flex justify-between text-[9px] text-muted-foreground">
@@ -660,6 +668,7 @@ const Sidebar = ({
                                 label: counties.label,
                                 icon: counties.icon,
                                 iconClassName: counties.colorClassName,
+                                helpKey: 'countiesLegend',
                                 dimmed: !layers.counties,
                                 sample: <div className="h-px w-8 bg-muted-foreground" />,
                               })}
@@ -667,6 +676,7 @@ const Sidebar = ({
                                 label: services.label,
                                 icon: services.icon,
                                 iconClassName: services.colorClassName,
+                                helpKey: 'servicesLegend',
                                 dimmed: !layers.services,
                                 sample: (
                                   <span
@@ -680,6 +690,7 @@ const Sidebar = ({
                                 label: providerLocations.label,
                                 icon: providerLocations.icon,
                                 iconClassName: providerLocations.colorClassName,
+                                helpKey: 'serviceLocationsLegend',
                                 dimmed: !layers.serviceLocations,
                                 sample: (
                                   <span
@@ -944,6 +955,7 @@ const Sidebar = ({
                                 label: response.label,
                                 icon: response.icon,
                                 iconClassName: response.colorClassName,
+                                helpKey: 'operationalCoverageLegend',
                                 dimmed: !layers.operationalCoverage,
                                 sample: (
                                   <div className="flex items-center gap-1">
@@ -957,6 +969,7 @@ const Sidebar = ({
                                 label: staffing.label,
                                 icon: staffing.icon,
                                 iconClassName: staffing.colorClassName,
+                                helpKey: 'fteCapacityLegend',
                                 dimmed: !layers.fteCapacity,
                                 sample: (
                                   <div className="flex items-end gap-1">
@@ -970,6 +983,7 @@ const Sidebar = ({
                                 label: engagement.label,
                                 icon: engagement.icon,
                                 iconClassName: engagement.colorClassName,
+                                helpKey: 'engagementGapLegend',
                                 dimmed: !layers.engagementGap,
                                 gradientStyle: { background: 'linear-gradient(to right, hsl(var(--engagement-early)), hsl(var(--engagement-watch)), hsl(var(--engagement-gap)))' },
                                 low: 'Low',
@@ -1031,6 +1045,7 @@ const Sidebar = ({
                               label: utilization.label,
                               icon: utilization.icon,
                               iconClassName: utilization.colorClassName,
+                              helpKey: 'utilizationIntensityLegend',
                               dimmed: !layers.utilizationIntensity,
                               gradientStyle: { background: 'linear-gradient(to right, hsl(var(--utilization-low) / 0.5), hsl(var(--utilization-mid) / 0.7), hsl(var(--utilization-high) / 0.9))' },
                               low: 'Low',
@@ -1094,6 +1109,7 @@ const Sidebar = ({
                           label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
                           icon: ACCESS_LAYER_CONFIG.coverageRadius.icon,
                           iconClassName: ACCESS_LAYER_CONFIG.coverageRadius.colorClassName,
+                          helpKey: 'coverageRadiusLegend',
                           dimmed: !coverageRadius,
                           sample: (
                             <div className="relative h-4 w-8">
@@ -1105,6 +1121,7 @@ const Sidebar = ({
                           label: ACCESS_LAYER_CONFIG.coverageGaps.label,
                           icon: ACCESS_LAYER_CONFIG.coverageGaps.icon,
                           iconClassName: ACCESS_LAYER_CONFIG.coverageGaps.colorClassName,
+                          helpKey: 'coverageGapsLegend',
                           dimmed: !coverageGaps,
                           sample: <span className="h-3 w-6 rounded-sm border border-destructive/30 bg-destructive/15" />,
                         })}
