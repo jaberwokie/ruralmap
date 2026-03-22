@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode } from 'react';
+import { useState, useRef, useMemo, useEffect, type CSSProperties, type ReactNode, type MouseEvent, type KeyboardEvent } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
@@ -11,7 +11,7 @@ import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface LayerState {
   counties: boolean;
@@ -49,8 +49,6 @@ interface SidebarProps {
   engagementRateBelow20Only: boolean;
   onEngagementRateBelow20OnlyChange: (checked: boolean) => void;
   onCountySelect?: (county: string) => void;
-  onHelpEnter?: (key: string) => void;
-  onHelpLeave?: () => void;
   onReplayTutorial?: () => void;
   tutorialStepKey?: MapTutorialStepKey | null;
 }
@@ -72,57 +70,73 @@ const LEGEND_LABEL_CLASSNAME = 'text-[11px] text-muted-foreground';
 
 const HelpIconTooltip = ({
   helpKey,
-  onHelpEnter,
-  onHelpLeave,
 }: {
   helpKey: string;
-  onHelpEnter?: (key: string) => void;
-  onHelpLeave?: () => void;
 }) => {
-  const tooltip = HELP_TOOLTIPS[helpKey]?.shortExplanation;
+  const helpData = HELP_TOOLTIPS[helpKey];
   const [open, setOpen] = useState(false);
 
-  const showTooltip = () => {
+  const stopSidebarHelpEvent = (event: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const showPopover = () => {
     setOpen(true);
-    onHelpEnter?.(helpKey);
   };
 
-  const hideTooltip = () => {
+  const hidePopover = () => {
     setOpen(false);
-    onHelpLeave?.();
   };
 
-  const button = (
+  if (!helpData) return null;
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
     <button
       type="button"
       className="rounded-sm p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      onMouseEnter={showTooltip}
-      onMouseLeave={hideTooltip}
-      onTouchStart={showTooltip}
+      onMouseEnter={showPopover}
+      onMouseLeave={hidePopover}
+      onTouchStart={(event) => {
+        stopSidebarHelpEvent(event);
+        showPopover();
+      }}
       onClick={(event) => {
-        event.stopPropagation();
+        stopSidebarHelpEvent(event);
         setOpen((current) => {
-          const next = !current;
-          if (next) onHelpEnter?.(helpKey);
-          else onHelpLeave?.();
-          return next;
+          return !current;
         });
       }}
-      aria-label={`More information about ${HELP_TOOLTIPS[helpKey]?.label ?? helpKey}`}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          stopSidebarHelpEvent(event);
+          setOpen((current) => !current);
+        }
+      }}
+      aria-label={`More information about ${helpData.label}`}
+      aria-expanded={open}
+      aria-haspopup="dialog"
     >
       <HelpCircle className="w-3 h-3" />
     </button>
-  );
-
-  if (!tooltip) return button;
-
-  return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent side="right" align="start" sideOffset={10} className="max-w-56 text-[11px] leading-relaxed">
-        {tooltip}
-      </TooltipContent>
-    </Tooltip>
+      </PopoverTrigger>
+      <PopoverContent
+        side="right"
+        align="start"
+        sideOffset={10}
+        className="w-64 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-foreground">{helpData.label}</p>
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {helpData.explanation}
+          </p>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
@@ -152,8 +166,6 @@ const Sidebar = ({
   engagementRateBelow20Only,
   onEngagementRateBelow20OnlyChange,
   onCountySelect,
-  onHelpEnter,
-  onHelpLeave,
   onReplayTutorial,
   tutorialStepKey,
 }: SidebarProps) => {
@@ -335,7 +347,7 @@ const Sidebar = ({
     : facilities;
 
   const renderHelpIcon = (key: string) => (
-    <HelpIconTooltip helpKey={key} onHelpEnter={onHelpEnter} onHelpLeave={onHelpLeave} />
+    <HelpIconTooltip helpKey={key} />
   );
 
   const getLayerConfig = (key: keyof LayerState) => LAYER_CONFIG.find((layer) => layer.key === key)!;
@@ -441,7 +453,6 @@ const Sidebar = ({
   );
 
   return (
-    <TooltipProvider delayDuration={120}>
     <div data-tutorial="sidebar" className="flex h-full w-full flex-col overflow-y-auto bg-card shadow-[var(--shadow-panel)] md:w-80">
       {/* Header */}
       <div className="p-4 pb-3">
@@ -1119,7 +1130,6 @@ const Sidebar = ({
         )}
       </div>
     </div>
-    </TooltipProvider>
   );
 };
 
