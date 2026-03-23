@@ -1388,7 +1388,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       applyMarkerPriority(marker, 'selected');
     };
 
-    if (layers.services) {
+    if (layers.services && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.servicePresence.size;
       const servicePresenceIcon = L.divIcon({
         className: '',
@@ -1445,7 +1445,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     }
 
-    if (layers.behavioralHealth) {
+    if (layers.behavioralHealth && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.behavioralHealth.size;
       const behavioralHealthIcon = L.divIcon({
         className: '',
@@ -1605,7 +1605,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    if (nextMarkers.length > 0) {
+    if (nextMarkers.length > 0 && !topProvidersOnly) {
       pointClusterRef.current.addLayers(nextMarkers);
     }
 
