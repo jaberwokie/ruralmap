@@ -741,9 +741,14 @@ const Sidebar = ({
                                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                                     <div className="mb-1 flex items-center justify-between">
                                       <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Response Radius</span>
-                                      <span className="text-[11px] font-bold tabular-nums text-foreground">
-                                        ~{Math.round((radius / 80) * 60)} min (~{kmToMiles(radius)} mi)
-                                      </span>
+                                      <div className="flex min-w-0 items-center gap-2 pl-2">
+                                        <span className="inline-flex h-5 items-center whitespace-nowrap rounded-full border border-border bg-background px-2 text-[11px] font-bold tabular-nums leading-none text-foreground">
+                                          {Math.round((radius / 80) * 60)} min
+                                        </span>
+                                        <span className="whitespace-nowrap text-[10px] font-medium tabular-nums text-muted-foreground">
+                                          ~{kmToMiles(radius)} mi
+                                        </span>
+                                      </div>
                                     </div>
                                     <input
                                       type="range"
@@ -758,7 +763,7 @@ const Sidebar = ({
                                       <span>~30 min (~25 mi)</span>
                                       <span>~150 min (~124 mi)</span>
                                     </div>
-                                    <p className="mt-1 text-[9px] leading-relaxed text-muted-foreground/70">Defines the maximum same-day response range from field staff base.</p>
+                                    <p className="mt-1 text-[9px] leading-relaxed text-muted-foreground/70">Based on real travel time, not straight-line distance.</p>
                                   </div>
 
                                   <div className="space-y-2">
