@@ -1598,11 +1598,23 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     if (nextFacilityMarkers.length > 0) {
-      markersRef.current.addLayers(nextFacilityMarkers);
+      if (topProvidersOnly) {
+        topProviderMarkersRef.current.addLayers(nextFacilityMarkers);
+      } else {
+        markersRef.current.addLayers(nextFacilityMarkers);
+      }
     }
 
     if (nextMarkers.length > 0) {
       pointClusterRef.current.addLayers(nextMarkers);
+    }
+
+    if (import.meta.env.DEV && shouldRenderProviderLocations && topProvidersOnly) {
+      console.info('[Top 20 Debug][Rendered Dataset]', {
+        renderedProviderCount: visibleFacilities.length,
+        renderedProviderIds: visibleFacilities.map((facility) => facility.id),
+        renderedProviderNames: visibleFacilities.map((facility) => facility.name),
+      });
     }
   }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, mapZoom, onFacilityClick, providerVisibleFacilities, topProvidersOnly]);
 
