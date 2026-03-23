@@ -306,7 +306,8 @@ const Sidebar = ({
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, toggleFilters, setFiltersOpen] = usePersistToggle('sidebar_filters', true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
