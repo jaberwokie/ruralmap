@@ -1,50 +1,39 @@
 
-Goal: make the Provider toggle show the full mapped provider set that should be visible, without changing unrelated layers or behavior.
 
-Plan
+## Fix Top 20 Providers as Exclusive Map Mode
 
-1. Audit the provider data path end-to-end
-- Trace how providers move from `src/pages/Index.tsx` into `src/components/map/MapView.tsx`.
-- Confirm which providers are being removed before rendering versus which never exist in the mappable facilities dataset.
-- Compare the rendered provider source (`facilities` prop) against `allFacilities` and the utilization list to separate a rendering bug from a missing-data issue.
+### Problem
+The current toggle handlers (`handleToggleLayer`, `handleCoverageRadiusChange`, `handleCoverageGapsChange`) don't check whether Top 20 mode is active. Users can turn on conflicting layers while in Top 20 mode, breaking the exclusive display intent.
 
-2. Apply the smallest safe rendering fix
-- Stop letting the global `filteredFacilities` list unintentionally decide the provider map layer.
-- In `MapView`, derive the provider marker input from the full mapped provider dataset (`allFacilities ?? facilities`) instead of the pre-trimmed list passed for sidebar/search results.
-- Reapply only provider-relevant filters inside `MapView` for the provider layer itself:
-  - search query
-  - county filters
-  - provider type chips like hospital/clinic
-- Keep service/behavioral-health filtering from suppressing provider markers when those filters are meant for other layers.
+### Changes (all in `src/pages/Index.tsx`)
 
-3. Preserve existing provider behavior
-- Keep the current red hospital / blue clinic custom pin icons exactly as-is.
-- Keep the existing provider clustering and pane ordering so markers stay above county/utilization fills.
-- Keep the current top-20 behavior intact, but make sure its filtered subset is built from the corrected provider source.
+**1. Remove snapshot/restore pattern**
+The user explicitly wants "do not automatically restore prior toggle states" on OFF. Remove `topProvidersSnapshotRef` entirely. When Top 20 turns OFF, conflicting layers stay off until the user manually re-enables them.
 
-4. Validate against the failure described
-- Provider toggle ON: all mapped provider facilities that match provider-specific filters render.
-- Provider toggle OFF: provider markers fully clear.
-- Service and Behavioral Health layers still behave exactly as before.
-- Utilization shading, legend, county layers, hover/click behavior, and sidebar logic remain unchanged.
+**2. Define conflicting layers as a constant**
+```typescript
+const TOP20_CONFLICTING_LAYERS: (keyof LayerState)[] = [
+  'services', 'behavioralHealth', 'operationalCoverage',
+  'fteCapacity', 'utilizationIntensity', 'engagementGap'
+];
+```
 
-Important audit finding
-- There are two different “provider universes” in the code right now:
-  1. `src/data/facilities.ts` = mapped providers with coordinates
-  2. `src/data/provider-utilization.ts` = broader utilization ranking list
-- Many utilization providers do not appear to have facility map records/coordinates, so they cannot be shown on the map until they are added to `facilities.ts`.
-- So the likely bug to fix now is accidental omission of already-mapped providers, not automatic mapping of every utilization-row provider.
+**3. Simplify `handleTopProvidersOnlyChange`**
+- ON: set all conflicting layers to `false`, set `coverageRadius` and `coverageGaps` to `false`, clear filters, keep `counties` and `serviceLocations` on.
+- OFF: just set `topProvidersOnly = false`. Leave all other state as-is.
 
-Technical details
-- Current likely root cause:
-  - `Index.tsx` computes `filteredFacilities` using global filter chips and passes that trimmed array into `MapView` as `facilities`.
-  - `MapView` currently renders provider markers from that already-filtered `facilities` prop.
-  - This means provider points can disappear even when the Provider toggle is on, simply because another filter upstream removed them first.
-- Minimal implementation target:
-  - Update provider marker filtering in `MapView` so provider rendering uses the full mapped facility dataset and applies its own provider-specific filtering there.
-  - Do not broadly refactor the sidebar, legend, county shading, or unrelated layer logic.
+**4. Gate conflicting toggle handlers**
+Modify `handleToggleLayer` so that if `topProvidersOnly` is active and the user turns ON a conflicting layer, it first sets `topProvidersOnly = false`, then applies the layer toggle. Non-conflicting layers pass through normally.
 
-Acceptance criteria
-- If a provider exists in the mapped facilities dataset and matches active provider-relevant filters, it appears when Provider is ON.
-- If a provider exists only in utilization rankings but not in mapped facilities with coordinates, it will still remain absent until added as map data.
-- No regression to other layers, toggles, or tutorial behavior.
+Same for `handleCoverageRadiusChange` and `handleCoverageGapsChange` — if enabling while Top 20 is on, turn Top 20 off first.
+
+**5. No changes to**
+- MapView rendering logic (it already respects `layers` state)
+- Sidebar layout/styling
+- Marker styling or Top 20 ranking logic
+- Tutorial, zoom, county metrics
+
+### Acceptance test coverage
+- Turn on Service/BH/Coverage → Turn on Top 20 → all conflicting toggles go OFF in state, only Top 20 markers render
+- While Top 20 active, turn on Coverage Radius → Top 20 turns OFF, Coverage Radius turns ON, normal rendering resumes
+
