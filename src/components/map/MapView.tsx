@@ -332,7 +332,12 @@ const createGeoJsonLayer = (
   pane: (typeof MAP_PANES)[keyof typeof MAP_PANES],
   style: L.PathOptions,
   interactive = false,
-) => L.geoJSON(geometry as any, { pane, style, interactive });
+) => L.geoJSON(geometry as any, {
+  pane,
+  style,
+  interactive,
+  smoothFactor: 0,
+} as any);
 
 type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 'servicePresence' | 'behavioralHealth'>;
 
@@ -1072,7 +1077,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           fillOpacity: 1,
         },
         interactive: true,
-      });
+        smoothFactor: 0,
+      } as any);
 
       hitArea.on('mouseover', (event: L.LeafletMouseEvent) => {
         updateCountyHoverPreview(county.name, event);
