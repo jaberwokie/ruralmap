@@ -1186,10 +1186,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           font-weight: 600;
           letter-spacing: 0.1em;
           text-transform: uppercase;
-          color: hsl(240, 5%, 55%);
+          color: hsl(var(--muted-foreground) / 0.58);
           white-space: nowrap;
           pointer-events: none;
-          text-shadow: 0 0 4px white, 0 0 4px white;
+          text-shadow: 0 0 2px hsl(var(--background) / 0.65);
         ">${county.name}</span>`,
         iconSize: [0, 0],
         iconAnchor: [0, 0],
