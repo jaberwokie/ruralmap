@@ -399,7 +399,7 @@ const Index = () => {
           coverageRadiusKm={coverageRadiusKm}
           onCoverageRadiusKmChange={setCoverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
-          onTopProvidersOnlyChange={setTopProvidersOnly}
+          onTopProvidersOnlyChange={handleTopProvidersOnlyChange}
           engagementRateBelow20Only={engagementRateBelow20Only}
           onEngagementRateBelow20OnlyChange={setEngagementRateBelow20Only}
           onCountySelect={handleCountySelect}
