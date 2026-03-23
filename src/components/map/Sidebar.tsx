@@ -106,6 +106,14 @@ const getProviderAccessThresholdNote = (km: number) => {
   return null;
 };
 
+const getProviderAccessTierTextClassName = (km: number) => {
+  const tier = getProviderAccessTierByKm(km);
+  if (tier === 'strong') return 'text-staffing-high';
+  if (tier === 'conditional') return 'text-engagement-watch';
+  if (tier === 'weak') return 'text-destructive';
+  return 'text-muted-foreground';
+};
+
 const SECTION_META = {
   coreMap: {
     question: 'What exists here?',
@@ -994,6 +1002,11 @@ const Sidebar = ({
                         <p className="pb-1 text-[10px] leading-relaxed text-muted-foreground">
                           Distance does not equal access. Rural engagement reliability decreases as distance increases.
                         </p>
+                        <div className="mb-1 flex items-center justify-between gap-2 px-1">
+                          <span className={`truncate text-[10px] font-semibold transition-colors ${coverageRadius ? getProviderAccessTierTextClassName(radiusKm) : 'text-muted-foreground'}`}>
+                            {PROVIDER_ACCESS_TIER_LABELS[getProviderAccessTierByKm(radiusKm)]}
+                          </span>
+                        </div>
                         <div className="relative px-1 pt-6">
                           <div
                             className={`pointer-events-none absolute top-0 z-10 -translate-x-1/2 transition-opacity ${coverageRadius ? 'opacity-100' : 'opacity-40'}`}
@@ -1002,8 +1015,8 @@ const Sidebar = ({
                             }}
                             aria-hidden="true"
                           >
-                            <span className={`inline-flex min-w-12 items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm transition-colors ${coverageRadius ? 'border-border bg-background text-foreground' : 'border-border/70 bg-secondary text-muted-foreground'}`}>
-                              {kmToMiles(radiusKm)} mi • {PROVIDER_ACCESS_TIER_LABELS[getProviderAccessTierByKm(radiusKm)]}
+                            <span className={`inline-flex h-5 min-w-[3.75rem] items-center justify-center whitespace-nowrap rounded-full border px-2 py-0 text-[10px] font-semibold tabular-nums leading-none shadow-sm transition-colors ${coverageRadius ? 'border-border bg-background text-foreground' : 'border-border/70 bg-secondary text-muted-foreground'}`}>
+                              {kmToMiles(radiusKm)} mi
                             </span>
                           </div>
                           <Slider
