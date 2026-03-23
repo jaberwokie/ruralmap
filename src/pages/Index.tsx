@@ -43,6 +43,11 @@ const TOGGLE_DIAGNOSTICS = {
   },
 } as const;
 
+const TOP20_CONFLICTING_LAYERS: (keyof LayerState)[] = [
+  'services', 'behavioralHealth', 'operationalCoverage',
+  'fteCapacity', 'utilizationIntensity', 'engagementGap',
+];
+
 interface LayerState {
   counties: boolean;
   services: boolean;
@@ -71,12 +76,6 @@ const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [topProvidersOnly, setTopProvidersOnly] = useState(false);
   const [engagementRateBelow20Only, setEngagementRateBelow20Only] = useState(false);
-  const topProvidersSnapshotRef = useRef<{
-    layers: LayerState;
-    filters: Filters;
-    coverageRadius: boolean;
-    coverageGaps: boolean;
-  } | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     services: true,
@@ -166,61 +165,44 @@ const Index = () => {
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
       const next = { ...prev, [layer]: !prev[layer] };
+      // If enabling a conflicting layer while Top 20 is active, exit Top 20 mode
+      if (!prev[layer] && TOP20_CONFLICTING_LAYERS.includes(layer)) {
+        setTopProvidersOnly(false);
+      }
       if (layer in TOGGLE_DIAGNOSTICS) {
         logToggleDiagnostic(layer as keyof typeof TOGGLE_DIAGNOSTICS, next[layer as keyof LayerState]);
       }
       return next;
     });
   }, [logToggleDiagnostic]);
-
   const handleCoverageRadiusChange = useCallback((checked: boolean) => {
+    if (checked) setTopProvidersOnly(false);
     setCoverageRadius(checked);
     logToggleDiagnostic('coverageRadius', checked);
   }, [logToggleDiagnostic]);
 
   const handleCoverageGapsChange = useCallback((checked: boolean) => {
+    if (checked) setTopProvidersOnly(false);
     setCoverageGaps(checked);
     logToggleDiagnostic('coverageGaps', checked);
   }, [logToggleDiagnostic]);
 
   const handleTopProvidersOnlyChange = useCallback((checked: boolean) => {
     if (checked) {
-      // Snapshot current state before entering focus mode
-      if (!topProvidersSnapshotRef.current) {
-        topProvidersSnapshotRef.current = {
-          layers: { ...layers },
-          filters: { types: new Set(filters.types), counties: new Set(filters.counties), serviceCategories: new Set(filters.serviceCategories) },
-          coverageRadius,
-          coverageGaps,
-        };
-      }
-      // Suppress all visual layers except serviceLocations
-      setLayers({
-        counties: false,
-        services: false,
-        behavioralHealth: false,
-        serviceLocations: true,
-        operationalCoverage: false,
-        fteCapacity: false,
-        utilizationIntensity: false,
-        engagementGap: false,
+      // Turn off all conflicting layers
+      setLayers(prev => {
+        const next = { ...prev };
+        for (const key of TOP20_CONFLICTING_LAYERS) {
+          next[key] = false;
+        }
+        return next;
       });
       setFilters({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
       setCoverageRadius(false);
       setCoverageGaps(false);
-    } else {
-      // Restore previous state
-      const snapshot = topProvidersSnapshotRef.current;
-      if (snapshot) {
-        setLayers(snapshot.layers);
-        setFilters(snapshot.filters);
-        setCoverageRadius(snapshot.coverageRadius);
-        setCoverageGaps(snapshot.coverageGaps);
-        topProvidersSnapshotRef.current = null;
-      }
     }
     setTopProvidersOnly(checked);
-  }, [layers, filters, coverageRadius, coverageGaps]);
+  }, []);
 
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
     setFacilities(prev => [...prev, ...newFacilities]);
