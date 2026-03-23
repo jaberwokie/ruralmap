@@ -597,7 +597,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
 
-  const providerVisibleFacilities = useMemo(() => {
+  const providerFilteredFacilities = useMemo(() => {
     let result = providerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
     if (searchQuery) {
@@ -626,20 +626,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    if (topProvidersOnly) {
-      // Rank by totalVisits descending, then slice to 20
-      const scored = result.map(f => ({ facility: f, score: getProviderUtilizationScore(f.name) }));
-      scored.sort((a, b) => b.score - a.score || a.facility.name.localeCompare(b.facility.name));
-      const top20 = scored.slice(0, 20).map(s => s.facility);
-      if (import.meta.env.DEV) {
-        console.info('[Top 20 Debug] filtered count:', result.length, '→ top20 count:', top20.length,
-          top20.map(f => ({ name: f.name, score: getProviderUtilizationScore(f.name) })));
-      }
-      return top20;
+    return result;
+  }, [providerFacilities, searchQuery, countyFilters, typeFilters]);
+
+  const topProvidersVisible = useMemo(() => {
+    const scored = providerFilteredFacilities.map((facility) => ({
+      facility,
+      score: getProviderUtilizationScore(facility.name),
+    }));
+
+    scored.sort((a, b) => b.score - a.score || a.facility.name.localeCompare(b.facility.name) || a.facility.id.localeCompare(b.facility.id));
+
+    const top20 = scored.slice(0, 20).map((entry) => entry.facility);
+
+    if (import.meta.env.DEV) {
+      console.info('[Top 20 Debug][Raw→Ranked]', {
+        filteredRawProviderCount: providerFilteredFacilities.length,
+        top20Count: top20.length,
+        top20Providers: top20.map((facility) => ({
+          id: facility.id,
+          name: facility.name,
+          score: getProviderUtilizationScore(facility.name),
+        })),
+      });
     }
 
-    return result;
-  }, [providerFacilities, searchQuery, countyFilters, typeFilters, topProvidersOnly]);
+    return top20;
+  }, [providerFilteredFacilities]);
+
+  const providerVisibleFacilities = useMemo(
+    () => (topProvidersOnly ? topProvidersVisible : providerFilteredFacilities),
+    [providerFilteredFacilities, topProvidersOnly, topProvidersVisible],
+  );
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
 
