@@ -1227,10 +1227,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     pointClusterRef.current.clearLayers();
     selectedPointMarkerRef.current = null;
 
-    if (!layers.services && !layers.behavioralHealth && !layers.serviceLocations) return;
+    const shouldRenderProviderLocations = layers.serviceLocations || topProvidersOnly;
+
+    if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
     const nextMarkers: L.Layer[] = [];
-    const visibleFacilities = layers.serviceLocations
+    const visibleFacilities = shouldRenderProviderLocations
       ? (topProvidersOnly ? filteredFacilities.filter((facility) => isTopProvider(facility.name)) : filteredFacilities)
       : [];
     const displayCoordinates = getDisplayCoordinates([
@@ -1402,7 +1404,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     }
 
-    if (layers.serviceLocations) {
+    if (shouldRenderProviderLocations) {
       const showUtilization = layers.utilizationIntensity;
 
       visibleFacilities.forEach(facility => {
