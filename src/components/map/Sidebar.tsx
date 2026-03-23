@@ -12,6 +12,7 @@ import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 
 interface LayerState {
@@ -78,6 +79,15 @@ const ACCESS_LAYER_CONFIG = {
     icon: TriangleAlert,
   },
 } as const;
+
+const PROVIDER_COVERAGE_RADIUS_MIN_KM = 10;
+const PROVIDER_COVERAGE_RADIUS_MAX_KM = 150;
+const PROVIDER_COVERAGE_RADIUS_MIN_MI = kmToMiles(PROVIDER_COVERAGE_RADIUS_MIN_KM);
+const PROVIDER_COVERAGE_RADIUS_MAX_MI = kmToMiles(PROVIDER_COVERAGE_RADIUS_MAX_KM);
+const MILES_TO_KM = 1.60934;
+
+const clampProviderCoverageKm = (km: number) => Math.min(PROVIDER_COVERAGE_RADIUS_MAX_KM, Math.max(PROVIDER_COVERAGE_RADIUS_MIN_KM, km));
+const milesToCoverageKm = (miles: number) => clampProviderCoverageKm(Number((miles * MILES_TO_KM).toFixed(2)));
 
 const SECTION_META = {
   coreMap: {
@@ -964,19 +974,34 @@ const Sidebar = ({
                         dataTutorial: 'toggle-coverage-radius',
                       })}
                       <div className="px-2 pb-1 pt-0.5">
-                        <input
-                          type="range"
-                          min={10}
-                          max={150}
-                          step={5}
-                          value={radiusKm}
-                          onChange={(e) => onRadiusChange(Number(e.target.value))}
-                          className="h-1 w-full cursor-pointer accent-primary"
-                          aria-label="Provider coverage radius"
-                        />
+                        <div className="relative px-1 pt-6">
+                          <div
+                            className="pointer-events-none absolute top-0 z-10 -translate-x-1/2"
+                            style={{
+                              left: `calc(${((kmToMiles(radiusKm) - PROVIDER_COVERAGE_RADIUS_MIN_MI) / (PROVIDER_COVERAGE_RADIUS_MAX_MI - PROVIDER_COVERAGE_RADIUS_MIN_MI)) * 100}% + ${10 - ((((kmToMiles(radiusKm) - PROVIDER_COVERAGE_RADIUS_MIN_MI) / (PROVIDER_COVERAGE_RADIUS_MAX_MI - PROVIDER_COVERAGE_RADIUS_MIN_MI)) * 100) / 100) * 20}px)`,
+                            }}
+                            aria-hidden="true"
+                          >
+                            <span className="inline-flex min-w-12 items-center justify-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold tabular-nums text-foreground shadow-sm">
+                              {kmToMiles(radiusKm)} mi
+                            </span>
+                          </div>
+                          <Slider
+                            min={PROVIDER_COVERAGE_RADIUS_MIN_MI}
+                            max={PROVIDER_COVERAGE_RADIUS_MAX_MI}
+                            step={1}
+                            value={[kmToMiles(radiusKm)]}
+                            onValueChange={([miles]) => {
+                              if (typeof miles !== 'number') return;
+                              onRadiusChange(milesToCoverageKm(miles));
+                            }}
+                            className="w-full"
+                            aria-label="Provider coverage radius"
+                          />
+                        </div>
                         <div className="mt-0.5 flex justify-between font-mono text-[9px] text-muted-foreground">
-                          <span>6 mi</span>
-                          <span>93 mi</span>
+                          <span>{PROVIDER_COVERAGE_RADIUS_MIN_MI} mi</span>
+                          <span>{PROVIDER_COVERAGE_RADIUS_MAX_MI} mi</span>
                         </div>
                       </div>
 
