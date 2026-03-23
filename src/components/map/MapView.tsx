@@ -1593,7 +1593,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!coverageRadius) return;
 
     const visibleFacilities = topProvidersOnly
-      ? filteredFacilities.filter(f => isTopProvider(f.name))
+      ? (() => {
+          const scored = filteredFacilities.map(f => ({ f, s: getProviderUtilizationScore(f.name) }));
+          scored.sort((a, b) => b.s - a.s || a.f.name.localeCompare(b.f.name));
+          return scored.slice(0, 20).map(x => x.f);
+        })()
       : filteredFacilities;
 
       const accessTier = getProviderAccessTierByKm(radiusKm);
