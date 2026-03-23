@@ -18,7 +18,7 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
   return (
     <div
       ref={ref}
-      className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl transition-[top,left,width,max-height] duration-200 ease-out"
+      className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card/95 text-card-foreground shadow-lg transition-[top,left,width,max-height] duration-200 ease-out"
       style={{
         top: layout.top,
         left: layout.left,
@@ -33,54 +33,54 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
       {arrowStyle ? (
         <span
           aria-hidden="true"
-          className="absolute h-3 w-3 rotate-45 border border-border bg-card"
+          className="absolute h-3 w-3 rotate-45 border border-border/80 bg-card/95"
           style={arrowStyle}
         />
       ) : null}
 
-      <div className="relative shrink-0 border-b border-border px-4 py-3">
+      <div className="relative shrink-0 border-b border-border/80 px-4 py-2.5">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             Step {stepIndex + 1} of {MAP_TUTORIAL_STEPS.length}
           </p>
           <button
             type="button"
             onClick={onClose}
-            className="text-xs font-medium text-muted-foreground transition-colors hover:text-foreground active:scale-[0.98]"
+            className="rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:scale-[0.98]"
           >
             Close
           </button>
         </div>
-        <h3 id="map-tutorial-title" className="mt-2 text-base font-semibold leading-snug text-balance">
+        <h3 id="map-tutorial-title" className="mt-1.5 text-[15px] font-semibold leading-snug text-balance">
           {step.title}
         </h3>
       </div>
 
-      <div className="min-h-0 overflow-y-auto px-4 py-3">
-        <p id="map-tutorial-description" className="text-sm leading-relaxed text-muted-foreground whitespace-normal break-words">
+      <div className="min-h-0 overflow-y-auto px-4 py-2.5">
+        <p id="map-tutorial-description" className="text-[13px] leading-5 text-muted-foreground whitespace-normal break-words">
           {step.text}
         </p>
         {step.footer ? (
-          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-relaxed text-muted-foreground whitespace-normal break-words">
+          <p className="mt-2 border-t border-border/80 pt-2 text-[11px] leading-4 text-muted-foreground whitespace-normal break-words">
             {step.footer}
           </p>
         ) : null}
       </div>
 
-      <div className="shrink-0 border-t border-border px-4 py-3">
+      <div className="shrink-0 border-t border-border/80 px-4 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={onBack}
             disabled={stepIndex === 0}
-            className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
           >
             Back
           </button>
           <button
             type="button"
             onClick={onNext}
-            className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
+            className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
           >
             {stepIndex === MAP_TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next'}
           </button>
