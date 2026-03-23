@@ -194,6 +194,8 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
     return getCardLayout(viewport, highlightRect, cardHeight, anchorContext, fallbackRect);
   }, [anchorContext, cardHeight, fallbackRect, highlightRect, mounted, viewport]);
 
+  const focusRect = highlightRect ?? fallbackRect;
+
   if (!mounted || (!introOpen && (!walkthroughOpen || !step))) return null;
 
   if (introOpen) {
@@ -238,19 +240,47 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
   if (!cardLayout || !step || !stepReady) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[2200] pointer-events-auto">
-      <button type="button" aria-label="Close tutorial" className="absolute inset-0 bg-foreground/28" onClick={onSkip} />
-      {highlightRect && (
-        <div
-          className="absolute rounded-2xl border border-primary/45 bg-transparent transition-[top,left,width,height] duration-200 ease-out"
-          style={{
-            top: highlightRect.top,
-            left: highlightRect.left,
-            width: highlightRect.width,
-            height: highlightRect.height,
-            boxShadow: '0 0 0 9999px hsl(var(--foreground) / 0.18)',
-          }}
-        />
+    <div className="fixed inset-0 z-[2200] pointer-events-none">
+      {focusRect ? (
+        <>
+          <div
+            className="absolute inset-x-0 top-0 bg-foreground/16 transition-[height] duration-200 ease-out"
+            style={{ height: focusRect.top }}
+          />
+          <div
+            className="absolute bottom-0 left-0 bg-foreground/16 transition-[top,width,height] duration-200 ease-out"
+            style={{
+              top: focusRect.top,
+              width: focusRect.left,
+              height: focusRect.height,
+            }}
+          />
+          <div
+            className="absolute bg-foreground/16 transition-[top,left,width,height] duration-200 ease-out"
+            style={{
+              top: focusRect.top,
+              left: focusRect.left + focusRect.width,
+              right: 0,
+              height: focusRect.height,
+            }}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 bg-foreground/16 transition-[top] duration-200 ease-out"
+            style={{ top: focusRect.top + focusRect.height }}
+          />
+          <div
+            className="absolute rounded-2xl border border-border/90 bg-background/5 shadow-sm transition-[top,left,width,height] duration-200 ease-out"
+            style={{
+              top: focusRect.top,
+              left: focusRect.left,
+              width: focusRect.width,
+              height: focusRect.height,
+              boxShadow: '0 0 0 1px hsl(var(--background) / 0.28)',
+            }}
+          />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-foreground/16" />
       )}
 
       <MapTutorialCard
