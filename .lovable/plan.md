@@ -1,39 +1,35 @@
 
 
-## Fix Top 20 Providers as Exclusive Map Mode
+## Fix: Top 20 Providers as True Exclusive Rendering Mode
 
-### Problem
-The current toggle handlers (`handleToggleLayer`, `handleCoverageRadiusChange`, `handleCoverageGapsChange`) don't check whether Top 20 mode is active. Users can turn on conflicting layers while in Top 20 mode, breaking the exclusive display intent.
+### Root Cause
 
-### Changes (all in `src/pages/Index.tsx`)
+The screenshot shows the exact problem: when Top 20 is ON, service markers (green), behavioral health markers (purple), and cluster counts all still render. This is because:
 
-**1. Remove snapshot/restore pattern**
-The user explicitly wants "do not automatically restore prior toggle states" on OFF. Remove `topProvidersSnapshotRef` entirely. When Top 20 turns OFF, conflicting layers stay off until the user manually re-enables them.
+1. The previous fix **removed** the exclusive mode logic from `Index.tsx` that turned off conflicting layer toggles
+2. The render effect in `MapView.tsx` (lines 1391-1502) renders service/BH markers based solely on `layers.services` and `layers.behavioralHealth` — it never checks `topProvidersOnly`
+3. The markers still get added to `pointClusterRef` (line 1609), producing cluster count badges
 
-**2. Define conflicting layers as a constant**
-```typescript
-const TOP20_CONFLICTING_LAYERS: (keyof LayerState)[] = [
-  'services', 'behavioralHealth', 'operationalCoverage',
-  'fteCapacity', 'utilizationIntensity', 'engagementGap'
-];
-```
+### Fix Strategy
 
-**3. Simplify `handleTopProvidersOnlyChange`**
-- ON: set all conflicting layers to `false`, set `coverageRadius` and `coverageGaps` to `false`, clear filters, keep `counties` and `serviceLocations` on.
-- OFF: just set `topProvidersOnly = false`. Leave all other state as-is.
+Apply the exclusive mode at the **render level** inside `MapView.tsx`, not by manipulating toggle state in `Index.tsx`. This means the sidebar toggles stay visually as-is, but when `topProvidersOnly` is active, the renderer skips all non-provider marker layers.
 
-**4. Gate conflicting toggle handlers**
-Modify `handleToggleLayer` so that if `topProvidersOnly` is active and the user turns ON a conflicting layer, it first sets `topProvidersOnly = false`, then applies the layer toggle. Non-conflicting layers pass through normally.
+### Changes
 
-Same for `handleCoverageRadiusChange` and `handleCoverageGapsChange` — if enabling while Top 20 is on, turn Top 20 off first.
+**File: `src/components/map/MapView.tsx`** — render effect (~line 1317)
 
-**5. No changes to**
-- MapView rendering logic (it already respects `layers` state)
-- Sidebar layout/styling
-- Marker styling or Top 20 ranking logic
-- Tutorial, zoom, county metrics
+1. When `topProvidersOnly` is true, skip rendering service presence markers (lines 1391-1446) and behavioral health markers (lines 1448-1503) entirely — treat both blocks as if their toggle is off
+2. When `topProvidersOnly` is true, skip adding anything to `pointClusterRef` (line 1608-1609) — no cluster badges
+3. The provider marker block (lines 1505-1598) already uses `providerVisibleFacilities` which resolves to the top-20 dataset — this is correct and stays
 
-### Acceptance test coverage
-- Turn on Service/BH/Coverage → Turn on Top 20 → all conflicting toggles go OFF in state, only Top 20 markers render
-- While Top 20 active, turn on Coverage Radius → Top 20 turns OFF, Coverage Radius turns ON, normal rendering resumes
+Concretely, change these conditions:
+- Line 1391: `if (layers.services)` → `if (layers.services && !topProvidersOnly)`
+- Line 1448: `if (layers.behavioralHealth)` → `if (layers.behavioralHealth && !topProvidersOnly)`
+
+This ensures when Top 20 is active:
+- Only the 20 provider pin markers render (via `topProviderMarkersRef`, no clustering)
+- No service dots, no BH dots, no cluster count badges
+- County boundaries and utilization shading still render normally (controlled by separate layer groups)
+
+**No changes to**: `Index.tsx`, sidebar, toggle state management, marker styling, ranking logic.
 
