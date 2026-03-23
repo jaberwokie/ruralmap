@@ -546,6 +546,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
   const selectedPointMarkerRef = useRef<MapPointMarker | null>(null);
   const markersRef = useRef<MarkerClusterGroupLike | null>(null);
+  const topProviderMarkersRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
   const behavioralHealthHaloRef = useRef<L.LayerGroup | null>(null);
