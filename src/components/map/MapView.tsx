@@ -337,7 +337,7 @@ const createGeoJsonLayer = (
   style,
   interactive,
   smoothFactor: 0,
-});
+} as any);
 
 type PointMarkerKind = keyof Pick<typeof MAP_PIN_VISUALS, 'providerLocations' | 'servicePresence' | 'behavioralHealth'>;
 
@@ -1078,7 +1078,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         },
         interactive: true,
         smoothFactor: 0,
-      });
+      } as any);
 
       hitArea.on('mouseover', (event: L.LeafletMouseEvent) => {
         updateCountyHoverPreview(county.name, event);
