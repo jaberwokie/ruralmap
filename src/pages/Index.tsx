@@ -175,45 +175,34 @@ const Index = () => {
       return next;
     });
   }, [logToggleDiagnostic]);
+  const handleCoverageRadiusChange = useCallback((checked: boolean) => {
+    if (checked) setTopProvidersOnly(false);
+    setCoverageRadius(checked);
+    logToggleDiagnostic('coverageRadius', checked);
+  }, [logToggleDiagnostic]);
+
+  const handleCoverageGapsChange = useCallback((checked: boolean) => {
+    if (checked) setTopProvidersOnly(false);
+    setCoverageGaps(checked);
+    logToggleDiagnostic('coverageGaps', checked);
+  }, [logToggleDiagnostic]);
 
   const handleTopProvidersOnlyChange = useCallback((checked: boolean) => {
     if (checked) {
-      // Snapshot current state before entering focus mode
-      if (!topProvidersSnapshotRef.current) {
-        topProvidersSnapshotRef.current = {
-          layers: { ...layers },
-          filters: { types: new Set(filters.types), counties: new Set(filters.counties), serviceCategories: new Set(filters.serviceCategories) },
-          coverageRadius,
-          coverageGaps,
-        };
-      }
-      // Suppress all visual layers except serviceLocations
-      setLayers({
-        counties: false,
-        services: false,
-        behavioralHealth: false,
-        serviceLocations: true,
-        operationalCoverage: false,
-        fteCapacity: false,
-        utilizationIntensity: false,
-        engagementGap: false,
+      // Turn off all conflicting layers
+      setLayers(prev => {
+        const next = { ...prev };
+        for (const key of TOP20_CONFLICTING_LAYERS) {
+          next[key] = false;
+        }
+        return next;
       });
       setFilters({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
       setCoverageRadius(false);
       setCoverageGaps(false);
-    } else {
-      // Restore previous state
-      const snapshot = topProvidersSnapshotRef.current;
-      if (snapshot) {
-        setLayers(snapshot.layers);
-        setFilters(snapshot.filters);
-        setCoverageRadius(snapshot.coverageRadius);
-        setCoverageGaps(snapshot.coverageGaps);
-        topProvidersSnapshotRef.current = null;
-      }
     }
     setTopProvidersOnly(checked);
-  }, [layers, filters, coverageRadius, coverageGaps]);
+  }, []);
 
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
     setFacilities(prev => [...prev, ...newFacilities]);
