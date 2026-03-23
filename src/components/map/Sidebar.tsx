@@ -980,13 +980,13 @@ const Sidebar = ({
                       <div className="px-2 pb-1 pt-0.5">
                         <div className="relative px-1 pt-6">
                           <div
-                            className="pointer-events-none absolute top-0 z-10 -translate-x-1/2"
+                            className={`pointer-events-none absolute top-0 z-10 -translate-x-1/2 transition-opacity ${coverageRadius ? 'opacity-100' : 'opacity-40'}`}
                             style={{
                               left: `calc(${((kmToMiles(radiusKm) - PROVIDER_COVERAGE_RADIUS_MIN_MI) / (PROVIDER_COVERAGE_RADIUS_MAX_MI - PROVIDER_COVERAGE_RADIUS_MIN_MI)) * 100}% + ${10 - ((((kmToMiles(radiusKm) - PROVIDER_COVERAGE_RADIUS_MIN_MI) / (PROVIDER_COVERAGE_RADIUS_MAX_MI - PROVIDER_COVERAGE_RADIUS_MIN_MI)) * 100) / 100) * 20}px)`,
                             }}
                             aria-hidden="true"
                           >
-                            <span className="inline-flex min-w-12 items-center justify-center rounded-full border border-border bg-background px-2 py-0.5 text-[10px] font-semibold tabular-nums text-foreground shadow-sm">
+                            <span className={`inline-flex min-w-12 items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm transition-colors ${coverageRadius ? 'border-border bg-background text-foreground' : 'border-border/70 bg-secondary text-muted-foreground'}`}>
                               {kmToMiles(radiusKm)} mi
                             </span>
                           </div>
@@ -995,11 +995,13 @@ const Sidebar = ({
                             max={PROVIDER_COVERAGE_RADIUS_MAX_MI}
                             step={1}
                             value={[kmToMiles(radiusKm)]}
+                            disabled={!coverageRadius}
                             onValueChange={([miles]) => {
+                              if (!coverageRadius) return;
                               if (typeof miles !== 'number') return;
                               onRadiusChange(milesToCoverageKm(miles));
                             }}
-                            className="w-full"
+                            className={coverageRadius ? 'w-full' : 'w-full opacity-60'}
                             aria-label="Provider coverage radius"
                           />
                         </div>
