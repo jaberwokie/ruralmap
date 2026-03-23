@@ -867,13 +867,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       'service-presence-markers': servicePresenceMarkerRef.current,
       'behavioral-health-halos': behavioralHealthHaloRef.current,
       'behavioral-health-markers': behavioralHealthMarkerRef.current,
-      'facility-markers': markersRef.current,
+      'facility-markers': topProvidersOnly ? topProviderMarkersRef.current : markersRef.current,
       'county-labels': labelsRef.current,
       'engagement-gap-labels': engagementGapLabelRef.current,
       'fte-capacity-hubs': fteCapacityRef.current,
       'selection-highlights': highlightsRef.current,
     }),
-    [mapReady],
+    [mapReady, topProvidersOnly],
   );
 
   const isLayerVisibleInDebug = useCallback(
