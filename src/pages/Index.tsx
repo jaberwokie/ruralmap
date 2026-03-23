@@ -63,7 +63,7 @@ export interface Filters {
 const Index = () => {
   const [facilities, setFacilities] = useState<Facility[]>(defaultFacilities);
   const [searchQuery, setSearchQuery] = useState('');
-  const [radiusKm, setRadiusKm] = useState(50);
+  const [radiusKm, setRadiusKm] = useState(32);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
   const [coverageRadius, setCoverageRadius] = useState(false);
   const [coverageRadiusKm, setCoverageRadiusKm] = useState(ACTIVE_COVERAGE_RADIUS_KM);
