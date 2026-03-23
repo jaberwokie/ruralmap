@@ -1388,7 +1388,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       applyMarkerPriority(marker, 'selected');
     };
 
-    if (layers.services) {
+    if (layers.services && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.servicePresence.size;
       const servicePresenceIcon = L.divIcon({
         className: '',
