@@ -531,7 +531,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const containerRef = useRef<HTMLDivElement>(null);
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
   const selectedPointMarkerRef = useRef<MapPointMarker | null>(null);
-  const markersRef = useRef<L.LayerGroup | null>(null);
+  const markersRef = useRef<MarkerClusterGroupLike | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
   const behavioralHealthHaloRef = useRef<L.LayerGroup | null>(null);
@@ -816,7 +816,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       case 'layers.behavioralHealth':
         return layers.behavioralHealth;
       case 'layers.serviceLocations':
-        return layers.serviceLocations;
+        return layers.serviceLocations || topProvidersOnly;
       case 'layers.operationalCoverage':
         return layers.operationalCoverage;
       case 'layers.fteCapacity':
@@ -835,7 +835,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       default:
         return true;
     }
-  }, [coverageGaps, coverageRadius, layers.behavioralHealth, layers.counties, layers.engagementGap, layers.fteCapacity, layers.operationalCoverage, layers.serviceLocations, layers.services, layers.utilizationIntensity, selectedCounty, selectedFteId]);
+  }, [coverageGaps, coverageRadius, layers.behavioralHealth, layers.counties, layers.engagementGap, layers.fteCapacity, layers.operationalCoverage, layers.serviceLocations, layers.services, layers.utilizationIntensity, selectedCounty, selectedFteId, topProvidersOnly]);
 
   const geometryWarnings = useMemo(() => {
     if (!DEBUG_ENABLED || !debugOpen) {
@@ -997,7 +997,24 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     servicePresenceMarkerRef.current = L.layerGroup().addTo(map);
     behavioralHealthHaloRef.current = L.layerGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.layerGroup().addTo(map);
-    markersRef.current = L.layerGroup().addTo(map);
+    markersRef.current = markerClusterFactory?.({
+      maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
+      showCoverageOnHover: false,
+      zoomToBoundsOnClick: true,
+      spiderfyOnMaxZoom: true,
+      removeOutsideVisibleBounds: false,
+      animate: true,
+      animateAddingMarkers: false,
+      spiderfyDistanceMultiplier: 0.85,
+      clusterPane: MAP_PANES.facilityMarkers,
+      spiderLegPolylineOptions: {
+        color: 'hsl(var(--border))',
+        weight: 1,
+        opacity: 0.85,
+      },
+      iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
+    }) ?? null;
+    markersRef.current?.addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
@@ -1232,6 +1249,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
     const nextMarkers: L.Layer[] = [];
+    const nextFacilityMarkers: L.Layer[] = [];
     const visibleFacilities = shouldRenderProviderLocations
       ? (topProvidersOnly ? filteredFacilities.filter((facility) => isTopProvider(facility.name)) : filteredFacilities)
       : [];
@@ -1495,8 +1513,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           className: 'facility-tooltip',
         });
 
-        nextMarkers.push(marker);
+        nextFacilityMarkers.push(marker);
       });
+    }
+
+    if (nextFacilityMarkers.length > 0) {
+      markersRef.current.addLayers(nextFacilityMarkers);
     }
 
     if (nextMarkers.length > 0) {
