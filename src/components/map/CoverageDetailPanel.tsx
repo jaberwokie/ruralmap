@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
@@ -167,8 +167,26 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 
   const display = entity ?? hoverEntity;
   const isLocked = !!entity;
 
+  useEffect(() => {
+    if (!isLocked) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      onClear();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isLocked, onClear]);
+
   return (
-    <div data-tutorial="details-panel" className="absolute top-3 right-3 z-[1000] flex max-h-[calc(100vh-120px)] w-64 select-none flex-col rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm">
+    <div
+      data-tutorial="details-panel"
+      className="absolute top-3 right-3 z-[1000] flex max-h-[calc(100vh-120px)] w-64 select-none flex-col rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm"
+      onClick={(event) => event.stopPropagation()}
+      onMouseDown={(event) => event.stopPropagation()}
+    >
       {/* Header */}
       <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -176,11 +194,17 @@ const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 
         </h3>
         {isLocked && (
           <button
-            onClick={onClear}
-            className="p-0.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
-            title="Clear selection"
+            type="button"
+            onClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              onClear();
+            }}
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            aria-label="Close details panel"
+            title="Close details"
           >
-            <X className="w-3.5 h-3.5" />
+            <X className="h-4 w-4 stroke-[1.75]" />
           </button>
         )}
       </div>

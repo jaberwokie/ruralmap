@@ -198,6 +198,8 @@ const Index = () => {
 
   const handleClearEntity = useCallback(() => {
     setLockedEntity(null);
+    setHoverEntity(null);
+    setSelectedFteId(null);
   }, []);
 
   const handleMapClick = useCallback(() => {
