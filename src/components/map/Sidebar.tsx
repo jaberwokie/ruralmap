@@ -87,7 +87,11 @@ const PROVIDER_COVERAGE_RADIUS_MAX_MI = kmToMiles(PROVIDER_COVERAGE_RADIUS_MAX_K
 const MILES_TO_KM = 1.60934;
 
 const clampProviderCoverageKm = (km: number) => Math.min(PROVIDER_COVERAGE_RADIUS_MAX_KM, Math.max(PROVIDER_COVERAGE_RADIUS_MIN_KM, km));
-const milesToCoverageKm = (miles: number) => clampProviderCoverageKm(Number((miles * MILES_TO_KM).toFixed(2)));
+const milesToCoverageKm = (miles: number) => {
+  if (miles <= PROVIDER_COVERAGE_RADIUS_MIN_MI) return PROVIDER_COVERAGE_RADIUS_MIN_KM;
+  if (miles >= PROVIDER_COVERAGE_RADIUS_MAX_MI) return PROVIDER_COVERAGE_RADIUS_MAX_KM;
+  return clampProviderCoverageKm(Number((miles * MILES_TO_KM).toFixed(2)));
+};
 
 const SECTION_META = {
   coreMap: {
