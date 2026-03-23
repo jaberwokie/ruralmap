@@ -581,7 +581,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
 
-  const facilityValidation = useMemo(() => buildFacilityValidationIndex(facilities), [facilities]);
+  const providerVisibleFacilities = useMemo(() => {
+    let result = providerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
+
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((facility) =>
+        facility.name.toLowerCase().includes(q)
+        || facility.city.toLowerCase().includes(q)
+        || facility.county.toLowerCase().includes(q)
+      );
+    }
+
+    if (countyFilters && countyFilters.size > 0) {
+      result = result.filter((facility) => countyFilters.has(facility.county));
+    }
+
+    if (typeFilters && typeFilters.size > 0) {
+      const providerTypeFilters = new Set(
+        [...typeFilters].filter((type) => type === 'hospital' || type === 'clinic')
+      );
+
+      if (providerTypeFilters.size > 0) {
+        result = result.filter((facility) => providerTypeFilters.has(facility.type));
+      }
+    }
+
+    return topProvidersOnly
+      ? result.filter((facility) => isTopProvider(facility.name))
+      : result;
+  }, [providerFacilities, searchQuery, countyFilters, typeFilters, topProvidersOnly]);
+
+  const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
 
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
@@ -1250,9 +1281,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     const nextMarkers: L.Layer[] = [];
     const nextFacilityMarkers: L.Layer[] = [];
-    const visibleFacilities = shouldRenderProviderLocations
-      ? (topProvidersOnly ? filteredFacilities.filter((facility) => isTopProvider(facility.name)) : filteredFacilities)
-      : [];
+    const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
     const displayCoordinates = getDisplayCoordinates([
       ...(layers.services
         ? filteredCommunityServices.map((service) => ({
@@ -1524,7 +1553,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (nextMarkers.length > 0) {
       pointClusterRef.current.addLayers(nextMarkers);
     }
-  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, filteredFacilities, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, mapZoom, onFacilityClick, topProvidersOnly]);
+  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, mapZoom, onFacilityClick, providerVisibleFacilities, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {
