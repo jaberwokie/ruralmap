@@ -1445,7 +1445,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     }
 
-    if (layers.behavioralHealth) {
+    if (layers.behavioralHealth && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.behavioralHealth.size;
       const behavioralHealthIcon = L.divIcon({
         className: '',
