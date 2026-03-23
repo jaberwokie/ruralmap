@@ -1605,7 +1605,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    if (nextMarkers.length > 0) {
+    if (nextMarkers.length > 0 && !topProvidersOnly) {
       pointClusterRef.current.addLayers(nextMarkers);
     }
 
