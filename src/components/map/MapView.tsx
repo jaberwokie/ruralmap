@@ -453,20 +453,18 @@ const createPointClusterIcon = (markers: L.Marker[]) => {
     { color: 'hsl(var(--behavioral-health))', count: behavioralHealthCount },
   ].filter((entry) => entry.count > 0);
   const primaryPinColor = [...categoryCounts].sort((left, right) => right.count - left.count)[0]?.color ?? 'hsl(var(--clinic))';
-  const primaryPin = getSharedPinSvgMarkup('providerLocations', 14, { color: primaryPinColor });
-  const compositionAccent = categoryCounts.length > 1
-    ? `
-      <span style="position:absolute;left:1px;bottom:2px;display:inline-flex;align-items:center;gap:2px;padding:1px 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));z-index:2;">
-        ${categoryCounts.map(({ color }) => `<span style="width:4px;height:4px;border-radius:999px;background:${color};display:block;"></span>`).join('')}
-      </span>
-    `.trim()
-    : '';
+  const primaryPin = getSharedPinSvgMarkup('providerLocations', 16, { color: primaryPinColor });
+  const indicatorDots = categoryCounts
+    .map(({ color, count }) => `<span class="cluster-marker__dot" style="--cluster-dot:${color}" aria-hidden="true" title="${count}"></span>`)
+    .join('');
 
   const html = `
-    <div style="position:relative;width:${iconSize}px;height:${iconSize}px;display:block;">
-      <span style="position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:flex;z-index:1;">${primaryPin}</span>
-      ${compositionAccent}
-      <span style="position:absolute;top:-4px;right:-4px;min-width:14px;height:14px;padding:0 3px;border-radius:999px;border:1px solid hsl(var(--border));background:hsl(var(--background));color:hsl(var(--foreground));font-size:9px;font-weight:600;line-height:1;display:inline-flex;align-items:center;justify-content:center;text-align:center;z-index:3;">${getClusterBadgeLabel(totalCount)}</span>
+    <div class="cluster-marker-composed" data-count="${totalCount}" style="width:${iconSize + 8}px;height:${iconSize + 14}px;">
+      <span class="cluster-marker-composed__pin" aria-hidden="true">${primaryPin}</span>
+      <span class="cluster-marker-composed__badge" aria-hidden="true">
+        <span class="cluster-marker-composed__count">${getClusterBadgeLabel(totalCount)}</span>
+      </span>
+      ${indicatorDots ? `<span class="cluster-marker-composed__indicators" aria-hidden="true">${indicatorDots}</span>` : ''}
     </div>
   `.trim();
 
