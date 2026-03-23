@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
+import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
@@ -306,7 +306,8 @@ const Sidebar = ({
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
-  const [filtersOpen, toggleFilters, setFiltersOpen] = usePersistToggle('sidebar_filters', true);
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
