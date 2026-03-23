@@ -1333,8 +1333,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     const nextMarkers: L.Layer[] = [];
     const nextFacilityMarkers: L.Layer[] = [];
     const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
+    // When Top 20 is active, force declutter zoom so overlapping providers always fan out
+    const effectiveZoom = topProvidersOnly ? Math.max(mapZoom, OVERLAP_DECLUTTER_ZOOM) : mapZoom;
     const displayCoordinates = getDisplayCoordinates([
-      ...(layers.services
+      ...(layers.services && !topProvidersOnly
         ? filteredCommunityServices.map((service) => ({
             id: `service:${service.id}`,
             lat: service.lat,
@@ -1342,7 +1344,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             sortKey: `service:${service.id}`,
           }))
         : []),
-      ...(layers.behavioralHealth
+      ...(layers.behavioralHealth && !topProvidersOnly
         ? filteredBehavioralHealthServices.map((service) => ({
             id: `behavioral-health:${service.id}`,
             lat: service.lat,
@@ -1356,7 +1358,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         lng: facility.lng,
         sortKey: `provider:${facility.type}:${facility.id}`,
       })),
-    ], mapZoom);
+    ], effectiveZoom);
 
     const applyMarkerPriority = (marker: MapPointMarker, state: 'default' | 'hovered' | 'selected') => {
       const baseOffset = marker.__baseZIndexOffset ?? POINT_MARKER_PRIORITY.base;
