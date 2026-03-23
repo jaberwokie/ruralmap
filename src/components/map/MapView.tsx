@@ -119,6 +119,12 @@ const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> =
   [MAP_PANES.highlights]: 740,
 };
 
+const LEAFLET_UI_PANE_Z_INDEX = {
+  markerPane: 700,
+  tooltipPane: 820,
+  popupPane: 830,
+} as const;
+
 const NEVADA_FEATURE: Feature<Polygon> = {
   type: 'Feature',
   properties: {},
@@ -953,9 +959,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       pane.style.pointerEvents = paneName === MAP_PANES.labels ? 'none' : 'auto';
     });
 
+    const markerPane = map.getPane('markerPane');
+    const tooltipPane = map.getPane('tooltipPane');
+    const popupPane = map.getPane('popupPane');
+
+    if (markerPane) markerPane.style.zIndex = String(LEAFLET_UI_PANE_Z_INDEX.markerPane);
+    if (tooltipPane) tooltipPane.style.zIndex = String(LEAFLET_UI_PANE_Z_INDEX.tooltipPane);
+    if (popupPane) popupPane.style.zIndex = String(LEAFLET_UI_PANE_Z_INDEX.popupPane);
+
     // Rendering hierarchy:
     // Base map → state outline → county polygons → county borders → operational areas
-    // → drive radii → gap/engagement overlays → grouped markers → individual markers → labels → highlights.
+    // → drive radii → gap/engagement overlays → grouped markers → individual markers → labels → highlights
+    // → Leaflet tooltips/popups.
     stateBoundaryRef.current = L.layerGroup().addTo(map);
     countyFillRef.current = L.layerGroup().addTo(map);
     utilizationRef.current = L.layerGroup().addTo(map);
