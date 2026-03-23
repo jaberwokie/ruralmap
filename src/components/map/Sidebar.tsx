@@ -571,7 +571,7 @@ const Sidebar = ({
             <div className="space-y-3">
               <div data-tutorial="facility-filters">
                 <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Facility Type</div>
-                <div className="grid grid-cols-2 gap-1.5">
+                <div data-tutorial="facility-filter-chips" className="grid grid-cols-2 gap-1.5">
                   {[
                     { value: 'hospital', label: 'Hospital', color: 'bg-hospital' },
                     { value: 'clinic', label: 'Clinic', color: 'bg-clinic' },

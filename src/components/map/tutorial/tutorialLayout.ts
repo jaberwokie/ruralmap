@@ -10,6 +10,8 @@ export interface ViewportSize {
   height: number;
 }
 
+export type TutorialAnchorContext = 'sidebar' | 'map' | 'details' | 'generic';
+
 export type TutorialPlacement = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
 export interface CardLayout {
@@ -69,15 +71,17 @@ export const getCardLayout = (
   viewport: ViewportSize,
   highlightRect: HighlightRect | null,
   measuredHeight: number,
+  anchorContext: TutorialAnchorContext = 'generic',
+  fallbackRect: HighlightRect | null = null,
 ): CardLayout => {
   const width = Math.min(CARD_MAX_WIDTH, Math.max(CARD_MIN_WIDTH, viewport.width - VIEWPORT_PADDING * 2));
   const maxHeight = Math.min(CARD_MAX_HEIGHT, viewport.height - VIEWPORT_PADDING * 2);
   const cardHeight = Math.min(Math.max(measuredHeight, FALLBACK_CARD_HEIGHT), maxHeight);
   const centeredLeft = clamp((viewport.width - width) / 2, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING));
   const centeredTop = clamp((viewport.height - cardHeight) / 2, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING));
-  const isCompactViewport = viewport.width < 900 || viewport.height < 720;
+  const anchorRect = highlightRect ?? fallbackRect;
 
-  if (!highlightRect || isCompactViewport) {
+  if (!anchorRect) {
     return {
       top: centeredTop,
       left: centeredLeft,
@@ -87,15 +91,15 @@ export const getCardLayout = (
     };
   }
 
-  const anchorCenterX = highlightRect.left + highlightRect.width / 2;
-  const anchorCenterY = highlightRect.top + highlightRect.height / 2;
-  const spaceAbove = highlightRect.top - VIEWPORT_PADDING;
-  const spaceBelow = viewport.height - (highlightRect.top + highlightRect.height) - VIEWPORT_PADDING;
-  const spaceLeft = highlightRect.left - VIEWPORT_PADDING;
-  const spaceRight = viewport.width - (highlightRect.left + highlightRect.width) - VIEWPORT_PADDING;
+  const anchorCenterX = anchorRect.left + anchorRect.width / 2;
+  const anchorCenterY = anchorRect.top + anchorRect.height / 2;
+  const spaceAbove = anchorRect.top - VIEWPORT_PADDING;
+  const spaceBelow = viewport.height - (anchorRect.top + anchorRect.height) - VIEWPORT_PADDING;
+  const spaceLeft = anchorRect.left - VIEWPORT_PADDING;
+  const spaceRight = viewport.width - (anchorRect.left + anchorRect.width) - VIEWPORT_PADDING;
 
   const placeTop = () => ({
-    top: clamp(highlightRect.top - cardHeight - GAP, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING)),
+    top: clamp(anchorRect.top - cardHeight - GAP, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING)),
     left: clamp(anchorCenterX - width / 2, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING)),
     width,
     maxHeight,
@@ -103,7 +107,7 @@ export const getCardLayout = (
   });
 
   const placeBottom = () => ({
-    top: clamp(highlightRect.top + highlightRect.height + GAP, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING)),
+    top: clamp(anchorRect.top + anchorRect.height + GAP, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING)),
     left: clamp(anchorCenterX - width / 2, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING)),
     width,
     maxHeight,
@@ -112,7 +116,7 @@ export const getCardLayout = (
 
   const placeLeft = () => ({
     top: clamp(anchorCenterY - cardHeight / 2, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING)),
-    left: clamp(highlightRect.left - width - GAP, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING)),
+    left: clamp(anchorRect.left - width - GAP, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING)),
     width,
     maxHeight,
     placement: 'left' as const,
@@ -120,11 +124,32 @@ export const getCardLayout = (
 
   const placeRight = () => ({
     top: clamp(anchorCenterY - cardHeight / 2, VIEWPORT_PADDING, Math.max(viewport.height - cardHeight - VIEWPORT_PADDING, VIEWPORT_PADDING)),
-    left: clamp(highlightRect.left + highlightRect.width + GAP, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING)),
+    left: clamp(anchorRect.left + anchorRect.width + GAP, VIEWPORT_PADDING, Math.max(viewport.width - width - VIEWPORT_PADDING, VIEWPORT_PADDING)),
     width,
     maxHeight,
     placement: 'right' as const,
   });
+
+  if (anchorContext === 'sidebar') {
+    if (spaceRight >= width + GAP) return placeRight();
+    if (spaceBelow >= cardHeight + GAP) return placeBottom();
+    if (spaceAbove >= cardHeight + GAP) return placeTop();
+    if (spaceLeft >= width + GAP) return placeLeft();
+    if (spaceRight >= GAP) return placeRight();
+    if (spaceBelow >= GAP) return placeBottom();
+    if (spaceAbove >= GAP) return placeTop();
+    return placeLeft();
+  }
+
+  if (anchorContext === 'details') {
+    if (spaceLeft >= width + GAP) return placeLeft();
+    if (spaceBelow >= cardHeight + GAP) return placeBottom();
+    if (spaceAbove >= cardHeight + GAP) return placeTop();
+    if (spaceRight >= width + GAP) return placeRight();
+    if (spaceLeft >= GAP) return placeLeft();
+    if (spaceBelow >= GAP) return placeBottom();
+    return placeTop();
+  }
 
   if (anchorCenterX < viewport.width * 0.38 && spaceRight >= width + GAP) return placeRight();
   if (anchorCenterX > viewport.width * 0.62 && spaceLeft >= width + GAP) return placeLeft();
@@ -133,13 +158,7 @@ export const getCardLayout = (
   if (spaceRight >= width + GAP) return placeRight();
   if (spaceLeft >= width + GAP) return placeLeft();
 
-  return {
-    top: centeredTop,
-    left: centeredLeft,
-    width,
-    maxHeight,
-    placement: 'center',
-  };
+  return placeBottom();
 };
 
 export const getArrowStyle = (layout: CardLayout, highlightRect: HighlightRect | null) => {

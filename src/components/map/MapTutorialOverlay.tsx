@@ -2,8 +2,8 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { MAP_TUTORIAL_STEPS } from '@/data/map-tutorial';
 import MapTutorialCard from '@/components/map/tutorial/MapTutorialCard';
-import { getPrimaryTutorialElement, resolveTutorialElements, scrollTutorialElementIntoView } from '@/components/map/tutorial/tutorialDom';
-import { FALLBACK_CARD_HEIGHT, getCardLayout, getHighlightRect, getViewportSize, type HighlightRect, type ViewportSize } from '@/components/map/tutorial/tutorialLayout';
+import { getTutorialAnchorContext, getTutorialFallbackElement, resolveTutorialElements, scrollTutorialElementIntoView } from '@/components/map/tutorial/tutorialDom';
+import { FALLBACK_CARD_HEIGHT, getCardLayout, getHighlightRect, getViewportSize, type HighlightRect, type TutorialAnchorContext, type ViewportSize } from '@/components/map/tutorial/tutorialLayout';
 
 interface MapTutorialOverlayProps {
   introOpen: boolean;
@@ -21,6 +21,8 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
   const [mounted, setMounted] = useState(false);
   const [stepReady, setStepReady] = useState(false);
   const [highlightRect, setHighlightRect] = useState<HighlightRect | null>(null);
+  const [fallbackRect, setFallbackRect] = useState<HighlightRect | null>(null);
+  const [anchorContext, setAnchorContext] = useState<TutorialAnchorContext>('generic');
   const [viewport, setViewport] = useState<ViewportSize>({ width: 0, height: 0 });
   const [cardHeight, setCardHeight] = useState(FALLBACK_CARD_HEIGHT);
 
@@ -45,34 +47,113 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
 
     let frame = 0;
     let timeout = 0;
+    let cancelled = false;
+    let attempts = 0;
 
-    const updateRect = () => {
+    const MAX_RESOLUTION_ATTEMPTS = 12;
+
+    const schedule = (callback: () => void, delay = 0) => {
+      window.clearTimeout(timeout);
       cancelAnimationFrame(frame);
-      frame = window.requestAnimationFrame(() => {
-        const elements = resolveTutorialElements(step.selectors);
-        setHighlightRect(getHighlightRect(elements));
+
+      if (delay > 0) {
+        timeout = window.setTimeout(() => {
+          frame = window.requestAnimationFrame(callback);
+        }, delay);
+        return;
+      }
+
+      frame = window.requestAnimationFrame(callback);
+    };
+
+    const updateStepGeometry = (allowFallback: boolean) => {
+      const elements = resolveTutorialElements(step.selectors);
+      const primaryElement = elements[0] ?? (allowFallback ? getTutorialFallbackElement(step.selectors) : null);
+
+      setAnchorContext(getTutorialAnchorContext(primaryElement, step.selectors));
+
+      if (!primaryElement) {
+        setHighlightRect(null);
+        setFallbackRect(null);
+        return false;
+      }
+
+      const nextHighlightRect = elements.length > 0 ? getHighlightRect(elements) : null;
+      const nextFallbackRect = elements.length === 0 ? getHighlightRect([primaryElement]) : null;
+
+      setHighlightRect(nextHighlightRect);
+      setFallbackRect(nextFallbackRect);
+
+      return Boolean(nextHighlightRect || nextFallbackRect);
+    };
+
+    const refreshPosition = () => {
+      if (cancelled) return;
+      updateStepGeometry(true);
+    };
+
+    const resolveAnchor = () => {
+      if (cancelled) return;
+
+      const elements = resolveTutorialElements(step.selectors);
+      const primaryElement = elements[0] ?? null;
+
+      if (!primaryElement) {
+        if (attempts < MAX_RESOLUTION_ATTEMPTS) {
+          attempts += 1;
+          schedule(resolveAnchor, attempts < 4 ? 40 : 80);
+          return;
+        }
+
+        const hasFallbackAnchor = updateStepGeometry(true);
+        console.warn('[MapTutorialOverlay] Missing tutorial anchor selector', {
+          stepKey: step.key,
+          selectors: step.selectors,
+          fallbackUsed: hasFallbackAnchor,
+        });
         setStepReady(true);
-      });
+        return;
+      }
+
+      const didScroll = scrollTutorialElementIntoView(primaryElement);
+      schedule(() => {
+        if (cancelled) return;
+
+        const hasResolvedAnchor = updateStepGeometry(false);
+
+        if (!hasResolvedAnchor && attempts < MAX_RESOLUTION_ATTEMPTS) {
+          attempts += 1;
+          schedule(resolveAnchor, 60);
+          return;
+        }
+
+        if (!hasResolvedAnchor) {
+          const hasFallbackAnchor = updateStepGeometry(true);
+          console.warn('[MapTutorialOverlay] Falling back after unresolved tutorial anchor', {
+            stepKey: step.key,
+            selectors: step.selectors,
+            fallbackUsed: hasFallbackAnchor,
+          });
+        }
+
+        setStepReady(true);
+      }, didScroll ? 110 : 0);
     };
 
     setStepReady(false);
-    const primaryElement = getPrimaryTutorialElement(step.selectors);
-    const didScroll = scrollTutorialElementIntoView(primaryElement);
+    setHighlightRect(null);
+    setFallbackRect(null);
+    resolveAnchor();
 
-    if (didScroll) {
-      timeout = window.setTimeout(updateRect, 80);
-    } else {
-      updateRect();
-    }
-
-    window.addEventListener('resize', updateRect);
-    window.addEventListener('scroll', updateRect, true);
+    window.addEventListener('resize', refreshPosition);
+    window.addEventListener('scroll', refreshPosition, true);
 
     return () => {
+      cancelled = true;
       window.clearTimeout(timeout);
       cancelAnimationFrame(frame);
-      window.removeEventListener('resize', updateRect);
-      window.removeEventListener('scroll', updateRect, true);
+      window.removeEventListener('resize', refreshPosition);
+      window.removeEventListener('scroll', refreshPosition, true);
     };
   }, [mounted, step, walkthroughOpen]);
 
@@ -110,8 +191,8 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
 
   const cardLayout = useMemo(() => {
     if (!mounted || viewport.width === 0 || viewport.height === 0) return null;
-    return getCardLayout(viewport, highlightRect, cardHeight);
-  }, [cardHeight, highlightRect, mounted, viewport]);
+    return getCardLayout(viewport, highlightRect, cardHeight, anchorContext, fallbackRect);
+  }, [anchorContext, cardHeight, fallbackRect, highlightRect, mounted, viewport]);
 
   if (!mounted || (!introOpen && (!walkthroughOpen || !step))) return null;
 
