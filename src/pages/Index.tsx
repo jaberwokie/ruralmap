@@ -71,6 +71,12 @@ const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [topProvidersOnly, setTopProvidersOnly] = useState(false);
   const [engagementRateBelow20Only, setEngagementRateBelow20Only] = useState(false);
+  const topProvidersSnapshotRef = useRef<{
+    layers: LayerState;
+    filters: Filters;
+    coverageRadius: boolean;
+    coverageGaps: boolean;
+  } | null>(null);
   const [layers, setLayers] = useState<LayerState>({
     counties: true,
     services: true,
