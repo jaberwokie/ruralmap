@@ -43,6 +43,11 @@ const TOGGLE_DIAGNOSTICS = {
   },
 } as const;
 
+const TOP20_CONFLICTING_LAYERS: (keyof LayerState)[] = [
+  'services', 'behavioralHealth', 'operationalCoverage',
+  'fteCapacity', 'utilizationIntensity', 'engagementGap',
+];
+
 interface LayerState {
   counties: boolean;
   services: boolean;
