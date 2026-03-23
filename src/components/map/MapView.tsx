@@ -1316,13 +1316,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   // Draw zoom-aware decluttered point markers.
   useEffect(() => {
-    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !behavioralHealthHaloRef.current || !behavioralHealthMarkerRef.current || !markersRef.current || !pointClusterRef.current) return;
+    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !behavioralHealthHaloRef.current || !behavioralHealthMarkerRef.current || !markersRef.current || !pointClusterRef.current || !topProviderMarkersRef.current) return;
     servicePresenceHaloRef.current.clearLayers();
     servicePresenceMarkerRef.current.clearLayers();
     behavioralHealthHaloRef.current.clearLayers();
     behavioralHealthMarkerRef.current.clearLayers();
     markersRef.current.clearLayers();
     pointClusterRef.current.clearLayers();
+    topProviderMarkersRef.current.clearLayers();
     selectedPointMarkerRef.current = null;
 
     const shouldRenderProviderLocations = layers.serviceLocations || topProvidersOnly;
