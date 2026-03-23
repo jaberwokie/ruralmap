@@ -603,7 +603,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       );
 
       if (providerTypeFilters.size > 0) {
-        result = result.filter((facility) => providerTypeFilters.has(facility.type));
+        result = result.filter((facility) => {
+          if (facility.type !== 'hospital' && facility.type !== 'clinic') return false;
+          return providerTypeFilters.has(facility.type);
+        });
       }
     }
 
