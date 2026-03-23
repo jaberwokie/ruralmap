@@ -48,7 +48,7 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
             onClick={onClose}
             className="rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:scale-[0.98]"
           >
-            Close
+            X
           </button>
         </div>
         <h3 id="map-tutorial-title" className="mt-1.5 text-[15px] font-semibold leading-snug text-balance">
@@ -73,16 +73,16 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
             type="button"
             onClick={onBack}
             disabled={stepIndex === 0}
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
+            className="rounded-md px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]"
           >
-            Back
+            Prev
           </button>
           <button
             type="button"
             onClick={onNext}
             className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
           >
-            {stepIndex === MAP_TUTORIAL_STEPS.length - 1 ? 'Finish' : 'Next'}
+            {stepIndex === MAP_TUTORIAL_STEPS.length - 1 ? 'Done' : 'Next'}
           </button>
         </div>
       </div>
