@@ -1095,6 +1095,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
     }) ?? null;
     markersRef.current?.addTo(map);
+    topProviderMarkersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
