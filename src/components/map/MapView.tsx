@@ -1599,7 +1599,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (nextFacilityMarkers.length > 0) {
       if (topProvidersOnly) {
-        topProviderMarkersRef.current.addLayers(nextFacilityMarkers);
+        nextFacilityMarkers.forEach((marker) => topProviderMarkersRef.current!.addLayer(marker));
       } else {
         markersRef.current.addLayers(nextFacilityMarkers);
       }
