@@ -13,7 +13,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
-import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, isTopProvider, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import intersect from '@turf/intersect';
@@ -625,9 +625,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    return topProvidersOnly
-      ? result.filter((facility) => isTopProvider(facility.name))
-      : result;
+    if (topProvidersOnly) {
+      // Rank by totalVisits descending, then slice to 20
+      const scored = result.map(f => ({ facility: f, score: getProviderUtilizationScore(f.name) }));
+      scored.sort((a, b) => b.score - a.score || a.facility.name.localeCompare(b.facility.name));
+      const top20 = scored.slice(0, 20).map(s => s.facility);
+      if (import.meta.env.DEV) {
+        console.info('[Top 20 Debug] filtered count:', result.length, '→ top20 count:', top20.length,
+          top20.map(f => ({ name: f.name, score: getProviderUtilizationScore(f.name) })));
+      }
+      return top20;
+    }
+
+    return result;
   }, [providerFacilities, searchQuery, countyFilters, typeFilters, topProvidersOnly]);
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
@@ -1583,7 +1593,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!coverageRadius) return;
 
     const visibleFacilities = topProvidersOnly
-      ? filteredFacilities.filter(f => isTopProvider(f.name))
+      ? (() => {
+          const scored = filteredFacilities.map(f => ({ f, s: getProviderUtilizationScore(f.name) }));
+          scored.sort((a, b) => b.s - a.s || a.f.name.localeCompare(b.f.name));
+          return scored.slice(0, 20).map(x => x.f);
+        })()
       : filteredFacilities;
 
       const accessTier = getProviderAccessTierByKm(radiusKm);

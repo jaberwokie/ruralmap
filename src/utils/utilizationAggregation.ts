@@ -269,7 +269,21 @@ export const OPERATIONAL_READ_COLORS: Record<string, string> = {
   'Low-access': 'text-red-700',
 };
 
-// ── Top 20 providers statewide ──
+// ── Top 20 providers: utilization lookup ──
+const utilizationByName = new Map<string, number>();
+for (const p of providerUtilizationData) {
+  utilizationByName.set(p.name.toUpperCase().trim(), p.totalVisits);
+}
+
+/**
+ * Return the totalVisits for a facility name from the utilization dataset.
+ * Returns 0 if no match is found.
+ */
+export function getProviderUtilizationScore(name: string): number {
+  return utilizationByName.get(name.toUpperCase().trim()) ?? 0;
+}
+
+// Keep legacy export for any other consumers
 export const TOP_20_PROVIDERS = new Set(
   providerUtilizationData.slice(0, 20).map(p => p.name.toUpperCase())
 );
