@@ -26,6 +26,7 @@ import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGr
 import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
+import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 
 interface MapViewProps {
@@ -100,6 +101,7 @@ const MAP_PANES = {
   groupedMarkers: 'grouped-markers-pane',
   servicePresence: 'service-presence-pane',
   behavioralHealth: 'behavioral-health-pane',
+  responseCapabilityMarkers: 'response-capability-markers-pane',
   facilityMarkers: 'facility-markers-pane',
   labels: 'labels-pane',
   highlights: 'highlights-pane',
@@ -115,6 +117,7 @@ const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> =
   [MAP_PANES.groupedMarkers]: 705,
   [MAP_PANES.servicePresence]: 710,
   [MAP_PANES.behavioralHealth]: 711,
+  [MAP_PANES.responseCapabilityMarkers]: 715,
   [MAP_PANES.facilityMarkers]: 720,
   [MAP_PANES.labels]: 730,
   [MAP_PANES.highlights]: 740,
@@ -222,6 +225,16 @@ const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
     drawOrder: 612,
     group: 'markers',
     filterKey: 'filtered-behavioral-health-services',
+    geometryKind: 'point',
+  },
+  {
+    id: 'operational-response-markers',
+    name: 'Response Capability Markers',
+    source: 'county-response-capability',
+    controllingToggle: 'layers.operationalCoverage',
+    drawOrder: 615,
+    group: 'markers',
+    filterKey: 'county-response-capability-markers',
     geometryKind: 'point',
   },
   {
@@ -545,6 +558,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
   const coverageGreyRef = useRef<L.LayerGroup | null>(null);
   const operationalCoverageRef = useRef<L.LayerGroup | null>(null);
+  const operationalResponseMarkerRef = useRef<L.LayerGroup | null>(null);
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
@@ -816,6 +830,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       'county-borders': countyBorderRef.current,
       'non-service-mask': coverageGreyRef.current,
       'operational-service-area': operationalCoverageRef.current,
+      'operational-response-markers': operationalResponseMarkerRef.current,
       'drive-radius-overlay': radiusRef.current,
       'coverage-gap-overlay': gapsRef.current,
       'engagement-gap-overlay': engagementGapRef.current,
@@ -1025,6 +1040,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     countyBorderRef.current = L.layerGroup().addTo(map);
     coverageGreyRef.current = L.layerGroup().addTo(map);
     operationalCoverageRef.current = L.layerGroup().addTo(map);
+    operationalResponseMarkerRef.current = L.layerGroup().addTo(map);
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
@@ -1687,9 +1703,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
   useEffect(() => {
-    if (!operationalCoverageRef.current || !coverageGreyRef.current) return;
+    if (!operationalCoverageRef.current || !coverageGreyRef.current || !operationalResponseMarkerRef.current) return;
     operationalCoverageRef.current.clearLayers();
     coverageGreyRef.current.clearLayers();
+    operationalResponseMarkerRef.current.clearLayers();
 
     if (!layers.operationalCoverage || coverageGaps) return;
 
@@ -1738,7 +1755,58 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       interactive: false,
     });
     operationalCoverageRef.current.addLayer(activeOutline);
-  }, [activeCoverageZone, layers.operationalCoverage, coverageGaps]);
+
+    nevadaCounties.forEach((county) => {
+      const breakdown = getCountyCoverageBreakdown(county.name, coverageRadiusKm);
+      const category = getResponseCapabilityCategory(breakdown);
+      const markerSize = RESPONSE_CAPABILITY_META[category].markerSize;
+      const buildIcon = (hovered = false) => L.divIcon({
+        className: '',
+        html: getResponseCapabilityMarkerHtml(category, hovered),
+        iconSize: [markerSize + (hovered ? 2 : 0), markerSize + (hovered ? 2 : 0)],
+        iconAnchor: [markerSize / 2, 4],
+        tooltipAnchor: [0, -(markerSize + 4)],
+      });
+
+      const marker = L.marker(county.center, {
+        icon: buildIcon(selectedCounty === county.name),
+        interactive: true,
+        pane: MAP_PANES.responseCapabilityMarkers,
+        zIndexOffset: category === 'active' ? 820 : category === 'scheduled' ? 780 : 740,
+      });
+
+      marker.on('mouseover', (event: L.LeafletMouseEvent) => {
+        marker.setIcon(buildIcon(true));
+        updateCountyHoverPreview(county.name, event);
+      });
+      marker.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(county.name, event));
+      marker.on('mouseout', () => {
+        marker.setIcon(buildIcon(selectedCounty === county.name));
+        clearCountyHoverPreview();
+      });
+      marker.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
+      });
+
+      marker.bindTooltip(
+        `
+          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
+            <div style="font-weight: 600; margin-bottom: 2px;">${county.name}</div>
+            <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${RESPONSE_CAPABILITY_META[category].label}</div>
+            <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${RESPONSE_CAPABILITY_META[category].description}</div>
+          </div>
+        `,
+        {
+          direction: 'top',
+          offset: [0, -8],
+          className: 'facility-tooltip',
+        },
+      );
+
+      operationalResponseMarkerRef.current!.addLayer(marker);
+    });
+  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectedCounty, updateCountyHoverPreview]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {
