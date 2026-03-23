@@ -270,9 +270,15 @@ export const OPERATIONAL_READ_COLORS: Record<string, string> = {
 };
 
 // ── Top 20 providers: utilization lookup ──
+const normalizeProviderName = (name: string) =>
+  name
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, ' ')
+    .trim();
+
 const utilizationByName = new Map<string, number>();
 for (const p of providerUtilizationData) {
-  utilizationByName.set(p.name.toUpperCase().trim(), p.totalVisits);
+  utilizationByName.set(normalizeProviderName(p.name), p.totalVisits);
 }
 
 /**
@@ -280,19 +286,19 @@ for (const p of providerUtilizationData) {
  * Returns 0 if no match is found.
  */
 export function getProviderUtilizationScore(name: string): number {
-  return utilizationByName.get(name.toUpperCase().trim()) ?? 0;
+  return utilizationByName.get(normalizeProviderName(name)) ?? 0;
 }
 
 // Keep legacy export for any other consumers
 export const TOP_20_PROVIDERS = new Set(
-  providerUtilizationData.slice(0, 20).map(p => p.name.toUpperCase())
+  providerUtilizationData.slice(0, 20).map(p => normalizeProviderName(p.name))
 );
 
 export function isTopProvider(name: string): boolean {
-  const upper = name.toUpperCase().trim();
-  if (TOP_20_PROVIDERS.has(upper)) return true;
+  const normalized = normalizeProviderName(name);
+  if (TOP_20_PROVIDERS.has(normalized)) return true;
   for (const top of TOP_20_PROVIDERS) {
-    if (top.includes(upper) || upper.includes(top)) return true;
+    if (top.includes(normalized) || normalized.includes(top)) return true;
   }
   return false;
 }

@@ -546,6 +546,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
   const selectedPointMarkerRef = useRef<MapPointMarker | null>(null);
   const markersRef = useRef<MarkerClusterGroupLike | null>(null);
+  const topProviderMarkersRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceMarkerRef = useRef<L.LayerGroup | null>(null);
   const behavioralHealthHaloRef = useRef<L.LayerGroup | null>(null);
@@ -596,7 +597,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
 
-  const providerVisibleFacilities = useMemo(() => {
+  const providerFilteredFacilities = useMemo(() => {
     let result = providerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
     if (searchQuery) {
@@ -625,20 +626,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    if (topProvidersOnly) {
-      // Rank by totalVisits descending, then slice to 20
-      const scored = result.map(f => ({ facility: f, score: getProviderUtilizationScore(f.name) }));
-      scored.sort((a, b) => b.score - a.score || a.facility.name.localeCompare(b.facility.name));
-      const top20 = scored.slice(0, 20).map(s => s.facility);
-      if (import.meta.env.DEV) {
-        console.info('[Top 20 Debug] filtered count:', result.length, '→ top20 count:', top20.length,
-          top20.map(f => ({ name: f.name, score: getProviderUtilizationScore(f.name) })));
-      }
-      return top20;
+    return result;
+  }, [providerFacilities, searchQuery, countyFilters, typeFilters]);
+
+  const topProvidersVisible = useMemo(() => {
+    const scored = providerFilteredFacilities.map((facility) => ({
+      facility,
+      score: getProviderUtilizationScore(facility.name),
+    }));
+
+    scored.sort((a, b) => b.score - a.score || a.facility.name.localeCompare(b.facility.name) || a.facility.id.localeCompare(b.facility.id));
+
+    const top20 = scored.slice(0, 20).map((entry) => entry.facility);
+
+    if (import.meta.env.DEV) {
+      console.info('[Top 20 Debug][Raw→Ranked]', {
+        filteredRawProviderCount: providerFilteredFacilities.length,
+        top20Count: top20.length,
+        top20Providers: top20.map((facility) => ({
+          id: facility.id,
+          name: facility.name,
+          score: getProviderUtilizationScore(facility.name),
+        })),
+      });
     }
 
-    return result;
-  }, [providerFacilities, searchQuery, countyFilters, typeFilters, topProvidersOnly]);
+    return top20;
+  }, [providerFilteredFacilities]);
+
+  const providerVisibleFacilities = useMemo(
+    () => (topProvidersOnly ? topProvidersVisible : providerFilteredFacilities),
+    [providerFilteredFacilities, topProvidersOnly, topProvidersVisible],
+  );
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
 
@@ -848,13 +867,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       'service-presence-markers': servicePresenceMarkerRef.current,
       'behavioral-health-halos': behavioralHealthHaloRef.current,
       'behavioral-health-markers': behavioralHealthMarkerRef.current,
-      'facility-markers': markersRef.current,
+      'facility-markers': topProvidersOnly ? topProviderMarkersRef.current : markersRef.current,
       'county-labels': labelsRef.current,
       'engagement-gap-labels': engagementGapLabelRef.current,
       'fte-capacity-hubs': fteCapacityRef.current,
       'selection-highlights': highlightsRef.current,
     }),
-    [mapReady],
+    [mapReady, topProvidersOnly],
   );
 
   const isLayerVisibleInDebug = useCallback(
@@ -1076,6 +1095,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
     }) ?? null;
     markersRef.current?.addTo(map);
+    topProviderMarkersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
@@ -1296,13 +1316,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   // Draw zoom-aware decluttered point markers.
   useEffect(() => {
-    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !behavioralHealthHaloRef.current || !behavioralHealthMarkerRef.current || !markersRef.current || !pointClusterRef.current) return;
+    if (!servicePresenceHaloRef.current || !servicePresenceMarkerRef.current || !behavioralHealthHaloRef.current || !behavioralHealthMarkerRef.current || !markersRef.current || !pointClusterRef.current || !topProviderMarkersRef.current) return;
     servicePresenceHaloRef.current.clearLayers();
     servicePresenceMarkerRef.current.clearLayers();
     behavioralHealthHaloRef.current.clearLayers();
     behavioralHealthMarkerRef.current.clearLayers();
     markersRef.current.clearLayers();
     pointClusterRef.current.clearLayers();
+    topProviderMarkersRef.current.clearLayers();
     selectedPointMarkerRef.current = null;
 
     const shouldRenderProviderLocations = layers.serviceLocations || topProvidersOnly;
@@ -1577,11 +1598,23 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     if (nextFacilityMarkers.length > 0) {
-      markersRef.current.addLayers(nextFacilityMarkers);
+      if (topProvidersOnly) {
+        nextFacilityMarkers.forEach((marker) => topProviderMarkersRef.current!.addLayer(marker));
+      } else {
+        markersRef.current.addLayers(nextFacilityMarkers);
+      }
     }
 
     if (nextMarkers.length > 0) {
       pointClusterRef.current.addLayers(nextMarkers);
+    }
+
+    if (import.meta.env.DEV && shouldRenderProviderLocations && topProvidersOnly) {
+      console.info('[Top 20 Debug][Rendered Dataset]', {
+        renderedProviderCount: visibleFacilities.length,
+        renderedProviderIds: visibleFacilities.map((facility) => facility.id),
+        renderedProviderNames: visibleFacilities.map((facility) => facility.name),
+      });
     }
   }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, mapZoom, onFacilityClick, providerVisibleFacilities, topProvidersOnly]);
 
@@ -1593,11 +1626,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!coverageRadius) return;
 
     const visibleFacilities = topProvidersOnly
-      ? (() => {
-          const scored = filteredFacilities.map(f => ({ f, s: getProviderUtilizationScore(f.name) }));
-          scored.sort((a, b) => b.s - a.s || a.f.name.localeCompare(b.f.name));
-          return scored.slice(0, 20).map(x => x.f);
-        })()
+      ? providerVisibleFacilities
       : filteredFacilities;
 
       const accessTier = getProviderAccessTierByKm(radiusKm);
@@ -1642,7 +1671,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, radiusKm, topProvidersOnly]);
+  }, [filteredFacilities, coverageRadius, radiusKm, topProvidersOnly, providerVisibleFacilities]);
 
   // Draw coverage gap overlays
   useEffect(() => {
