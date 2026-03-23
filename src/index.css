@@ -184,6 +184,15 @@
   padding: 0 !important;
 }
 
+.leaflet-popup-pane,
+.leaflet-tooltip-pane {
+  z-index: 820 !important;
+}
+
+.leaflet-popup-pane {
+  z-index: 830 !important;
+}
+
 .leaflet-popup-content {
   margin: 0 !important;
   font-family: 'Inter', system-ui, sans-serif;
@@ -209,6 +218,11 @@
   white-space: normal !important;
   word-break: break-word !important;
   overflow-wrap: anywhere !important;
+}
+
+.leaflet-tooltip.facility-tooltip,
+.leaflet-popup {
+  z-index: inherit !important;
 }
 
 .leaflet-tooltip.facility-tooltip::before {

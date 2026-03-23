@@ -1862,7 +1862,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       <TooltipProvider delayDuration={120}>
         {countyHoverPreview && countyHoverPreviewStyle && (
           <div
-            className="pointer-events-none absolute z-[1100] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm"
+            className="pointer-events-none absolute z-[810] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm"
             style={countyHoverPreviewStyle}
           >
             <p className="text-sm font-semibold text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
