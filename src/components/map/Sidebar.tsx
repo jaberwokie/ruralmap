@@ -15,6 +15,7 @@ import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
+import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 
 interface LayerState {
   counties: boolean;
@@ -179,6 +180,14 @@ const renderProviderLocationsInlineLegend = (dimmed = false) => (
       <span>Clinic</span>
     </span>
   </span>
+);
+
+const renderResponseCapabilityVisual = (category: ResponseCapabilityCategory, dimmed = false) => (
+  <span
+    aria-hidden="true"
+    className={`flex items-center justify-center ${dimmed ? 'opacity-60' : ''}`}
+    dangerouslySetInnerHTML={{ __html: getResponseCapabilityMarkerHtml(category) }}
+  />
 );
 
 const HelpIconTooltip = ({
@@ -768,33 +777,14 @@ const Sidebar = ({
 
                                   <div className="space-y-2">
                                     <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
-                                    {[
-                                      {
-                                        label: 'Same-Day Field Response Available',
-                                        desc: 'In-person response within ~75–90 minutes of FTE base.',
-                                        swatchClassName: 'bg-response-active opacity-85',
-                                        titleClassName: 'text-foreground/85',
-                                      },
-                                      {
-                                        label: 'Field Response Available (Planned)',
-                                        desc: 'In-person visits require scheduling. Not same-day.',
-                                        swatchClassName: 'border border-dashed border-response-scheduled bg-response-scheduled/25',
-                                        titleClassName: 'text-foreground/70',
-                                      },
-                                      {
-                                        label: 'Remote Support Only',
-                                        desc: 'No in-person response. Telephonic and virtual coordination only.',
-                                        swatchClassName: 'border border-dashed border-response-remote bg-response-remote/20',
-                                        titleClassName: 'text-foreground/60',
-                                      },
-                                    ].map(({ label: lbl, desc, swatchClassName, titleClassName }) => (
-                                      <div key={lbl} className="flex gap-2">
+                                    {(['active', 'scheduled', 'remote'] as const).map((category) => (
+                                      <div key={category} className="flex gap-2">
                                         <div className="mt-0.5 flex-shrink-0">
-                                          <div className={`h-3 w-3 rounded-sm ${swatchClassName}`} />
+                                          {renderResponseCapabilityVisual(category)}
                                         </div>
                                         <div className="min-w-0">
-                                          <div className={`text-[11px] font-medium leading-tight ${titleClassName}`}>{lbl}</div>
-                                          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{desc}</p>
+                                          <div className={`text-[11px] font-medium leading-tight ${RESPONSE_CAPABILITY_META[category].titleClassName}`}>{RESPONSE_CAPABILITY_META[category].label}</div>
+                                          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{RESPONSE_CAPABILITY_META[category].description}</p>
                                         </div>
                                       </div>
                                     ))}
