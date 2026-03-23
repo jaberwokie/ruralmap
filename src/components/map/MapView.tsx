@@ -625,9 +625,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    return topProvidersOnly
-      ? result.filter((facility) => isTopProvider(facility.name))
-      : result;
+    if (topProvidersOnly) {
+      // Rank by totalVisits descending, then slice to 20
+      const scored = result.map(f => ({ facility: f, score: getProviderUtilizationScore(f.name) }));
+      scored.sort((a, b) => b.score - a.score || a.facility.name.localeCompare(b.facility.name));
+      const top20 = scored.slice(0, 20).map(s => s.facility);
+      if (import.meta.env.DEV) {
+        console.info('[Top 20 Debug] filtered count:', result.length, '→ top20 count:', top20.length,
+          top20.map(f => ({ name: f.name, score: getProviderUtilizationScore(f.name) })));
+      }
+      return top20;
+    }
+
+    return result;
   }, [providerFacilities, searchQuery, countyFilters, typeFilters, topProvidersOnly]);
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
