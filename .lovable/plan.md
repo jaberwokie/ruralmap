@@ -1,98 +1,50 @@
 
-Goal: make Behavioral Health visible as a true first-class category. Right now it is missing because the codebase has not actually implemented that feature yet.
+Goal: make the Provider toggle show the full mapped provider set that should be visible, without changing unrelated layers or behavior.
 
-What I found
-- The current map still has only 3 point categories in code:
-  - Provider Locations
-  - Service Presence
-  - County Boundaries
-- There are no Behavioral Health tokens or marker definitions in the repo right now.
-- `MapView.tsx` renders all `ruralServices` as the same green `servicePresence` marker.
-- The Type filter only has `hospital`, `clinic`, and `service`.
-- Sidebar legend/toggles still show only Service Presence + Provider Locations.
-- Help text and tutorial are still on the older 3-color model.
-- So your report is correct: Behavioral Health is currently neither added to the UI nor separated on the map.
+Plan
 
-Plan to implement
-1. Add Behavioral Health classification layer
-- Create a small utility that classifies `ruralServices` into:
-  - general Service
-  - Behavioral Health
-- Use explicit source-based rules from the existing data:
-  - `Mental Health`
-  - `Substance Use`
-- Keep the remaining rural service categories as green Service.
+1. Audit the provider data path end-to-end
+- Trace how providers move from `src/pages/Index.tsx` into `src/components/map/MapView.tsx`.
+- Confirm which providers are being removed before rendering versus which never exist in the mappable facilities dataset.
+- Compare the rendered provider source (`facilities` prop) against `allFacilities` and the utilization list to separate a rendering bug from a missing-data issue.
 
-2. Extend the shared visual system
-- Add a purple Behavioral Health color token to the existing design token system.
-- Extend `pinVisuals.ts` so shared marker visuals support:
-  - hospital = red
-  - clinic = blue
-  - service = green
-  - behavioral health = purple
-- Keep shape language consistent across sidebar, legend, map, and grouped states.
+2. Apply the smallest safe rendering fix
+- Stop letting the global `filteredFacilities` list unintentionally decide the provider map layer.
+- In `MapView`, derive the provider marker input from the full mapped provider dataset (`allFacilities ?? facilities`) instead of the pre-trimmed list passed for sidebar/search results.
+- Reapply only provider-relevant filters inside `MapView` for the provider layer itself:
+  - search query
+  - county filters
+  - provider type chips like hospital/clinic
+- Keep service/behavioral-health filtering from suppressing provider markers when those filters are meant for other layers.
 
-3. Update sidebar controls
-- In Core Map, add a distinct Behavioral Health row/toggle alongside:
-  - Provider Locations
-  - Service Presence / Service
-  - Behavioral Health
-- Update the Type filter chips to:
-  - Hospital
-  - Clinic
-  - Service
-  - Behavioral Health
-- Make each chip filter only its own category.
+3. Preserve existing provider behavior
+- Keep the current red hospital / blue clinic custom pin icons exactly as-is.
+- Keep the existing provider clustering and pane ordering so markers stay above county/utilization fills.
+- Keep the current top-20 behavior intact, but make sure its filtered subset is built from the corrected provider source.
 
-4. Update map rendering logic
-- Split current `filteredRuralServices` into two filtered sets:
-  - community services
-  - behavioral health services
-- Render community services in green.
-- Render behavioral health in purple.
-- Ensure the existing layer behavior remains intact:
-  - Provider Locations toggle still gates hospitals/clinics
-  - Service toggle still gates green services
-  - Behavioral Health toggle gates purple BH points
+4. Validate against the failure described
+- Provider toggle ON: all mapped provider facilities that match provider-specific filters render.
+- Provider toggle OFF: provider markers fully clear.
+- Service and Behavioral Health layers still behave exactly as before.
+- Utilization shading, legend, county layers, hover/click behavior, and sidebar logic remain unchanged.
 
-5. Preserve grouped/cluster meaning
-- Update cluster composition logic so purple BH markers are represented distinctly in mixed groups.
-- Prevent clusters from collapsing BH back into generic green service semantics.
-- Keep hover/selected emphasis while preserving base category identity.
+Important audit finding
+- There are two different “provider universes” in the code right now:
+  1. `src/data/facilities.ts` = mapped providers with coordinates
+  2. `src/data/provider-utilization.ts` = broader utilization ranking list
+- Many utilization providers do not appear to have facility map records/coordinates, so they cannot be shown on the map until they are added to `facilities.ts`.
+- So the likely bug to fix now is accidental omission of already-mapped providers, not automatic mapping of every utilization-row provider.
 
-6. Update legend, help, and tutorial
-- Inline legend becomes:
-  - County Boundaries
-  - Service (green)
-  - Behavioral Health (purple)
-  - Provider Locations → Hospital (red) + Clinic (blue)
-- Update help tooltip copy so Service and Behavioral Health are clearly separated.
-- Update tutorial text and likely bump tutorial storage version so returning users see the new 4-color explanation.
+Technical details
+- Current likely root cause:
+  - `Index.tsx` computes `filteredFacilities` using global filter chips and passes that trimmed array into `MapView` as `facilities`.
+  - `MapView` currently renders provider markers from that already-filtered `facilities` prop.
+  - This means provider points can disappear even when the Provider toggle is on, simply because another filter upstream removed them first.
+- Minimal implementation target:
+  - Update provider marker filtering in `MapView` so provider rendering uses the full mapped facility dataset and applies its own provider-specific filtering there.
+  - Do not broadly refactor the sidebar, legend, county shading, or unrelated layer logic.
 
-7. Fix the related sidebar popover warning
-- There is also a current runtime warning in `HelpIconTooltip` about refs with the popover trigger/content path.
-- I would clean that up during this pass so the updated help UI stays stable while adding the new Behavioral Health explanations.
-
-Files likely involved
-- `src/components/map/MapView.tsx`
-- `src/components/map/Sidebar.tsx`
-- `src/pages/Index.tsx`
-- `src/components/map/pinVisuals.ts`
-- `src/data/help-tooltips.ts`
-- `src/data/map-tutorial.ts`
-- `src/index.css`
-- `tailwind.config.ts`
-- new utility such as `src/utils/ruralServiceClassification.ts`
-
-QA checklist
-- Behavioral Health appears as purple on the map.
-- Behavioral Health has its own sidebar toggle.
-- Behavioral Health has its own Type chip.
-- Green Service no longer includes purple Behavioral Health visually.
-- Mixed filter combinations work correctly.
-- Legend exactly matches live markers.
-- Grouped/clustered states still preserve category meaning.
-- Tutorial/help text matches the final 4-color system.
-
-Technical note
-The main reason you cannot see Behavioral Health now is not a small bug; it is that the current code still routes all rural-service points through one green “service presence” pathway and has no BH-specific token, filter, legend entry, or render branch yet.
+Acceptance criteria
+- If a provider exists in the mapped facilities dataset and matches active provider-relevant filters, it appears when Provider is ON.
+- If a provider exists only in utilization rankings but not in mapped facilities with coordinates, it will still remain absent until added as map data.
+- No regression to other layers, toggles, or tutorial behavior.
