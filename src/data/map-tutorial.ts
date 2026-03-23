@@ -31,7 +31,7 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
     key: 'facilityFilters',
     title: 'Filter by facility type',
     text: 'Use these chips to narrow the map to Hospital, Clinic, Service, or Behavioral Health locations.',
-    selectors: ['[data-tutorial="facility-filters"]'],
+    selectors: ['[data-tutorial="facility-filter-chips"]', '[data-tutorial="facility-filters"]'],
   },
   {
     key: 'coreMap',
