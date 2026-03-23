@@ -481,8 +481,8 @@ const numberFormatter = new Intl.NumberFormat();
 const getCountyDisplayName = (county: string) => county === 'Carson City' ? county : `${county} County`;
 
 const CountyHoverMetricRow = ({ label, value, emphasize = false }: { label: string; value: string; emphasize?: boolean }) => (
-  <div className="flex items-baseline justify-between gap-3 text-[11px] leading-relaxed">
-    <span className="text-muted-foreground">{label}</span>
+  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
+    <span className="truncate text-muted-foreground">{label}</span>
     <span className={`text-right font-medium tabular-nums ${emphasize ? 'text-foreground' : 'text-foreground/85'}`}>{value}</span>
   </div>
 );
@@ -501,7 +501,7 @@ const CoverageGapInfoButton = () => {
       <TooltipTrigger asChild>
         <button
           type="button"
-          className="pointer-events-auto inline-flex h-4 w-4 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="pointer-events-auto inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           onMouseEnter={() => setOpen(true)}
           onMouseLeave={() => setOpen(false)}
           onClick={(event) => {
@@ -510,10 +510,10 @@ const CoverageGapInfoButton = () => {
           }}
           aria-label="Explain coverage gap"
         >
-          <Info className="h-3 w-3" />
+          <Info className="h-2.5 w-2.5" />
         </button>
       </TooltipTrigger>
-      <TooltipContent side="right" align="start" sideOffset={10} className="text-[11px] leading-relaxed">
+      <TooltipContent side="right" align="start" sideOffset={8} className="max-w-52 text-[10px] leading-4">
         Percent of county area outside provider coverage radius based on current radius setting.
       </TooltipContent>
     </Tooltip>
@@ -704,15 +704,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const countyHoverPreviewStyle = useMemo(() => {
     if (!countyHoverPreview || !containerRef.current) return null;
 
-    const width = 240;
-    const height = 140;
+    const width = 208;
+    const height = 112;
     const containerWidth = containerRef.current.clientWidth;
     const containerHeight = containerRef.current.clientHeight;
+    const horizontalOffset = 18;
+    const verticalOffset = 14;
+    const preferLeft = countyHoverPreview.x > containerWidth * 0.58;
+    const preferAbove = countyHoverPreview.y > containerHeight * 0.62;
+    const proposedLeft = preferLeft
+      ? countyHoverPreview.x - width - horizontalOffset
+      : countyHoverPreview.x + horizontalOffset;
+    const proposedTop = preferAbove
+      ? countyHoverPreview.y - height - verticalOffset
+      : countyHoverPreview.y + verticalOffset;
 
     return {
       width,
-      left: Math.min(Math.max(countyHoverPreview.x + 16, 12), Math.max(containerWidth - width - 12, 12)),
-      top: Math.min(Math.max(countyHoverPreview.y + 16, 12), Math.max(containerHeight - height - 12, 12)),
+      left: Math.min(Math.max(proposedLeft, 12), Math.max(containerWidth - width - 12, 12)),
+      top: Math.min(Math.max(proposedTop, 12), Math.max(containerHeight - height - 12, 12)),
     };
   }, [countyHoverPreview]);
 
@@ -1860,11 +1870,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       <TooltipProvider delayDuration={120}>
         {countyHoverPreview && countyHoverPreviewStyle && (
           <div
-            className="pointer-events-none absolute z-[810] rounded-xl border border-border bg-card/95 p-3 text-card-foreground shadow-lg backdrop-blur-sm"
+            className="pointer-events-none absolute z-[810] rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
             style={countyHoverPreviewStyle}
           >
-            <p className="text-sm font-semibold text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
-            <div className="mt-2 space-y-1">
+            <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
+            <div className="mt-1.5 space-y-1">
               {typeof countyHoverPreview.unengagedMembers === 'number' && (
                 <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
               )}
@@ -1876,22 +1886,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
               )}
               {typeof countyHoverPreview.coverageGapPercent === 'number' && (
                 <div className="space-y-1">
-                  <div className="flex items-baseline justify-between gap-3 text-[11px] leading-relaxed">
+                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
                     <span className="flex items-center gap-1 text-muted-foreground">
                       Coverage gap
                       <CoverageGapInfoButton />
                     </span>
                     <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
+                  <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground">
                     Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
                   </div>
                 </div>
               )}
             </div>
-            <p className="mt-3 border-t border-border pt-2 text-[11px] leading-relaxed text-muted-foreground">
-              Consider outreach or resource expansion.
-            </p>
           </div>
         )}
       </TooltipProvider>
