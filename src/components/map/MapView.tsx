@@ -1856,7 +1856,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!fteCapacityRef.current) return;
     fteCapacityRef.current.clearLayers();
 
-    if (!layers.fteCapacity) return;
+    if (!layers.fteCapacity || topProvidersOnly) return;
 
     fteCapacityData.forEach(fte => {
       if (!fte.hubLocation) return;
