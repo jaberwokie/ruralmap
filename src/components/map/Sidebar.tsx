@@ -8,6 +8,7 @@ import { Filters } from '@/pages/Index';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
+import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCESS_TIER_LABELS } from '@/utils/providerAccessTiers';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 import { Switch } from '@/components/ui/switch';
@@ -82,6 +83,7 @@ const ACCESS_LAYER_CONFIG = {
 
 const PROVIDER_COVERAGE_RADIUS_MIN_KM = 10;
 const PROVIDER_COVERAGE_RADIUS_MAX_KM = 150;
+const PROVIDER_COVERAGE_RADIUS_DEFAULT_KM = 32;
 const PROVIDER_COVERAGE_RADIUS_MIN_MI = kmToMiles(PROVIDER_COVERAGE_RADIUS_MIN_KM);
 const PROVIDER_COVERAGE_RADIUS_MAX_MI = kmToMiles(PROVIDER_COVERAGE_RADIUS_MAX_KM);
 const MILES_TO_KM = 1.60934;
@@ -91,6 +93,17 @@ const milesToCoverageKm = (miles: number) => {
   if (miles <= PROVIDER_COVERAGE_RADIUS_MIN_MI) return PROVIDER_COVERAGE_RADIUS_MIN_KM;
   if (miles >= PROVIDER_COVERAGE_RADIUS_MAX_MI) return PROVIDER_COVERAGE_RADIUS_MAX_KM;
   return clampProviderCoverageKm(Number((miles * MILES_TO_KM).toFixed(2)));
+};
+
+const getProviderAccessThresholdNote = (km: number) => {
+  const miles = kmToMiles(km);
+  if (miles > 45) {
+    return 'Distances over 45 miles should be treated as access gaps without transportation or outreach support';
+  }
+  if (miles > 30) {
+    return 'Engagement reliability drops beyond 30 miles for many rural members';
+  }
+  return null;
 };
 
 const SECTION_META = {
@@ -969,7 +982,7 @@ const Sidebar = ({
                     <div className="mt-0.5 space-y-0.5">
                       {renderSectionIntro(SECTION_META.access.question, SECTION_META.access.helper)}
                       {renderLayerToggleRow({
-                        label: `Provider Coverage Radius (${kmToMiles(radiusKm)} mi)`,
+                        label: 'Distance to Provider (Access View)',
                         icon: ACCESS_LAYER_CONFIG.coverageRadius.icon,
                         iconClassName: ACCESS_LAYER_CONFIG.coverageRadius.colorClassName,
                         checked: coverageRadius,
@@ -978,6 +991,9 @@ const Sidebar = ({
                         dataTutorial: 'toggle-coverage-radius',
                       })}
                       <div className="px-2 pb-1 pt-0.5">
+                        <p className="pb-1 text-[10px] leading-relaxed text-muted-foreground">
+                          Distance does not equal access. Rural engagement reliability decreases as distance increases.
+                        </p>
                         <div className="relative px-1 pt-6">
                           <div
                             className={`pointer-events-none absolute top-0 z-10 -translate-x-1/2 transition-opacity ${coverageRadius ? 'opacity-100' : 'opacity-40'}`}
@@ -987,14 +1003,14 @@ const Sidebar = ({
                             aria-hidden="true"
                           >
                             <span className={`inline-flex min-w-12 items-center justify-center rounded-full border px-2 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm transition-colors ${coverageRadius ? 'border-border bg-background text-foreground' : 'border-border/70 bg-secondary text-muted-foreground'}`}>
-                              {kmToMiles(radiusKm)} mi
+                              {kmToMiles(radiusKm)} mi • {PROVIDER_ACCESS_TIER_LABELS[getProviderAccessTierByKm(radiusKm)]}
                             </span>
                           </div>
                           <Slider
                             min={PROVIDER_COVERAGE_RADIUS_MIN_MI}
                             max={PROVIDER_COVERAGE_RADIUS_MAX_MI}
                             step={1}
-                            value={[kmToMiles(radiusKm)]}
+                            value={[kmToMiles(radiusKm || PROVIDER_COVERAGE_RADIUS_DEFAULT_KM)]}
                             disabled={!coverageRadius}
                             onValueChange={([miles]) => {
                               if (!coverageRadius) return;
@@ -1009,6 +1025,11 @@ const Sidebar = ({
                           <span>{PROVIDER_COVERAGE_RADIUS_MIN_MI} mi</span>
                           <span>{PROVIDER_COVERAGE_RADIUS_MAX_MI} mi</span>
                         </div>
+                        {getProviderAccessThresholdNote(radiusKm) && (
+                          <p className="mt-1 text-[9px] leading-relaxed text-muted-foreground/80">
+                            {getProviderAccessThresholdNote(radiusKm)}
+                          </p>
+                        )}
                       </div>
 
                       {renderLayerToggleRow({
@@ -1021,10 +1042,10 @@ const Sidebar = ({
                       })}
                       {coverageGaps && (
                         <p className="px-2 pb-1 pt-0.5 text-[10px] leading-relaxed text-muted-foreground">
-                          Counties highlighted in red fall outside the current provider coverage radius of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
+                          Counties highlighted in red fall outside the current distance-to-provider scenario of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
                         </p>
                       )}
-                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">Access gaps use the current provider coverage radius setting ({kmToMiles(radiusKm)} mi).</p>
+                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">This is a scenario tool, not a claim of actual access. Access gaps use the current distance-to-provider setting ({kmToMiles(radiusKm)} mi).</p>
                     </div>
                   )}
                 </div>

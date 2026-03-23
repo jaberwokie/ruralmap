@@ -26,6 +26,7 @@ import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGr
 import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
+import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -1569,15 +1570,29 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       ? filteredFacilities.filter(f => isTopProvider(f.name))
       : filteredFacilities;
 
-    visibleFacilities.forEach(facility => {
-        const colors = facility.type === 'hospital'
-          ? { stroke: 'hsla(0, 72%, 51%, 0.55)', fill: 'hsla(0, 72%, 51%, 0.10)' }
-          : { stroke: 'hsla(217, 91%, 60%, 0.38)', fill: 'hsla(217, 91%, 60%, 0.08)' };
+      const accessTier = getProviderAccessTierByKm(radiusKm);
+
+      visibleFacilities.forEach(facility => {
+        const colors = accessTier === 'strong'
+          ? facility.type === 'hospital'
+            ? { stroke: 'hsla(0, 72%, 51%, 0.55)', fill: 'hsla(0, 72%, 51%, 0.10)', dashArray: undefined, haloOpacity: 0.7 }
+            : { stroke: 'hsla(217, 91%, 60%, 0.38)', fill: 'hsla(217, 91%, 60%, 0.08)', dashArray: undefined, haloOpacity: 0.7 }
+          : accessTier === 'conditional'
+            ? facility.type === 'hospital'
+              ? { stroke: 'hsla(0, 72%, 51%, 0.42)', fill: 'hsla(0, 72%, 51%, 0.08)', dashArray: undefined, haloOpacity: 0.52 }
+              : { stroke: 'hsla(217, 91%, 60%, 0.3)', fill: 'hsla(217, 91%, 60%, 0.06)', dashArray: undefined, haloOpacity: 0.52 }
+            : accessTier === 'weak'
+              ? facility.type === 'hospital'
+                ? { stroke: 'hsla(0, 72%, 51%, 0.28)', fill: 'hsla(0, 72%, 51%, 0.05)', dashArray: '8 8', haloOpacity: 0.38 }
+                : { stroke: 'hsla(217, 91%, 60%, 0.22)', fill: 'hsla(217, 91%, 60%, 0.045)', dashArray: '8 8', haloOpacity: 0.38 }
+              : facility.type === 'hospital'
+                ? { stroke: 'hsla(0, 20%, 45%, 0.2)', fill: 'hsla(0, 12%, 50%, 0.035)', dashArray: '4 10', haloOpacity: 0.26 }
+                : { stroke: 'hsla(217, 18%, 52%, 0.18)', fill: 'hsla(217, 18%, 52%, 0.03)', dashArray: '4 10', haloOpacity: 0.26 };
 
         const halo = L.circle([facility.lat, facility.lng], {
           pane: MAP_PANES.driveRadii,
           radius: radiusKm * 1000,
-          color: 'hsla(0, 0%, 100%, 0.7)',
+          color: `hsla(0, 0%, 100%, ${colors.haloOpacity})`,
           weight: 4,
           fillColor: 'transparent',
           fillOpacity: 0,
@@ -1592,7 +1607,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           weight: 2.5,
           fillColor: colors.fill,
           fillOpacity: 1,
-          dashArray: '10 6',
+          dashArray: colors.dashArray,
           interactive: false,
         });
         radiusRef.current!.addLayer(circle);
