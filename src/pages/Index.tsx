@@ -165,21 +165,15 @@ const Index = () => {
   const handleToggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
       const next = { ...prev, [layer]: !prev[layer] };
+      // If enabling a conflicting layer while Top 20 is active, exit Top 20 mode
+      if (!prev[layer] && TOP20_CONFLICTING_LAYERS.includes(layer)) {
+        setTopProvidersOnly(false);
+      }
       if (layer in TOGGLE_DIAGNOSTICS) {
         logToggleDiagnostic(layer as keyof typeof TOGGLE_DIAGNOSTICS, next[layer as keyof LayerState]);
       }
       return next;
     });
-  }, [logToggleDiagnostic]);
-
-  const handleCoverageRadiusChange = useCallback((checked: boolean) => {
-    setCoverageRadius(checked);
-    logToggleDiagnostic('coverageRadius', checked);
-  }, [logToggleDiagnostic]);
-
-  const handleCoverageGapsChange = useCallback((checked: boolean) => {
-    setCoverageGaps(checked);
-    logToggleDiagnostic('coverageGaps', checked);
   }, [logToggleDiagnostic]);
 
   const handleTopProvidersOnlyChange = useCallback((checked: boolean) => {
