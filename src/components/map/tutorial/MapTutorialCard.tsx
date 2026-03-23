@@ -1,4 +1,5 @@
 import { forwardRef } from 'react';
+import { X } from 'lucide-react';
 import { MAP_TUTORIAL_STEPS, type MapTutorialStep } from '@/data/map-tutorial';
 import { type CardLayout, type HighlightRect, getArrowStyle } from '@/components/map/tutorial/tutorialLayout';
 
@@ -46,9 +47,10 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:scale-[0.98]"
+            aria-label="Close tutorial"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground active:scale-[0.98]"
           >
-            X
+            <X className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden="true" />
           </button>
         </div>
         <h3 id="map-tutorial-title" className="mt-1.5 text-[15px] font-semibold leading-snug text-balance">
