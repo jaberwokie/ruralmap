@@ -297,6 +297,74 @@
   background: none !important;
 }
 
+.cluster-marker-composed {
+  position: relative;
+  display: block;
+}
+
+.cluster-marker-composed__pin {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  display: flex;
+  z-index: 1;
+}
+
+.cluster-marker-composed__badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  box-shadow: var(--shadow-panel);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+}
+
+.cluster-marker-composed__count {
+  position: relative;
+  z-index: 4;
+  color: hsl(var(--foreground));
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+}
+
+.cluster-marker-composed__indicators {
+  position: absolute;
+  left: 50%;
+  bottom: 3px;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 10px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  border: 1px solid hsl(var(--border));
+  background: hsl(var(--background));
+  z-index: 2;
+}
+
+.cluster-marker__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cluster-dot);
+  display: block;
+  flex-shrink: 0;
+}
+
 @keyframes fte-pulse {
   0%, 100% { box-shadow: 0 0 0 0 hsla(0, 0%, 0%, 0.1); }
   50% { box-shadow: 0 0 0 6px hsla(0, 0%, 0%, 0.05); }
