@@ -220,8 +220,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-140", name: "Lyon County Senior Center Yerington", category: "Senior Services", county: "Lyon", city: "Yerington", address: "117 Tilson Rd, Yerington, NV 89447", phone: "(775) 463-6550", lat: 38.9850, lng: -119.1620 },
   { id: "rs-141", name: "Fernley EmployNV Career Hub", category: "Employment", county: "Lyon", city: "Fernley", address: "1320 W Newlands Dr, Fernley, NV 89408", phone: "(775) 439-3077", lat: 39.6050, lng: -119.2560 },
   { id: "rs-142", name: "Dayton Community Health Nurse", category: "Physical Health", county: "Lyon", city: "Dayton", address: "5 Pinecone Road, Suite 103, Dayton, NV 89403", phone: "(775) 246-6211", lat: 39.2351, lng: -119.5873 },
-  // 213 S Whitacre St → matches h7: 38.9841, -119.1674
-  { id: "rs-143", name: "South Lyon Medical Center", category: "Physical Health", county: "Lyon", city: "Yerington", address: "213 S Whitacre Street, Yerington, NV 89447", phone: "(775) 463-2301", lat: 38.9841, lng: -119.1674 },
   { id: "rs-144", name: "Banner Health Center Fernley", category: "Physical Health", county: "Lyon", city: "Fernley", address: "1260 Nevada Pacific Boulevard, Fernley, NV 89408", phone: "(775) 575-7171", lat: 39.6060, lng: -119.2530 },
   { id: "rs-145", name: "Rural Nevada Counseling - Dayton", category: "Substance Use", county: "Lyon", city: "Dayton", address: "801 Overland Loop, Suite 201, Dayton, NV 89403", phone: "(775) 241-9285", lat: 39.2380, lng: -119.5910 },
   // 720 S Main St → same as rs-131
