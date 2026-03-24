@@ -1,57 +1,42 @@
 
 
-## Audit: Pin-to-Address Accuracy Across All Data Layers
+## Deduplicate Cross-Layer Pins
 
-### Findings
+### Problem
+Multiple facilities appear as pins in **both** the Provider Locations layer (from `facilities.ts`) and the Rural Services / Behavioral Health layer (from `rural-services.ts`), producing 2-3 stacked pins at the same address. The user screenshot shows this at South Lyon Medical Center in Yerington.
 
-**Facilities (`facilities.ts`) — 38 records**
+### Identified Duplicates
 
-Hospitals (h1–h15) and base clinics (c1–c8) appear reasonably geocoded with building-level precision. The recent t1–t15 corrections improved Clark/Nye/Elko providers. Remaining issues:
+Records in `rural-services.ts` that duplicate entries already in `facilities.ts`:
 
-- **c3** ("Nevada Health Centers Fallon"): address is just "E Williams Ave" — no street number, coordinate is approximate
-- **c5** shares the exact same address as **h5** (1500 Avenue H, Ely) but has a slightly different lat/lng — likely co-located, coordinates should match exactly
-- **t4** (Mindspace, Henderson): address says Henderson but city field says "Las Vegas" — should be "Henderson"
-- **t1** (Beautiful Mind): `dataConfidence` is "Likely Accurate" — coordinate is corridor-placed, not verified to the building at 4955 S Durango Dr
+| Rural Service ID | Name | Duplicates Facility ID |
+|---|---|---|
+| rs-143 | South Lyon Medical Center | h7 |
+| rs-178 | William Bee Ririe Hospital | h5 |
+| rs-179 | Nevada Health Centers Ely | c5 |
+| rs-104 | Humboldt General Hospital | h9 |
+| rs-77 | Nevada Health Centers - Elko | c4 |
+| rs-163 | Nevada Health Centers Pahrump | c1 |
+| rs-126 | Grover C. Dils Medical Center | h10 |
+| rs-164 | Desert View Hospital BH Services | h1 (same address, BH dept) |
 
-**Rural Services (`rural-services.ts`) — 180 records: SYSTEMIC ISSUE**
+Additionally, within `facilities.ts` itself:
+- **t7** (Carson Tahoe Physician Clinics) shares the exact same address/coordinates as **h3** (Carson Tahoe Regional Medical Center) — these are legitimately different entities (hospital vs. physician clinic) but stack visually.
 
-Nearly all 180 rural service coordinates are **manually scattered from city-center points**, not geocoded from their listed addresses. The file even defines a `scatter()` helper (line 38) for this purpose. Evidence:
+### Changes
 
-- Carson City services (rs-1 through rs-33): all coordinates cluster in a ~0.02-degree band around `39.16, -119.77` regardless of actual address
-- Fallon services (rs-34 through rs-52): all cluster around `39.47, -118.78`
-- Gardnerville, Elko, Winnemucca, etc. — same pattern
-- Services that share the same physical address have **different** coordinates (e.g., rs-34, rs-36, rs-38 all at "270 S. Maine Street" Fallon but each has unique lat/lng)
-- Services with no address at all still have coordinates (city-center fallbacks)
-
-This means **every green and purple service pin is approximate to within ~0.5–1 mile of its true location**.
-
-### Proposed Fix
-
-**Phase 1 — Facility data cleanup (small, immediate)**
-
-File: `src/data/facilities.ts`
-- Fix **t4** city to "Henderson"
-- Align **c5** coordinates to match **h5** (co-located)
-- Add street number to **c3** address ("490 E Williams Ave" per NHC records)
-- Upgrade t1 confidence after address verification
-
-**Phase 2 — Rural services geocoding (large, systematic)**
-
-File: `src/data/rural-services.ts`
-- For all 180 records that have a street address: replace the scattered city-center coordinates with address-derived GPS coordinates
-- For records sharing the same physical address: use identical coordinates (not artificial scatter)
-- For records with no address: keep current city-center approximation but add `notes: "city-center approx"`
-- Remove the unused `scatter()` helper function
-
-This is a data-intensive update affecting ~150+ coordinate pairs. The addresses are already in the data — the coordinates just need to match them.
+**File: `src/data/rural-services.ts`**
+- Remove the 7 records that are exact name+address duplicates of hospitals/clinics already in `facilities.ts`: rs-143, rs-178, rs-179, rs-104, rs-77, rs-163, rs-126
+- Keep rs-164 (Desert View Hospital **BH Services**) — it's a distinct service department at the same address, which is a valid separate entry for the services layer
 
 ### What stays the same
-- All names, categories, phone numbers, county assignments
-- Map rendering logic, tooltip behavior, cluster settings
-- Facility hospitals and most clinic coordinates (already building-level)
+- All facility records in `facilities.ts` (no changes)
+- All non-duplicate rural service records
+- Map rendering, tooltip, and clustering logic
+- The overlap resolution system will continue to handle legitimate co-located but distinct services
 
 ### Impact
-- All green (service) and purple (behavioral health) pins will render at their actual street addresses instead of scattered city-center approximations
-- Same-address services will stack correctly and be handled by the existing overlap resolution logic
-- Pin-to-address verification via tooltips will show accurate alignment
+- Eliminates 7 duplicate pins that appear when both Provider Locations and Rural Services layers are active
+- South Lyon Medical Center will show as a single hospital pin instead of a hospital + green service pin stacked together
+- Same fix applies to William Bee Ririe, Humboldt General, NHC clinics, and Grover C. Dils
 
