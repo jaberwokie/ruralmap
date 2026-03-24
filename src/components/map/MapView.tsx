@@ -1512,7 +1512,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const validation = facilityValidation.records.get(facility.id);
         const dataConfidence = getFacilityDataConfidence(facility);
         const [displayLat, displayLng] = displayCoordinates.get(`facility:${facility.id}`) ?? [facility.lat, facility.lng];
-        const scaledSize = showUtilization && util
+        const useUniformSize = topProvidersOnly && mapZoom < 11;
+        const scaledSize = showUtilization && util && !useUniformSize
           ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
           : MAP_PIN_VISUALS.providerLocations.size;
         const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
