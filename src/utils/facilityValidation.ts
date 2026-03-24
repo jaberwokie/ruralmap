@@ -126,16 +126,16 @@ const FACILITY_VALIDATION_OVERRIDES: Record<string, FacilityValidationOverride> 
     notes: 'Stored coordinates align to East Williams Avenue rather than a building-level clinic footprint.',
   },
   c6: {
-    sourceAddress: 'Dayton, NV',
-    coordinateSource: 'city_level_estimate',
+    sourceAddress: '25 Dayton Village Pkwy, Dayton, NV 89403',
+    coordinateSource: 'street_level_geocode',
     confidence: 'approximate',
-    notes: 'No street address is stored; pin represents a Dayton city-level estimate.',
+    notes: 'Address confirmed to street segment; building footprint not individually verified.',
   },
   c7: {
-    sourceAddress: 'Carson City, NV',
-    coordinateSource: 'city_level_estimate',
+    sourceAddress: '3325 Research Way, Carson City, NV 89706',
+    coordinateSource: 'street_level_geocode',
     confidence: 'approximate',
-    notes: 'No street address is stored; pin represents a Carson City city-level estimate.',
+    notes: 'Address confirmed to street segment; building footprint not individually verified.',
   },
   c8: {
     coordinateSource: 'street_level_geocode',
