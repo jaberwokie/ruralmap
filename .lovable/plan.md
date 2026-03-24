@@ -1,26 +1,57 @@
 
 
-## Add Address Display to All Pin Tooltips
+## Audit: Pin-to-Address Accuracy Across All Data Layers
 
-### Problem
-The address-in-tooltip fix was only applied to provider location pins. Rural services (green) and behavioral health (purple) pins still omit the street address from their tooltips, making it impossible to verify pin-to-address alignment for those layers.
+### Findings
 
-### Changes
+**Facilities (`facilities.ts`) — 38 records**
 
-**File: `src/components/map/MapView.tsx`**
+Hospitals (h1–h15) and base clinics (c1–c8) appear reasonably geocoded with building-level precision. The recent t1–t15 corrections improved Clark/Nye/Elko providers. Remaining issues:
 
-1. **Rural services tooltip** (~line 1437): Add the `service.address` line between the city/county line and the category line, matching the provider tooltip pattern:
-   ```
-   ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
-   ```
+- **c3** ("Nevada Health Centers Fallon"): address is just "E Williams Ave" — no street number, coordinate is approximate
+- **c5** shares the exact same address as **h5** (1500 Avenue H, Ely) but has a slightly different lat/lng — likely co-located, coordinates should match exactly
+- **t4** (Mindspace, Henderson): address says Henderson but city field says "Las Vegas" — should be "Henderson"
+- **t1** (Beautiful Mind): `dataConfidence` is "Likely Accurate" — coordinate is corridor-placed, not verified to the building at 4955 S Durango Dr
 
-2. **Behavioral health tooltip** (~line 1494): Same addition between city/county and category lines.
+**Rural Services (`rural-services.ts`) — 180 records: SYSTEMIC ISSUE**
+
+Nearly all 180 rural service coordinates are **manually scattered from city-center points**, not geocoded from their listed addresses. The file even defines a `scatter()` helper (line 38) for this purpose. Evidence:
+
+- Carson City services (rs-1 through rs-33): all coordinates cluster in a ~0.02-degree band around `39.16, -119.77` regardless of actual address
+- Fallon services (rs-34 through rs-52): all cluster around `39.47, -118.78`
+- Gardnerville, Elko, Winnemucca, etc. — same pattern
+- Services that share the same physical address have **different** coordinates (e.g., rs-34, rs-36, rs-38 all at "270 S. Maine Street" Fallon but each has unique lat/lng)
+- Services with no address at all still have coordinates (city-center fallbacks)
+
+This means **every green and purple service pin is approximate to within ~0.5–1 mile of its true location**.
+
+### Proposed Fix
+
+**Phase 1 — Facility data cleanup (small, immediate)**
+
+File: `src/data/facilities.ts`
+- Fix **t4** city to "Henderson"
+- Align **c5** coordinates to match **h5** (co-located)
+- Add street number to **c3** address ("490 E Williams Ave" per NHC records)
+- Upgrade t1 confidence after address verification
+
+**Phase 2 — Rural services geocoding (large, systematic)**
+
+File: `src/data/rural-services.ts`
+- For all 180 records that have a street address: replace the scattered city-center coordinates with address-derived GPS coordinates
+- For records sharing the same physical address: use identical coordinates (not artificial scatter)
+- For records with no address: keep current city-center approximation but add `notes: "city-center approx"`
+- Remove the unused `scatter()` helper function
+
+This is a data-intensive update affecting ~150+ coordinate pairs. The addresses are already in the data — the coordinates just need to match them.
 
 ### What stays the same
-- Provider tooltips (already have address)
-- County/FTE tooltips (no street address concept)
-- All coordinates, data, and rendering logic
+- All names, categories, phone numbers, county assignments
+- Map rendering logic, tooltip behavior, cluster settings
+- Facility hospitals and most clinic coordinates (already building-level)
 
 ### Impact
-All pin types on the map will display their street address in the tooltip, allowing verification of pin-to-address alignment across every layer.
+- All green (service) and purple (behavioral health) pins will render at their actual street addresses instead of scattered city-center approximations
+- Same-address services will stack correctly and be handled by the existing overlap resolution logic
+- Pin-to-address verification via tooltips will show accurate alignment
 
