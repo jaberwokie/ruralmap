@@ -169,8 +169,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-102", name: "Elwood Staffing", category: "Employment", county: "Humboldt", city: "Winnemucca", address: "3013 Potato Rd Suite #C, Winnemucca, NV 89445", phone: "(775) 623-2113", lat: 40.9770, lng: -117.7200 },
   // 475 W Haskell St → same as rs-100
   { id: "rs-103", name: "EmployNV Business/Career Hub Winnemucca", category: "Employment", county: "Humboldt", city: "Winnemucca", address: "475 W Haskell Street Suite 1, Winnemucca, NV 89445", phone: "(775) 623-6520", lat: 40.9710, lng: -117.7400 },
-  // 118 E Haskell St → matches h9: 40.9711, -117.7265
-  { id: "rs-104", name: "Humboldt General Hospital", category: "Physical Health", county: "Humboldt", city: "Winnemucca", address: "118 E Haskell Street, Winnemucca, NV 89445", phone: "(775) 623-5222", lat: 40.9711, lng: -117.7265 },
   { id: "rs-105", name: "Golden Valley Medical Center", category: "Physical Health", county: "Humboldt", city: "Winnemucca", address: "515 W Haskell Street, Winnemucca, NV 89445", phone: "(775) 625-4653", lat: 40.9710, lng: -117.7410 },
   { id: "rs-106", name: "Silver Sage Counseling Services", category: "Substance Use", county: "Humboldt", city: "Winnemucca", address: "530 Melarkey Suite #202, Winnemucca, NV 89445", phone: "(775) 623-3626", lat: 40.9715, lng: -117.7345 },
   { id: "rs-107", name: "Winnemucca Mental Health Center", category: "Mental Health", county: "Humboldt", city: "Winnemucca", address: "3140 Traders Way, Winnemucca, NV 89445", phone: "(775) 623-6580", lat: 40.9780, lng: -117.7190 },
