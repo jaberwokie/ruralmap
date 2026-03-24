@@ -134,8 +134,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-75", name: "Employ NV Business/Career Hub Elko", category: "Employment", county: "Elko", city: "Elko", address: "172 6th Street, Elko, NV 89801", phone: "(775) 753-1900", lat: 40.8355, lng: -115.7655 },
   // 1010 Ruby Vista Dr → same as rs-72
   { id: "rs-76", name: "Aging and Disability Services Division Elko", category: "Disability Services", county: "Elko", city: "Elko", address: "1010 Ruby Vista Drive, Suite 104, Elko, NV 89801", phone: "(775) 738-1966", lat: 40.8390, lng: -115.7500 },
-  // 762 14th St → matches c4: 40.8416, -115.7584
-  { id: "rs-77", name: "Nevada Health Centers - Elko", category: "Physical Health", county: "Elko", city: "Elko", address: "762 14th Street, Elko, NV 89801", phone: "(775) 738-5850", lat: 40.8416, lng: -115.7584 },
   { id: "rs-78", name: "Elko Community Health Center", category: "Physical Health", county: "Elko", city: "Elko", address: "2098 Idaho Street, Elko, NV 89801", phone: "(775) 389-5778", lat: 40.8340, lng: -115.7620 },
   { id: "rs-79", name: "Wendover Community Health Center", category: "Physical Health", county: "Elko", city: "West Wendover", address: "925 Wells Avenue, West Wendover, NV 89883", phone: "(775) 664-2220", lat: 40.7390, lng: -114.0730 },
   { id: "rs-80", name: "Carlin Community Health Center", category: "Physical Health", county: "Elko", city: "Carlin", address: "310 Memory Lane, Carlin, NV 89822", phone: "(775) 754-2666", lat: 40.7140, lng: -116.1040 },
