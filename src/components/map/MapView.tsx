@@ -1651,6 +1651,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                 ? { stroke: 'hsla(0, 20%, 45%, 0.2)', fill: 'hsla(0, 12%, 50%, 0.035)', dashArray: '4 10', haloOpacity: 0.26 }
                 : { stroke: 'hsla(217, 18%, 52%, 0.18)', fill: 'hsla(217, 18%, 52%, 0.03)', dashArray: '4 10', haloOpacity: 0.26 };
 
+        if (coverageGaps) {
+          colors.fill = 'hsla(0, 0%, 100%, 0.85)';
+        }
+
         const halo = L.circle([facility.lat, facility.lng], {
           pane: MAP_PANES.driveRadii,
           radius: radiusKm * 1000,
@@ -1674,7 +1678,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, radiusKm, topProvidersOnly, providerVisibleFacilities]);
+  }, [filteredFacilities, coverageRadius, coverageGaps, radiusKm, topProvidersOnly, providerVisibleFacilities]);
 
   // Draw coverage gap overlays
   useEffect(() => {
