@@ -199,8 +199,6 @@ export const ruralServices: RuralService[] = [
   // 700 N Spring St → matches h10: 37.6226, -114.5136
   { id: "rs-124", name: "Lincoln County Medical Associates - Caliente", category: "Physical Health", county: "Lincoln", city: "Caliente", address: "700 N Spring Street, Caliente, NV 89008", phone: "(775) 726-8051", lat: 37.6226, lng: -114.5136 },
   { id: "rs-125", name: "Lincoln County Medical Associates - Alamo", category: "Physical Health", county: "Lincoln", city: "Alamo", address: "33 Joshua Tree Street, Alamo, NV 89001", phone: "(775) 726-8059", lat: 37.3655, lng: -115.1635 },
-  // Grover C Dils → matches h10: 37.6226, -114.5136
-  { id: "rs-126", name: "Grover C. Dils Medical Center", category: "Physical Health", county: "Lincoln", city: "Caliente", phone: "(775) 726-3171", lat: 37.6226, lng: -114.5136 },
   { id: "rs-127", name: "DPBH-Rural Clinics: Panaca", category: "Mental Health", county: "Lincoln", city: "Panaca", address: "1005 Main Street, Suite 111, Panaca, NV 89042", phone: "(775) 962-8089", lat: 37.7870, lng: -114.3870 },
 
   // ── Lyon ──
