@@ -1,27 +1,32 @@
 
 
-## Tighten Nevada State Boundary to High-Resolution GeoJSON
+## Zoom-Aware Pin Sizing for Top 20 Providers
 
 ### Problem
-The current `nevada-boundary.ts` contains only **21 coordinate pairs** — an extremely coarse approximation of Nevada's state line. Every overlay that clips to this boundary (coverage gaps, operational coverage, grey non-service areas) bleeds well beyond the actual state border, as visible in the screenshot.
+When Top 20 is active, pins are scaled by total visits at all zoom levels via `getScaledPinSize`. At statewide zoom, the size differences make the view cluttered and visually unappealing. Size variation only makes sense when zoomed in enough to inspect individual providers.
 
-### Solution
-Replace the boundary data with a **~290-point** high-resolution polygon sourced from US Census TIGER/Line data (via `glynnbird/usstatesgeojson`). This is the same authoritative Census source referenced in the file's original comment, just at proper resolution.
+### Change
 
-### Changes
+**File: `src/components/map/MapView.tsx`** (~line 1515)
 
-**File: `src/data/nevada-boundary.ts`** — Complete replacement
+Replace the current unconditional scaling with a zoom-aware check:
+- When `topProvidersOnly` is active **and** the map zoom is below a threshold (e.g., zoom < 11), use the uniform base pin size for all 20 markers
+- When zoomed in at 11+, apply `getScaledPinSize` as it does today
 
-Replace the 21-point coordinate array with the ~290-point polygon extracted from the TIGER-derived GeoJSON. The export signature (`nevadaBoundaryGeoJSON: GeoJSON.Polygon`) stays identical — no consumers need to change.
+This keeps the zoomed-out view clean and uniform, while still showing engagement-proportional sizing when the user drills in.
 
-All downstream code that references `nevadaBoundaryGeoJSON` (MapView.tsx, coverageZones.ts, mergePolygons.ts) will automatically render tighter overlays with zero code changes needed.
+```
+// Before
+const scaledSize = showUtilization && util
+  ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
+  : MAP_PIN_VISUALS.providerLocations.size;
 
-### What stays the same
-- Export name and type (`GeoJSON.Polygon`)
-- All consuming code in MapView, coverageZones, mergePolygons
-- No map styling or layer logic changes
-- No UI changes
+// After
+const useUniformSize = topProvidersOnly && mapZoom < 11;
+const scaledSize = showUtilization && util && !useUniformSize
+  ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
+  : MAP_PIN_VISUALS.providerLocations.size;
+```
 
-### Impact
-Every clipped overlay — coverage gaps (red), operational coverage (teal/grey), county clipping — will now conform tightly to the actual Nevada state line instead of cutting across neighboring states.
+Single line-level change, no other files affected.
 
