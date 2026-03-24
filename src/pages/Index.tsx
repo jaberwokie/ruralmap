@@ -62,7 +62,8 @@ export interface Filters {
 }
 
 const Index = () => {
-  const [facilities, setFacilities] = useState<Facility[]>(defaultFacilities);
+  const [importedFacilities, setImportedFacilities] = useState<Facility[]>([]);
+  const facilities = useMemo(() => [...defaultFacilities, ...importedFacilities], [importedFacilities]);
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(32);
   const [filters, setFilters] = useState<Filters>({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
@@ -183,7 +184,7 @@ const Index = () => {
   }, []);
 
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
-    setFacilities(prev => [...prev, ...newFacilities]);
+    setImportedFacilities(prev => [...prev, ...newFacilities]);
   }, []);
 
   // ── Unified entity selection handlers ──
