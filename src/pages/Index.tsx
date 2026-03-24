@@ -184,7 +184,7 @@ const Index = () => {
   }, []);
 
   const handleAddFacilities = useCallback((newFacilities: Facility[]) => {
-    setFacilities(prev => [...prev, ...newFacilities]);
+    setImportedFacilities(prev => [...prev, ...newFacilities]);
   }, []);
 
   // ── Unified entity selection handlers ──
