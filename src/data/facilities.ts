@@ -45,7 +45,7 @@ export const defaultFacilities: Facility[] = [
   // Clinics
   { id: "c1", name: "Nevada Health Centers Pahrump", type: "clinic", classification: "clinic_provider", city: "Pahrump", county: "Nye", address: "1430 E Calvada Blvd", lat: 36.1943, lng: -115.9664, notes: "FQHC" },
   { id: "c2", name: "Nevada Health Centers Carson City", type: "clinic", classification: "clinic_provider", city: "Carson City", county: "Carson City", address: "1802 N Carson St", lat: 39.1757, lng: -119.7670, notes: "FQHC" },
-  { id: "c3", name: "Nevada Health Centers Fallon", type: "clinic", classification: "clinic_provider", city: "Fallon", county: "Churchill", address: "E Williams Ave", lat: 39.4749, lng: -118.7727, notes: "FQHC" },
+  { id: "c3", name: "Nevada Health Centers Fallon", type: "clinic", classification: "clinic_provider", city: "Fallon", county: "Churchill", address: "490 E Williams Ave", lat: 39.4749, lng: -118.7727, notes: "FQHC" },
   { id: "c4", name: "Nevada Health Centers Elko", type: "clinic", classification: "clinic_provider", city: "Elko", county: "Elko", address: "762 14th St", lat: 40.8416, lng: -115.7584, notes: "FQHC" },
   { id: "c5", name: "Nevada Health Centers Ely", type: "clinic", classification: "clinic_provider", city: "Ely", county: "White Pine", address: "1500 Avenue H", lat: 39.2547, lng: -114.8610, notes: "FQHC" },
   { id: "c6", name: "Community Health Alliance Dayton", type: "clinic", classification: "clinic_provider", city: "Dayton", county: "Lyon", address: "25 Dayton Village Pkwy, Dayton, NV 89403", lat: 39.2351, lng: -119.5873, notes: "Primary care + BH", dataConfidence: "Likely Accurate" },
