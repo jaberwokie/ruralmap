@@ -1,40 +1,51 @@
 
 
-## Verify and Correct ~50 Approximate Coordinates in Rural Services
+## Revised Plan: Port Map Features to LANTERN (Clark County Urban Focus)
 
-### Problem
-After the bulk geocoding pass, approximately 50 records in `rural-services.ts` still have only 4-decimal-place precision (round numbers like `38.9480, -119.7440`), indicating they were estimated rather than geocoded to a specific building. These all have street addresses that can be verified.
+### Key Context Shift
+LANTERN serves **non-rural Clark County only** — Las Vegas, Henderson, North Las Vegas, Downtown, Historic Westside, Spring Valley, The Strip, East Las Vegas. This is a dense urban environment, not rural Nevada. The PWA is used primarily on **mobile devices outdoors** by people experiencing homelessness.
 
-### Scope
+This changes priorities significantly from the earlier plan.
 
-Records with addresses but only 4-decimal (~11m) precision, grouped by county:
+### What to Port (Revised)
 
-**Carson City** (6 records): rs-5, rs-17, rs-18, rs-22, rs-23, rs-33
-**Churchill** (5): rs-37, rs-40, rs-45, rs-48, rs-49
-**Douglas/Gardnerville** (12): rs-53, rs-54, rs-55, rs-57, rs-58, rs-59, rs-60, rs-61, rs-62, rs-63, rs-65, rs-66
-**Elko** (2): rs-73, rs-84
-**Humboldt** (2): rs-102, rs-106
-**Lander** (4): rs-110, rs-111, rs-113, rs-114/rs-116
-**Lincoln** (2): rs-119, rs-122
-**Lyon** (8): rs-128, rs-129/rs-130, rs-135, rs-140, rs-142/rs-147, rs-145, rs-148
-**Mineral** (4): rs-151, rs-152, rs-153, rs-156
-**White Pine** (2): rs-172, rs-176
+#### 1. Marker Clustering (highest priority)
+Clark County is where pin density is worst — dozens of shelters, meal sites, and hygiene stations overlap in downtown Las Vegas alone. Add `supercluster` to replace the current per-marker DOM loop in `MapLibreMapView.tsx` with a GeoJSON source + cluster layers. Cluster circles show counts, expand on tap/zoom.
 
-### Changes
+**File:** `src/components/MapLibreMapView.tsx` — replace the `mappable.forEach` marker loop with a clustered GeoJSON source.
 
-**File: `src/data/rural-services.ts`**
+#### 2. "Near Me" Geolocation Button
+Urban outdoor users need "what's closest to me right now." Add a GPS locate button (44×44px minimum tap target) that centers the map on the user's position and sorts resources by walking distance. Use the browser Geolocation API with a fallback message if denied.
 
-For each of the ~50 records listed above, look up the street address and update the `lat`/`lng` values to 5-decimal-place building-level coordinates. Records sharing the same physical address will get identical coordinates.
+**File:** `src/components/MapLibreMapView.tsx` — add a locate control button and geolocation handler.
 
-### What stays the same
-- All record IDs, names, categories, phone numbers, counties
-- Records with `notes: "city-center approx"` (no address to verify)
-- Records already at 5-decimal precision from the previous geocoding pass
-- Map rendering, tooltip, and clustering logic
+#### 3. Sunlight-Readable Defaults
+The current dark basemap is hard to read in direct Las Vegas sun. Change the default map style to `light` (Voyager) for outdoor readability while keeping the dark/light toggle. Increase marker size from 28px to 32px for better visibility.
 
-### Technical details
-- Primary file: `src/data/rural-services.ts`
-- ~50 coordinate pairs will be updated to 5-decimal precision
-- Will use AI-assisted address lookup to determine correct building-level coordinates
-- Co-located services (same address, different suites) will share identical coordinates
+**File:** `src/components/MapLibreMapView.tsx` — change `osDefault` fallback to `"light"`, bump `MARKER_SIZE` to 32.
+
+#### 4. Map Legend Overlay
+LANTERN already has `IconLegendModal.tsx` but it's a separate modal. Add a small collapsible on-map legend in the bottom-left corner showing category colors, using the existing `getCategoryHsl` function.
+
+**File:** New `src/components/MapLegend.tsx`, referenced from `MapLibreMapView.tsx`.
+
+### What NOT to Port (Revised)
+- **County boundaries, FTE capacity, coverage radius, gap analysis** — operational planning tools irrelevant to end users
+- **Drive-time zones** — not useful in an urban grid with transit
+- **Building-level geocoding audit** — LANTERN pulls from Supabase dynamically; coordinate quality should be enforced at data entry in `ResourceFormDialog.tsx`, not via a bulk audit of static data
+- **Fit-to-bounds on filter** — in a single-metro context, the map viewport rarely needs to jump; "Near Me" is more useful
+- **Offline tile caching** — Clark County urban areas have reliable cell coverage; not a priority
+
+### Implementation Order
+1. Clustering (fixes the Las Vegas pin pile-up)
+2. Geolocation button (highest-value mobile feature)
+3. Sunlight defaults (two-line change, immediate readability win)
+4. Map legend (quick add)
+
+### Technical Notes
+- All changes happen in the [LANTERN](/projects/33ace3b4-b9db-496b-b41d-f040d4cd545f) project
+- `supercluster` is the standard clustering library for MapLibre GL
+- Geolocation uses the browser API, no external service needed
+- Current map is 296 lines; clustering will roughly double it
+- 44×44px tap targets are already used for markers; same standard applies to the locate button and legend toggle
 
