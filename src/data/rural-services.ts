@@ -248,8 +248,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", phone: "(775) 727-9970", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
   { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", phone: "(775) 751-7300", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
   { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", phone: "(775) 727-5008", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  // 1430 E Calvada Blvd → matches c1: 36.1943, -115.9664
-  { id: "rs-163", name: "Nevada Health Centers Pahrump", category: "Physical Health", county: "Nye", city: "Pahrump", address: "1430 E Calvada Blvd, Pahrump, NV", phone: "(775) 751-7500", lat: 36.1943, lng: -115.9664 },
   // 360 S Lola Ln → matches h1: 36.2142, -116.0248
   { id: "rs-164", name: "Desert View Hospital BH Services", category: "Mental Health", county: "Nye", city: "Pahrump", address: "360 S Lola Ln, Pahrump, NV", phone: "(775) 751-7500", lat: 36.2142, lng: -116.0248 },
 
