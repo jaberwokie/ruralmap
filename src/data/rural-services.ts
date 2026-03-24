@@ -272,9 +272,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", phone: "(775) 289-4091", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
   { id: "rs-176", name: "DCFS White Pine", category: "Family Services", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.2490, lng: -114.8860 },
   { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", phone: "(775) 289-3582", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
-  // 1500 Avenue H → matches h5: 39.2556, -114.8596
-  { id: "rs-178", name: "William Bee Ririe Hospital", category: "Physical Health", county: "White Pine", city: "Ely", address: "1500 Avenue H, Ely, NV 89301", phone: "(775) 289-3001", lat: 39.2556, lng: -114.8596 },
-  { id: "rs-179", name: "Nevada Health Centers Ely", category: "Physical Health", county: "White Pine", city: "Ely", address: "1500 Avenue H, Ely, NV 89301", phone: "(775) 289-8500", lat: 39.2556, lng: -114.8596 },
   { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", phone: "(775) 289-1640", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
 ];
 
