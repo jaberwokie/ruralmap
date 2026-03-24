@@ -1435,6 +1435,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
               <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
               <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
+              ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
               <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
             </div>
           `,
@@ -1492,6 +1493,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
               <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
               <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
+              ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
               <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">Behavioral Health · ${service.category}</div>
             </div>
           `,
