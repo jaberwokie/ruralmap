@@ -134,8 +134,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-75", name: "Employ NV Business/Career Hub Elko", category: "Employment", county: "Elko", city: "Elko", address: "172 6th Street, Elko, NV 89801", phone: "(775) 753-1900", lat: 40.8355, lng: -115.7655 },
   // 1010 Ruby Vista Dr → same as rs-72
   { id: "rs-76", name: "Aging and Disability Services Division Elko", category: "Disability Services", county: "Elko", city: "Elko", address: "1010 Ruby Vista Drive, Suite 104, Elko, NV 89801", phone: "(775) 738-1966", lat: 40.8390, lng: -115.7500 },
-  // 762 14th St → matches c4: 40.8416, -115.7584
-  { id: "rs-77", name: "Nevada Health Centers - Elko", category: "Physical Health", county: "Elko", city: "Elko", address: "762 14th Street, Elko, NV 89801", phone: "(775) 738-5850", lat: 40.8416, lng: -115.7584 },
   { id: "rs-78", name: "Elko Community Health Center", category: "Physical Health", county: "Elko", city: "Elko", address: "2098 Idaho Street, Elko, NV 89801", phone: "(775) 389-5778", lat: 40.8340, lng: -115.7620 },
   { id: "rs-79", name: "Wendover Community Health Center", category: "Physical Health", county: "Elko", city: "West Wendover", address: "925 Wells Avenue, West Wendover, NV 89883", phone: "(775) 664-2220", lat: 40.7390, lng: -114.0730 },
   { id: "rs-80", name: "Carlin Community Health Center", category: "Physical Health", county: "Elko", city: "Carlin", address: "310 Memory Lane, Carlin, NV 89822", phone: "(775) 754-2666", lat: 40.7140, lng: -116.1040 },
@@ -171,8 +169,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-102", name: "Elwood Staffing", category: "Employment", county: "Humboldt", city: "Winnemucca", address: "3013 Potato Rd Suite #C, Winnemucca, NV 89445", phone: "(775) 623-2113", lat: 40.9770, lng: -117.7200 },
   // 475 W Haskell St → same as rs-100
   { id: "rs-103", name: "EmployNV Business/Career Hub Winnemucca", category: "Employment", county: "Humboldt", city: "Winnemucca", address: "475 W Haskell Street Suite 1, Winnemucca, NV 89445", phone: "(775) 623-6520", lat: 40.9710, lng: -117.7400 },
-  // 118 E Haskell St → matches h9: 40.9711, -117.7265
-  { id: "rs-104", name: "Humboldt General Hospital", category: "Physical Health", county: "Humboldt", city: "Winnemucca", address: "118 E Haskell Street, Winnemucca, NV 89445", phone: "(775) 623-5222", lat: 40.9711, lng: -117.7265 },
   { id: "rs-105", name: "Golden Valley Medical Center", category: "Physical Health", county: "Humboldt", city: "Winnemucca", address: "515 W Haskell Street, Winnemucca, NV 89445", phone: "(775) 625-4653", lat: 40.9710, lng: -117.7410 },
   { id: "rs-106", name: "Silver Sage Counseling Services", category: "Substance Use", county: "Humboldt", city: "Winnemucca", address: "530 Melarkey Suite #202, Winnemucca, NV 89445", phone: "(775) 623-3626", lat: 40.9715, lng: -117.7345 },
   { id: "rs-107", name: "Winnemucca Mental Health Center", category: "Mental Health", county: "Humboldt", city: "Winnemucca", address: "3140 Traders Way, Winnemucca, NV 89445", phone: "(775) 623-6580", lat: 40.9780, lng: -117.7190 },
@@ -203,8 +199,6 @@ export const ruralServices: RuralService[] = [
   // 700 N Spring St → matches h10: 37.6226, -114.5136
   { id: "rs-124", name: "Lincoln County Medical Associates - Caliente", category: "Physical Health", county: "Lincoln", city: "Caliente", address: "700 N Spring Street, Caliente, NV 89008", phone: "(775) 726-8051", lat: 37.6226, lng: -114.5136 },
   { id: "rs-125", name: "Lincoln County Medical Associates - Alamo", category: "Physical Health", county: "Lincoln", city: "Alamo", address: "33 Joshua Tree Street, Alamo, NV 89001", phone: "(775) 726-8059", lat: 37.3655, lng: -115.1635 },
-  // Grover C Dils → matches h10: 37.6226, -114.5136
-  { id: "rs-126", name: "Grover C. Dils Medical Center", category: "Physical Health", county: "Lincoln", city: "Caliente", phone: "(775) 726-3171", lat: 37.6226, lng: -114.5136 },
   { id: "rs-127", name: "DPBH-Rural Clinics: Panaca", category: "Mental Health", county: "Lincoln", city: "Panaca", address: "1005 Main Street, Suite 111, Panaca, NV 89042", phone: "(775) 962-8089", lat: 37.7870, lng: -114.3870 },
 
   // ── Lyon ──
@@ -226,8 +220,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-140", name: "Lyon County Senior Center Yerington", category: "Senior Services", county: "Lyon", city: "Yerington", address: "117 Tilson Rd, Yerington, NV 89447", phone: "(775) 463-6550", lat: 38.9850, lng: -119.1620 },
   { id: "rs-141", name: "Fernley EmployNV Career Hub", category: "Employment", county: "Lyon", city: "Fernley", address: "1320 W Newlands Dr, Fernley, NV 89408", phone: "(775) 439-3077", lat: 39.6050, lng: -119.2560 },
   { id: "rs-142", name: "Dayton Community Health Nurse", category: "Physical Health", county: "Lyon", city: "Dayton", address: "5 Pinecone Road, Suite 103, Dayton, NV 89403", phone: "(775) 246-6211", lat: 39.2351, lng: -119.5873 },
-  // 213 S Whitacre St → matches h7: 38.9841, -119.1674
-  { id: "rs-143", name: "South Lyon Medical Center", category: "Physical Health", county: "Lyon", city: "Yerington", address: "213 S Whitacre Street, Yerington, NV 89447", phone: "(775) 463-2301", lat: 38.9841, lng: -119.1674 },
   { id: "rs-144", name: "Banner Health Center Fernley", category: "Physical Health", county: "Lyon", city: "Fernley", address: "1260 Nevada Pacific Boulevard, Fernley, NV 89408", phone: "(775) 575-7171", lat: 39.6060, lng: -119.2530 },
   { id: "rs-145", name: "Rural Nevada Counseling - Dayton", category: "Substance Use", county: "Lyon", city: "Dayton", address: "801 Overland Loop, Suite 201, Dayton, NV 89403", phone: "(775) 241-9285", lat: 39.2380, lng: -119.5910 },
   // 720 S Main St → same as rs-131
@@ -256,8 +248,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", phone: "(775) 727-9970", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
   { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", phone: "(775) 751-7300", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
   { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", phone: "(775) 727-5008", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  // 1430 E Calvada Blvd → matches c1: 36.1943, -115.9664
-  { id: "rs-163", name: "Nevada Health Centers Pahrump", category: "Physical Health", county: "Nye", city: "Pahrump", address: "1430 E Calvada Blvd, Pahrump, NV", phone: "(775) 751-7500", lat: 36.1943, lng: -115.9664 },
   // 360 S Lola Ln → matches h1: 36.2142, -116.0248
   { id: "rs-164", name: "Desert View Hospital BH Services", category: "Mental Health", county: "Nye", city: "Pahrump", address: "360 S Lola Ln, Pahrump, NV", phone: "(775) 751-7500", lat: 36.2142, lng: -116.0248 },
 
@@ -282,9 +272,6 @@ export const ruralServices: RuralService[] = [
   { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", phone: "(775) 289-4091", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
   { id: "rs-176", name: "DCFS White Pine", category: "Family Services", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.2490, lng: -114.8860 },
   { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", phone: "(775) 289-3582", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
-  // 1500 Avenue H → matches h5: 39.2556, -114.8596
-  { id: "rs-178", name: "William Bee Ririe Hospital", category: "Physical Health", county: "White Pine", city: "Ely", address: "1500 Avenue H, Ely, NV 89301", phone: "(775) 289-3001", lat: 39.2556, lng: -114.8596 },
-  { id: "rs-179", name: "Nevada Health Centers Ely", category: "Physical Health", county: "White Pine", city: "Ely", address: "1500 Avenue H, Ely, NV 89301", phone: "(775) 289-8500", lat: 39.2556, lng: -114.8596 },
   { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", phone: "(775) 289-1640", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
 ];
 
