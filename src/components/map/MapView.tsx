@@ -28,6 +28,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
+import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 
 interface MapViewProps {
   facilities: Facility[];
