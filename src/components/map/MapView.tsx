@@ -1452,6 +1452,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
+          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
@@ -1512,6 +1513,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
+          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
@@ -1583,6 +1585,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('click', (event: L.LeafletEvent) => {
+          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
