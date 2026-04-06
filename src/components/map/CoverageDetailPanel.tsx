@@ -48,7 +48,6 @@ export type MapEntity =
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
-  hoverEntity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
   memberVolumeLayerOn?: boolean;
@@ -165,8 +164,8 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
-  const display = entity ?? hoverEntity;
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
+  const display = entity;
   const isLocked = !!entity;
 
   useEffect(() => {
