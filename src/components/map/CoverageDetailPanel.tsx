@@ -1540,6 +1540,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 
 // ── Rural Service Group ──
 const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; services: RuralService[]; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+  const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
@@ -1551,67 +1552,84 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
       .sort((a, b) => b[1].length - a[1].length);
   }, [services]);
 
+  const util = getCountyUtilization(county);
+  const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
+
   return (
     <>
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      <GapContextAlerts county={county} serviceCount={services.length} />
-      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
-      <EngagementPriorityCard county={county} />
-      <UtilizationEngagementSection county={county} />
-      <UtilizationMetricsCard county={county} />
-
-      <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
-      <p className="text-[10px] text-muted-foreground mb-3">total services</p>
-
-      <div className="space-y-1 mb-3">
+      <DetailSection title="Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={services.length}>
+        <div className="space-y-1 mb-3">
+          {grouped.map(([category, items]) => (
+            <div key={category} className="flex items-center justify-between text-xs">
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+                {category}
+              </span>
+              <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
+            </div>
+          ))}
+        </div>
         {grouped.map(([category, items]) => (
-          <div key={category} className="flex items-center justify-between text-xs">
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
-              {category}
-            </span>
-            <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
+          <div key={category} className="mb-3">
+            <div className="flex items-center gap-1.5 mb-1.5 border-b border-border pb-1">
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+                {category}
+              </span>
+              <span className="text-[10px] text-muted-foreground">({items.length})</span>
+            </div>
+            <div className="space-y-2">
+              {items.map(service => (
+                <div key={service.id} className="pl-1">
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+                      {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
+                      {service.address && (
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <span style={{ wordBreak: 'break-word' }}>{service.address}</span>
+                          <CopyAddress text={`${service.address}, ${service.city}, NV`} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <ActionButtonRow
+                    phone={service.phone}
+                    address={service.address}
+                    lat={service.lat}
+                    lng={service.lng}
+                    city={service.city}
+                    website={service.website}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         ))}
-      </div>
+      </DetailSection>
 
-      {grouped.map(([category, items]) => (
-        <div key={category} className="mb-3">
-          <div className="flex items-center gap-1.5 mb-1.5 border-b border-border pb-1">
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
-              {category}
-            </span>
-            <span className="text-[10px] text-muted-foreground">({items.length})</span>
-          </div>
-          <div className="space-y-2">
-            {items.map(service => (
-              <div key={service.id} className="pl-1">
-                <div className="flex items-start justify-between gap-1">
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
-                    {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
-                    {service.address && (
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <span style={{ wordBreak: 'break-word' }}>{service.address}</span>
-                        <CopyAddress text={`${service.address}, ${service.city}, NV`} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <ActionButtonRow
-                  phone={service.phone}
-                  address={service.address}
-                  lat={service.lat}
-                  lng={service.lng}
-                  city={service.city}
-                  website={service.website}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+      <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
+        <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+        <GapContextAlerts county={county} serviceCount={services.length} />
+      </DetailSection>
+
+      {memberVolumeLayerOn && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+          <EngagementPriorityCard county={county} />
+        </DetailSection>
+      )}
+
+      {hasUtilization && (
+        <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
+          <UtilizationEngagementSection county={county} />
+          <UtilizationMetricsCard county={county} />
+        </DetailSection>
+      )}
+    </>
+  );
+};
       ))}
     </>
   );
