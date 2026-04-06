@@ -1,54 +1,40 @@
 
-1. Refactor selection state in `src/pages/Index.tsx` into a single panel-driving source of truth:
-   - replace the implicit `lockedEntity`/`hoverEntity` fallback behavior with explicit persistent selection for the right-side panel
-   - keep hover preview separate so hover can never override a clicked provider
-   - derive county highlight/FTE focus only from county-like selected entities, not provider selections
+Problem:
+- The hovered green pin in your screenshot is a rural service record (`Central Nevada Health District Eureka` in `src/data/rural-services.ts`), so service marker rendering and hover tooltip wiring are already working.
+- The Details panel already supports `ruralService` via `RuralServiceContent` in `src/components/map/CoverageDetailPanel.tsx`.
+- That means the remaining break is in the click pipeline for service markers: marker hit target and/or clustered marker click routing is still not reliably reaching persistent selection state.
 
-2. Tighten marker-to-panel routing in `src/components/map/MapView.tsx`:
-   - audit all clickable marker layers and make them all call the same provider-selection path with the full underlying record
-   - preserve county clicks for county entities, but ensure provider/service/facility clicks always replace county panel content immediately
-   - keep click propagation stopped on markers so the map background click does not clear selection in the same interaction
-   - ensure clustered service markers and facility markers both resolve to exact record-level entities after expansion
+Plan:
+1. Normalize all marker clicks behind one selection helper in `src/components/map/MapView.tsx`
+   - Create one internal path for all point markers: stop propagation, set click guard, prioritize marker, push the full entity record to `onEntityClick`.
+   - Route green service pins and purple behavioral health pins through the exact same locked-selection path as red/blue provider pins.
 
-3. Rebuild `CoverageDetailPanel` as one shared panel shell with two renderer modes:
-   - `CountyDetailsRenderer`
-   - `ProviderDetailsRenderer`
-   - panel mode should be determined strictly by selected entity type, never by hover/default content
-   - remove county fallback content from provider mode entirely
+2. Fix service marker hit-area without changing the visual design
+   - Keep the current pin appearance.
+   - Expand the clickable target for service and behavioral-health `divIcon` markers by wrapping the SVG in a fixed hit box or adding an invisible clickable SVG target.
+   - This is the most likely reason hover works but click does not consistently lock selection.
 
-4. Convert county details from flat cards into true accordions:
-   - create one reusable accordion section component for both county and provider views
-   - only one section open at a time
-   - first visible county section expanded by default
-   - move existing county cards like Member Volume, Engagement Priority, Coverage Breakdown, Regional FTE Support, Utilization/Operational sections into collapsible bodies
-   - omit empty sections completely
+3. Harden clustered service-marker behavior
+   - Audit how `pointClusterRef` handles individual child markers after clustering/unclustering.
+   - Ensure service markers remain clickable both before and after cluster expansion.
+   - If needed, attach selection handling at the clustered child-marker level so the full service record always survives the cluster pipeline.
 
-5. Normalize provider/service detail rendering into true accordions:
-   - keep Provider Information expanded by default
-   - add/retain Services Offered, Contact Information, Access Details, and Engagement Metrics only when data exists
-   - make service records and facility records share the same section system so behavior is consistent across all pin types
+4. Tighten persistent selection state in `src/pages/Index.tsx`
+   - Keep `lockedEntity` as the single source of truth for the Details panel.
+   - Ensure any clicked service pin immediately replaces county or prior provider selection.
+   - Add a dev-only guard during implementation so unsupported or malformed clicked entities fail loudly in code instead of silently leaving the panel empty.
 
-6. Fix provider website + action utilities in the provider renderer:
-   - validate `website` before rendering
-   - show `Visit Website` inside Contact Information when valid
-   - add compact top action row under the title with data-driven `Call`, `Directions`, and `Website` buttons
-   - use full address for directions when present, fallback to lat/lng otherwise
-   - render nothing for missing fields/buttons
+5. Keep the service renderer data-driven and null-safe in `src/components/map/CoverageDetailPanel.tsx`
+   - Confirm `ruralService` always renders `RuralServiceContent`.
+   - Keep address, phone, website, directions, and action buttons conditional so missing optional fields never blank the whole panel.
+   - Do not allow county fallback when a service entity is selected.
 
-7. Clean up panel precedence rules:
-   - clicked provider/service/facility always wins over county selection until cleared
-   - closing the panel clears only panel selection state
-   - hover remains non-persistent and must never populate the persistent panel when a selection exists
+6. Verify end-to-end before closing
+   - Test green service pins, purple behavioral-health pins, red hospital pins, and blue clinic pins.
+   - Specifically verify `Central Nevada Health District Eureka` opens the right-side Details panel as a service record.
+   - Confirm county view only appears when a county is actually selected.
 
-8. Verify against the current known failure points:
-   - hospital, clinic, service, and behavioral health pins all open exact provider details
-   - county content no longer appears after provider click
-   - county and provider details both use real expanding/collapsing accordion bodies
-   - website/action buttons appear only when backed by real data
-   - no empty rows, dead buttons, or stale county metrics in provider mode
-
-Technical notes:
-- Root cause is visible now: `CoverageDetailPanel` currently uses `const display = entity ?? hoverEntity`, so the panel is mixing persistent selection with hover fallback.
-- County content is still rendered as static stacked sections in `CountyContent`, while only facility/service branches use `DetailSection`.
-- Website/action UI exists in `FacilityContent` and `RuralServiceContent`, but most dataset records currently do not include `website`, so rendering must stay optional and null-safe.
-- Marker click wiring already exists for county, facility, and rural service markers in `MapView.tsx`; this pass should standardize panel state precedence rather than redesign the map.
+Technical details:
+- Primary fix file: `src/components/map/MapView.tsx`
+- Likely supporting files: `src/components/map/pinVisuals.ts`, `src/index.css`, `src/pages/Index.tsx`, `src/components/map/CoverageDetailPanel.tsx`
+- The current code already proves the schema exists (`entity.type === 'ruralService'`), so this should be treated as a service-marker interaction bug, not a panel layout bug.
