@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -26,6 +26,7 @@ interface LayerState {
   fteCapacity: boolean;
   utilizationIntensity: boolean;
   engagementGap: boolean;
+  broadbandAccess: boolean;
 }
 
 interface SidebarProps {
