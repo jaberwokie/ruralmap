@@ -1465,23 +1465,29 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
             </span>
             <span className="text-[10px] text-muted-foreground">({items.length})</span>
           </div>
-          <div className="space-y-1.5">
+          <div className="space-y-2">
             {items.map(service => (
-              <div key={service.id} className="flex items-start justify-between gap-1 pl-1">
-                <div className="min-w-0">
-                  <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
-                  {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
+              <div key={service.id} className="pl-1">
+                <div className="flex items-start justify-between gap-1">
+                  <div className="min-w-0">
+                    <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+                    {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
+                    {service.address && (
+                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                        <span style={{ wordBreak: 'break-word' }}>{service.address}</span>
+                        <CopyAddress text={`${service.address}, ${service.city}, NV`} />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                {service.phone && (
-                  <a
-                    href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
-                    className="flex-shrink-0 p-1 rounded hover:bg-secondary text-primary"
-                    title={service.phone}
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <Phone className="w-3 h-3" />
-                  </a>
-                )}
+                <ActionButtonRow
+                  phone={service.phone}
+                  address={service.address}
+                  lat={service.lat}
+                  lng={service.lng}
+                  city={service.city}
+                  website={service.website}
+                />
               </div>
             ))}
           </div>
