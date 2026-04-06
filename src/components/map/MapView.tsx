@@ -72,6 +72,9 @@ interface CountyHoverMetrics {
   providerCount?: number;
   serviceCount?: number;
   coverageGapPercent?: number;
+  broadbandStatus?: BroadbandStatus;
+  broadbandServedPercent?: number;
+  broadbandUnservedPercent?: number;
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
