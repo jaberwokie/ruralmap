@@ -15,6 +15,7 @@ import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/cover
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { BROADBAND_BY_COUNTY, type BroadbandStatus } from '@/data/broadband-coverage';
+import { CELLULAR_BY_COUNTY, formatCarriers, type CellularReliability } from '@/data/cellular-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import intersect from '@turf/intersect';
@@ -44,6 +45,7 @@ interface MapViewProps {
     utilizationIntensity: boolean;
     engagementGap: boolean;
     broadbandAccess: boolean;
+    cellularCoverage: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -75,6 +77,8 @@ interface CountyHoverMetrics {
   broadbandStatus?: BroadbandStatus;
   broadbandServedPercent?: number;
   broadbandUnservedPercent?: number;
+  cellularReliability?: CellularReliability;
+  cellularCarriers?: string;
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
@@ -102,6 +106,7 @@ const MAP_PANES = {
   countyPolygons: 'county-polygons-pane',
   countyBorders: 'county-borders-pane',
   broadbandOverlay: 'broadband-overlay-pane',
+  cellularOverlay: 'cellular-overlay-pane',
   operationalAreas: 'operational-areas-pane',
   driveRadii: 'drive-radii-pane',
   gapOverlays: 'gap-overlays-pane',
@@ -118,6 +123,7 @@ const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> =
   [MAP_PANES.stateOutline]: 320,
   [MAP_PANES.countyPolygons]: 330,
   [MAP_PANES.broadbandOverlay]: 335,
+  [MAP_PANES.cellularOverlay]: 336,
   [MAP_PANES.countyBorders]: 340,
   [MAP_PANES.operationalAreas]: 350,
   [MAP_PANES.driveRadii]: 360,
@@ -598,6 +604,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const broadbandRef = useRef<L.LayerGroup | null>(null);
+  const cellularRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
@@ -882,6 +889,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         metric.broadbandStatus = bbData.broadbandStatus;
         metric.broadbandServedPercent = bbData.servedPercent;
         metric.broadbandUnservedPercent = bbData.unservedPercent;
+      }
+
+      const cellData = CELLULAR_BY_COUNTY.get(name);
+      if (cellData) {
+        metric.cellularReliability = cellData.reliabilityCategory;
+        metric.cellularCarriers = formatCarriers(cellData.carriers);
       }
 
       metricsByCounty.set(name, metric);
@@ -1203,6 +1216,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     utilizationRef.current = L.layerGroup().addTo(map);
     countyBorderRef.current = L.layerGroup().addTo(map);
     broadbandRef.current = L.layerGroup().addTo(map);
+    cellularRef.current = L.layerGroup().addTo(map);
     coverageGreyRef.current = L.layerGroup().addTo(map);
     operationalCoverageRef.current = L.layerGroup().addTo(map);
     operationalResponseMarkerRef.current = L.layerGroup().addTo(map);
@@ -2312,6 +2326,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [layers.broadbandAccess]);
 
+  // ── Cellular Coverage choropleth ──
+  useEffect(() => {
+    if (!cellularRef.current) return;
+    cellularRef.current.clearLayers();
+    if (!layers.cellularCoverage) return;
+
+    const RELIABILITY_FILL: Record<import('@/data/cellular-coverage').CellularReliability, string> = {
+      Strong: 'hsla(160, 55%, 40%, 0.14)',
+      Moderate: 'hsla(44, 90%, 50%, 0.16)',
+      Weak: 'hsla(20, 85%, 55%, 0.16)',
+      None: 'hsla(240, 5%, 60%, 0.14)',
+    };
+
+    nevadaCounties.forEach((county) => {
+      const cell = CELLULAR_BY_COUNTY.get(county.name);
+      if (!cell) return;
+      const feature = getCountyFeature(county.name);
+      if (!feature) return;
+
+      const geoLayer = L.geoJSON(feature, {
+        pane: MAP_PANES.cellularOverlay,
+        style: {
+          color: 'transparent',
+          weight: 0,
+          fillColor: RELIABILITY_FILL[cell.reliabilityCategory],
+          fillOpacity: 1,
+        },
+        interactive: false,
+      });
+      cellularRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.cellularCoverage]);
 
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
@@ -2358,6 +2404,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                   )}
                 </div>
               )}
+              {layers.cellularCoverage && countyHoverPreview.cellularReliability && (
+                <div className="border-t border-border/70 pt-1 space-y-0.5">
+                  <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReliability} />
+                  {countyHoverPreview.cellularCarriers && (
+                    <CountyHoverMetricRow label="Carriers" value={countyHoverPreview.cellularCarriers} />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -2377,6 +2431,29 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             <div className="flex items-center gap-1.5 text-[10px]">
               <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(0, 65%, 55%, 0.35)' }} />
               <span className="text-foreground/80">Unserved</span>
+            </div>
+          </div>
+        </div>
+      )}
+      {layers.cellularCoverage && (
+        <div className={`absolute ${layers.broadbandAccess ? 'bottom-[5.5rem]' : 'bottom-4'} left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm`}>
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Cellular Coverage</p>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 55%, 40%, 0.35)' }} />
+              <span className="text-foreground/80">Strong</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(44, 90%, 50%, 0.35)' }} />
+              <span className="text-foreground/80">Moderate</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(20, 85%, 55%, 0.35)' }} />
+              <span className="text-foreground/80">Weak</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(240, 5%, 60%, 0.35)' }} />
+              <span className="text-foreground/80">None</span>
             </div>
           </div>
         </div>

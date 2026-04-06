@@ -54,6 +54,7 @@ interface LayerState {
   utilizationIntensity: boolean;
   engagementGap: boolean;
   broadbandAccess: boolean;
+  cellularCoverage: boolean;
 }
 
 export interface Filters {
@@ -84,6 +85,7 @@ const Index = () => {
     utilizationIntensity: false,
     engagementGap: false,
     broadbandAccess: false,
+    cellularCoverage: false,
   });
 
   // ── Unified detail panel state ──

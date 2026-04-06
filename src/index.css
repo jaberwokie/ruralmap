@@ -72,6 +72,11 @@
     --broadband-underserved: 38 85% 52%;
     --broadband-unserved: 0 65% 55%;
 
+    --cellular-strong: 160 55% 40%;
+    --cellular-moderate: 44 90% 50%;
+    --cellular-weak: 20 85% 55%;
+    --cellular-none: 240 5% 60%;
+
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 10% 10%;
     --sidebar-primary: 217 91% 60%;
