@@ -1149,9 +1149,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     setMapReady(true);
 
     map.on('click', () => {
-      console.log('[MAP CLICK] guard=', clickGuardRef.current);
       if (clickGuardRef.current) return;
-      console.log('[MAP CLICK] clearing selection');
       onMapClickRef.current?.();
     });
     map.on('zoomend', () => setMapZoom(map.getZoom()));
