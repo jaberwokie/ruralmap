@@ -13,6 +13,8 @@ export interface Facility {
   city: string;
   county: string;
   address?: string;
+  phone?: string;
+  website?: string;
   lat: number;
   lng: number;
   notes?: string;
