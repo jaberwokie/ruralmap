@@ -15,6 +15,7 @@ import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/cover
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { BROADBAND_BY_COUNTY, type BroadbandStatus } from '@/data/broadband-coverage';
+import { CELLULAR_BY_COUNTY, formatCarriers, type CellularReliability } from '@/data/cellular-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import intersect from '@turf/intersect';
@@ -44,6 +45,7 @@ interface MapViewProps {
     utilizationIntensity: boolean;
     engagementGap: boolean;
     broadbandAccess: boolean;
+    cellularCoverage: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -75,6 +77,8 @@ interface CountyHoverMetrics {
   broadbandStatus?: BroadbandStatus;
   broadbandServedPercent?: number;
   broadbandUnservedPercent?: number;
+  cellularReliability?: CellularReliability;
+  cellularCarriers?: string;
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
