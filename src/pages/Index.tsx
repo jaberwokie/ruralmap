@@ -105,6 +105,10 @@ const Index = () => {
   } | null>(null);
 
   useEffect(() => {
+    loadBroadbandData().then((ok) => setBroadbandReady(ok));
+  }, []);
+
+  useEffect(() => {
     try {
       const completed = isMapTutorialCompleted(localStorage.getItem(MAP_TUTORIAL_STORAGE_KEY));
       if (!completed) setTutorialIntroOpen(true);
