@@ -1498,7 +1498,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        nextMarkers.push(marker);
+        servicePresenceMarkerRef.current!.addLayer(marker);
       });
     }
 
@@ -1560,7 +1560,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        nextMarkers.push(marker);
+        behavioralHealthMarkerRef.current!.addLayer(marker);
       });
     }
 
