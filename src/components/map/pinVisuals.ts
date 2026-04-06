@@ -34,6 +34,7 @@ export const getSharedPinSvgMarkup = (
 
   return `
     <div style="width:${hitSize}px;height:${hitSize}px;position:relative;cursor:pointer;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;" aria-hidden="true"></div>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="${resolvedSize}"
@@ -44,7 +45,7 @@ export const getSharedPinSvgMarkup = (
         stroke-width="1.75"
         stroke-linecap="round"
         stroke-linejoin="round"
-        style="display:block;opacity:${opacity};overflow:visible;position:absolute;top:${offset}px;left:${offset}px;"
+        style="display:block;opacity:${opacity};overflow:visible;position:absolute;top:${offset}px;left:${offset}px;pointer-events:none;"
         aria-hidden="true"
       >
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
