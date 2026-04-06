@@ -1113,29 +1113,38 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
   );
 };
 
-// ── Collapsible Section helper ──
-const DetailSection = ({ title, defaultOpen = false, children, count }: { title: string; defaultOpen?: boolean; children: React.ReactNode; count?: number }) => {
-  const [open, setOpen] = useState(defaultOpen);
+// ── Accordion Section helper (only one open at a time) ──
+const DetailSection = ({ title, isOpen, onToggle, children, count }: { title: string; isOpen: boolean; onToggle: () => void; children: React.ReactNode; count?: number }) => {
   return (
     <div className="border-t border-border/50 first:border-t-0">
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between py-2 text-left"
       >
         <span className="text-[10px] font-bold uppercase tracking-wide text-foreground/70">
           {title}{count !== undefined ? ` (${count})` : ''}
         </span>
-        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div
         className="overflow-hidden transition-all duration-150"
-        style={{ maxHeight: open ? '1000px' : '0', opacity: open ? 1 : 0 }}
+        style={{ maxHeight: isOpen ? '1000px' : '0', opacity: isOpen ? 1 : 0 }}
       >
         <div className="pb-2">{children}</div>
       </div>
     </div>
   );
+};
+
+/** Hook for accordion state: only one section open at a time */
+const useAccordion = (defaultSection: string) => {
+  const [openSection, setOpenSection] = useState<string | null>(defaultSection);
+  const toggle = useCallback((section: string) => {
+    setOpenSection(prev => prev === section ? null : section);
+  }, []);
+  const isOpen = useCallback((section: string) => openSection === section, [openSection]);
+  return { isOpen, toggle };
 };
 
 // ── Action Buttons Row ──
