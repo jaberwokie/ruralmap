@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -12,6 +12,7 @@ import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCES
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 import { COUNTY_BROADBAND_DATA } from '@/data/broadband-coverage';
+import { COUNTY_CELLULAR_DATA } from '@/data/cellular-coverage';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
@@ -28,6 +29,7 @@ interface LayerState {
   utilizationIntensity: boolean;
   engagementGap: boolean;
   broadbandAccess: boolean;
+  cellularCoverage: boolean;
 }
 
 interface SidebarProps {
