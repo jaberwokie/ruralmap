@@ -604,6 +604,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
   const broadbandRef = useRef<L.LayerGroup | null>(null);
+  const cellularRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
