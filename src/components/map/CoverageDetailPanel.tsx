@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
@@ -11,6 +11,8 @@ import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILI
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { getCountyBroadband } from '@/data/broadband-coverage';
 import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS } from '@/utils/broadbandFeasibility';
+import { getCountyCellular, formatCarriers } from '@/data/cellular-coverage';
+import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1177,6 +1179,47 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
               )}
               <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
               {bb.notes && <p className="text-[9px] italic text-muted-foreground/60">{bb.notes}</p>}
+            </div>
+          </DetailSection>
+        );
+      })()}
+
+      {(() => {
+        const cell = getCountyCellular(county);
+        if (!cell) return null;
+        const feasibility = getCountyMobileFeasibility(county);
+        const note = getCellularOperationalNote(cell);
+        return (
+          <DetailSection title="Cellular Coverage" isOpen={isOpen('cellular')} onToggle={() => toggle('cellular')}>
+            <div className="space-y-1.5">
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Signal className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Reliability</span>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Reliability</span>
+                    <span className={`font-bold ${RELIABILITY_COLORS[cell.reliabilityCategory]}`}>{cell.reliabilityCategory}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Carriers</span>
+                    <span className="font-medium text-foreground">{formatCarriers(cell.carriers)}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Signal Score</span>
+                    <span className="font-medium tabular-nums text-foreground">{cell.signalStrengthScore}/100</span>
+                  </div>
+                </div>
+              </div>
+              {feasibility && (
+                <div className="flex justify-between text-[11px] px-0.5">
+                  <span className="text-muted-foreground">Mobile Feasibility</span>
+                  <span className={`font-semibold ${RELIABILITY_COLORS[cell.reliabilityCategory]}`}>{feasibility.replace(' Mobile Feasibility', '')}</span>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
+              {cell.notes && <p className="text-[9px] italic text-muted-foreground/60">{cell.notes}</p>}
             </div>
           </DetailSection>
         );
