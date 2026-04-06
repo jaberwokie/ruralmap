@@ -1502,8 +1502,11 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
 
 // ── Member Volume (clicked from choropleth) ──
 const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
+  const { isOpen, toggle } = useAccordion('memberVolume');
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const util = getCountyUtilization(county);
+  const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
 
   return (
     <>
@@ -1511,15 +1514,26 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
-      <MemberVolumeSection county={county} />
-      <EngagementPriorityCard county={county} />
-      <div className="text-xs text-foreground/80 space-y-1">
-        <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
-      </div>
-      <UtilizationEngagementSection county={county} />
-      <UtilizationMetricsCard county={county} />
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
+        <EngagementPriorityCard county={county} />
+      </DetailSection>
+
+      <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
+        <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+        <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+        <div className="text-xs text-foreground/80 space-y-1">
+          <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
+        </div>
+      </DetailSection>
+
+      {hasUtilization && (
+        <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
+          <UtilizationEngagementSection county={county} />
+          <UtilizationMetricsCard county={county} />
+        </DetailSection>
+      )}
     </>
   );
 };
