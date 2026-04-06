@@ -65,6 +65,9 @@ export default {
         "utilization-mid": "hsl(var(--utilization-mid))",
         "utilization-high": "hsl(var(--utilization-high))",
         "radius-stroke": "hsl(var(--radius-stroke))",
+        "broadband-served": "hsl(var(--broadband-served))",
+        "broadband-underserved": "hsl(var(--broadband-underserved))",
+        "broadband-unserved": "hsl(var(--broadband-unserved))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
