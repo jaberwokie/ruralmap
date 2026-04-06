@@ -1517,7 +1517,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        nextMarkers.push(marker);
+        behavioralHealthMarkerRef.current!.addLayer(marker);
       });
     }
 
