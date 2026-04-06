@@ -1,51 +1,54 @@
 
+1. Refactor selection state in `src/pages/Index.tsx` into a single panel-driving source of truth:
+   - replace the implicit `lockedEntity`/`hoverEntity` fallback behavior with explicit persistent selection for the right-side panel
+   - keep hover preview separate so hover can never override a clicked provider
+   - derive county highlight/FTE focus only from county-like selected entities, not provider selections
 
-## Revised Plan: Port Map Features to LANTERN (Clark County Urban Focus)
+2. Tighten marker-to-panel routing in `src/components/map/MapView.tsx`:
+   - audit all clickable marker layers and make them all call the same provider-selection path with the full underlying record
+   - preserve county clicks for county entities, but ensure provider/service/facility clicks always replace county panel content immediately
+   - keep click propagation stopped on markers so the map background click does not clear selection in the same interaction
+   - ensure clustered service markers and facility markers both resolve to exact record-level entities after expansion
 
-### Key Context Shift
-LANTERN serves **non-rural Clark County only** — Las Vegas, Henderson, North Las Vegas, Downtown, Historic Westside, Spring Valley, The Strip, East Las Vegas. This is a dense urban environment, not rural Nevada. The PWA is used primarily on **mobile devices outdoors** by people experiencing homelessness.
+3. Rebuild `CoverageDetailPanel` as one shared panel shell with two renderer modes:
+   - `CountyDetailsRenderer`
+   - `ProviderDetailsRenderer`
+   - panel mode should be determined strictly by selected entity type, never by hover/default content
+   - remove county fallback content from provider mode entirely
 
-This changes priorities significantly from the earlier plan.
+4. Convert county details from flat cards into true accordions:
+   - create one reusable accordion section component for both county and provider views
+   - only one section open at a time
+   - first visible county section expanded by default
+   - move existing county cards like Member Volume, Engagement Priority, Coverage Breakdown, Regional FTE Support, Utilization/Operational sections into collapsible bodies
+   - omit empty sections completely
 
-### What to Port (Revised)
+5. Normalize provider/service detail rendering into true accordions:
+   - keep Provider Information expanded by default
+   - add/retain Services Offered, Contact Information, Access Details, and Engagement Metrics only when data exists
+   - make service records and facility records share the same section system so behavior is consistent across all pin types
 
-#### 1. Marker Clustering (highest priority)
-Clark County is where pin density is worst — dozens of shelters, meal sites, and hygiene stations overlap in downtown Las Vegas alone. Add `supercluster` to replace the current per-marker DOM loop in `MapLibreMapView.tsx` with a GeoJSON source + cluster layers. Cluster circles show counts, expand on tap/zoom.
+6. Fix provider website + action utilities in the provider renderer:
+   - validate `website` before rendering
+   - show `Visit Website` inside Contact Information when valid
+   - add compact top action row under the title with data-driven `Call`, `Directions`, and `Website` buttons
+   - use full address for directions when present, fallback to lat/lng otherwise
+   - render nothing for missing fields/buttons
 
-**File:** `src/components/MapLibreMapView.tsx` — replace the `mappable.forEach` marker loop with a clustered GeoJSON source.
+7. Clean up panel precedence rules:
+   - clicked provider/service/facility always wins over county selection until cleared
+   - closing the panel clears only panel selection state
+   - hover remains non-persistent and must never populate the persistent panel when a selection exists
 
-#### 2. "Near Me" Geolocation Button
-Urban outdoor users need "what's closest to me right now." Add a GPS locate button (44×44px minimum tap target) that centers the map on the user's position and sorts resources by walking distance. Use the browser Geolocation API with a fallback message if denied.
+8. Verify against the current known failure points:
+   - hospital, clinic, service, and behavioral health pins all open exact provider details
+   - county content no longer appears after provider click
+   - county and provider details both use real expanding/collapsing accordion bodies
+   - website/action buttons appear only when backed by real data
+   - no empty rows, dead buttons, or stale county metrics in provider mode
 
-**File:** `src/components/MapLibreMapView.tsx` — add a locate control button and geolocation handler.
-
-#### 3. Sunlight-Readable Defaults
-The current dark basemap is hard to read in direct Las Vegas sun. Change the default map style to `light` (Voyager) for outdoor readability while keeping the dark/light toggle. Increase marker size from 28px to 32px for better visibility.
-
-**File:** `src/components/MapLibreMapView.tsx` — change `osDefault` fallback to `"light"`, bump `MARKER_SIZE` to 32.
-
-#### 4. Map Legend Overlay
-LANTERN already has `IconLegendModal.tsx` but it's a separate modal. Add a small collapsible on-map legend in the bottom-left corner showing category colors, using the existing `getCategoryHsl` function.
-
-**File:** New `src/components/MapLegend.tsx`, referenced from `MapLibreMapView.tsx`.
-
-### What NOT to Port (Revised)
-- **County boundaries, FTE capacity, coverage radius, gap analysis** — operational planning tools irrelevant to end users
-- **Drive-time zones** — not useful in an urban grid with transit
-- **Building-level geocoding audit** — LANTERN pulls from Supabase dynamically; coordinate quality should be enforced at data entry in `ResourceFormDialog.tsx`, not via a bulk audit of static data
-- **Fit-to-bounds on filter** — in a single-metro context, the map viewport rarely needs to jump; "Near Me" is more useful
-- **Offline tile caching** — Clark County urban areas have reliable cell coverage; not a priority
-
-### Implementation Order
-1. Clustering (fixes the Las Vegas pin pile-up)
-2. Geolocation button (highest-value mobile feature)
-3. Sunlight defaults (two-line change, immediate readability win)
-4. Map legend (quick add)
-
-### Technical Notes
-- All changes happen in the [LANTERN](/projects/33ace3b4-b9db-496b-b41d-f040d4cd545f) project
-- `supercluster` is the standard clustering library for MapLibre GL
-- Geolocation uses the browser API, no external service needed
-- Current map is 296 lines; clustering will roughly double it
-- 44×44px tap targets are already used for markers; same standard applies to the locate button and legend toggle
-
+Technical notes:
+- Root cause is visible now: `CoverageDetailPanel` currently uses `const display = entity ?? hoverEntity`, so the panel is mixing persistent selection with hover fallback.
+- County content is still rendered as static stacked sections in `CountyContent`, while only facility/service branches use `DetailSection`.
+- Website/action UI exists in `FacilityContent` and `RuralServiceContent`, but most dataset records currently do not include `website`, so rendering must stay optional and null-safe.
+- Marker click wiring already exists for county, facility, and rural service markers in `MapView.tsx`; this pass should standardize panel state precedence rather than redesign the map.
