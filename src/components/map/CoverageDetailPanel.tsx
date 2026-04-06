@@ -1631,6 +1631,5 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
   );
 };
 
-export default CoverageDetailPanel;
 
 export default CoverageDetailPanel;
