@@ -1658,7 +1658,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity({ type: 'ruralService', service }, 'service-marker-click', event, marker);
+          selectMarkerEntity({ type: 'ruralService', service }, 'bh-marker-leaflet', event, marker);
+        });
+
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'bh-marker-native' });
+              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'bh-marker-native', null, marker);
+            });
+          }
         });
 
         marker.bindTooltip(
