@@ -1216,6 +1216,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     utilizationRef.current = L.layerGroup().addTo(map);
     countyBorderRef.current = L.layerGroup().addTo(map);
     broadbandRef.current = L.layerGroup().addTo(map);
+    cellularRef.current = L.layerGroup().addTo(map);
     coverageGreyRef.current = L.layerGroup().addTo(map);
     operationalCoverageRef.current = L.layerGroup().addTo(map);
     operationalResponseMarkerRef.current = L.layerGroup().addTo(map);
