@@ -8,6 +8,7 @@ import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABE
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
+import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
