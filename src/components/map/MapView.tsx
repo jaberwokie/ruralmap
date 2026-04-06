@@ -1645,11 +1645,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          setClickGuard();
-          prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'ruralService', service });
-          const origEvent = (event as any).originalEvent;
-          if (origEvent) L.DomEvent.stopPropagation(origEvent);
+          selectMarkerEntity({ type: 'ruralService', service }, 'service-marker-click', event, marker);
         });
 
         marker.bindTooltip(
