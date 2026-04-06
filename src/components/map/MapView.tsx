@@ -1440,7 +1440,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          console.info('[DEBUG] Service pin clicked:', service.name, service.id);
           fireEntityClick({ type: 'ruralService', service });
         });
 
