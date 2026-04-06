@@ -78,15 +78,13 @@ export const loadBroadbandData = (): Promise<boolean> => {
       if (!Array.isArray(json)) throw new Error('Expected array');
       const records = parseRecords(json);
 
-      // Mutate the shared exported references so all consumers see the data
+      // Mutate shared exported references in place so all consumers see data
       COUNTY_BROADBAND_DATA.length = 0;
       COUNTY_BROADBAND_DATA.push(...records);
       BROADBAND_BY_COUNTY.clear();
       records.forEach((d) => BROADBAND_BY_COUNTY.set(d.countyName, d));
 
-      if (import.meta.env.DEV) {
-        console.info('[Broadband] Loaded', records.length, 'county records');
-      }
+      console.info('[Broadband] Loaded', records.length, 'county records from /data/nevada_broadband.json');
       return true;
     } catch (err) {
       console.warn('[Broadband] Failed to load dataset:', err);
@@ -96,6 +94,7 @@ export const loadBroadbandData = (): Promise<boolean> => {
   return _loadPromise;
 };
 
-/** Get broadband data for a county, returns undefined if not found */
+/** Get broadband data for a county, returns undefined if not found.
+ *  Normalizes the input name to handle "County" suffix variants. */
 export const getCountyBroadband = (countyName: string): CountyBroadbandData | undefined =>
-  BROADBAND_BY_COUNTY.get(countyName);
+  BROADBAND_BY_COUNTY.get(normalizeCountyName(countyName));
