@@ -584,6 +584,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
 
+  const fireEntityClick = useCallback((entity: MapEntity | null) => {
+    markerClickGuardRef.current = true;
+    onEntityClickRef.current?.(entity);
+  }, []);
+
   const filteredFacilities = useMemo(() => {
     let result = facilities;
     if (searchQuery) {
