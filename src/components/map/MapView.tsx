@@ -1053,10 +1053,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }).addTo(map);
 
     // Strict pane hierarchy prevents path/marker draw-order drift as layers toggle on/off.
+    // Marker panes must use pointer-events: none so higher-z empty panes
+    // don't block clicks on markers in lower-z panes. Individual marker
+    // icons already have pointer-events: auto via Leaflet defaults.
+    const markerPaneNames = new Set([
+      MAP_PANES.groupedMarkers,
+      MAP_PANES.servicePresence,
+      MAP_PANES.behavioralHealth,
+      MAP_PANES.responseCapabilityMarkers,
+      MAP_PANES.facilityMarkers,
+      MAP_PANES.highlights,
+    ]);
     Object.entries(PANE_Z_INDEX).forEach(([paneName, zIndex]) => {
       const pane = map.createPane(paneName);
       pane.style.zIndex = String(zIndex);
-      pane.style.pointerEvents = paneName === MAP_PANES.labels ? 'none' : 'auto';
+      if (paneName === MAP_PANES.labels || markerPaneNames.has(paneName as any)) {
+        pane.style.pointerEvents = 'none';
+      } else {
+        pane.style.pointerEvents = 'auto';
+      }
     });
 
     const markerPane = map.getPane('markerPane');
