@@ -314,6 +314,7 @@ const Sidebar = ({
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
+  const [connectivityOpen, toggleConnectivity] = usePersistToggle('sidebar_layer_connectivity');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
