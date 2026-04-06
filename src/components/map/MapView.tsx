@@ -1476,6 +1476,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
+          console.info('[SERVICE PIN CLICK]', service.name, service.id, marker.__entity);
           setClickGuard();
           prioritizeOnSelection(marker);
           onEntityClickRef.current?.({ type: 'ruralService', service });
