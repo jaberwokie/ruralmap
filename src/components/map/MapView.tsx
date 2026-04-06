@@ -586,7 +586,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
   const fireEntityClick = useCallback((entity: MapEntity | null) => {
     markerClickGuardRef.current = true;
-    onEntityClickRef.current?.(entity);
+    fireEntityClick(entity);
   }, []);
 
   const filteredFacilities = useMemo(() => {
@@ -1206,7 +1206,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       hitArea.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        onEntityClickRef.current?.({ type: 'county', county: county.name });
+        fireEntityClick({ type: 'county', county: county.name });
       });
       countyFillRef.current!.addLayer(hitArea);
 
@@ -1441,7 +1441,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
           console.info('[DEBUG] Service pin clicked:', service.name, service.id);
-          onEntityClickRef.current?.({ type: 'ruralService', service });
+          fireEntityClick({ type: 'ruralService', service });
         });
 
         marker.bindTooltip(
@@ -1499,7 +1499,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'ruralService', service });
+          fireEntityClick({ type: 'ruralService', service });
         });
 
         marker.bindTooltip(
@@ -1569,7 +1569,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'facility', facility });
+          fireEntityClick({ type: 'facility', facility });
 
           if (!facilityValidationMode || !validation) return;
 
@@ -1780,7 +1780,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         geoLayer.on('click', (e: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(e as any);
-          onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
+          fireEntityClick({ type: 'coverageGap', radiusKm });
         });
         gapsRef.current.addLayer(geoLayer);
       }
@@ -1874,7 +1874,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       marker.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
-        onEntityClickRef.current?.({ type: 'county', county: county.name });
+        fireEntityClick({ type: 'county', county: county.name });
       });
 
       marker.bindTooltip(
@@ -1966,7 +1966,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
         const memberCount = memberVolumeData.find(entry => entry.county === county.name)?.memberCount ?? util.totalMembers;
-        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount });
+        fireEntityClick({ type: 'memberVolume', county: county.name, memberCount });
       });
       utilizationRef.current!.addLayer(geoLayer);
     });
@@ -2020,7 +2020,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       geoLayer.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
-        onEntityClickRef.current?.({ type: 'county', county: metrics.county });
+        fireEntityClick({ type: 'county', county: metrics.county });
       });
 
       engagementGapRef.current!.addLayer(geoLayer);
@@ -2078,7 +2078,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       geoLayer.on('mouseout', () => clearCountyHoverPreview());
       geoLayer.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
-        onEntityClickRef.current?.({ type: 'county', county: result.county });
+        fireEntityClick({ type: 'county', county: result.county });
       });
       engagementGapRef.current!.addLayer(geoLayer);
 
