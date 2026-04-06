@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
@@ -8,6 +8,7 @@ import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABE
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
+import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -42,6 +43,7 @@ export type MapEntity =
   | { type: 'coverageGap'; radiusKm: number }
   | { type: 'memberVolume'; county: string; memberCount: number }
   | { type: 'ruralServiceGroup'; county: string; services: RuralService[] }
+  | { type: 'ruralService'; service: RuralService }
   | { type: 'fteDetail'; fteId: string };
 
 interface CoverageDetailPanelProps {
@@ -233,6 +235,7 @@ const EntityContent = ({ entity, coverageRadiusKm, memberVolumeLayerOn }: { enti
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />;
+    case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     default: return null;
   }
@@ -1111,29 +1114,38 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
   );
 };
 
-// ── Collapsible Section helper ──
-const DetailSection = ({ title, defaultOpen = false, children, count }: { title: string; defaultOpen?: boolean; children: React.ReactNode; count?: number }) => {
-  const [open, setOpen] = useState(defaultOpen);
+// ── Accordion Section helper (only one open at a time) ──
+const DetailSection = ({ title, isOpen, onToggle, children, count }: { title: string; isOpen: boolean; onToggle: () => void; children: React.ReactNode; count?: number }) => {
   return (
     <div className="border-t border-border/50 first:border-t-0">
       <button
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={onToggle}
         className="flex w-full items-center justify-between py-2 text-left"
       >
         <span className="text-[10px] font-bold uppercase tracking-wide text-foreground/70">
           {title}{count !== undefined ? ` (${count})` : ''}
         </span>
-        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-150 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       <div
         className="overflow-hidden transition-all duration-150"
-        style={{ maxHeight: open ? '1000px' : '0', opacity: open ? 1 : 0 }}
+        style={{ maxHeight: isOpen ? '1000px' : '0', opacity: isOpen ? 1 : 0 }}
       >
         <div className="pb-2">{children}</div>
       </div>
     </div>
   );
+};
+
+/** Hook for accordion state: only one section open at a time */
+const useAccordion = (defaultSection: string) => {
+  const [openSection, setOpenSection] = useState<string | null>(defaultSection);
+  const toggle = useCallback((section: string) => {
+    setOpenSection(prev => prev === section ? null : section);
+  }, []);
+  const isOpen = useCallback((section: string) => openSection === section, [openSection]);
+  return { isOpen, toggle };
 };
 
 // ── Action Buttons Row ──
@@ -1220,6 +1232,7 @@ const CopyAddress = ({ text }: { text: string }) => {
 
 // ── Facility ──
 const FacilityContent = ({ facility }: { facility: Facility }) => {
+  const { isOpen, toggle } = useAccordion('provider');
   const isHighUtilClinic = facility.tier === 'tier1';
   const classification = getFacilityClassification(facility);
   const dataConfidence = getFacilityDataConfidence(facility);
@@ -1233,7 +1246,6 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const isMember = isNRHPMember(facility);
   const fullAddress = facility.address ? `${facility.address}, ${facility.city}, NV` : undefined;
 
-  // Determine what sections have data
   const hasServices = !!facility.service;
   const hasContact = !!(facility.phone || (facility.website && isValidUrl(facility.website)));
   const hasAccess = !!(facility.type === 'hospital' || facility.accessType);
@@ -1241,7 +1253,6 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
 
   return (
     <>
-      {/* Name + type badge */}
       <div className="flex items-center gap-2 mb-1">
         <div className={`w-2.5 h-2.5 rounded-full ${typeColor}`} />
         <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
@@ -1252,7 +1263,6 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         {facility.name}
       </h3>
 
-      {/* Action Buttons */}
       <ActionButtonRow
         phone={facility.phone}
         address={facility.address}
@@ -1262,8 +1272,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         website={facility.website}
       />
 
-      {/* Collapsible Sections */}
-      <DetailSection title="Provider Information" defaultOpen>
+      <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="w-3 h-3 flex-shrink-0" />
@@ -1299,7 +1308,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       </DetailSection>
 
       {hasServices && (
-        <DetailSection title="Services Offered" count={1}>
+        <DetailSection title="Services Offered" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={1}>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Stethoscope className="w-3 h-3 flex-shrink-0" />
             <span>
@@ -1311,7 +1320,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       )}
 
       {hasContact && (
-        <DetailSection title="Contact Information">
+        <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
           {facility.phone && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Phone className="w-3 h-3 flex-shrink-0" />
@@ -1328,7 +1337,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       )}
 
       {hasAccess && (
-        <DetailSection title="Access Details">
+        <DetailSection title="Access Details" isOpen={isOpen('access')} onToggle={() => toggle('access')}>
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MapIcon className="w-3 h-3 flex-shrink-0" />
@@ -1355,7 +1364,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       )}
 
       {util && (
-        <DetailSection title="Engagement Metrics">
+        <DetailSection title="Engagement Metrics" isOpen={isOpen('engagement')} onToggle={() => toggle('engagement')}>
           <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
             <div className="flex justify-between text-[11px]">
               <span className="text-purple-700">Provider Rank</span>
@@ -1374,6 +1383,83 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
               <span className="font-bold text-purple-800 tabular-nums">{util.visitsPerMember}</span>
             </div>
           </div>
+        </DetailSection>
+      )}
+    </>
+  );
+};
+
+// ── Individual Rural Service ──
+const RuralServiceContent = ({ service }: { service: RuralService }) => {
+  const { isOpen, toggle } = useAccordion('provider');
+  const isBH = isBehavioralHealthService(service);
+  const fullAddress = service.address ? `${service.address}, ${service.city}, NV` : undefined;
+  const hasContact = !!(service.phone || (service.website && isValidUrl(service.website)));
+  const categoryColor = CATEGORY_COLORS[service.category] ?? 'bg-secondary text-foreground';
+
+  return (
+    <>
+      <div className="flex items-center gap-2 mb-1">
+        <div className={`w-2.5 h-2.5 rounded-full ${isBH ? 'bg-purple-500' : 'bg-green-500'}`} />
+        <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
+          {isBH ? 'Behavioral Health' : 'Service'}
+        </span>
+      </div>
+      <h3 className="text-sm font-semibold text-foreground leading-tight mb-1" style={{ wordBreak: 'break-word' }}>
+        {service.name}
+      </h3>
+      <span className={`inline-block px-1.5 py-0.5 rounded-full text-[9px] font-medium mb-2 ${categoryColor}`}>
+        {service.category}
+      </span>
+
+      <ActionButtonRow
+        phone={service.phone}
+        address={service.address}
+        lat={service.lat}
+        lng={service.lng}
+        city={service.city}
+        website={service.website}
+      />
+
+      <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <MapPin className="w-3 h-3 flex-shrink-0" />
+            <span>{service.city}, {service.county} County</span>
+          </div>
+          {service.address && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="flex-1" style={{ wordBreak: 'break-word' }}>{fullAddress}</span>
+              <CopyAddress text={fullAddress!} />
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+            <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
+            <span>{service.lat.toFixed(4)}, {service.lng.toFixed(4)}</span>
+          </div>
+          {service.notes && (
+            <div className="text-[11px] text-muted-foreground/80 pt-1 italic">
+              {service.notes}
+            </div>
+          )}
+        </div>
+      </DetailSection>
+
+      {hasContact && (
+        <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
+          {service.phone && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <Phone className="w-3 h-3 flex-shrink-0" />
+              <a href={`tel:${service.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{service.phone}</a>
+            </div>
+          )}
+          {service.website && isValidUrl(service.website) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              <a href={service.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>Visit Website</a>
+            </div>
+          )}
         </DetailSection>
       )}
     </>
