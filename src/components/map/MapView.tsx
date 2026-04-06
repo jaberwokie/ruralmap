@@ -891,6 +891,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         metric.broadbandUnservedPercent = bbData.unservedPercent;
       }
 
+      const cellData = CELLULAR_BY_COUNTY.get(name);
+      if (cellData) {
+        metric.cellularReliability = cellData.reliabilityCategory;
+        metric.cellularCarriers = formatCarriers(cellData.carriers);
+      }
+
       metricsByCounty.set(name, metric);
     });
 
