@@ -1127,7 +1127,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     setMapZoom(map.getZoom());
     setMapReady(true);
 
-    map.on('click', () => onMapClickRef.current?.());
+    map.on('click', () => {
+      if (markerClickGuardRef.current) {
+        markerClickGuardRef.current = false;
+        return;
+      }
+      onMapClickRef.current?.();
+    });
     map.on('zoomend', () => setMapZoom(map.getZoom()));
 
     return () => {
