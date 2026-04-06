@@ -1475,10 +1475,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
           onEntityClickRef.current?.({ type: 'ruralService', service });
+          const origEvent = (event as any).originalEvent;
+          if (origEvent) L.DomEvent.stopPropagation(origEvent);
         });
 
         marker.bindTooltip(
@@ -1536,11 +1537,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          
-          L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
           onEntityClickRef.current?.({ type: 'ruralService', service });
+          const origEvent = (event as any).originalEvent;
+          if (origEvent) L.DomEvent.stopPropagation(origEvent);
         });
 
         marker.bindTooltip(
@@ -1609,11 +1610,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('click', (event: L.LeafletEvent) => {
-          
-          L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
           onEntityClickRef.current?.({ type: 'facility', facility });
+          const origEvent = (event as any).originalEvent;
+          if (origEvent) L.DomEvent.stopPropagation(origEvent);
 
           if (!facilityValidationMode || !validation) return;
 
