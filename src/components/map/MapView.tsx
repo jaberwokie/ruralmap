@@ -1452,7 +1452,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          console.log('[SERVICE CLICK]', service.name);
+          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
@@ -1513,7 +1513,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          console.log('[BH CLICK]', service.name);
+          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
@@ -1585,7 +1585,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('click', (event: L.LeafletEvent) => {
-          console.log('[FACILITY CLICK]', facility.name);
+          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
