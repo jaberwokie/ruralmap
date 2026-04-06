@@ -902,7 +902,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
 
     return metricsByCounty;
-  }, [filteredRuralServices, providerFacilities, radiusKm]);
+  }, [filteredRuralServices, providerFacilities, radiusKm, broadbandReady]);
 
   const updateCountyHoverPreview = useCallback((county: string, event: L.LeafletMouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
