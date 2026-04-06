@@ -583,6 +583,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
 
+  // Click guard: prevents map-level click from clearing selection right after a marker click
+  const clickGuardRef = useRef(false);
+  const setClickGuard = useCallback(() => {
+    clickGuardRef.current = true;
+    window.setTimeout(() => { clickGuardRef.current = false; }, 50);
+  }, []);
+
   const filteredFacilities = useMemo(() => {
     let result = facilities;
     if (searchQuery) {
