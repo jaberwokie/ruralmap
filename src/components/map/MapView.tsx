@@ -96,6 +96,7 @@ const MAP_PANES = {
   stateOutline: 'state-outline-pane',
   countyPolygons: 'county-polygons-pane',
   countyBorders: 'county-borders-pane',
+  broadbandOverlay: 'broadband-overlay-pane',
   operationalAreas: 'operational-areas-pane',
   driveRadii: 'drive-radii-pane',
   gapOverlays: 'gap-overlays-pane',
