@@ -42,6 +42,7 @@ export type MapEntity =
   | { type: 'coverageGap'; radiusKm: number }
   | { type: 'memberVolume'; county: string; memberCount: number }
   | { type: 'ruralServiceGroup'; county: string; services: RuralService[] }
+  | { type: 'ruralService'; service: RuralService }
   | { type: 'fteDetail'; fteId: string };
 
 interface CoverageDetailPanelProps {
