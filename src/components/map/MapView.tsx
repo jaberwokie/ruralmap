@@ -1345,7 +1345,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
-    const nextMarkers: L.Layer[] = [];
+    const nextMarkers: L.Layer[] = []; // kept for future non-facility, non-service markers
     const nextFacilityMarkers: L.Layer[] = [];
     const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
     // When Top 20 is active, force declutter zoom so overlapping providers always fan out
