@@ -43,6 +43,7 @@ interface MapViewProps {
     fteCapacity: boolean;
     utilizationIntensity: boolean;
     engagementGap: boolean;
+    broadbandAccess: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -593,6 +594,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const countyFillRef = useRef<L.LayerGroup | null>(null);
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
+  const broadbandRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
