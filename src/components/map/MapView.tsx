@@ -1149,7 +1149,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     setMapReady(true);
 
     map.on('click', () => {
+      console.log('[MAP CLICK] guard=', clickGuardRef.current);
       if (clickGuardRef.current) return;
+      console.log('[MAP CLICK] clearing selection');
       onMapClickRef.current?.();
     });
     map.on('zoomend', () => setMapZoom(map.getZoom()));
@@ -1583,6 +1585,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('click', (event: L.LeafletEvent) => {
+          console.log('[FACILITY CLICK]', facility.name);
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
