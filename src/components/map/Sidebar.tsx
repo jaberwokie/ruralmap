@@ -1070,10 +1070,10 @@ const Sidebar = ({
                     <div className="mt-0.5 space-y-0.5">
                       <div className="px-2 pb-1">
                         <p className="text-[10px] font-medium text-muted-foreground/80 leading-relaxed">
-                          Does broadband infrastructure support remote service delivery?
+                          Do broadband and cellular infrastructure support remote service delivery?
                         </p>
                         <p className="text-[9px] text-muted-foreground/60 leading-relaxed">
-                          County-level broadband classification for telehealth and remote coordination feasibility.
+                          County-level broadband and cellular classification for telehealth, phone coordination, and remote feasibility.
                         </p>
                       </div>
                       {renderLayerToggleRow({
