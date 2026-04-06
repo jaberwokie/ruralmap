@@ -112,6 +112,7 @@ const MAP_PANES = {
 const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> = {
   [MAP_PANES.stateOutline]: 320,
   [MAP_PANES.countyPolygons]: 330,
+  [MAP_PANES.broadbandOverlay]: 335,
   [MAP_PANES.countyBorders]: 340,
   [MAP_PANES.operationalAreas]: 350,
   [MAP_PANES.driveRadii]: 360,
