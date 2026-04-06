@@ -1061,6 +1061,59 @@ const Sidebar = ({
                     </div>
                   )}
                 </div>
+
+                <div>
+                  {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
+                  {connectivityOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      <div className="px-2 pb-1">
+                        <p className="text-[10px] font-medium text-muted-foreground/80 leading-relaxed">
+                          Does broadband infrastructure support remote service delivery?
+                        </p>
+                        <p className="text-[9px] text-muted-foreground/60 leading-relaxed">
+                          County-level broadband classification for telehealth and remote coordination feasibility.
+                        </p>
+                      </div>
+                      {renderLayerToggleRow({
+                        label: 'Broadband Access',
+                        icon: Wifi,
+                        iconClassName: 'text-broadband-served',
+                        checked: layers.broadbandAccess,
+                        onCheckedChange: () => onToggleLayer('broadbandAccess'),
+                        helpKey: 'broadbandAccess',
+                      })}
+                      {layers.broadbandAccess && (() => {
+                        const served = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Served').length;
+                        const underserved = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Underserved').length;
+                        const unserved = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Unserved').length;
+                        return (
+                          <div className="space-y-1.5 px-2 pb-2 pt-1">
+                            <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">County Broadband Status</div>
+                              <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-served" />
+                                  <span><span className="font-semibold text-foreground">{served}</span> counties served</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-underserved" />
+                                  <span><span className="font-semibold text-foreground">{underserved}</span> counties underserved</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-unserved" />
+                                  <span><span className="font-semibold text-foreground">{unserved}</span> counties unserved</span>
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-[9px] italic text-muted-foreground/60">
+                              Mock data. Replace with FCC BDC or state broadband office data.
+                            </p>
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
