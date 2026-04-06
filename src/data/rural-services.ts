@@ -29,6 +29,7 @@ export interface RuralService {
   city: string;
   address?: string;
   phone?: string;
+  website?: string;
   notes?: string;
   lat: number;
   lng: number;
