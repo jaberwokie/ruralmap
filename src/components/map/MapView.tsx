@@ -2326,6 +2326,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [layers.broadbandAccess]);
 
+  // ── Cellular Coverage choropleth ──
+  useEffect(() => {
+    if (!cellularRef.current) return;
+    cellularRef.current.clearLayers();
+    if (!layers.cellularCoverage) return;
+
+    const RELIABILITY_FILL: Record<import('@/data/cellular-coverage').CellularReliability, string> = {
+      Strong: 'hsla(160, 55%, 40%, 0.14)',
+      Moderate: 'hsla(44, 90%, 50%, 0.16)',
+      Weak: 'hsla(20, 85%, 55%, 0.16)',
+      None: 'hsla(240, 5%, 60%, 0.14)',
+    };
+
+    nevadaCounties.forEach((county) => {
+      const cell = CELLULAR_BY_COUNTY.get(county.name);
+      if (!cell) return;
+      const feature = getCountyFeature(county.name);
+      if (!feature) return;
+
+      const geoLayer = L.geoJSON(feature, {
+        pane: MAP_PANES.cellularOverlay,
+        style: {
+          color: 'transparent',
+          weight: 0,
+          fillColor: RELIABILITY_FILL[cell.reliabilityCategory],
+          fillOpacity: 1,
+        },
+        interactive: false,
+      });
+      cellularRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.cellularCoverage]);
 
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
@@ -2369,6 +2401,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                   )}
                   {typeof countyHoverPreview.broadbandUnservedPercent === 'number' && countyHoverPreview.broadbandUnservedPercent > 0 && (
                     <CountyHoverMetricRow label="Unserved" value={`${countyHoverPreview.broadbandUnservedPercent}%`} />
+                  )}
+                </div>
+              )}
+              {layers.cellularCoverage && countyHoverPreview.cellularReliability && (
+                <div className="border-t border-border/70 pt-1 space-y-0.5">
+                  <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReliability} />
+                  {countyHoverPreview.cellularCarriers && (
+                    <CountyHoverMetricRow label="Carriers" value={countyHoverPreview.cellularCarriers} />
                   )}
                 </div>
               )}
