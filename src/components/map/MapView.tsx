@@ -877,6 +877,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         }
       }
 
+      const bbData = BROADBAND_BY_COUNTY.get(name);
+      if (bbData) {
+        metric.broadbandStatus = bbData.broadbandStatus;
+        metric.broadbandServedPercent = bbData.servedPercent;
+        metric.broadbandUnservedPercent = bbData.unservedPercent;
+      }
+
       metricsByCounty.set(name, metric);
     });
 
