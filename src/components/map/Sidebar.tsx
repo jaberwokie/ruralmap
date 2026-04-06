@@ -1113,6 +1113,50 @@ const Sidebar = ({
                           </div>
                         );
                       })()}
+                      {renderLayerToggleRow({
+                        label: 'Cellular Coverage',
+                        icon: Signal,
+                        iconClassName: 'text-cellular-strong',
+                        checked: layers.cellularCoverage,
+                        onCheckedChange: () => onToggleLayer('cellularCoverage'),
+                        helpKey: 'cellularCoverage',
+                      })}
+                      {layers.cellularCoverage && (() => {
+                        const strong = COUNTY_CELLULAR_DATA.filter(d => d.reliabilityCategory === 'Strong').length;
+                        const moderate = COUNTY_CELLULAR_DATA.filter(d => d.reliabilityCategory === 'Moderate').length;
+                        const weak = COUNTY_CELLULAR_DATA.filter(d => d.reliabilityCategory === 'Weak').length;
+                        const none = COUNTY_CELLULAR_DATA.filter(d => d.reliabilityCategory === 'None').length;
+                        return (
+                          <div className="space-y-1.5 px-2 pb-2 pt-1">
+                            <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">County Cellular Reliability</div>
+                              <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cellular-strong" />
+                                  <span><span className="font-semibold text-foreground">{strong}</span> strong</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cellular-moderate" />
+                                  <span><span className="font-semibold text-foreground">{moderate}</span> moderate</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cellular-weak" />
+                                  <span><span className="font-semibold text-foreground">{weak}</span> weak</span>
+                                </div>
+                                {none > 0 && (
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="h-2 w-2 flex-shrink-0 rounded-full bg-cellular-none" />
+                                    <span><span className="font-semibold text-foreground">{none}</span> none</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-[9px] italic text-muted-foreground/60">
+                              Mock data. Replace with real carrier coverage data.
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>
