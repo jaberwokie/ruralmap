@@ -1455,7 +1455,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
-          console.info('[DEBUG] Service pin clicked:', service.name, service.id);
+          
           onEntityClickRef.current?.({ type: 'ruralService', service });
         });
 
