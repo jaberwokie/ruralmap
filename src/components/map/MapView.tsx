@@ -546,7 +546,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const containerRef = useRef<HTMLDivElement>(null);
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
   const selectedPointMarkerRef = useRef<MapPointMarker | null>(null);
-  const markerClickGuardRef = useRef(false);
   const markersRef = useRef<MarkerClusterGroupLike | null>(null);
   const topProviderMarkersRef = useRef<L.LayerGroup | null>(null);
   const servicePresenceHaloRef = useRef<L.LayerGroup | null>(null);
@@ -583,11 +582,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onEntityHoverRef.current = onEntityHover;
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
-
-  const fireEntityClick = useCallback((entity: MapEntity | null) => {
-    markerClickGuardRef.current = true;
-    fireEntityClick(entity);
-  }, []);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -1132,13 +1126,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     setMapZoom(map.getZoom());
     setMapReady(true);
 
-    map.on('click', () => {
-      if (markerClickGuardRef.current) {
-        markerClickGuardRef.current = false;
-        return;
-      }
-      onMapClickRef.current?.();
-    });
+    map.on('click', () => onMapClickRef.current?.());
     map.on('zoomend', () => setMapZoom(map.getZoom()));
 
     return () => {
@@ -1206,7 +1194,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       hitArea.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
-        fireEntityClick({ type: 'county', county: county.name });
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
       });
       countyFillRef.current!.addLayer(hitArea);
 
@@ -1345,7 +1333,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
-    const nextMarkers: L.Layer[] = []; // kept for future non-facility, non-service markers
+    const nextMarkers: L.Layer[] = [];
     const nextFacilityMarkers: L.Layer[] = [];
     const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
     // When Top 20 is active, force declutter zoom so overlapping providers always fan out
@@ -1440,7 +1428,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          fireEntityClick({ type: 'ruralService', service });
+          onEntityClickRef.current?.({ type: 'ruralService', service });
         });
 
         marker.bindTooltip(
@@ -1459,7 +1447,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        servicePresenceMarkerRef.current!.addLayer(marker);
+        nextMarkers.push(marker);
       });
     }
 
@@ -1498,7 +1486,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          fireEntityClick({ type: 'ruralService', service });
+          onEntityClickRef.current?.({ type: 'ruralService', service });
         });
 
         marker.bindTooltip(
@@ -1517,7 +1505,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        behavioralHealthMarkerRef.current!.addLayer(marker);
+        nextMarkers.push(marker);
       });
     }
 
@@ -1568,7 +1556,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          fireEntityClick({ type: 'facility', facility });
+          onEntityClickRef.current?.({ type: 'facility', facility });
 
           if (!facilityValidationMode || !validation) return;
 
@@ -1779,7 +1767,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         geoLayer.on('click', (e: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(e as any);
-          fireEntityClick({ type: 'coverageGap', radiusKm });
+          onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
         });
         gapsRef.current.addLayer(geoLayer);
       }
@@ -1873,7 +1861,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       marker.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
-        fireEntityClick({ type: 'county', county: county.name });
+        onEntityClickRef.current?.({ type: 'county', county: county.name });
       });
 
       marker.bindTooltip(
@@ -1965,7 +1953,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       geoLayer.on('click', (e: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(e as any);
         const memberCount = memberVolumeData.find(entry => entry.county === county.name)?.memberCount ?? util.totalMembers;
-        fireEntityClick({ type: 'memberVolume', county: county.name, memberCount });
+        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount });
       });
       utilizationRef.current!.addLayer(geoLayer);
     });
@@ -2019,7 +2007,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       geoLayer.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
-        fireEntityClick({ type: 'county', county: metrics.county });
+        onEntityClickRef.current?.({ type: 'county', county: metrics.county });
       });
 
       engagementGapRef.current!.addLayer(geoLayer);
@@ -2077,7 +2065,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       geoLayer.on('mouseout', () => clearCountyHoverPreview());
       geoLayer.on('click', (event: L.LeafletEvent) => {
         L.DomEvent.stopPropagation(event as any);
-        fireEntityClick({ type: 'county', county: result.county });
+        onEntityClickRef.current?.({ type: 'county', county: result.county });
       });
       engagementGapRef.current!.addLayer(geoLayer);
 
