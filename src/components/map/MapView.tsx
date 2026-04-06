@@ -617,13 +617,75 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onEntityHoverRef.current = onEntityHover;
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
+  const interactionGuardUntilRef = useRef(0);
+  const markerGuardUntilRef = useRef(0);
+  const selectPointMarkerRef = useRef<(marker: MapPointMarker | null) => void>(() => {});
+  const clearSelectedPointMarkerRef = useRef<() => void>(() => {});
 
-  // Click guard: prevents map-level click from clearing selection right after a marker click
-  const clickGuardRef = useRef(false);
-  const setClickGuard = useCallback(() => {
-    clickGuardRef.current = true;
-    window.setTimeout(() => { clickGuardRef.current = false; }, 50);
+  const logMapSelectionDebug = useCallback((phase: string, entity: MapEntity | null | undefined = null, extra: Record<string, unknown> = {}) => {
+    if (!DEBUG_ENABLED) return;
+    console.info('[Map Selection Debug]', {
+      phase,
+      ...getEntityDebugMeta(entity),
+      ...extra,
+    });
   }, []);
+
+  const stopInteractionEvent = useCallback((event?: L.LeafletEvent | Event | null) => {
+    if (!event) return;
+    const originalEvent = (event as L.LeafletEvent & { originalEvent?: Event }).originalEvent;
+    if (originalEvent) {
+      L.DomEvent.stop(originalEvent as any);
+      return;
+    }
+    L.DomEvent.stop(event as any);
+  }, []);
+
+  const armInteractionGuard = useCallback((source: 'marker' | 'county' | 'overlay') => {
+    const expiresAt = Date.now() + SELECTION_GUARD_MS;
+    interactionGuardUntilRef.current = Math.max(interactionGuardUntilRef.current, expiresAt);
+    if (source === 'marker') markerGuardUntilRef.current = expiresAt;
+  }, []);
+
+  const hasActiveInteractionGuard = useCallback(() => Date.now() < interactionGuardUntilRef.current, []);
+  const hasActiveMarkerGuard = useCallback(() => Date.now() < markerGuardUntilRef.current, []);
+
+  const selectMarkerEntity = useCallback((entity: PointSelectionEntity | null | undefined, source: string, originalEvent?: L.LeafletEvent | Event | null, marker?: MapPointMarker | null) => {
+    if (!entity) {
+      logMapSelectionDebug('marker-selection-skipped', null, { source, reason: 'missing-entity' });
+      return;
+    }
+    logMapSelectionDebug('marker-click-received', entity, { source });
+    stopInteractionEvent(originalEvent);
+    armInteractionGuard('marker');
+    if (marker) selectPointMarkerRef.current(marker);
+    logMapSelectionDebug('selectMarkerEntity-called', entity, { source });
+    onEntityClickRef.current?.(entity);
+  }, [armInteractionGuard, logMapSelectionDebug, stopInteractionEvent]);
+
+  const selectCountyEntity = useCallback((county: string | null | undefined, source: string, originalEvent?: L.LeafletEvent | Event | null) => {
+    if (!county) return;
+    const entity: MapEntity = { type: 'county', county };
+    if (hasActiveMarkerGuard()) {
+      stopInteractionEvent(originalEvent);
+      logMapSelectionDebug('county-click-ignored-due-to-marker-guard', entity, { source });
+      return;
+    }
+    stopInteractionEvent(originalEvent);
+    armInteractionGuard('county');
+    clearSelectedPointMarkerRef.current();
+    logMapSelectionDebug('selectCountyEntity-called', entity, { source });
+    onEntityClickRef.current?.(entity);
+  }, [armInteractionGuard, hasActiveMarkerGuard, logMapSelectionDebug, stopInteractionEvent]);
+
+  const selectOverlayEntity = useCallback((entity: MapEntity | null | undefined, source: string, originalEvent?: L.LeafletEvent | Event | null) => {
+    if (!entity) return;
+    stopInteractionEvent(originalEvent);
+    armInteractionGuard('overlay');
+    clearSelectedPointMarkerRef.current();
+    logMapSelectionDebug('overlay-selection', entity, { source });
+    onEntityClickRef.current?.(entity);
+  }, [armInteractionGuard, logMapSelectionDebug, stopInteractionEvent]);
 
   const filteredFacilities = useMemo(() => {
     let result = facilities;
@@ -1131,10 +1193,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
-    servicePresenceHaloRef.current = L.layerGroup().addTo(map);
-    servicePresenceMarkerRef.current = L.layerGroup().addTo(map);
-    behavioralHealthHaloRef.current = L.layerGroup().addTo(map);
-    behavioralHealthMarkerRef.current = L.layerGroup().addTo(map);
+    servicePresenceHaloRef.current = L.featureGroup().addTo(map);
+    servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
+    behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
+    behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
     markersRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
@@ -1158,10 +1220,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // Facility cluster group click handler (same pattern as pointCluster)
     (markersRef.current as any)?.on?.('click', (e: any) => {
       const marker = e.layer as MapPointMarker | undefined;
-      if (!marker?.__entity) return;
-      setClickGuard();
-      selectedPointMarkerRef.current = marker;
-      onEntityClickRef.current?.(marker.__entity);
+      selectMarkerEntity(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
     });
     topProviderMarkersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
@@ -1190,10 +1249,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // child-marker clicks via the cluster group's own event system.
     (pointClusterRef.current as any)?.on?.('click', (e: any) => {
       const marker = e.layer as MapPointMarker | undefined;
-      if (!marker?.__entity) return;
-      setClickGuard();
-      selectedPointMarkerRef.current = marker;
-      onEntityClickRef.current?.(marker.__entity);
+      selectMarkerEntity(marker?.__entity as PointSelectionEntity | undefined, 'declutter-cluster-marker', e, marker);
     });
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
@@ -1205,7 +1261,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     setMapReady(true);
 
     map.on('click', () => {
-      if (clickGuardRef.current) return;
+      if (hasActiveInteractionGuard()) {
+        logMapSelectionDebug('background-click-ignored-due-to-guard');
+        return;
+      }
+      clearSelectedPointMarkerRef.current();
+      logMapSelectionDebug('background-click-clear-executed', null, { source: 'map-background' });
       onMapClickRef.current?.();
     });
     map.on('zoomend', () => setMapZoom(map.getZoom()));
@@ -1274,10 +1335,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
       });
       hitArea.on('click', (e: L.LeafletEvent) => {
-        if (clickGuardRef.current) return;
-        L.DomEvent.stopPropagation(e as any);
-        setClickGuard();
-        onEntityClickRef.current?.({ type: 'county', county: county.name });
+        selectCountyEntity(county.name, 'county-hit-area', e);
       });
       countyFillRef.current!.addLayer(hitArea);
 
@@ -1316,7 +1374,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         pane: MAP_PANES.labels,
       }).addTo(labelsRef.current!);
     });
-  }, [clearCountyHoverPreview, layers.counties, updateCountyHoverPreview]);
+  }, [clearCountyHoverPreview, layers.counties, selectCountyEntity, updateCountyHoverPreview]);
 
   useEffect(() => {
     if (!DEBUG_ENABLED || !mapRef.current || !mapReady) return;
@@ -1475,6 +1533,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       applyMarkerPriority(marker, 'selected');
     };
 
+    selectPointMarkerRef.current = (marker) => {
+      if (!marker) return;
+      prioritizeOnSelection(marker);
+    };
+
+    clearSelectedPointMarkerRef.current = () => {
+      if (!selectedPointMarkerRef.current) return;
+      applyMarkerPriority(selectedPointMarkerRef.current, 'default');
+      selectedPointMarkerRef.current = null;
+    };
+
     if (layers.services && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.servicePresence.size;
       const hitSize = Math.max(markerSize, 28);
@@ -1499,7 +1568,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__pointKind = 'servicePresence';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
         marker.__entity = { type: 'ruralService', service };
+        marker.__entityType = 'ruralService';
+        marker.__entityId = service.id;
+        marker.__entityName = service.name;
         applyMarkerPriority(marker, 'default');
+        logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'service-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
           prioritizeOnHover(marker);
@@ -1510,11 +1583,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          setClickGuard();
-          prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'ruralService', service });
-          const origEvent = (event as any).originalEvent;
-          if (origEvent) L.DomEvent.stopPropagation(origEvent);
+          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker', event, marker);
         });
 
         marker.bindTooltip(
@@ -1561,7 +1630,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__pointKind = 'behavioralHealth';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
         marker.__entity = { type: 'ruralService', service };
+        marker.__entityType = 'ruralService';
+        marker.__entityId = service.id;
+        marker.__entityName = service.name;
         applyMarkerPriority(marker, 'default');
+        logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'behavioral-health-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
           prioritizeOnHover(marker);
@@ -1611,6 +1684,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const scaledSize = showUtilization && util && !useUniformSize
           ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
           : MAP_PIN_VISUALS.providerLocations.size;
+        const hitSize = Math.max(scaledSize, 28);
         const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
         const markerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
           color: facility.type === 'hospital' ? 'hsl(var(--hospital))' : 'hsl(var(--clinic))',
@@ -1620,9 +1694,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const icon = L.divIcon({
           className: '',
           html: markerHtml,
-          iconSize: [scaledSize, scaledSize],
-          iconAnchor: [scaledSize / 2, scaledSize],
-          tooltipAnchor: [0, -scaledSize],
+          iconSize: [hitSize, hitSize],
+          iconAnchor: [hitSize / 2, hitSize],
+          tooltipAnchor: [0, -hitSize],
         });
 
         const marker = L.marker([displayLat, displayLng], {
@@ -1635,7 +1709,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__providerType = facility.type === 'hospital' ? 'hospital' : 'clinic';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
         marker.__entity = { type: 'facility', facility };
+        marker.__entityType = 'facility';
+        marker.__entityId = facility.id;
+        marker.__entityName = facility.name;
         applyMarkerPriority(marker, 'default');
+        logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'facility-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
           prioritizeOnHover(marker);
@@ -1645,11 +1723,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('click', (event: L.LeafletEvent) => {
-          setClickGuard();
-          prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'facility', facility });
-          const origEvent = (event as any).originalEvent;
-          if (origEvent) L.DomEvent.stopPropagation(origEvent);
+          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'facility-marker', event, marker);
 
           if (!facilityValidationMode || !validation) return;
 
@@ -1734,7 +1808,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         renderedProviderNames: visibleFacilities.map((facility) => facility.name),
       });
     }
-  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, mapZoom, onFacilityClick, providerVisibleFacilities, topProvidersOnly]);
+  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, logMapSelectionDebug, mapZoom, onFacilityClick, providerVisibleFacilities, selectMarkerEntity, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {
@@ -1856,16 +1930,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           },
         });
         geoLayer.on('click', (e: L.LeafletEvent) => {
-          L.DomEvent.stopPropagation(e as any);
-          setClickGuard();
-          onEntityClickRef.current?.({ type: 'coverageGap', radiusKm });
+          selectOverlayEntity({ type: 'coverageGap', radiusKm }, 'coverage-gap-overlay', e);
         });
         gapsRef.current.addLayer(geoLayer);
       }
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [facilities, coverageGaps, radiusKm]);
+  }, [coverageGaps, facilities, radiusKm, selectOverlayEntity]);
 
   // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
   useEffect(() => {
@@ -1951,9 +2023,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         clearCountyHoverPreview();
       });
       marker.on('click', (event: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(event as any);
-          setClickGuard();
-        onEntityClickRef.current?.({ type: 'county', county: county.name });
+        selectCountyEntity(county.name, 'response-capability-marker', event);
       });
 
       marker.bindTooltip(
@@ -1973,7 +2043,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       operationalResponseMarkerRef.current!.addLayer(marker);
     });
-  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectedCounty, updateCountyHoverPreview]);
+  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {
@@ -2012,13 +2082,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000 });
       marker.options.pane = MAP_PANES.highlights;
       marker.on('click', (e: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(e as any);
-          setClickGuard();
+        stopInteractionEvent(e);
+        armInteractionGuard('overlay');
+        clearSelectedPointMarkerRef.current();
         onFteHubClickRef.current?.(fte.id);
       });
       fteCapacityRef.current!.addLayer(marker);
     });
-  }, [layers.fteCapacity, selectedFteId]);
+  }, [armInteractionGuard, layers.fteCapacity, selectedFteId, stopInteractionEvent]);
 
   // ── Utilization Intensity choropleth (purple ramp) ──
   useEffect(() => {
@@ -2044,14 +2115,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         },
       });
       geoLayer.on('click', (e: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(e as any);
-          setClickGuard();
         const memberCount = memberVolumeData.find(entry => entry.county === county.name)?.memberCount ?? util.totalMembers;
-        onEntityClickRef.current?.({ type: 'memberVolume', county: county.name, memberCount });
+        selectOverlayEntity({ type: 'memberVolume', county: county.name, memberCount }, 'utilization-county', e);
       });
       utilizationRef.current!.addLayer(geoLayer);
     });
-  }, [layers.utilizationIntensity, coverageGaps, clearCountyHoverPreview, updateCountyHoverPreview]);
+  }, [clearCountyHoverPreview, coverageGaps, layers.utilizationIntensity, selectOverlayEntity, updateCountyHoverPreview]);
 
   // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) ──
   useEffect(() => {
@@ -2100,9 +2169,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         geoLayer.setStyle({ fillOpacity, weight });
       });
       geoLayer.on('click', (event: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(event as any);
-          setClickGuard();
-        onEntityClickRef.current?.({ type: 'county', county: metrics.county });
+        selectCountyEntity(metrics.county, 'engagement-gap-priority-county', event);
       });
 
       engagementGapRef.current!.addLayer(geoLayer);
@@ -2159,9 +2226,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
       geoLayer.on('mouseout', () => clearCountyHoverPreview());
       geoLayer.on('click', (event: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(event as any);
-          setClickGuard();
-        onEntityClickRef.current?.({ type: 'county', county: result.county });
+        selectCountyEntity(result.county, 'engagement-gap-county', event);
       });
       engagementGapRef.current!.addLayer(geoLayer);
 
@@ -2177,7 +2242,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapLabelRef.current!);
     });
-  }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, updateCountyHoverPreview]);
+  }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
 
 
   return (
