@@ -33,8 +33,8 @@ export const getSharedPinSvgMarkup = (
   const offset = (hitSize - resolvedSize) / 2;
 
   return `
-    <div style="width:${hitSize}px;height:${hitSize}px;position:relative;cursor:pointer;">
-      <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;" aria-hidden="true"></div>
+    <div style="width:${hitSize}px;height:${hitSize}px;position:relative;cursor:pointer;pointer-events:auto;">
+      <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;pointer-events:auto;" aria-hidden="true"></div>
       <svg
         xmlns="http://www.w3.org/2000/svg"
         width="${resolvedSize}"
