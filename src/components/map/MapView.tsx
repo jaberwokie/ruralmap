@@ -2325,7 +2325,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       broadbandRef.current!.addLayer(geoLayer);
     });
-  }, [layers.broadbandAccess]);
+  }, [layers.broadbandAccess, broadbandReady]);
 
   // ── Cellular Coverage choropleth ──
   useEffect(() => {
