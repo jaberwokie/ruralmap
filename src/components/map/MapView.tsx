@@ -2280,6 +2280,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
 
+  // ── Broadband Access choropleth ──
+  useEffect(() => {
+    if (!broadbandRef.current) return;
+    broadbandRef.current.clearLayers();
+    if (!layers.broadbandAccess) return;
+
+    const STATUS_FILL: Record<BroadbandStatus, string> = {
+      Served: 'hsla(160, 50%, 45%, 0.14)',
+      Underserved: 'hsla(38, 85%, 52%, 0.16)',
+      Unserved: 'hsla(0, 65%, 55%, 0.16)',
+    };
+
+    nevadaCounties.forEach((county) => {
+      const bb = BROADBAND_BY_COUNTY.get(county.name);
+      if (!bb) return;
+      const feature = getCountyFeature(county.name);
+      if (!feature) return;
+
+      const geoLayer = L.geoJSON(feature, {
+        pane: MAP_PANES.broadbandOverlay,
+        style: {
+          color: 'transparent',
+          weight: 0,
+          fillColor: STATUS_FILL[bb.broadbandStatus],
+          fillOpacity: 1,
+        },
+        interactive: false,
+      });
+      broadbandRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.broadbandAccess]);
+
 
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
