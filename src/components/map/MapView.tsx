@@ -1419,7 +1419,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
         marker.on('mouseover', () => {
           prioritizeOnHover(marker);
-          onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+          onEntityHoverRef.current?.({ type: 'ruralService', service });
         });
         marker.on('mouseout', () => {
           resetHoverPriority(marker);
@@ -1428,7 +1428,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+          onEntityClickRef.current?.({ type: 'ruralService', service });
         });
 
         marker.bindTooltip(
@@ -1477,7 +1477,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
         marker.on('mouseover', () => {
           prioritizeOnHover(marker);
-          onEntityHoverRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+          onEntityHoverRef.current?.({ type: 'ruralService', service });
         });
         marker.on('mouseout', () => {
           resetHoverPriority(marker);
@@ -1486,7 +1486,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.on('click', (event: L.LeafletEvent) => {
           L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          onEntityClickRef.current?.({ type: 'ruralServiceGroup', county: service.county, services: countyServices });
+          onEntityClickRef.current?.({ type: 'ruralService', service });
         });
 
         marker.bindTooltip(
@@ -1553,9 +1553,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
         });
 
-        marker.on('click', () => {
+        marker.on('click', (event: L.LeafletEvent) => {
+          L.DomEvent.stopPropagation(event as any);
           prioritizeOnSelection(marker);
-          onFacilityClick(facility);
+          onEntityClickRef.current?.({ type: 'facility', facility });
 
           if (!facilityValidationMode || !validation) return;
 
