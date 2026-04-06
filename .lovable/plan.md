@@ -1,66 +1,63 @@
 
-Do I know what the issue is? Yes.
+Fix the actual remaining failure instead of repeating the earlier wrong assumption.
 
-Actual issue:
-- The green Carlin pin is a real rural service record (`rs-80`, `Carlin Community Health Center`), and its hover tooltip proves the record is rendering.
-- The remaining break is in `src/components/map/MapView.tsx`: service and behavioral-health markers are created with click handlers, but they are only pushed into the shared `pointClusterRef` path. The dedicated `servicePresenceMarkerRef` / `behavioralHealthMarkerRef` layers are created and cleared but never populated.
-- That means green/purple pins still depend entirely on `Leaflet.markercluster` click routing even when shown as individual pins, which is why hover can work while the Details panel still fails to update.
+What I found:
+- The detail panel path is already wired for `facility` and `ruralService` entities.
+- `Index.tsx` is using `lockedEntity` directly, so county fallback is not the main blocker now.
+- `MapView.tsx` already adds green and purple pins to dedicated layer groups and already attaches `marker.on('click')`.
+- The likely remaining break is the marker DOM hit area, not the panel renderer:
+  - `getSharedPinSvgMarkup()` creates a 28×28 wrapper, but the visible/clickable SVG inside it is still only 14×14.
+  - The pin graphic is stroke-only with `fill="transparent"`, so a lot of the apparent target can still miss.
+  - That fits your symptom exactly: hover tooltip may appear, but single-click on a green pin like Carlin still does not reliably lock selection and populate Details.
 
-Files to fix:
-- `src/components/map/MapView.tsx`
-- `src/pages/Index.tsx`
-- `src/components/map/CoverageDetailPanel.tsx`
-- `src/components/map/pinVisuals.ts` only if hit-area tuning is still needed after the main fix
+Plan:
+1. Make the entire 28×28 marker wrapper truly clickable
+   - Update `src/components/map/pinVisuals.ts`
+   - Keep the visual design the same.
+   - Add an invisible full-hitbox element or explicit pointer-event behavior so the whole wrapper receives clicks, not just the tiny SVG stroke.
 
-Implementation plan:
-1. Fix the render path for service and behavioral-health pins in `MapView.tsx`
-   - Stop treating all service/BH pins as cluster-only.
-   - Render them through their dedicated marker layers when they are shown as individual pins.
-   - Keep clustering only for the zoom states where clustering is actually needed.
-
-2. Create one shared entity-selection helper in `MapView.tsx`
-   - One function for all point clicks: stop propagation, set click guard, apply selected z-index priority, and send the full `MapEntity`.
+2. Normalize point selection into one helper in `src/components/map/MapView.tsx`
+   - Create one internal selection function for all point markers:
+     - stop propagation
+     - set click guard
+     - apply selected priority
+     - send `marker.__entity`
    - Use it for:
-     - provider markers
-     - service markers
-     - behavioral-health markers
-     - cluster child-marker clicks
+     - green service pins
+     - purple behavioral health pins
+     - red/blue provider pins
+     - cluster-group click fallbacks
 
-3. Make service/BH click routing independent of cluster quirks
-   - Keep the cluster-group listener as a fallback for clustered states.
-   - Ensure non-clustered green/purple pins fire their own direct marker click path every time.
-   - Remove duplicated partial paths that can diverge.
+3. Remove duplicated direct entity payload creation inside click handlers
+   - Use `marker.__entity` as the single source of truth for clicked marker data.
+   - This avoids any mismatch between rendered marker type and panel entity type.
 
-4. Tighten persistent selection state in `Index.tsx`
-   - Keep `lockedEntity` as the only persistent source for the Details panel.
-   - Ensure a clicked `ruralService` always replaces county/provider content immediately.
-   - Add a dev-only guard so malformed clicked entities are visible in code instead of silently showing the empty default panel.
+4. Preserve panel logic, but harden it against silent failure
+   - Keep `CoverageDetailPanel.tsx` branching by `entity.type`.
+   - If a valid `ruralService` arrives, it must always render `RuralServiceContent`.
+   - Do not allow empty-panel behavior from optional missing fields.
 
-5. Harden `CoverageDetailPanel.tsx`
-   - Keep strict branching by `entity.type`.
-   - Ensure `ruralService` always renders `RuralServiceContent`.
-   - Prevent silent fallback to county/default content when a service entity exists.
-   - Keep null-safe rendering for missing optional fields, but do not let missing website/phone/address blank the whole panel.
+5. Clean up the panel console warning at the same time
+   - Fix the `Function components cannot be given refs` warning in `CoverageDetailPanel.tsx`.
+   - This is separate from the map click bug, but it should be removed because it can affect panel interaction reliability and accordion behavior.
 
-6. Verify the exact failing case and all pin types
-   - Confirm `Carlin Community Health Center` opens the shared right-side Details panel on single click.
-   - Re-test:
-     - red hospital
-     - blue clinic
-     - green service
-     - purple behavioral health
-   - Confirm county content only appears when a county was actually selected.
+6. Verify the exact failing case after the hit-area fix
+   - Re-test the Carlin green pin specifically.
+   - Then re-test:
+     - green service pins
+     - purple behavioral-health pins
+     - red hospital pins
+     - blue clinic pins
+   - Confirm each single click updates the right-side Details panel immediately with the correct entity.
 
-Technical notes:
-- Main bug is not the panel schema; `ruralService` is already supported.
-- Main bug is not hover; hover already proves service records render.
-- Main bug is the click-to-selection transport for service/BH pins.
-- The existing unused refs (`servicePresenceMarkerRef`, `behavioralHealthMarkerRef`) strongly suggest the map was meant to support direct non-clustered service/BH markers but currently does not.
+Files to update:
+- `src/components/map/pinVisuals.ts`
+- `src/components/map/MapView.tsx`
+- `src/components/map/CoverageDetailPanel.tsx`
 
-Acceptance criteria:
-- Clicking the green Carlin pin opens service details in the right panel.
-- Every visible green service pin opens service details reliably.
-- Purple behavioral-health pins also open correctly.
-- Provider pins still work.
-- County details never override a clicked service/provider pin.
-- No empty panel on valid pin click.
+Expected end state:
+- Clicking the green Carlin pin opens `RuralServiceContent` in the Details panel.
+- All visible pin types use one consistent click-to-selection path.
+- No stale county content overrides a clicked pin.
+- Accordion sections still work.
+- The current ref warning is gone.
