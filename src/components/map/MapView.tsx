@@ -1382,7 +1382,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
     const nextFacilityMarkers: L.Layer[] = [];
-    const nextFacilityMarkers: L.Layer[] = [];
     const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
     // When Top 20 is active, force declutter zoom so overlapping providers always fan out
     const effectiveZoom = topProvidersOnly ? Math.max(mapZoom, OVERLAP_DECLUTTER_ZOOM) : mapZoom;
