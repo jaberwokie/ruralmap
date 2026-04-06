@@ -411,7 +411,7 @@ const getEntityDebugMeta = (entity: MapEntity | null | undefined) => {
     case 'fteDetail':
       return { entityType: entity.type, entityId: entity.fteId, entityName: entity.fteId };
     default:
-      return { entityType: entity.type, entityId: null, entityName: null };
+      return { entityType: null, entityId: null, entityName: null };
   }
 };
 
