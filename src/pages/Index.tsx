@@ -395,7 +395,6 @@ const Index = () => {
         />
         <CoverageDetailPanel
           entity={lockedEntity}
-          hoverEntity={hoverEntity}
           onClear={handleClearEntity}
           coverageRadiusKm={coverageRadiusKm}
           memberVolumeLayerOn={true}

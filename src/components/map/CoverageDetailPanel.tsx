@@ -48,7 +48,6 @@ export type MapEntity =
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
-  hoverEntity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
   memberVolumeLayerOn?: boolean;
@@ -165,8 +164,8 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, hoverEntity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
-  const display = entity ?? hoverEntity;
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
+  const display = entity;
   const isLocked = !!entity;
 
   useEffect(() => {
@@ -1065,51 +1064,72 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+  const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const hasField = serving.some(f => f.hubLocation !== null);
+  const isRemoteOnly = serving.length === 0 || !hasField;
+  const responseLabel = isRemoteOnly
+    ? PRIMARY_RESPONSE_LABELS.remote
+    : hasField
+    ? PRIMARY_RESPONSE_LABELS.active
+    : PRIMARY_RESPONSE_LABELS.scheduled;
+
+  const util = getCountyUtilization(county);
+  const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
+  const hasFte = serving.length > 0;
+  const hasLocalResources = (COUNTY_SERVICE_COUNT.get(county) ?? 0) > 0;
+
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
-      {(() => {
-        const serving = fteCapacityData.filter(f => f.counties.includes(county));
-        const hasField = serving.some(f => f.hubLocation !== null);
-        const isRemoteOnly = serving.length === 0 || !hasField;
-        const label = isRemoteOnly
-          ? PRIMARY_RESPONSE_LABELS.remote
-          : hasField
-          ? PRIMARY_RESPONSE_LABELS.active
-          : PRIMARY_RESPONSE_LABELS.scheduled;
-        return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
-      })()}
+      <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {responseLabel}</p>
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
-      {/* 1. Member Volume */}
-      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
-      <EngagementPriorityCard county={county} />
-      {/* 2. Coverage Breakdown */}
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      {/* 3. Field Capacity */}
-      <FieldCapacitySection county={county} />
-      {/* 4. Utilization & Engagement */}
-      <UtilizationEngagementSection county={county} />
-      {/* 4b. Utilization Metrics */}
-      <UtilizationMetricsCard county={county} />
-      {/* 5. Assigned FTE */}
-      <CapacityStatusSection county={county} />
-      {/* 6. Recommended Action Path */}
-      <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
-      {/* 7. Local Resources */}
-      <LocalResourcesSection county={county} />
-      <div className="space-y-1 text-xs text-foreground/80">
-        <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
-        <div className="flex justify-between"><span>Rural Access Dependence</span><span className="font-medium">{RURAL_ACCESS_DEPENDENCE[area]}</span></div>
-        {countyData?.secondaryZone && (
-          <div className="text-[10px] text-muted-foreground italic">
-            Secondary support from Area {countyData.secondaryZone.replace('area', '')}
-          </div>
-        )}
-      </div>
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+        <EngagementPriorityCard county={county} />
+      </DetailSection>
+
+      <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
+        <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+        <div className="space-y-1 text-xs text-foreground/80">
+          <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
+          <div className="flex justify-between"><span>Rural Access Dependence</span><span className="font-medium">{RURAL_ACCESS_DEPENDENCE[area]}</span></div>
+          {countyData?.secondaryZone && (
+            <div className="text-[10px] text-muted-foreground italic">
+              Secondary support from Area {countyData.secondaryZone.replace('area', '')}
+            </div>
+          )}
+        </div>
+      </DetailSection>
+
+      {hasFte && (
+        <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
+          <FieldCapacitySection county={county} />
+          <CapacityStatusSection county={county} />
+        </DetailSection>
+      )}
+
+      {hasUtilization && (
+        <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
+          <UtilizationEngagementSection county={county} />
+          <UtilizationMetricsCard county={county} />
+        </DetailSection>
+      )}
+
+      <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
+        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+      </DetailSection>
+
+      {hasLocalResources && (
+        <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={COUNTY_SERVICE_COUNT.get(county)}>
+          <LocalResourcesSection county={county} />
+        </DetailSection>
+      )}
     </>
   );
 };
@@ -1482,8 +1502,11 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
 
 // ── Member Volume (clicked from choropleth) ──
 const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
+  const { isOpen, toggle } = useAccordion('memberVolume');
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const util = getCountyUtilization(county);
+  const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
 
   return (
     <>
@@ -1491,21 +1514,33 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         ● Member Volume
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
-      <MemberVolumeSection county={county} />
-      <EngagementPriorityCard county={county} />
-      <div className="text-xs text-foreground/80 space-y-1">
-        <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
-      </div>
-      <UtilizationEngagementSection county={county} />
-      <UtilizationMetricsCard county={county} />
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
+        <EngagementPriorityCard county={county} />
+      </DetailSection>
+
+      <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
+        <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+        <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+        <div className="text-xs text-foreground/80 space-y-1">
+          <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
+        </div>
+      </DetailSection>
+
+      {hasUtilization && (
+        <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
+          <UtilizationEngagementSection county={county} />
+          <UtilizationMetricsCard county={county} />
+        </DetailSection>
+      )}
     </>
   );
 };
 
 // ── Rural Service Group ──
 const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; services: RuralService[]; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+  const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
@@ -1517,70 +1552,84 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
       .sort((a, b) => b[1].length - a[1].length);
   }, [services]);
 
+  const util = getCountyUtilization(county);
+  const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
+
   return (
     <>
       <p className="text-sm font-semibold text-foreground">{county} County</p>
       <p className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Rural Services</p>
 
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      <GapContextAlerts county={county} serviceCount={services.length} />
-      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
-      <EngagementPriorityCard county={county} />
-      <UtilizationEngagementSection county={county} />
-      <UtilizationMetricsCard county={county} />
-
-      <p className="text-2xl font-bold text-foreground tabular-nums">{services.length}</p>
-      <p className="text-[10px] text-muted-foreground mb-3">total services</p>
-
-      <div className="space-y-1 mb-3">
+      <DetailSection title="Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={services.length}>
+        <div className="space-y-1 mb-3">
+          {grouped.map(([category, items]) => (
+            <div key={category} className="flex items-center justify-between text-xs">
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+                {category}
+              </span>
+              <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
+            </div>
+          ))}
+        </div>
         {grouped.map(([category, items]) => (
-          <div key={category} className="flex items-center justify-between text-xs">
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
-              {category}
-            </span>
-            <span className="font-semibold tabular-nums text-foreground">{items.length}</span>
+          <div key={category} className="mb-3">
+            <div className="flex items-center gap-1.5 mb-1.5 border-b border-border pb-1">
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+                {category}
+              </span>
+              <span className="text-[10px] text-muted-foreground">({items.length})</span>
+            </div>
+            <div className="space-y-2">
+              {items.map(service => (
+                <div key={service.id} className="pl-1">
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
+                      {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
+                      {service.address && (
+                        <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                          <span style={{ wordBreak: 'break-word' }}>{service.address}</span>
+                          <CopyAddress text={`${service.address}, ${service.city}, NV`} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <ActionButtonRow
+                    phone={service.phone}
+                    address={service.address}
+                    lat={service.lat}
+                    lng={service.lng}
+                    city={service.city}
+                    website={service.website}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         ))}
-      </div>
+      </DetailSection>
 
-      {grouped.map(([category, items]) => (
-        <div key={category} className="mb-3">
-          <div className="flex items-center gap-1.5 mb-1.5 border-b border-border pb-1">
-            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-semibold ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
-              {category}
-            </span>
-            <span className="text-[10px] text-muted-foreground">({items.length})</span>
-          </div>
-          <div className="space-y-2">
-            {items.map(service => (
-              <div key={service.id} className="pl-1">
-                <div className="flex items-start justify-between gap-1">
-                  <div className="min-w-0">
-                    <div className="text-xs font-semibold text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
-                    {service.city && <div className="text-[10px] text-muted-foreground">{service.city}</div>}
-                    {service.address && (
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <span style={{ wordBreak: 'break-word' }}>{service.address}</span>
-                        <CopyAddress text={`${service.address}, ${service.city}, NV`} />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <ActionButtonRow
-                  phone={service.phone}
-                  address={service.address}
-                  lat={service.lat}
-                  lng={service.lng}
-                  city={service.city}
-                  website={service.website}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
+        <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+        <GapContextAlerts county={county} serviceCount={services.length} />
+      </DetailSection>
+
+      {memberVolumeLayerOn && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+          <EngagementPriorityCard county={county} />
+        </DetailSection>
+      )}
+
+      {hasUtilization && (
+        <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
+          <UtilizationEngagementSection county={county} />
+          <UtilizationMetricsCard county={county} />
+        </DetailSection>
+      )}
     </>
   );
 };
+
 
 export default CoverageDetailPanel;
