@@ -2347,6 +2347,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                   </div>
                 </div>
               )}
+              {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
+                <div className="border-t border-border/70 pt-1 space-y-0.5">
+                  <CountyHoverMetricRow label="Broadband" value={countyHoverPreview.broadbandStatus} />
+                  {typeof countyHoverPreview.broadbandServedPercent === 'number' && (
+                    <CountyHoverMetricRow label="Served" value={`${countyHoverPreview.broadbandServedPercent}%`} />
+                  )}
+                  {typeof countyHoverPreview.broadbandUnservedPercent === 'number' && countyHoverPreview.broadbandUnservedPercent > 0 && (
+                    <CountyHoverMetricRow label="Unserved" value={`${countyHoverPreview.broadbandUnservedPercent}%`} />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
