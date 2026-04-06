@@ -1381,7 +1381,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
-    const nextMarkers: L.Layer[] = [];
+    const nextFacilityMarkers: L.Layer[] = [];
     const nextFacilityMarkers: L.Layer[] = [];
     const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
     // When Top 20 is active, force declutter zoom so overlapping providers always fan out
@@ -1691,9 +1691,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
-    if (nextMarkers.length > 0 && !topProvidersOnly) {
-      pointClusterRef.current.addLayers(nextMarkers);
-    }
 
     if (import.meta.env.DEV && shouldRenderProviderLocations && topProvidersOnly) {
       console.info('[Top 20 Debug][Rendered Dataset]', {
