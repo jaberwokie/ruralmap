@@ -1240,8 +1240,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
       });
       hitArea.on('click', (e: L.LeafletEvent) => {
+        if (clickGuardRef.current) return;
         L.DomEvent.stopPropagation(e as any);
-          setClickGuard();
+        setClickGuard();
         onEntityClickRef.current?.({ type: 'county', county: county.name });
       });
       countyFillRef.current!.addLayer(hitArea);
