@@ -361,6 +361,7 @@ type MapPointMarker = L.Marker & {
   __providerType?: 'hospital' | 'clinic';
   __baseZIndexOffset?: number;
   __priorityState?: 'default' | 'hovered' | 'selected';
+  __entity?: MapEntity;
 };
 
 type MarkerClusterGroupLike = L.LayerGroup & {
@@ -1119,6 +1120,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
     }) ?? null;
     markersRef.current?.addTo(map);
+
+    // Facility cluster group click handler (same pattern as pointCluster)
+    (markersRef.current as any)?.on?.('click', (e: any) => {
+      const marker = e.layer as MapPointMarker | undefined;
+      if (!marker?.__entity) return;
+      setClickGuard();
+      selectedPointMarkerRef.current = marker;
+      onEntityClickRef.current?.(marker.__entity);
+    });
     topProviderMarkersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
@@ -1139,6 +1149,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
     }) ?? null;
     pointClusterRef.current?.addTo(map);
+
+    // Handle clicks on individual markers inside the cluster group.
+    // MarkerClusterGroup intercepts DOM clicks on child markers; individual
+    // marker.on('click') may not fire reliably. This listener catches all
+    // child-marker clicks via the cluster group's own event system.
+    (pointClusterRef.current as any)?.on?.('click', (e: any) => {
+      const marker = e.layer as MapPointMarker | undefined;
+      if (!marker?.__entity) return;
+      setClickGuard();
+      selectedPointMarkerRef.current = marker;
+      onEntityClickRef.current?.(marker.__entity);
+    });
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
     engagementGapLabelRef.current = L.layerGroup().addTo(map);
@@ -1421,12 +1443,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (layers.services && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.servicePresence.size;
+      const hitSize = Math.max(markerSize, 28);
       const servicePresenceIcon = L.divIcon({
         className: '',
         html: getSharedPinSvgMarkup('servicePresence', markerSize),
-        iconSize: [markerSize, markerSize],
-        iconAnchor: [markerSize / 2, markerSize],
-        tooltipAnchor: [0, -markerSize],
+        iconSize: [hitSize, hitSize],
+        iconAnchor: [hitSize / 2, hitSize],
+        tooltipAnchor: [0, -hitSize],
       });
 
       filteredCommunityServices.forEach((service) => {
@@ -1441,6 +1464,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
         marker.__pointKind = 'servicePresence';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
+        marker.__entity = { type: 'ruralService', service };
         applyMarkerPriority(marker, 'default');
 
         marker.on('mouseover', () => {
@@ -1452,11 +1476,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           onEntityHoverRef.current?.(null);
         });
         marker.on('click', (event: L.LeafletEvent) => {
-          
           L.DomEvent.stopPropagation(event as any);
           setClickGuard();
           prioritizeOnSelection(marker);
-          
           onEntityClickRef.current?.({ type: 'ruralService', service });
         });
 
@@ -1482,12 +1504,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (layers.behavioralHealth && !topProvidersOnly) {
       const markerSize = MAP_PIN_VISUALS.behavioralHealth.size;
+      const hitSize = Math.max(markerSize, 28);
       const behavioralHealthIcon = L.divIcon({
         className: '',
         html: getSharedPinSvgMarkup('behavioralHealth', markerSize),
-        iconSize: [markerSize, markerSize],
-        iconAnchor: [markerSize / 2, markerSize],
-        tooltipAnchor: [0, -markerSize],
+        iconSize: [hitSize, hitSize],
+        iconAnchor: [hitSize / 2, hitSize],
+        tooltipAnchor: [0, -hitSize],
       });
 
       filteredBehavioralHealthServices.forEach((service) => {
@@ -1502,6 +1525,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
         marker.__pointKind = 'behavioralHealth';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
+        marker.__entity = { type: 'ruralService', service };
         applyMarkerPriority(marker, 'default');
 
         marker.on('mouseover', () => {
@@ -1575,6 +1599,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__pointKind = 'providerLocations';
         marker.__providerType = facility.type === 'hospital' ? 'hospital' : 'clinic';
         marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
+        marker.__entity = { type: 'facility', facility };
         applyMarkerPriority(marker, 'default');
 
         marker.on('mouseover', () => {
