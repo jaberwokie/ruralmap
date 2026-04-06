@@ -1,33 +1,27 @@
 /**
  * County-level broadband coverage data for rural Nevada.
  *
- * This file contains mock/placeholder data that can be replaced with
- * real FCC or state-level broadband data later. The structure is
- * designed to be swappable without changing downstream logic.
+ * Loads real FCC-derived data from /data/nevada_broadband.json at runtime.
+ * Fetched once and cached for the session lifetime.
  */
 
-export type DominantTechnology = 'Fiber' | 'Fixed Wireless' | 'Satellite' | 'Mixed' | 'Unknown';
+export type DominantTechnology = 'Fiber' | 'Fixed Wireless' | 'Satellite' | 'Mixed' | 'Unknown' | 'Any Technology';
 export type BroadbandStatus = 'Served' | 'Underserved' | 'Unserved';
 
 export interface CountyBroadbandData {
   countyName: string;
-  /** % of population with ≥25/3 Mbps service */
   servedPercent: number;
-  /** % of population with some service but below 25/3 Mbps */
   underservedPercent: number;
-  /** % of population with no fixed broadband */
   unservedPercent: number;
   dominantTechnology: DominantTechnology;
-  /** Derived from thresholds — do not hardcode per county */
   broadbandStatus: BroadbandStatus;
-  /** Optional notes for operational context */
   notes?: string;
 }
 
-/** Derive broadband status from served/underserved/unserved percentages */
+/** Derive broadband status from percentages */
 export const deriveBroadbandStatus = (
   servedPercent: number,
-  underservedPercent: number,
+  _underservedPercent: number,
   unservedPercent: number,
 ): BroadbandStatus => {
   if (servedPercent >= 60) return 'Served';
@@ -35,52 +29,72 @@ export const deriveBroadbandStatus = (
   return 'Underserved';
 };
 
-/** Build a county record with auto-derived status */
-const county = (
-  countyName: string,
-  servedPercent: number,
-  underservedPercent: number,
-  unservedPercent: number,
-  dominantTechnology: DominantTechnology,
-  notes?: string,
-): CountyBroadbandData => ({
-  countyName,
-  servedPercent,
-  underservedPercent,
-  unservedPercent,
-  dominantTechnology,
-  broadbandStatus: deriveBroadbandStatus(servedPercent, underservedPercent, unservedPercent),
-  notes,
-});
+// ── Normalize county name: strip trailing " County", trim ──
+const normalizeCountyName = (raw: string): string =>
+  raw.replace(/\s+County$/i, '').trim();
+
+const coerceStatus = (raw: unknown, s: number, u2: number, u3: number): BroadbandStatus => {
+  if (raw === 'Served' || raw === 'Underserved' || raw === 'Unserved') return raw;
+  return deriveBroadbandStatus(s, u2, u3);
+};
+
+// ── Shared mutable arrays/maps — consumers import these references ──
+
+/** All loaded county broadband records (mutated in place after fetch) */
+export const COUNTY_BROADBAND_DATA: CountyBroadbandData[] = [];
+
+/** O(1) lookup by county name (mutated in place after fetch) */
+export const BROADBAND_BY_COUNTY = new Map<string, CountyBroadbandData>();
+
+let _loadPromise: Promise<boolean> | null = null;
+
+/** Parse raw JSON into typed records */
+const parseRecords = (raw: unknown[]): CountyBroadbandData[] =>
+  raw
+    .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
+    .map((r) => {
+      const countyName = normalizeCountyName(String(r.countyName ?? ''));
+      const servedPercent = Number(r.servedPercent ?? 0);
+      const underservedPercent = Number(r.underservedPercent ?? 0);
+      const unservedPercent = Number(r.unservedPercent ?? 0);
+      const dominantTechnology = (r.dominantTechnology ?? 'Unknown') as DominantTechnology;
+      const broadbandStatus = coerceStatus(r.broadbandStatus, servedPercent, underservedPercent, unservedPercent);
+      return { countyName, servedPercent, underservedPercent, unservedPercent, dominantTechnology, broadbandStatus };
+    })
+    .filter((d) => d.countyName.length > 0);
 
 /**
- * Mock broadband data for all rural Nevada counties.
- * Replace with real data from FCC BDC or state broadband office.
+ * Fetch the broadband dataset from /data/nevada_broadband.json.
+ * Safe to call multiple times — deduplicates.
+ * Returns true if data loaded successfully.
  */
-export const COUNTY_BROADBAND_DATA: CountyBroadbandData[] = [
-  county('Elko',        45, 30, 25, 'Fixed Wireless', 'Hub towns served; outlying areas rely on satellite'),
-  county('Humboldt',    38, 28, 34, 'Fixed Wireless', 'Winnemucca core has DSL; rural areas largely unserved'),
-  county('Lander',      22, 25, 53, 'Satellite',      'Battle Mountain has limited fixed wireless'),
-  county('Eureka',      15, 20, 65, 'Satellite',      'Very low population density limits deployment'),
-  county('White Pine',  40, 30, 30, 'Mixed',          'Ely has fiber; surrounding areas mixed'),
-  county('Nye',         50, 25, 25, 'Mixed',          'Pahrump has cable; Tonopah area underserved'),
-  county('Lincoln',     20, 25, 55, 'Satellite',      'Caliente and Pioche have minimal fixed service'),
-  county('Pershing',    30, 30, 40, 'Fixed Wireless', 'Lovelock has some broadband; rest is sparse'),
-  county('Mineral',     25, 30, 45, 'Satellite',      'Hawthorne has limited DSL'),
-  county('Esmeralda',   10, 15, 75, 'Satellite',      'Least connected county in Nevada'),
-  county('Lyon',        62, 25, 13, 'Mixed',          'Fernley and Dayton have cable/fiber expansion'),
-  county('Churchill',   55, 25, 20, 'Mixed',          'Fallon has good coverage; rural pockets remain'),
-  county('Douglas',     70, 20, 10, 'Fiber',          'Gardnerville/Minden well-served'),
-  county('Storey',      60, 25, 15, 'Mixed',          'Virginia City area has improved access'),
-  county('Carson City', 78, 15,  7, 'Fiber',          'Urban area with strong broadband infrastructure'),
-  county('Clark',       85, 10,  5, 'Fiber',          'Metro Las Vegas — high broadband availability'),
-  county('Washoe',      80, 12,  8, 'Fiber',          'Reno/Sparks metro well-served'),
-];
+export const loadBroadbandData = (): Promise<boolean> => {
+  if (_loadPromise) return _loadPromise;
+  _loadPromise = (async () => {
+    try {
+      const resp = await fetch('/data/nevada_broadband.json');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+      if (!Array.isArray(json)) throw new Error('Expected array');
+      const records = parseRecords(json);
 
-/** Lookup map for O(1) access by county name */
-export const BROADBAND_BY_COUNTY = new Map(
-  COUNTY_BROADBAND_DATA.map((d) => [d.countyName, d]),
-);
+      // Mutate the shared exported references so all consumers see the data
+      COUNTY_BROADBAND_DATA.length = 0;
+      COUNTY_BROADBAND_DATA.push(...records);
+      BROADBAND_BY_COUNTY.clear();
+      records.forEach((d) => BROADBAND_BY_COUNTY.set(d.countyName, d));
+
+      if (import.meta.env.DEV) {
+        console.info('[Broadband] Loaded', records.length, 'county records');
+      }
+      return true;
+    } catch (err) {
+      console.warn('[Broadband] Failed to load dataset:', err);
+      return false;
+    }
+  })();
+  return _loadPromise;
+};
 
 /** Get broadband data for a county, returns undefined if not found */
 export const getCountyBroadband = (countyName: string): CountyBroadbandData | undefined =>

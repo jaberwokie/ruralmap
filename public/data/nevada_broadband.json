@@ -1,0 +1,138 @@
+[
+  {
+    "countyName": "Carson City",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Churchill",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Clark",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Douglas",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Elko",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Esmeralda",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Eureka",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Humboldt",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Lander",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Lincoln",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Lyon",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Mineral",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Nye",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Pershing",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Storey",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "Washoe",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  },
+  {
+    "countyName": "White Pine",
+    "servedPercent": 100.0,
+    "underservedPercent": 0.0,
+    "unservedPercent": 0.0,
+    "dominantTechnology": "Any Technology",
+    "broadbandStatus": "Served"
+  }
+]

@@ -64,6 +64,7 @@ interface MapViewProps {
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
+  broadbandReady?: boolean;
   tutorialStepKey?: string | null;
 }
 
@@ -589,7 +590,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, broadbandReady = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
@@ -901,7 +902,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
 
     return metricsByCounty;
-  }, [filteredRuralServices, providerFacilities, radiusKm]);
+  }, [filteredRuralServices, providerFacilities, radiusKm, broadbandReady]);
 
   const updateCountyHoverPreview = useCallback((county: string, event: L.LeafletMouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -2324,7 +2325,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       broadbandRef.current!.addLayer(geoLayer);
     });
-  }, [layers.broadbandAccess]);
+  }, [layers.broadbandAccess, broadbandReady]);
 
   // ── Cellular Coverage choropleth ──
   useEffect(() => {

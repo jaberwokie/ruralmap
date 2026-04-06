@@ -8,6 +8,7 @@ import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
+import { loadBroadbandData } from '@/data/broadband-coverage';
 import {
   isMapTutorialCompleted,
   MAP_TUTORIAL_COMPLETION_VALUE,
@@ -65,6 +66,7 @@ export interface Filters {
 
 const Index = () => {
   const [importedFacilities, setImportedFacilities] = useState<Facility[]>([]);
+  const [broadbandReady, setBroadbandReady] = useState(false);
   const facilities = useMemo(() => [...defaultFacilities, ...importedFacilities], [importedFacilities]);
   const [searchQuery, setSearchQuery] = useState('');
   const [radiusKm, setRadiusKm] = useState(32);
@@ -101,6 +103,10 @@ const Index = () => {
     coverageRadius: boolean;
     coverageGaps: boolean;
   } | null>(null);
+
+  useEffect(() => {
+    loadBroadbandData().then((ok) => setBroadbandReady(ok));
+  }, []);
 
   useEffect(() => {
     try {
@@ -395,6 +401,7 @@ const Index = () => {
           coverageRadiusKm={coverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
           engagementRateBelow20Only={engagementRateBelow20Only}
+          broadbandReady={broadbandReady}
           tutorialStepKey={tutorialStepKey}
         />
         <CoverageDetailPanel
