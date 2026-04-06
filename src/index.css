@@ -369,3 +369,9 @@
   0%, 100% { box-shadow: 0 0 0 0 hsla(0, 0%, 0%, 0.1); }
   50% { box-shadow: 0 0 0 6px hsla(0, 0%, 0%, 0.05); }
 }
+
+/* Ensure Leaflet marker icons remain clickable in panes with pointer-events: none */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+  pointer-events: auto !important;
+}
