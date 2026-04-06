@@ -68,6 +68,10 @@
     --access-gap-fill: 0 84% 60% / 0.14;
     --access-gap-border: 0 84% 60% / 0.3;
 
+    --broadband-served: 160 50% 45%;
+    --broadband-underserved: 38 85% 52%;
+    --broadband-unserved: 0 65% 55%;
+
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 10% 10%;
     --sidebar-primary: 217 91% 60%;
