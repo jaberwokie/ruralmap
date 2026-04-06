@@ -14,6 +14,7 @@ import { MapEntity } from '@/components/map/CoverageDetailPanel';
 import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
+import { BROADBAND_BY_COUNTY, type BroadbandStatus } from '@/data/broadband-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import intersect from '@turf/intersect';
@@ -42,6 +43,7 @@ interface MapViewProps {
     fteCapacity: boolean;
     utilizationIntensity: boolean;
     engagementGap: boolean;
+    broadbandAccess: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -70,6 +72,9 @@ interface CountyHoverMetrics {
   providerCount?: number;
   serviceCount?: number;
   coverageGapPercent?: number;
+  broadbandStatus?: BroadbandStatus;
+  broadbandServedPercent?: number;
+  broadbandUnservedPercent?: number;
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
@@ -96,6 +101,7 @@ const MAP_PANES = {
   stateOutline: 'state-outline-pane',
   countyPolygons: 'county-polygons-pane',
   countyBorders: 'county-borders-pane',
+  broadbandOverlay: 'broadband-overlay-pane',
   operationalAreas: 'operational-areas-pane',
   driveRadii: 'drive-radii-pane',
   gapOverlays: 'gap-overlays-pane',
@@ -111,6 +117,7 @@ const MAP_PANES = {
 const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> = {
   [MAP_PANES.stateOutline]: 320,
   [MAP_PANES.countyPolygons]: 330,
+  [MAP_PANES.broadbandOverlay]: 335,
   [MAP_PANES.countyBorders]: 340,
   [MAP_PANES.operationalAreas]: 350,
   [MAP_PANES.driveRadii]: 360,
@@ -590,6 +597,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const countyFillRef = useRef<L.LayerGroup | null>(null);
   const countyBorderRef = useRef<L.LayerGroup | null>(null);
   const labelsRef = useRef<L.LayerGroup | null>(null);
+  const broadbandRef = useRef<L.LayerGroup | null>(null);
   const radiusRef = useRef<L.LayerGroup | null>(null);
   const gapsRef = useRef<L.LayerGroup | null>(null);
   const stateBoundaryRef = useRef<L.LayerGroup | null>(null);
@@ -867,6 +875,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
           metric.coverageGapPercent = Math.max(0, Math.min(100, Math.round(((countyArea - coveredArea) / countyArea) * 100)));
         }
+      }
+
+      const bbData = BROADBAND_BY_COUNTY.get(name);
+      if (bbData) {
+        metric.broadbandStatus = bbData.broadbandStatus;
+        metric.broadbandServedPercent = bbData.servedPercent;
+        metric.broadbandUnservedPercent = bbData.unservedPercent;
       }
 
       metricsByCounty.set(name, metric);
@@ -1187,6 +1202,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     countyFillRef.current = L.layerGroup().addTo(map);
     utilizationRef.current = L.layerGroup().addTo(map);
     countyBorderRef.current = L.layerGroup().addTo(map);
+    broadbandRef.current = L.layerGroup().addTo(map);
     coverageGreyRef.current = L.layerGroup().addTo(map);
     operationalCoverageRef.current = L.layerGroup().addTo(map);
     operationalResponseMarkerRef.current = L.layerGroup().addTo(map);
@@ -2264,6 +2280,38 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
 
+  // ── Broadband Access choropleth ──
+  useEffect(() => {
+    if (!broadbandRef.current) return;
+    broadbandRef.current.clearLayers();
+    if (!layers.broadbandAccess) return;
+
+    const STATUS_FILL: Record<BroadbandStatus, string> = {
+      Served: 'hsla(160, 50%, 45%, 0.14)',
+      Underserved: 'hsla(38, 85%, 52%, 0.16)',
+      Unserved: 'hsla(0, 65%, 55%, 0.16)',
+    };
+
+    nevadaCounties.forEach((county) => {
+      const bb = BROADBAND_BY_COUNTY.get(county.name);
+      if (!bb) return;
+      const feature = getCountyFeature(county.name);
+      if (!feature) return;
+
+      const geoLayer = L.geoJSON(feature, {
+        pane: MAP_PANES.broadbandOverlay,
+        style: {
+          color: 'transparent',
+          weight: 0,
+          fillColor: STATUS_FILL[bb.broadbandStatus],
+          fillOpacity: 1,
+        },
+        interactive: false,
+      });
+      broadbandRef.current!.addLayer(geoLayer);
+    });
+  }, [layers.broadbandAccess]);
+
 
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
@@ -2299,10 +2347,40 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                   </div>
                 </div>
               )}
+              {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
+                <div className="border-t border-border/70 pt-1 space-y-0.5">
+                  <CountyHoverMetricRow label="Broadband" value={countyHoverPreview.broadbandStatus} />
+                  {typeof countyHoverPreview.broadbandServedPercent === 'number' && (
+                    <CountyHoverMetricRow label="Served" value={`${countyHoverPreview.broadbandServedPercent}%`} />
+                  )}
+                  {typeof countyHoverPreview.broadbandUnservedPercent === 'number' && countyHoverPreview.broadbandUnservedPercent > 0 && (
+                    <CountyHoverMetricRow label="Unserved" value={`${countyHoverPreview.broadbandUnservedPercent}%`} />
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
       </TooltipProvider>
+      {layers.broadbandAccess && (
+        <div className="absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm">
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Broadband Access</p>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 50%, 45%, 0.35)' }} />
+              <span className="text-foreground/80">Served</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(38, 85%, 52%, 0.35)' }} />
+              <span className="text-foreground/80">Underserved</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(0, 65%, 55%, 0.35)' }} />
+              <span className="text-foreground/80">Unserved</span>
+            </div>
+          </div>
+        </div>
+      )}
       {DEBUG_ENABLED && (
         <MapDebugPanel
           open={debugOpen}

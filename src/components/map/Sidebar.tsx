@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -11,6 +11,7 @@ import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCESS_TIER_LABELS } from '@/utils/providerAccessTiers';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
+import { COUNTY_BROADBAND_DATA } from '@/data/broadband-coverage';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Slider } from '@/components/ui/slider';
@@ -26,6 +27,7 @@ interface LayerState {
   fteCapacity: boolean;
   utilizationIntensity: boolean;
   engagementGap: boolean;
+  broadbandAccess: boolean;
 }
 
 interface SidebarProps {
@@ -312,6 +314,7 @@ const Sidebar = ({
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
+  const [connectivityOpen, toggleConnectivity] = usePersistToggle('sidebar_layer_connectivity');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -1055,6 +1058,59 @@ const Sidebar = ({
                         </p>
                       )}
                       <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">This is a scenario tool, not a claim of actual access. Access gaps use the current distance-to-provider setting ({kmToMiles(radiusKm)} mi).</p>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
+                  {connectivityOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      <div className="px-2 pb-1">
+                        <p className="text-[10px] font-medium text-muted-foreground/80 leading-relaxed">
+                          Does broadband infrastructure support remote service delivery?
+                        </p>
+                        <p className="text-[9px] text-muted-foreground/60 leading-relaxed">
+                          County-level broadband classification for telehealth and remote coordination feasibility.
+                        </p>
+                      </div>
+                      {renderLayerToggleRow({
+                        label: 'Broadband Access',
+                        icon: Wifi,
+                        iconClassName: 'text-broadband-served',
+                        checked: layers.broadbandAccess,
+                        onCheckedChange: () => onToggleLayer('broadbandAccess'),
+                        helpKey: 'broadbandAccess',
+                      })}
+                      {layers.broadbandAccess && (() => {
+                        const served = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Served').length;
+                        const underserved = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Underserved').length;
+                        const unserved = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Unserved').length;
+                        return (
+                          <div className="space-y-1.5 px-2 pb-2 pt-1">
+                            <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">County Broadband Status</div>
+                              <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-served" />
+                                  <span><span className="font-semibold text-foreground">{served}</span> counties served</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-underserved" />
+                                  <span><span className="font-semibold text-foreground">{underserved}</span> counties underserved</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-unserved" />
+                                  <span><span className="font-semibold text-foreground">{unserved}</span> counties unserved</span>
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-[9px] italic text-muted-foreground/60">
+                              Mock data. Replace with FCC BDC or state broadband office data.
+                            </p>
+                          </div>
+                        );
+                      })()}
                     </div>
                   )}
                 </div>

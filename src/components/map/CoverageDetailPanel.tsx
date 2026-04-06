@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi } from 'lucide-react';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
@@ -9,6 +9,8 @@ import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
+import { getCountyBroadband } from '@/data/broadband-coverage';
+import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS } from '@/utils/broadbandFeasibility';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1130,6 +1132,55 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
           <LocalResourcesSection county={county} />
         </DetailSection>
       )}
+
+      {(() => {
+        const bb = getCountyBroadband(county);
+        if (!bb) return null;
+        const feasibility = getCountyRemoteFeasibility(county);
+        const note = getBroadbandOperationalNote(bb);
+        return (
+          <DetailSection title="Broadband Access" isOpen={isOpen('broadband')} onToggle={() => toggle('broadband')}>
+            <div className="space-y-1.5">
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Wifi className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Status</span>
+                </div>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Broadband Status</span>
+                    <span className="font-bold text-foreground">{bb.broadbandStatus}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Served</span>
+                    <span className="font-medium tabular-nums text-foreground">{bb.servedPercent}%</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Underserved</span>
+                    <span className="font-medium tabular-nums text-foreground">{bb.underservedPercent}%</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Unserved</span>
+                    <span className="font-medium tabular-nums text-foreground">{bb.unservedPercent}%</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Technology</span>
+                    <span className="font-medium text-foreground">{bb.dominantTechnology}</span>
+                  </div>
+                </div>
+              </div>
+              {feasibility && (
+                <div className="flex justify-between text-[11px] px-0.5">
+                  <span className="text-muted-foreground">Remote Feasibility</span>
+                  <span className={`font-semibold ${FEASIBILITY_COLORS[feasibility]}`}>{feasibility.replace(' Remote Feasibility', '')}</span>
+                </div>
+              )}
+              <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
+              {bb.notes && <p className="text-[9px] italic text-muted-foreground/60">{bb.notes}</p>}
+            </div>
+          </DetailSection>
+        );
+      })()}
     </>
   );
 };
