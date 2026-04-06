@@ -1111,6 +1111,113 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
   );
 };
 
+// ── Collapsible Section helper ──
+const DetailSection = ({ title, defaultOpen = false, children, count }: { title: string; defaultOpen?: boolean; children: React.ReactNode; count?: number }) => {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div className="border-t border-border/50 first:border-t-0">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="flex w-full items-center justify-between py-2 text-left"
+      >
+        <span className="text-[10px] font-bold uppercase tracking-wide text-foreground/70">
+          {title}{count !== undefined ? ` (${count})` : ''}
+        </span>
+        <ChevronDown className={`w-3 h-3 text-muted-foreground transition-transform duration-150 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <div
+        className="overflow-hidden transition-all duration-150"
+        style={{ maxHeight: open ? '1000px' : '0', opacity: open ? 1 : 0 }}
+      >
+        <div className="pb-2">{children}</div>
+      </div>
+    </div>
+  );
+};
+
+// ── Action Buttons Row ──
+const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
+  const hasPhone = !!phone;
+  const hasDirections = !!(address || (lat && lng));
+  const hasWebsite = !!website && isValidUrl(website);
+  if (!hasPhone && !hasDirections && !hasWebsite) return null;
+
+  const directionsUrl = address
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + (city ? `, ${city}, NV` : ''))}`
+    : lat && lng
+    ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    : '#';
+
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-2">
+      {hasPhone && (
+        <a
+          href={`tel:${phone!.replace(/[^\d+]/g, '')}`}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
+          title={phone}
+          onClick={e => e.stopPropagation()}
+        >
+          <PhoneCall className="w-3 h-3" />
+          Call
+        </a>
+      )}
+      {hasDirections && (
+        <a
+          href={directionsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
+          title="Get directions"
+          onClick={e => e.stopPropagation()}
+        >
+          <Navigation className="w-3 h-3" />
+          Directions
+        </a>
+      )}
+      {hasWebsite && (
+        <a
+          href={website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
+          title="Visit website"
+          onClick={e => e.stopPropagation()}
+        >
+          <ExternalLink className="w-3 h-3" />
+          Website
+        </a>
+      )}
+    </div>
+  );
+};
+
+const isValidUrl = (str: string): boolean => {
+  try { new URL(str); return true; } catch { return false; }
+};
+
+// ── Copy Address helper ──
+const CopyAddress = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="flex-shrink-0 p-0.5 rounded hover:bg-secondary text-muted-foreground"
+      title="Copy address"
+    >
+      {copied ? <Check className="w-2.5 h-2.5 text-emerald-600" /> : <Copy className="w-2.5 h-2.5" />}
+    </button>
+  );
+};
+
 // ── Facility ──
 const FacilityContent = ({ facility }: { facility: Facility }) => {
   const isHighUtilClinic = facility.tier === 'tier1';
@@ -1124,9 +1231,17 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const countyData = nevadaCounties.find(c => c.name === facility.county);
   const isCah = isCriticalAccessHospital(facility);
   const isMember = isNRHPMember(facility);
+  const fullAddress = facility.address ? `${facility.address}, ${facility.city}, NV` : undefined;
+
+  // Determine what sections have data
+  const hasServices = !!facility.service;
+  const hasContact = !!(facility.phone || (facility.website && isValidUrl(facility.website)));
+  const hasAccess = !!(facility.type === 'hospital' || facility.accessType);
+  const util = getFacilityUtilization(facility);
 
   return (
     <>
+      {/* Name + type badge */}
       <div className="flex items-center gap-2 mb-1">
         <div className={`w-2.5 h-2.5 rounded-full ${typeColor}`} />
         <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
@@ -1136,29 +1251,85 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       <h3 className="text-sm font-semibold text-foreground leading-tight mb-2" style={{ wordBreak: 'break-word' }}>
         {facility.name}
       </h3>
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <MapPin className="w-3 h-3 flex-shrink-0" />
-          <span>{facility.city}, {facility.county} County</span>
-        </div>
-        {facility.address && (
+
+      {/* Action Buttons */}
+      <ActionButtonRow
+        phone={facility.phone}
+        address={facility.address}
+        lat={facility.lat}
+        lng={facility.lng}
+        city={facility.city}
+        website={facility.website}
+      />
+
+      {/* Collapsible Sections */}
+      <DetailSection title="Provider Information" defaultOpen>
+        <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="w-3 h-3 flex-shrink-0" />
-            <span style={{ wordBreak: 'break-word' }}>{facility.address}, {facility.city}, NV</span>
+            <span>{facility.city}, {facility.county} County</span>
           </div>
-        )}
-        {facility.type === 'hospital' && (
-          <>
+          {facility.address && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <MapPin className="w-3 h-3 flex-shrink-0" />
+              <span className="flex-1" style={{ wordBreak: 'break-word' }}>{fullAddress}</span>
+              <CopyAddress text={fullAddress!} />
+            </div>
+          )}
+          {facility.type === 'hospital' && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Building2 className="w-3 h-3 flex-shrink-0" />
               <span>{isCah ? 'Critical Access Hospital (CAH)' : 'Hospital'}</span>
             </div>
-            {isMember && (
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Shield className="w-3 h-3 flex-shrink-0" />
-                <span>NRHP Member</span>
-              </div>
-            )}
+          )}
+          {isMember && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Shield className="w-3 h-3 flex-shrink-0" />
+              <span>NRHP Member</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+            <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
+            <span>{facility.lat.toFixed(4)}, {facility.lng.toFixed(4)}</span>
+          </div>
+          <div className="text-[11px] text-muted-foreground/80 pt-1">
+            Data Confidence: {dataConfidence}
+          </div>
+        </div>
+      </DetailSection>
+
+      {hasServices && (
+        <DetailSection title="Services Offered" count={1}>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Stethoscope className="w-3 h-3 flex-shrink-0" />
+            <span>
+              {facility.service === 'BH' ? 'Behavioral Health' : 'Primary Care'}
+              {facility.volume ? ` · ${facility.volume.toLocaleString()} visits` : ''}
+            </span>
+          </div>
+        </DetailSection>
+      )}
+
+      {hasContact && (
+        <DetailSection title="Contact Information">
+          {facility.phone && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <Phone className="w-3 h-3 flex-shrink-0" />
+              <a href={`tel:${facility.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{facility.phone}</a>
+            </div>
+          )}
+          {facility.website && isValidUrl(facility.website) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              <a href={facility.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>Visit Website</a>
+            </div>
+          )}
+        </DetailSection>
+      )}
+
+      {hasAccess && (
+        <DetailSection title="Access Details">
+          <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <MapIcon className="w-3 h-3 flex-shrink-0" />
               <span>{COVERAGE_AREA_LABELS[coverageArea]}</span>
@@ -1179,26 +1350,32 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
               <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
               <span>Rural Dependence: {RURAL_ACCESS_DEPENDENCE[coverageArea]}</span>
             </div>
-          </>
-        )}
-        {facility.service && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Stethoscope className="w-3 h-3 flex-shrink-0" />
-            <span>
-              {facility.service === 'BH' ? 'Behavioral Health' : 'Primary Care'}
-              {facility.volume ? ` · ${facility.volume.toLocaleString()} visits` : ''}
-            </span>
           </div>
-        )}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-          <span className="w-3 h-3 flex-shrink-0 text-center text-[10px]">⊕</span>
-          <span>{facility.lat.toFixed(4)}, {facility.lng.toFixed(4)}</span>
-        </div>
-        <div className="text-[11px] text-muted-foreground/80 pt-1">
-          Data Confidence: {dataConfidence}
-        </div>
-      </div>
-      <FacilityUtilizationSection facility={facility} />
+        </DetailSection>
+      )}
+
+      {util && (
+        <DetailSection title="Engagement Metrics">
+          <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Provider Rank</span>
+              <span className="font-bold text-purple-800">#{util.rank}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Total Members</span>
+              <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Total Visits</span>
+              <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Visits per Member</span>
+              <span className="font-bold text-purple-800 tabular-nums">{util.visitsPerMember}</span>
+            </div>
+          </div>
+        </DetailSection>
+      )}
     </>
   );
 };
