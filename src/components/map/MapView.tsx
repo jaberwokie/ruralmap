@@ -540,11 +540,6 @@ const CoverageGapInfoButton = () => {
   );
 };
 
-  const fireEntityClick = useCallback((entity: MapEntity | null) => {
-    markerClickGuardRef.current = true;
-    onEntityClickRef.current?.(entity);
-  }, []);
-
 
 const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
   const mapRef = useRef<L.Map | null>(null);
