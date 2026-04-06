@@ -1064,51 +1064,72 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+  const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const hasField = serving.some(f => f.hubLocation !== null);
+  const isRemoteOnly = serving.length === 0 || !hasField;
+  const responseLabel = isRemoteOnly
+    ? PRIMARY_RESPONSE_LABELS.remote
+    : hasField
+    ? PRIMARY_RESPONSE_LABELS.active
+    : PRIMARY_RESPONSE_LABELS.scheduled;
+
+  const util = getCountyUtilization(county);
+  const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
+  const hasFte = serving.length > 0;
+  const hasLocalResources = (COUNTY_SERVICE_COUNT.get(county) ?? 0) > 0;
+
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
-      {(() => {
-        const serving = fteCapacityData.filter(f => f.counties.includes(county));
-        const hasField = serving.some(f => f.hubLocation !== null);
-        const isRemoteOnly = serving.length === 0 || !hasField;
-        const label = isRemoteOnly
-          ? PRIMARY_RESPONSE_LABELS.remote
-          : hasField
-          ? PRIMARY_RESPONSE_LABELS.active
-          : PRIMARY_RESPONSE_LABELS.scheduled;
-        return <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {label}</p>;
-      })()}
+      <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {responseLabel}</p>
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
-      {/* 1. Member Volume */}
-      {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
-      <EngagementPriorityCard county={county} />
-      {/* 2. Coverage Breakdown */}
-      <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-      {/* 3. Field Capacity */}
-      <FieldCapacitySection county={county} />
-      {/* 4. Utilization & Engagement */}
-      <UtilizationEngagementSection county={county} />
-      {/* 4b. Utilization Metrics */}
-      <UtilizationMetricsCard county={county} />
-      {/* 5. Assigned FTE */}
-      <CapacityStatusSection county={county} />
-      {/* 6. Recommended Action Path */}
-      <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
-      {/* 7. Local Resources */}
-      <LocalResourcesSection county={county} />
-      <div className="space-y-1 text-xs text-foreground/80">
-        <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
-        <div className="flex justify-between"><span>Rural Access Dependence</span><span className="font-medium">{RURAL_ACCESS_DEPENDENCE[area]}</span></div>
-        {countyData?.secondaryZone && (
-          <div className="text-[10px] text-muted-foreground italic">
-            Secondary support from Area {countyData.secondaryZone.replace('area', '')}
-          </div>
-        )}
-      </div>
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+        <EngagementPriorityCard county={county} />
+      </DetailSection>
+
+      <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
+        <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
+        <div className="space-y-1 text-xs text-foreground/80">
+          <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
+          <div className="flex justify-between"><span>Rural Access Dependence</span><span className="font-medium">{RURAL_ACCESS_DEPENDENCE[area]}</span></div>
+          {countyData?.secondaryZone && (
+            <div className="text-[10px] text-muted-foreground italic">
+              Secondary support from Area {countyData.secondaryZone.replace('area', '')}
+            </div>
+          )}
+        </div>
+      </DetailSection>
+
+      {hasFte && (
+        <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
+          <FieldCapacitySection county={county} />
+          <CapacityStatusSection county={county} />
+        </DetailSection>
+      )}
+
+      {hasUtilization && (
+        <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
+          <UtilizationEngagementSection county={county} />
+          <UtilizationMetricsCard county={county} />
+        </DetailSection>
+      )}
+
+      <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
+        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+      </DetailSection>
+
+      {hasLocalResources && (
+        <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={COUNTY_SERVICE_COUNT.get(county)}>
+          <LocalResourcesSection county={county} />
+        </DetailSection>
+      )}
     </>
   );
 };
