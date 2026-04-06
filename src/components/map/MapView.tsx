@@ -2362,6 +2362,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           </div>
         )}
       </TooltipProvider>
+      {layers.broadbandAccess && (
+        <div className="absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm">
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Broadband Access</p>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 50%, 45%, 0.35)' }} />
+              <span className="text-foreground/80">Served</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(38, 85%, 52%, 0.35)' }} />
+              <span className="text-foreground/80">Underserved</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-[10px]">
+              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(0, 65%, 55%, 0.35)' }} />
+              <span className="text-foreground/80">Unserved</span>
+            </div>
+          </div>
+        </div>
+      )}
       {DEBUG_ENABLED && (
         <MapDebugPanel
           open={debugOpen}
