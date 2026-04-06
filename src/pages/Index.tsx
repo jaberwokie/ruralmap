@@ -401,6 +401,7 @@ const Index = () => {
           coverageRadiusKm={coverageRadiusKm}
           topProvidersOnly={topProvidersOnly}
           engagementRateBelow20Only={engagementRateBelow20Only}
+          broadbandReady={broadbandReady}
           tutorialStepKey={tutorialStepKey}
         />
         <CoverageDetailPanel
