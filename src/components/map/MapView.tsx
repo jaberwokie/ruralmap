@@ -1459,7 +1459,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        nextMarkers.push(marker);
+        servicePresenceMarkerRef.current!.addLayer(marker);
       });
     }
 
