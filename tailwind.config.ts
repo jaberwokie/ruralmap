@@ -68,6 +68,10 @@ export default {
         "broadband-served": "hsl(var(--broadband-served))",
         "broadband-underserved": "hsl(var(--broadband-underserved))",
         "broadband-unserved": "hsl(var(--broadband-unserved))",
+        "cellular-strong": "hsl(var(--cellular-strong))",
+        "cellular-moderate": "hsl(var(--cellular-moderate))",
+        "cellular-weak": "hsl(var(--cellular-weak))",
+        "cellular-none": "hsl(var(--cellular-none))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

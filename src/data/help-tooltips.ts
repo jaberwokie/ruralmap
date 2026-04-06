@@ -111,6 +111,11 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'The red shaded sample shows the overlay used for areas outside the selected provider coverage radius. It indicates uncovered geography based on the current radius setting.',
   },
+  cellularCoverage: {
+    label: 'Cellular Coverage',
+    explanation:
+      'Shows cellular signal reliability by county. Reliability is derived from carrier availability and composite signal strength. Helps assess whether phone-based coordination and mobile engagement are viable.',
+  },
   tier1Legend: {
     label: 'Tier 1',
     explanation:
