@@ -382,7 +382,7 @@ const LAYER_CONFLICTS = createLayerConflictMaps(DEBUG_LAYER_DEFINITIONS);
 
 const createGeoJsonLayer = (
   geometry: Feature<Polygon | MultiPolygon> | Feature<Polygon>,
-  pane: (typeof MAP_PANES)[keyof typeof MAP_PANES],
+  pane: string,
   style: L.PathOptions,
   interactive = false,
 ) => L.geoJSON(geometry as any, {
