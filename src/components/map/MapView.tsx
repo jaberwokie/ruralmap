@@ -84,8 +84,9 @@ interface CountyHoverMetrics {
   broadbandReadiness?: OperationalBroadbandReadiness;
   broadbandSatelliteShare?: number;
   broadbandUneven?: boolean;
-  cellularReliability?: CellularReliability;
-  cellularCarriers?: string;
+  cellularReadiness?: OperationalCellularReadiness;
+  cellularLtePct?: number;
+  cellularFiveGPct?: number;
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
@@ -925,8 +926,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       const cellData = CELLULAR_BY_COUNTY.get(name);
       if (cellData) {
-        metric.cellularReliability = getReliabilityCategory(cellData);
-        metric.cellularCarriers = formatCarriers(cellData);
+        metric.cellularReadiness = cellData.operationalCellularReadiness;
+        metric.cellularLtePct = cellData.lteCoveragePct;
+        metric.cellularFiveGPct = cellData.fiveGCoveragePct;
       }
 
       metricsByCounty.set(name, metric);
@@ -2448,11 +2450,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                   )}
                 </div>
               )}
-              {layers.cellularCoverage && countyHoverPreview.cellularReliability && (
+              {layers.cellularCoverage && countyHoverPreview.cellularReadiness && (
                 <div className="border-t border-border/70 pt-1 space-y-0.5">
-                  <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReliability} />
-                  {countyHoverPreview.cellularCarriers && (
-                    <CountyHoverMetricRow label="Carriers" value={countyHoverPreview.cellularCarriers} />
+                  <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReadiness} />
+                  {typeof countyHoverPreview.cellularLtePct === 'number' && (
+                    <CountyHoverMetricRow label="LTE" value={`${countyHoverPreview.cellularLtePct}%`} />
+                  )}
+                  {typeof countyHoverPreview.cellularFiveGPct === 'number' && (
+                    <CountyHoverMetricRow label="5G" value={`${countyHoverPreview.cellularFiveGPct}%`} />
                   )}
                 </div>
               )}

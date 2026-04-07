@@ -11,7 +11,7 @@ import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILI
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { getCountyBroadband } from '@/data/broadband-coverage';
 import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS, READINESS_COLORS } from '@/utils/broadbandFeasibility';
-import { getCountyCellular, formatCarriers, getReliabilityCategory, READINESS_COLORS as CELLULAR_READINESS_COLORS } from '@/data/cellular-coverage';
+import { getCountyCellular, getReliabilityCategory, READINESS_COLORS as CELLULAR_READINESS_COLORS } from '@/data/cellular-coverage';
 import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
@@ -1226,12 +1226,21 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                     <span className={`font-bold ${CELLULAR_READINESS_COLORS[cell.operationalCellularReadiness]}`}>{cell.operationalCellularReadiness}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Carriers</span>
-                    <span className="font-medium text-foreground">{formatCarriers(cell)}</span>
+                    <span className="text-muted-foreground">Confidence</span>
+                    <span className="font-medium text-foreground">{cell.fieldReliabilityConfidence}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Technology Coverage</div>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">LTE (4G)</span>
+                    <span className="font-bold tabular-nums text-foreground">{cell.lteCoveragePct}%</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Overlap</span>
-                    <span className="font-medium tabular-nums text-foreground">{cell.carrierOverlapScore} of 3</span>
+                    <span className="text-muted-foreground">5G-NR</span>
+                    <span className="font-bold tabular-nums text-foreground">{cell.fiveGCoveragePct}%</span>
                   </div>
                 </div>
               </div>
@@ -1243,29 +1252,12 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                     <span className="font-bold tabular-nums text-foreground">{cell.strongSignalPct}%</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Moderate (LTE)</span>
+                    <span className="text-muted-foreground">Moderate (LTE only)</span>
                     <span className="font-bold tabular-nums text-foreground">{cell.moderateSignalPct}%</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Weak / None</span>
                     <span className="font-bold tabular-nums text-foreground">{cell.weakOrNonePct}%</span>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Carrier Coverage</div>
-                <div className="space-y-0.5">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Verizon</span>
-                    <span className="font-medium tabular-nums text-foreground">{cell.verizonCoveragePct}% <span className="text-muted-foreground/60">({cell.verizon5gPct}% 5G)</span></span>
-                  </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">AT&T</span>
-                    <span className="font-medium tabular-nums text-foreground">{cell.attCoveragePct}% <span className="text-muted-foreground/60">({cell.att5gPct}% 5G)</span></span>
-                  </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">T-Mobile</span>
-                    <span className="font-medium tabular-nums text-foreground">{cell.tmobileCoveragePct}% <span className="text-muted-foreground/60">({cell.tmobile5gPct}% 5G)</span></span>
                   </div>
                 </div>
               </div>
@@ -1276,8 +1268,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
-              {cell.notes && <p className="text-[9px] italic text-muted-foreground/60">{cell.notes}</p>}
-              <p className="text-[9px] italic text-muted-foreground/40">Confidence: {cell.fieldReliabilityConfidence} — FCC modeled data</p>
+              <p className="text-[9px] italic text-muted-foreground/50 leading-relaxed">{cell.dataLimitations}</p>
+              <p className="text-[9px] italic text-muted-foreground/40">Confidence: {cell.fieldReliabilityConfidence} — {cell.dataSource}</p>
             </div>
           </DetailSection>
         );
