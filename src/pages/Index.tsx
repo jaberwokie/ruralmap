@@ -8,7 +8,6 @@ import { useMapSelection } from '@/hooks/useMapSelection';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
 import { useTutorialState } from '@/hooks/useTutorialState';
-import { useBroadbandData } from '@/hooks/useBroadbandData';
 import type { MapEntity } from '@/types/entities';
 
 const Index = () => {
