@@ -379,10 +379,15 @@
   50% { box-shadow: 0 0 0 6px hsla(0, 0%, 0%, 0.05); }
 }
 
-/* Ensure Leaflet marker icons remain clickable in panes with pointer-events: none */
+/* Ensure Leaflet marker icons remain clickable — except labels which must not block polygons */
 .leaflet-marker-icon,
 .leaflet-marker-shadow {
   pointer-events: auto !important;
+}
+/* Labels pane markers must pass clicks through to county polygons beneath.
+   Leaflet createPane('labels-pane') → class 'leaflet-labels-pane-pane' */
+.leaflet-labels-pane-pane .leaflet-marker-icon {
+  pointer-events: none !important;
 }
 
 /* Ensure interactive SVG paths (county hit areas, engagement gap polygons, etc.)
