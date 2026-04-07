@@ -111,42 +111,49 @@ const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%
 
 // ═══════════════════════════════════════════════════════════
 // AUTHORITATIVE PANE CONFIGURATION — single source of truth
-// interactive: true  → pointer-events: auto  (receives clicks)
-// interactive: false → pointer-events: none  (decorative only)
 // ═══════════════════════════════════════════════════════════
 const PANE_CONFIG = {
-  stateOutline:              { id: 'state-outline-pane',              zIndex: 320, interactive: false },
-  countyPolygons:            { id: 'county-polygons-pane',            zIndex: 330, interactive: true  },
-  broadbandOverlay:          { id: 'broadband-overlay-pane',          zIndex: 335, interactive: false },
-  cellularOverlay:           { id: 'cellular-overlay-pane',           zIndex: 336, interactive: false },
-  countyBorders:             { id: 'county-borders-pane',             zIndex: 340, interactive: false },
-  operationalAreas:          { id: 'operational-areas-pane',          zIndex: 350, interactive: false },
-  driveRadii:                { id: 'drive-radii-pane',                zIndex: 360, interactive: false },
-  gapOverlays:               { id: 'gap-overlays-pane',               zIndex: 370, interactive: true  },
-  groupedMarkers:            { id: 'grouped-markers-pane',            zIndex: 705, interactive: true  },
-  servicePresence:           { id: 'service-presence-pane',           zIndex: 710, interactive: true  },
-  behavioralHealth:          { id: 'behavioral-health-pane',          zIndex: 711, interactive: true  },
-  responseCapabilityMarkers: { id: 'response-capability-markers-pane',zIndex: 715, interactive: true  },
-  facilityMarkers:           { id: 'facility-markers-pane',           zIndex: 720, interactive: true  },
-  labels:                    { id: 'labels-pane',                     zIndex: 730, interactive: false },
-  highlights:                { id: 'highlights-pane',                 zIndex: 740, interactive: false },
+  // Passive base polygons — never interactive
+  basePolygons:    { id: 'base-polygons-pane',    zIndex: 200, interactive: false },
+  // Visual-only coverage overlays — never interactive
+  coverage:        { id: 'coverage-pane',          zIndex: 300, interactive: false },
+  // County hit areas — interactive for click/hover
+  countyInteractive: { id: 'county-interactive-pane', zIndex: 400, interactive: true },
+  // All clickable non-provider markers
+  markers:         { id: 'markers-pane',           zIndex: 650, interactive: true },
+  // Provider markers — highest marker layer
+  providerMarkers: { id: 'provider-markers-pane',  zIndex: 660, interactive: true },
+  // Popup pane for tooltips
+  uiPopups:        { id: 'ui-popups-pane',         zIndex: 700, interactive: true },
 } as const;
 
-// Derived lookup maps for backward-compat with existing layer code
-const MAP_PANES = Object.fromEntries(
-  Object.entries(PANE_CONFIG).map(([k, v]) => [k, v.id])
-) as { [K in keyof typeof PANE_CONFIG]: (typeof PANE_CONFIG)[K]['id'] };
+// Backward-compat mapping — maps OLD semantic names to NEW pane IDs
+const MAP_PANES = {
+  stateOutline:              PANE_CONFIG.basePolygons.id,
+  countyPolygons:            PANE_CONFIG.countyInteractive.id,
+  broadbandOverlay:          PANE_CONFIG.coverage.id,
+  cellularOverlay:           PANE_CONFIG.coverage.id,
+  countyBorders:             PANE_CONFIG.basePolygons.id,
+  operationalAreas:          PANE_CONFIG.basePolygons.id,
+  driveRadii:                PANE_CONFIG.basePolygons.id,
+  gapOverlays:               PANE_CONFIG.countyInteractive.id,
+  groupedMarkers:            PANE_CONFIG.markers.id,
+  servicePresence:           PANE_CONFIG.markers.id,
+  behavioralHealth:          PANE_CONFIG.markers.id,
+  responseCapabilityMarkers: PANE_CONFIG.markers.id,
+  facilityMarkers:           PANE_CONFIG.providerMarkers.id,
+  labels:                    PANE_CONFIG.basePolygons.id,
+  highlights:                PANE_CONFIG.basePolygons.id,
+} as const;
 
 // Centralized pane initializer — called once during map setup
 function initializeAllPanes(map: L.Map) {
   Object.entries(PANE_CONFIG).forEach(([key, cfg]) => {
     const pane = map.createPane(cfg.id);
     pane.style.zIndex = String(cfg.zIndex);
-    // ALL pane divs are pointer-events: none. Interactive elements (marker
-    // icons via .leaflet-marker-icon and SVG paths via .leaflet-interactive)
-    // opt in at the element level. This prevents higher-z pane divs from
-    // blocking clicks on markers/polygons in lower-z panes.
-    pane.style.pointerEvents = 'none';
+    // Interactive panes get pointer-events: auto so their children receive clicks.
+    // Non-interactive panes get pointer-events: none so they never steal clicks.
+    pane.style.pointerEvents = cfg.interactive ? 'auto' : 'none';
     if (DEBUG_CLICKS) {
       pane.addEventListener('click', () => {
         console.debug('[Pane Click]', { pane: key, id: cfg.id, interactive: cfg.interactive });
@@ -156,7 +163,7 @@ function initializeAllPanes(map: L.Map) {
 }
 
 const LEAFLET_UI_PANE_Z_INDEX = {
-  markerPane: 700,
+  markerPane: 190,   // below all custom panes so it never blocks
   tooltipPane: 820,
   popupPane: 830,
 } as const;
