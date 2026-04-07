@@ -65,7 +65,6 @@ interface MapViewProps {
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
-  broadbandReady?: boolean;
   tutorialStepKey?: string | null;
 }
 
