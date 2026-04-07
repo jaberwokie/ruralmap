@@ -2199,8 +2199,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         iconAnchor: [0, 14],
       });
 
-      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000 });
-      marker.options.pane = MAP_PANES.highlights;
+      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000, pane: MAP_PANES.markers });
       marker.on('click', (e: L.LeafletEvent) => {
         stopInteractionEvent(e);
         armInteractionGuard('overlay');
