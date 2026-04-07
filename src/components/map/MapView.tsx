@@ -1639,6 +1639,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           pane: MAP_PANES.servicePresence,
           icon: servicePresenceIcon,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
+          interactive: true,
+          bubblingMouseEvents: true,
         }) as MapPointMarker;
 
         marker.__pointKind = 'servicePresence';
@@ -1665,15 +1667,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         marker.on('click', (event: L.LeafletEvent) => {
           selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker', event, marker);
-        });
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
-            });
-          }
         });
 
         marker.bindTooltip(
