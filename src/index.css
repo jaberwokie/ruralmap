@@ -384,8 +384,9 @@
 .leaflet-marker-shadow {
   pointer-events: auto !important;
 }
-/* Labels pane markers must pass clicks through to county polygons beneath */
-.leaflet-pane[style*="labels"] .leaflet-marker-icon {
+/* Labels pane markers must pass clicks through to county polygons beneath.
+   Leaflet createPane('labels-pane') → class 'leaflet-labels-pane-pane' */
+.leaflet-labels-pane-pane .leaflet-marker-icon {
   pointer-events: none !important;
 }
 
