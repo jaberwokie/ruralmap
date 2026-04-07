@@ -1638,6 +1638,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__entityId = service.id;
         marker.__entityName = service.name;
         applyMarkerPriority(marker, 'default');
+        // Reduce opacity for approximate/city-center pins
+        const svcValidation = serviceValidation.records.get(service.id);
+        if (svcValidation && svcValidation.confidence !== 'verified') {
+          marker.setOpacity(0.82);
+        }
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'service-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
