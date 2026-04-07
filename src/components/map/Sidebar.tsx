@@ -22,32 +22,48 @@ import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type Respons
 
 // LayerState imported from @/types/layers
 
-interface SidebarProps {
+export interface SidebarLayerProps {
   layers: LayerState;
   onToggleLayer: (layer: keyof LayerState) => void;
-  allFacilities: Facility[];
-  facilities: Facility[];
-  onAddFacilities: (facilities: Facility[]) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onFacilityClick: (facility: Facility) => void;
-  filters: Filters;
-  onFiltersChange: (filters: Filters) => void;
-  radiusKm: number;
-  onRadiusChange: (km: number) => void;
   coverageRadius: boolean;
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
-  selectedFteId?: string | null;
-  onFteCardClick?: (fteId: string) => void;
-  coverageRadiusKm?: number;
+  radiusKm: number;
+  onRadiusChange: (km: number) => void;
+  coverageRadiusKm: number;
   onCoverageRadiusKmChange?: (km: number) => void;
+}
+
+export interface SidebarFilterProps {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  filters: Filters;
+  onFiltersChange: (filters: Filters) => void;
   topProvidersOnly: boolean;
   onTopProvidersOnlyChange: (checked: boolean) => void;
   engagementRateBelow20Only: boolean;
   onEngagementRateBelow20OnlyChange: (checked: boolean) => void;
+}
+
+export interface SidebarFacilityProps {
+  allFacilities: Facility[];
+  facilities: Facility[];
+  onAddFacilities: (facilities: Facility[]) => void;
+  onFacilityClick: (facility: Facility) => void;
+}
+
+export interface SidebarSelectionProps {
+  selectedFteId?: string | null;
+  onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
+}
+
+interface SidebarProps {
+  layer: SidebarLayerProps;
+  filter: SidebarFilterProps;
+  facility: SidebarFacilityProps;
+  selection: SidebarSelectionProps;
   onReplayTutorial?: () => void;
   tutorialStepKey?: MapTutorialStepKey | null;
 }
@@ -259,31 +275,39 @@ const HelpIconTooltip = ({
 };
 
 const Sidebar = ({
-  layers,
-  onToggleLayer,
-  allFacilities,
-  facilities,
-  onAddFacilities,
-  searchQuery,
-  onSearchChange,
-  onFacilityClick,
-  filters,
-  onFiltersChange,
-  radiusKm,
-  onRadiusChange,
-  coverageRadius,
-  coverageGaps,
-  onCoverageRadiusChange,
-  onCoverageGapsChange,
-  selectedFteId,
-  onFteCardClick,
-  coverageRadiusKm = 120,
-  onCoverageRadiusKmChange,
-  topProvidersOnly,
-  onTopProvidersOnlyChange,
-  engagementRateBelow20Only,
-  onEngagementRateBelow20OnlyChange,
-  onCountySelect,
+  layer: {
+    layers,
+    onToggleLayer,
+    coverageRadius,
+    coverageGaps,
+    onCoverageRadiusChange,
+    onCoverageGapsChange,
+    radiusKm,
+    onRadiusChange,
+    coverageRadiusKm = 120,
+    onCoverageRadiusKmChange,
+  },
+  filter: {
+    searchQuery,
+    onSearchChange,
+    filters,
+    onFiltersChange,
+    topProvidersOnly,
+    onTopProvidersOnlyChange,
+    engagementRateBelow20Only,
+    onEngagementRateBelow20OnlyChange,
+  },
+  facility: {
+    allFacilities,
+    facilities,
+    onAddFacilities,
+    onFacilityClick,
+  },
+  selection: {
+    selectedFteId,
+    onFteCardClick,
+    onCountySelect,
+  },
   onReplayTutorial,
   tutorialStepKey,
 }: SidebarProps) => {
