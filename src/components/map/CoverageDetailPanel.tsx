@@ -38,17 +38,9 @@ const GAP_COUNTIES = (() => {
   return gaps;
 })();
 
-// ── Unified entity types ──
-
-export type MapEntity =
-  | { type: 'coverageArea'; area: CoverageArea }
-  | { type: 'county'; county: string }
-  | { type: 'facility'; facility: Facility }
-  | { type: 'coverageGap'; radiusKm: number }
-  | { type: 'memberVolume'; county: string; memberCount: number }
-  | { type: 'ruralServiceGroup'; county: string; services: RuralService[] }
-  | { type: 'ruralService'; service: RuralService }
-  | { type: 'fteDetail'; fteId: string };
+// Re-export MapEntity from shared types for backward compatibility
+export type { MapEntity } from '@/types/entities';
+import type { MapEntity } from '@/types/entities';
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;

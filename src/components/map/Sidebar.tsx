@@ -4,7 +4,8 @@ import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
 import { toast } from 'sonner';
-import { Filters } from '@/pages/Index';
+import type { Filters } from '@/types/filters';
+import type { LayerState } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
@@ -19,18 +20,7 @@ import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 
-interface LayerState {
-  counties: boolean;
-  services: boolean;
-  behavioralHealth: boolean;
-  serviceLocations: boolean;
-  operationalCoverage: boolean;
-  fteCapacity: boolean;
-  utilizationIntensity: boolean;
-  engagementGap: boolean;
-  broadbandAccess: boolean;
-  cellularCoverage: boolean;
-}
+// LayerState imported from @/types/layers
 
 interface SidebarProps {
   layers: LayerState;
