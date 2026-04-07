@@ -1099,31 +1099,34 @@ const Sidebar = ({
                         helpKey: 'broadbandAccess',
                       })}
                       {layers.broadbandAccess && (() => {
-                        const served = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Served').length;
-                        const underserved = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Underserved').length;
-                        const unserved = COUNTY_BROADBAND_DATA.filter(d => d.broadbandStatus === 'Unserved').length;
+                        const high = COUNTY_BROADBAND_DATA.filter(d => d.operationalReadiness === 'High').length;
+                        const mixed = COUNTY_BROADBAND_DATA.filter(d => d.operationalReadiness === 'Mixed').length;
+                        const low = COUNTY_BROADBAND_DATA.filter(d => d.operationalReadiness === 'Low').length;
+                        const uneven = COUNTY_BROADBAND_DATA.filter(d => d.coverageUnevenness).length;
                         return (
                           <div className="space-y-1.5 px-2 pb-2 pt-1">
                             <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">County Broadband Status</div>
+                              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Operational Readiness</div>
                               <div className="space-y-0.5 text-[10px] text-muted-foreground">
                                 <div className="flex items-center gap-1.5">
                                   <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-served" />
-                                  <span><span className="font-semibold text-foreground">{served}</span> counties served</span>
+                                  <span><span className="font-semibold text-foreground">{high}</span> High readiness</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-underserved" />
-                                  <span><span className="font-semibold text-foreground">{underserved}</span> counties underserved</span>
+                                  <span><span className="font-semibold text-foreground">{mixed}</span> Mixed readiness</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                   <div className="h-2 w-2 flex-shrink-0 rounded-full bg-broadband-unserved" />
-                                  <span><span className="font-semibold text-foreground">{unserved}</span> counties unserved</span>
+                                  <span><span className="font-semibold text-foreground">{low}</span> Low readiness</span>
                                 </div>
                               </div>
                             </div>
-                            <p className="text-[9px] italic text-muted-foreground/60">
-                              Mock data. Replace with FCC BDC or state broadband office data.
-                            </p>
+                            {uneven > 0 && (
+                              <p className="text-[9px] text-engagement-watch">
+                                ⚠ {uneven} counties have uneven coverage distribution
+                              </p>
+                            )}
                           </div>
                         );
                       })()}
