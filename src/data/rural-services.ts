@@ -244,11 +244,11 @@ export const ruralServices: RuralService[] = [
   { id: "rs-157", name: "Mt. Grant General Hospital", category: "Physical Health", county: "Mineral", city: "Hawthorne", address: "200 South A Street, Hawthorne, NV 89415", phone: "(775) 945-2461", lat: 38.5166, lng: -118.6274 },
 
   // ── Nye ──
-  { id: "rs-158", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Nye", city: "Pahrump", phone: "(775) 751-1118", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-159", name: "Nye County Social Services", category: "Shelter", county: "Nye", city: "Pahrump", phone: "(775) 751-7075", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", phone: "(775) 727-9970", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", phone: "(775) 751-7300", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", phone: "(775) 727-5008", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
+  { id: "rs-158", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Nye", city: "Pahrump", address: "1397 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-1118", lat: 36.2080, lng: -115.9840, notes: "co-located with Family Centers of Nevada" },
+  { id: "rs-159", name: "Nye County Social Services", category: "Shelter", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7075", lat: 36.2078, lng: -115.9720, notes: "street-level approx" },
+  { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", address: "1600 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 727-9970", lat: 36.2080, lng: -115.9780, notes: "street-level approx" },
+  { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7300", lat: 36.2078, lng: -115.9720, notes: "co-located with Nye County Social Services" },
+  { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", address: "1370 W Basin Ave, Pahrump, NV 89060", phone: "(775) 727-5008", lat: 36.2058, lng: -116.0100, notes: "street-level approx" },
   // 360 S Lola Ln → matches h1: 36.2142, -116.0248
   { id: "rs-164", name: "Desert View Hospital BH Services", category: "Mental Health", county: "Nye", city: "Pahrump", address: "360 S Lola Ln, Pahrump, NV", phone: "(775) 751-7500", lat: 36.2142, lng: -116.0248 },
 
@@ -256,14 +256,14 @@ export const ruralServices: RuralService[] = [
   // 1005 E Broadway Ave → 40.1793, -118.4734
   { id: "rs-165", name: "Frontier Community Coalition (Pershing)", category: "Coordinated Entry", county: "Pershing", city: "Lovelock", address: "1005 E Broadway Avenue, Lovelock, NV 89419", phone: "(775) 273-2400", lat: 40.1793, lng: -118.4734 },
   { id: "rs-166", name: "Frontier Community Coalition (Family)", category: "Family Services", county: "Pershing", city: "Lovelock", address: "1005 E Broadway Avenue, Lovelock, NV 89419", phone: "(775) 273-2400", lat: 40.1793, lng: -118.4734 },
-  { id: "rs-167", name: "Pershing County Senior Center", category: "Senior Services", county: "Pershing", city: "Lovelock", phone: "(775) 273-2284", lat: 40.1800, lng: -118.4740, notes: "city-center approx" },
+  { id: "rs-167", name: "Pershing County Senior Center", category: "Senior Services", county: "Pershing", city: "Lovelock", address: "1075 Dartmouth Ave, Lovelock, NV 89419", phone: "(775) 273-2284", lat: 40.1793, lng: -118.4750, notes: "street-level approx" },
   // 855 6th St → matches h11: 40.1762, -118.4818
   { id: "rs-168", name: "Pershing General Hospital", category: "Physical Health", county: "Pershing", city: "Lovelock", address: "855 6th St, Lovelock, NV 89419", phone: "(775) 273-2621", lat: 40.1762, lng: -118.4818 },
 
   // ── Storey ──
-  { id: "rs-169", name: "Lyon County Human Services (serves Storey)", category: "Coordinated Entry", county: "Storey", city: "Virginia City", phone: "(775) 577-5009", lat: 39.24987, lng: -114.88695, notes: "city-center approx" },
-  { id: "rs-170", name: "Storey County Human Services", category: "Family Services", county: "Storey", city: "Virginia City", phone: "(775) 847-1140", lat: 39.3096, lng: -119.6500, notes: "city-center approx" },
-  { id: "rs-171", name: "Storey County Senior Center", category: "Senior Services", county: "Storey", city: "Virginia City", phone: "(775) 847-0956", lat: 39.3096, lng: -119.6500, notes: "city-center approx" },
+  { id: "rs-169", name: "Lyon County Human Services (serves Storey)", category: "Coordinated Entry", county: "Storey", city: "Virginia City", address: "Virginia City, NV 89440", phone: "(775) 577-5009", lat: 39.3096, lng: -119.6500, notes: "city-center approx; served remotely from Lyon" },
+  { id: "rs-170", name: "Storey County Human Services", category: "Family Services", county: "Storey", city: "Virginia City", address: "26 S B St, Virginia City, NV 89440", phone: "(775) 847-1140", lat: 39.3096, lng: -119.6500, notes: "street-level approx" },
+  { id: "rs-171", name: "Storey County Senior Center", category: "Senior Services", county: "Storey", city: "Virginia City", address: "145 N C St, Virginia City, NV 89440", phone: "(775) 847-0956", lat: 39.3110, lng: -119.6490, notes: "street-level approx" },
 
   // ── White Pine ──
   // 297 11th St → 39.2480, -114.8870
