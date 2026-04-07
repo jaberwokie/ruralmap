@@ -11,7 +11,7 @@ import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILI
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { getCountyBroadband } from '@/data/broadband-coverage';
 import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS, READINESS_COLORS } from '@/utils/broadbandFeasibility';
-import { getCountyCellular, formatCarriers } from '@/data/cellular-coverage';
+import { getCountyCellular, formatCarriers, getReliabilityCategory, READINESS_COLORS as CELLULAR_READINESS_COLORS } from '@/data/cellular-coverage';
 import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */

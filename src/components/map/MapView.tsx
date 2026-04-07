@@ -2371,11 +2371,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     cellularRef.current.clearLayers();
     if (!layers.cellularCoverage) return;
 
-    const RELIABILITY_FILL: Record<import('@/data/cellular-coverage').CellularReliability, string> = {
-      Strong: 'hsla(160, 55%, 40%, 0.14)',
-      Moderate: 'hsla(44, 90%, 50%, 0.16)',
-      Weak: 'hsla(20, 85%, 55%, 0.16)',
-      None: 'hsla(240, 5%, 60%, 0.14)',
+    const READINESS_FILL: Record<import('@/data/cellular-coverage').OperationalCellularReadiness, string> = {
+      High: 'hsla(160, 55%, 40%, 0.14)',
+      Mixed: 'hsla(44, 90%, 50%, 0.16)',
+      Low: 'hsla(20, 85%, 55%, 0.16)',
     };
 
     nevadaCounties.forEach((county) => {
@@ -2389,7 +2388,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         style: {
           color: 'transparent',
           weight: 0,
-          fillColor: RELIABILITY_FILL[cell.reliabilityCategory],
+          fillColor: READINESS_FILL[cell.operationalCellularReadiness],
           fillOpacity: 1,
         },
         interactive: false,
