@@ -114,7 +114,7 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   cellularCoverage: {
     label: 'Cellular Coverage',
     explanation:
-      'Displays LTE and 5G coverage by county using FCC availability data. Indicates where cellular service is present, not carrier-specific networks or signal strength. Used to assess feasibility for mobile engagement and coordination.',
+      'Displays LTE and 5G coverage by county using FCC availability data. High: LTE >80% and 5G present with a major population center. Mixed: LTE 50–80% or uneven geographic distribution. Low: LTE <50% or mostly rural coverage gaps. Coverage reflects geographic availability, not signal quality. Large rural counties may appear lower despite strong coverage in populated areas.',
   },
   tier1Legend: {
     label: 'Tier 1',
