@@ -62,31 +62,39 @@ const Index = () => {
       {/* Sidebar */}
       <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 h-[calc(100vh-52px)] md:h-full`}>
         <Sidebar
-          layers={layerState.layers}
-          onToggleLayer={layerState.actions.toggleLayer}
-          allFacilities={facilityData.facilities}
-          facilities={facilityData.filteredFacilities}
-          onAddFacilities={facilityData.addFacilities}
-          searchQuery={filterState.searchQuery}
-          onSearchChange={filterState.actions.setSearchQuery}
-          onFacilityClick={handleFacilityClickFromSidebar}
-          filters={filterState.filters}
-          onFiltersChange={filterState.actions.setFilters}
-          radiusKm={layerState.radiusKm}
-          onRadiusChange={layerState.actions.setRadiusKm}
-          coverageRadius={layerState.coverageRadius}
-          coverageGaps={layerState.coverageGaps}
-          onCoverageRadiusChange={layerState.actions.setCoverageRadius}
-          onCoverageGapsChange={layerState.actions.setCoverageGaps}
-          selectedFteId={selection.activeFteId}
-          onFteCardClick={selection.actions.handleFteCardClick}
-          coverageRadiusKm={layerState.coverageRadiusKm}
-          onCoverageRadiusKmChange={layerState.actions.setCoverageRadiusKm}
-          topProvidersOnly={filterState.topProvidersOnly}
-          onTopProvidersOnlyChange={filterState.actions.setTopProvidersOnly}
-          engagementRateBelow20Only={filterState.engagementRateBelow20Only}
-          onEngagementRateBelow20OnlyChange={filterState.actions.setEngagementRateBelow20Only}
-          onCountySelect={handleCountySelect}
+          layer={{
+            layers: layerState.layers,
+            onToggleLayer: layerState.actions.toggleLayer,
+            coverageRadius: layerState.coverageRadius,
+            coverageGaps: layerState.coverageGaps,
+            onCoverageRadiusChange: layerState.actions.setCoverageRadius,
+            onCoverageGapsChange: layerState.actions.setCoverageGaps,
+            radiusKm: layerState.radiusKm,
+            onRadiusChange: layerState.actions.setRadiusKm,
+            coverageRadiusKm: layerState.coverageRadiusKm,
+            onCoverageRadiusKmChange: layerState.actions.setCoverageRadiusKm,
+          }}
+          filter={{
+            searchQuery: filterState.searchQuery,
+            onSearchChange: filterState.actions.setSearchQuery,
+            filters: filterState.filters,
+            onFiltersChange: filterState.actions.setFilters,
+            topProvidersOnly: filterState.topProvidersOnly,
+            onTopProvidersOnlyChange: filterState.actions.setTopProvidersOnly,
+            engagementRateBelow20Only: filterState.engagementRateBelow20Only,
+            onEngagementRateBelow20OnlyChange: filterState.actions.setEngagementRateBelow20Only,
+          }}
+          facility={{
+            allFacilities: facilityData.facilities,
+            facilities: facilityData.filteredFacilities,
+            onAddFacilities: facilityData.addFacilities,
+            onFacilityClick: handleFacilityClickFromSidebar,
+          }}
+          selection={{
+            selectedFteId: selection.activeFteId,
+            onFteCardClick: selection.actions.handleFteCardClick,
+            onCountySelect: handleCountySelect,
+          }}
           onReplayTutorial={tutorial.replayTutorial}
           tutorialStepKey={tutorial.tutorialStepKey}
         />
