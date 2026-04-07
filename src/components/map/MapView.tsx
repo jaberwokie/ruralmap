@@ -1704,6 +1704,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__entityId = service.id;
         marker.__entityName = service.name;
         applyMarkerPriority(marker, 'default');
+        const bhValidation = serviceValidation.records.get(service.id);
+        if (bhValidation && bhValidation.confidence !== 'verified') {
+          marker.setOpacity(0.82);
+        }
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'behavioral-health-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
