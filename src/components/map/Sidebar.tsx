@@ -4,7 +4,7 @@ import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
 import { toast } from 'sonner';
-import { Filters } from '@/pages/Index';
+import { Filters } from '@/types/filters';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
