@@ -1058,7 +1058,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
@@ -1085,7 +1085,7 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
 
       <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+        <MemberVolumeSection county={county} />
         <EngagementPriorityCard county={county} />
       </DetailSection>
 
@@ -1624,7 +1624,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 };
 
 // ── Rural Service Group ──
-const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; services: RuralService[]; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
   const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
@@ -1699,7 +1699,7 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
         <GapContextAlerts county={county} serviceCount={services.length} />
       </DetailSection>
 
-      {memberVolumeLayerOn && (
+      {(
         <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
           <MemberVolumeSection county={county} />
           <EngagementPriorityCard county={county} />
