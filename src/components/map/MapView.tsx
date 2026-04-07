@@ -17,7 +17,7 @@ import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/cover
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { BROADBAND_BY_COUNTY, type BroadbandStatus, type OperationalBroadbandReadiness } from '@/data/broadband-coverage';
-import { CELLULAR_BY_COUNTY, formatCarriers, type CellularReliability } from '@/data/cellular-coverage';
+import { CELLULAR_BY_COUNTY, formatCarriers, getReliabilityCategory, type CellularReliability, type OperationalCellularReadiness } from '@/data/cellular-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import intersect from '@turf/intersect';
@@ -925,8 +925,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       const cellData = CELLULAR_BY_COUNTY.get(name);
       if (cellData) {
-        metric.cellularReliability = cellData.reliabilityCategory;
-        metric.cellularCarriers = formatCarriers(cellData.carriers);
+        metric.cellularReliability = getReliabilityCategory(cellData);
+        metric.cellularCarriers = formatCarriers(cellData);
       }
 
       metricsByCounty.set(name, metric);
