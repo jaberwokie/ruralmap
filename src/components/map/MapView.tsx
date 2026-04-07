@@ -1790,6 +1790,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
         });
 
+        // Native DOM click backup — same pattern as service/behavioral markers
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'facility-marker-native' });
+              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'facility-marker-native', null, marker);
+            });
+          }
+        });
+
         const classification = getFacilityClassification(facility);
         const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
           ? 'Clinic / Community Provider'
