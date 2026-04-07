@@ -38,8 +38,6 @@ const GAP_COUNTIES = (() => {
   return gaps;
 })();
 
-// Re-export MapEntity from shared types for backward compatibility
-export type { MapEntity } from '@/types/entities';
 import type { MapEntity } from '@/types/entities';
 
 interface CoverageDetailPanelProps {
