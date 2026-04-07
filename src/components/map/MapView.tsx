@@ -141,7 +141,7 @@ function initializeAllPanes(map: L.Map) {
     // opt in at the element level. This prevents higher-z pane divs from
     // blocking clicks on markers/polygons in lower-z panes.
     pane.style.pointerEvents = 'none';
-    if (import.meta.env.DEV) {
+    if (DEBUG_CLICKS) {
       pane.addEventListener('click', () => {
         console.debug('[Pane Click]', { pane: key, id: cfg.id, interactive: cfg.interactive });
       }, true);
@@ -170,7 +170,7 @@ const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>
 );
 
 const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
-const DEBUG_ENABLED = import.meta.env.DEV;
+const DEBUG_ENABLED = DEBUG_CLICKS;
 
 const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
   {
