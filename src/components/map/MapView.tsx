@@ -28,6 +28,7 @@ import type { Feature, Polygon, MultiPolygon } from 'geojson';
 import MapDebugPanel from '@/components/map/MapDebugPanel';
 import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGroup, type DebugLayerDefinition } from '@/components/map/mapDiagnostics';
 import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
+import { buildServiceValidationIndex } from '@/utils/serviceValidation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
@@ -802,6 +803,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   );
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
+  const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), []);
 
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
@@ -1636,6 +1638,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__entityId = service.id;
         marker.__entityName = service.name;
         applyMarkerPriority(marker, 'default');
+        // Reduce opacity for approximate/city-center pins
+        const svcValidation = serviceValidation.records.get(service.id);
+        if (svcValidation && svcValidation.confidence !== 'verified') {
+          marker.setOpacity(0.82);
+        }
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'service-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
@@ -1697,6 +1704,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         marker.__entityId = service.id;
         marker.__entityName = service.name;
         applyMarkerPriority(marker, 'default');
+        const bhValidation = serviceValidation.records.get(service.id);
+        if (bhValidation && bhValidation.confidence !== 'verified') {
+          marker.setOpacity(0.82);
+        }
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'behavioral-health-marker', pointKind: marker.__pointKind });
 
         marker.on('mouseover', () => {
@@ -1878,7 +1889,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         renderedProviderNames: visibleFacilities.map((facility) => facility.name),
       });
     }
-  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, logMapSelectionDebug, mapZoom, onFacilityClick, providerVisibleFacilities, selectMarkerEntity, topProvidersOnly]);
+  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, logMapSelectionDebug, mapZoom, onFacilityClick, providerVisibleFacilities, selectMarkerEntity, serviceValidation, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {

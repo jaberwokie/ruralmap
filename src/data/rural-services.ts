@@ -40,8 +40,8 @@ export const ruralServices: RuralService[] = [
   // 900 E Long St → 39.1546, -119.7534
   { id: "rs-1", name: "Carson City Health & Human Services", category: "Coordinated Entry", county: "Carson City", city: "Carson City", address: "900 East Long Street, Carson City, NV 89706", phone: "(775) 887-2110", lat: 39.17415, lng: -119.75815 },
   { id: "rs-2", name: "Advocates to End Domestic Violence", category: "Shelter", county: "Carson City", city: "Carson City", address: "3640 Gordon Street, Carson City, NV 89702", phone: "(775) 883-7654", lat: 39.17819, lng: -119.72636 },
-  { id: "rs-3", name: "FISH - FOCUS House (Men's Shelter)", category: "Shelter", county: "Carson City", city: "Carson City", phone: "(775) 882-3474", lat: 39.17415, lng: -119.75815, notes: "city-center approx" },
-  { id: "rs-4", name: "FISH - Wylie House (Women & Family)", category: "Shelter", county: "Carson City", city: "Carson City", phone: "(775) 882-3474", lat: 39.1640, lng: -119.7700, notes: "city-center approx; co-located with FISH" },
+  { id: "rs-3", name: "FISH - FOCUS House (Men's Shelter)", category: "Shelter", county: "Carson City", city: "Carson City", address: "138 E Long St, Carson City, NV 89706", phone: "(775) 882-3474", lat: 39.17417, lng: -119.76628, notes: "co-located with FISH Food Pantry" },
+  { id: "rs-4", name: "FISH - Wylie House (Women & Family)", category: "Shelter", county: "Carson City", city: "Carson City", address: "408 Hot Springs Rd, Carson City, NV 89706", phone: "(775) 882-3474", lat: 39.1640, lng: -119.7700, notes: "street-level approx" },
   { id: "rs-5", name: "Carson City Health & Human Services (PSH/RRH)", category: "Supportive Housing", county: "Carson City", city: "Carson City", address: "900 E. Long Street, Carson City, NV 89706", phone: "(775) 887-2110", lat: 39.17291, lng: -119.75711 },
   { id: "rs-6", name: "Nation's Finest - SSVF Program", category: "Supportive Housing", county: "Carson City", city: "Carson City", address: "106 E. Adams Street, Suite 203, Carson City, NV 89706", phone: "(775) 360-2155", lat: 39.17349, lng: -119.76669 },
   { id: "rs-7", name: "Volunteer Attorneys for Rural Nevadans (VARN)", category: "Legal", county: "Carson City", city: "Carson City", address: "412 W. John Street, Suite C, Carson City, NV 89703", phone: "(775) 883-8278", lat: 39.17121, lng: -119.76964 },
@@ -83,7 +83,7 @@ export const ruralServices: RuralService[] = [
   { id: "rs-36", name: "Churchill County Social Services - PATH", category: "Shelter", county: "Churchill", city: "Fallon", address: "270 S. Maine Street, Suite B, Fallon, NV 89406", phone: "(775) 423-6695", lat: 39.4724, lng: -118.77729 },
   { id: "rs-37", name: "Stepping Stones Youth Shelter (FPST)", category: "Shelter", county: "Churchill", city: "Fallon", address: "2101 Agency Road, Fallon, NV 89406", phone: "(775) 423-1132", lat: 39.46731, lng: -118.76104 },
   { id: "rs-38", name: "Churchill County Social Services (RRH)", category: "Supportive Housing", county: "Churchill", city: "Fallon", address: "270 S. Maine Street, Suite B, Fallon, NV 89406", phone: "(775) 423-6695", lat: 39.4724, lng: -118.77729 },
-  { id: "rs-39", name: "New Frontier - Room for Ruth (Women)", category: "Recovery/Boarding", county: "Churchill", city: "Fallon", phone: "(775) 423-1412", lat: 39.47608, lng: -118.77395, notes: "city-center approx" },
+  { id: "rs-39", name: "New Frontier - Room for Ruth (Women)", category: "Recovery/Boarding", county: "Churchill", city: "Fallon", address: "1490 Grimes St, Fallon, NV 89406", phone: "(775) 423-1412", lat: 39.47173, lng: -118.7948, notes: "co-located with New Frontier Treatment Center" },
   // 96 N Broadway → 39.4760, -118.7780
   { id: "rs-40", name: "The Lighthouse at Fallon Christian Fellowship (Men)", category: "Recovery/Boarding", county: "Churchill", city: "Fallon", address: "96 N Broadway, Fallon, NV 89406", phone: "(775) 423-6360", lat: 39.47514, lng: -118.77708 },
   { id: "rs-41", name: "Fallon Daily Bread", category: "Food", county: "Churchill", city: "Fallon", address: "280 E Stillwater Street, Fallon, NV", phone: "(775) 423-4714", lat: 39.4755, lng: -118.7740 },
@@ -145,11 +145,11 @@ export const ruralServices: RuralService[] = [
   { id: "rs-85", name: "DPBH-Rural Clinics: Elko", category: "Mental Health", county: "Elko", city: "Elko", address: "1825 Pinion Road, Suite A, Elko, NV 89801", phone: "(775) 738-8021", lat: 40.83164, lng: -115.73502 },
 
   // ── Esmeralda ──
-  { id: "rs-86", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Esmeralda", city: "Goldfield", phone: "(775) 751-1118", lat: 37.7085, lng: -117.2354, notes: "city-center approx" },
+  { id: "rs-86", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Esmeralda", city: "Goldfield", address: "Goldfield, NV 89013", phone: "(775) 751-1118", lat: 37.7085, lng: -117.2354, notes: "city-center approx; no street address available" },
   { id: "rs-87", name: "Consolidated Agencies of Human Services", category: "Family Services", county: "Esmeralda", city: "Hawthorne", address: "924 5th Street, Hawthorne, NV 89415", phone: "(775) 945-2471", lat: 38.5260, lng: -118.6290, notes: "Serves Esmeralda from Hawthorne" },
 
   // ── Eureka ──
-  { id: "rs-88", name: "Churchill County Social Services (serves Eureka)", category: "Coordinated Entry", county: "Eureka", city: "Eureka", phone: "(775) 423-1412", lat: 39.65989, lng: -116.002, notes: "city-center approx" },
+  { id: "rs-88", name: "Churchill County Social Services (serves Eureka)", category: "Coordinated Entry", county: "Eureka", city: "Eureka", address: "Eureka, NV 89316", phone: "(775) 423-1412", lat: 39.5130, lng: -115.9610, notes: "city-center approx; served remotely from Churchill" },
   { id: "rs-89", name: "Food Pantry by Eureka Senior Center", category: "Food", county: "Eureka", city: "Eureka", address: "20 Gold Street, Eureka, NV 89316", phone: "(775) 237-5597", lat: 39.5130, lng: -115.9610 },
   { id: "rs-90", name: "White Pine County Social Services (serves Eureka)", category: "Family Services", county: "Eureka", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24987, lng: -114.88695 },
   // 20 W Gold St → same as rs-89
@@ -190,13 +190,13 @@ export const ruralServices: RuralService[] = [
   { id: "rs-116", name: "DPBH-Rural Clinics: Battle Mountain", category: "Mental Health", county: "Lander", city: "Battle Mountain", address: "825 North 2nd Street, Battle Mountain, NV 89820", phone: "(775) 635-5753", lat: 40.64811, lng: -116.93651 },
 
   // ── Lincoln ──
-  { id: "rs-117", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Lincoln", city: "Pioche", phone: "(775) 751-1118", lat: 37.61809, lng: -114.51101, notes: "city-center approx" },
-  { id: "rs-118", name: "Emergency Food Assistance - Lincoln County", category: "Food", county: "Lincoln", city: "Pioche", phone: "(775) 962-8084", lat: 37.9296, lng: -114.4524, notes: "city-center approx" },
+  { id: "rs-117", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Lincoln", city: "Pioche", address: "Pioche, NV 89043", phone: "(775) 751-1118", lat: 37.9296, lng: -114.4524, notes: "city-center approx; no street address available" },
+  { id: "rs-118", name: "Emergency Food Assistance - Lincoln County", category: "Food", county: "Lincoln", city: "Pioche", address: "Pioche, NV 89043", phone: "(775) 962-8084", lat: 37.9296, lng: -114.4524, notes: "city-center approx; no street address available" },
   { id: "rs-119", name: "Lincoln County Community Connection", category: "Food", county: "Lincoln", city: "Caliente", address: "30 Lincoln Street, Caliente, NV 89008", phone: "(775) 726-3325", lat: 37.61511, lng: -114.51214 },
   { id: "rs-120", name: "Alamo Senior Center", category: "Senior Services", county: "Lincoln", city: "Alamo", address: "759 Box Canyon Road, Alamo, NV 89001", phone: "(775) 725-3340", lat: 37.35915, lng: -115.18725 },
   { id: "rs-121", name: "Pioche Senior Center", category: "Senior Services", county: "Lincoln", city: "Pioche", address: "410 Field Street, Pioche, NV 89043", phone: "(775) 962-5378", lat: 37.93337, lng: -114.44997 },
   { id: "rs-122", name: "Caliente Olson Senior Center", category: "Senior Services", county: "Lincoln", city: "Caliente", address: "240 Front Street, Caliente, NV 89008", phone: "(775) 726-3740", lat: 37.61211, lng: -114.51581 },
-  { id: "rs-123", name: "EmployNV Career Hub Lincoln County", category: "Employment", county: "Lincoln", city: "Caliente", phone: "(775) 726-3800", lat: 37.6147, lng: -114.5119, notes: "city-center approx" },
+  { id: "rs-123", name: "EmployNV Career Hub Lincoln County", category: "Employment", county: "Lincoln", city: "Caliente", address: "Caliente, NV 89008", phone: "(775) 726-3800", lat: 37.6147, lng: -114.5119, notes: "city-center approx; no street address available" },
   // 700 N Spring St → matches h10: 37.6226, -114.5136
   { id: "rs-124", name: "Lincoln County Medical Associates - Caliente", category: "Physical Health", county: "Lincoln", city: "Caliente", address: "700 N Spring Street, Caliente, NV 89008", phone: "(775) 726-8051", lat: 37.6226, lng: -114.5136 },
   { id: "rs-125", name: "Lincoln County Medical Associates - Alamo", category: "Physical Health", county: "Lincoln", city: "Alamo", address: "33 Joshua Tree Street, Alamo, NV 89001", phone: "(775) 726-8059", lat: 37.36136, lng: -115.16777 },
@@ -231,7 +231,7 @@ export const ruralServices: RuralService[] = [
   { id: "rs-149", name: "DPBH-Rural Clinics: Yerington", category: "Mental Health", county: "Lyon", city: "Yerington", address: "215 W. Bridge Street, Suite 5, Yerington, NV 89447", phone: "(775) 687-2199", lat: 38.98286, lng: -119.1659 },
 
   // ── Mineral ──
-  { id: "rs-150", name: "Lyon County Human Services (serves Mineral)", category: "Coordinated Entry", county: "Mineral", city: "Hawthorne", phone: "(775) 577-5009", lat: 38.53303, lng: -118.62137, notes: "city-center approx" },
+  { id: "rs-150", name: "Lyon County Human Services (serves Mineral)", category: "Coordinated Entry", county: "Mineral", city: "Hawthorne", address: "Hawthorne, NV 89415", phone: "(775) 577-5009", lat: 38.53303, lng: -118.62137, notes: "city-center approx; served remotely from Lyon" },
   { id: "rs-151", name: "SNAP - Dept of Welfare Mineral", category: "Food", county: "Mineral", city: "Hawthorne", address: "1000 C Street, Hawthorne, NV 89415", phone: "(775) 945-3602", lat: 38.52912, lng: -118.63111 },
   // 924 5th St → 38.5260, -118.6290
   { id: "rs-152", name: "Consolidated Agencies of Human Services (WIC)", category: "Food", county: "Mineral", city: "Hawthorne", address: "924 5th Street, Hawthorne, NV 89415", phone: "(775) 945-2471", lat: 38.52781, lng: -118.62411 },
@@ -244,11 +244,11 @@ export const ruralServices: RuralService[] = [
   { id: "rs-157", name: "Mt. Grant General Hospital", category: "Physical Health", county: "Mineral", city: "Hawthorne", address: "200 South A Street, Hawthorne, NV 89415", phone: "(775) 945-2461", lat: 38.5166, lng: -118.6274 },
 
   // ── Nye ──
-  { id: "rs-158", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Nye", city: "Pahrump", phone: "(775) 751-1118", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-159", name: "Nye County Social Services", category: "Shelter", county: "Nye", city: "Pahrump", phone: "(775) 751-7075", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", phone: "(775) 727-9970", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", phone: "(775) 751-7300", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
-  { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", phone: "(775) 727-5008", lat: 36.2083, lng: -115.9839, notes: "city-center approx" },
+  { id: "rs-158", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Nye", city: "Pahrump", address: "1397 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-1118", lat: 36.2080, lng: -115.9840, notes: "co-located with Family Centers of Nevada" },
+  { id: "rs-159", name: "Nye County Social Services", category: "Shelter", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7075", lat: 36.2078, lng: -115.9720, notes: "street-level approx" },
+  { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", address: "1600 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 727-9970", lat: 36.2080, lng: -115.9780, notes: "street-level approx" },
+  { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7300", lat: 36.2078, lng: -115.9720, notes: "co-located with Nye County Social Services" },
+  { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", address: "1370 W Basin Ave, Pahrump, NV 89060", phone: "(775) 727-5008", lat: 36.2058, lng: -116.0100, notes: "street-level approx" },
   // 360 S Lola Ln → matches h1: 36.2142, -116.0248
   { id: "rs-164", name: "Desert View Hospital BH Services", category: "Mental Health", county: "Nye", city: "Pahrump", address: "360 S Lola Ln, Pahrump, NV", phone: "(775) 751-7500", lat: 36.2142, lng: -116.0248 },
 
@@ -256,24 +256,24 @@ export const ruralServices: RuralService[] = [
   // 1005 E Broadway Ave → 40.1793, -118.4734
   { id: "rs-165", name: "Frontier Community Coalition (Pershing)", category: "Coordinated Entry", county: "Pershing", city: "Lovelock", address: "1005 E Broadway Avenue, Lovelock, NV 89419", phone: "(775) 273-2400", lat: 40.1793, lng: -118.4734 },
   { id: "rs-166", name: "Frontier Community Coalition (Family)", category: "Family Services", county: "Pershing", city: "Lovelock", address: "1005 E Broadway Avenue, Lovelock, NV 89419", phone: "(775) 273-2400", lat: 40.1793, lng: -118.4734 },
-  { id: "rs-167", name: "Pershing County Senior Center", category: "Senior Services", county: "Pershing", city: "Lovelock", phone: "(775) 273-2284", lat: 40.1800, lng: -118.4740, notes: "city-center approx" },
+  { id: "rs-167", name: "Pershing County Senior Center", category: "Senior Services", county: "Pershing", city: "Lovelock", address: "1075 Dartmouth Ave, Lovelock, NV 89419", phone: "(775) 273-2284", lat: 40.1793, lng: -118.4750, notes: "street-level approx" },
   // 855 6th St → matches h11: 40.1762, -118.4818
   { id: "rs-168", name: "Pershing General Hospital", category: "Physical Health", county: "Pershing", city: "Lovelock", address: "855 6th St, Lovelock, NV 89419", phone: "(775) 273-2621", lat: 40.1762, lng: -118.4818 },
 
   // ── Storey ──
-  { id: "rs-169", name: "Lyon County Human Services (serves Storey)", category: "Coordinated Entry", county: "Storey", city: "Virginia City", phone: "(775) 577-5009", lat: 39.24987, lng: -114.88695, notes: "city-center approx" },
-  { id: "rs-170", name: "Storey County Human Services", category: "Family Services", county: "Storey", city: "Virginia City", phone: "(775) 847-1140", lat: 39.3096, lng: -119.6500, notes: "city-center approx" },
-  { id: "rs-171", name: "Storey County Senior Center", category: "Senior Services", county: "Storey", city: "Virginia City", phone: "(775) 847-0956", lat: 39.3096, lng: -119.6500, notes: "city-center approx" },
+  { id: "rs-169", name: "Lyon County Human Services (serves Storey)", category: "Coordinated Entry", county: "Storey", city: "Virginia City", address: "Virginia City, NV 89440", phone: "(775) 577-5009", lat: 39.3096, lng: -119.6500, notes: "city-center approx; served remotely from Lyon" },
+  { id: "rs-170", name: "Storey County Human Services", category: "Family Services", county: "Storey", city: "Virginia City", address: "26 S B St, Virginia City, NV 89440", phone: "(775) 847-1140", lat: 39.3096, lng: -119.6500, notes: "street-level approx" },
+  { id: "rs-171", name: "Storey County Senior Center", category: "Senior Services", county: "Storey", city: "Virginia City", address: "145 N C St, Virginia City, NV 89440", phone: "(775) 847-0956", lat: 39.3110, lng: -119.6490, notes: "street-level approx" },
 
   // ── White Pine ──
   // 297 11th St → 39.2480, -114.8870
   { id: "rs-172", name: "White Pine County Social Services", category: "Coordinated Entry", county: "White Pine", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24581, lng: -114.88711 },
   { id: "rs-173", name: "White Pine County Social Services (Shelter)", category: "Shelter", county: "White Pine", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24987, lng: -114.88695 },
-  { id: "rs-174", name: "Nevada Legal Services Ely", category: "Legal", county: "White Pine", city: "Ely", phone: "(775) 289-8522", lat: 39.26399, lng: -114.85575, notes: "city-center approx" },
-  { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", phone: "(775) 289-4091", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
+  { id: "rs-174", name: "Nevada Legal Services Ely", category: "Legal", county: "White Pine", city: "Ely", address: "725 Railroad St, Ely, NV 89301", phone: "(775) 289-8522", lat: 39.2480, lng: -114.8870, notes: "street-level approx" },
+  { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", address: "59 Campton St, Ely, NV 89301", phone: "(775) 289-4091", lat: 39.2480, lng: -114.8860, notes: "street-level approx" },
   { id: "rs-176", name: "DCFS White Pine", category: "Family Services", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.24831, lng: -114.87812 },
-  { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", phone: "(775) 289-3582", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
-  { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", phone: "(775) 289-1640", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
+  { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", address: "1900 Bobcat Dr, Ely, NV 89301", phone: "(775) 289-3582", lat: 39.2530, lng: -114.8750, notes: "street-level approx" },
+  { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.24831, lng: -114.87812, notes: "co-located with DCFS White Pine" },
 ];
 
 /** Unique counties present in the rural services dataset */
