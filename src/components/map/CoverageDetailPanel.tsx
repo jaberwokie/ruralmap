@@ -1241,13 +1241,18 @@ const DetailSection = ({ title, isOpen, onToggle, children, count }: { title: st
   );
 };
 
-/** Hook for accordion state: only one section open at a time */
+/** Hook for independent multi-open section state */
 const useAccordion = (defaultSection: string) => {
-  const [openSection, setOpenSection] = useState<string | null>(defaultSection);
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set([defaultSection]));
   const toggle = useCallback((section: string) => {
-    setOpenSection(prev => prev === section ? null : section);
+    setOpenSections(prev => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
   }, []);
-  const isOpen = useCallback((section: string) => openSection === section, [openSection]);
+  const isOpen = useCallback((section: string) => openSections.has(section), [openSections]);
   return { isOpen, toggle };
 };
 
