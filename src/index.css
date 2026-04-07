@@ -379,15 +379,32 @@
   50% { box-shadow: 0 0 0 6px hsla(0, 0%, 0%, 0.05); }
 }
 
-/* Ensure Leaflet marker icons remain clickable — except labels which must not block polygons */
+/* Ensure Leaflet marker icons remain clickable */
 .leaflet-marker-icon,
 .leaflet-marker-shadow {
   pointer-events: auto !important;
 }
-/* Labels pane markers must pass clicks through to county polygons beneath.
-   Leaflet createPane('labels-pane') → class 'leaflet-labels-pane-pane' */
-.leaflet-labels-pane-pane .leaflet-marker-icon {
+
+/* Coverage pane must never intercept clicks */
+.leaflet-coverage-pane-pane,
+.leaflet-coverage-pane-pane * {
   pointer-events: none !important;
+}
+
+/* Base polygons pane must never intercept clicks */
+.leaflet-base-polygons-pane-pane {
+  pointer-events: none !important;
+}
+/* But label markers inside base polygons should also pass through */
+.leaflet-base-polygons-pane-pane .leaflet-marker-icon {
+  pointer-events: none !important;
+}
+
+/* All marker icons inside any pane are clickable */
+.leaflet-markers-pane-pane .leaflet-marker-icon,
+.leaflet-provider-markers-pane-pane .leaflet-marker-icon {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }
 
 /* Ensure interactive SVG paths (county hit areas, engagement gap polygons, etc.)
@@ -398,5 +415,13 @@
   pointer-events: none;
 }
 .leaflet-pane svg .leaflet-interactive {
+  pointer-events: auto;
+}
+
+/* County interactive pane SVG needs pointer-events */
+.leaflet-county-interactive-pane-pane svg {
+  pointer-events: auto;
+}
+.leaflet-county-interactive-pane-pane svg .leaflet-interactive {
   pointer-events: auto;
 }
