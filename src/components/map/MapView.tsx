@@ -1645,11 +1645,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const [displayLat, displayLng] = displayCoordinates.get(`service:${service.id}`) ?? [service.lat, service.lng];
 
         const marker = L.marker([displayLat, displayLng], {
-          pane: MAP_PANES.servicePresence,
           icon: servicePresenceIcon,
+          pane: MAP_PANES.servicePresence,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
-          interactive: true,
-          bubblingMouseEvents: true,
         }) as MapPointMarker;
 
         marker.__pointKind = 'servicePresence';
@@ -1694,15 +1692,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
+        // Native DOM click backup — same pattern as provider markers
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
+            });
+          }
+        });
+
         servicePresenceMarkerRef.current!.addLayer(marker);
-        // Native DOM click backup — attached immediately after addLayer
-        const svcIconEl = marker.getElement?.();
-        if (svcIconEl) {
-          svcIconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-            nativeEvent.stopPropagation();
-            selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
-          });
-        }
       });
     }
 
@@ -1722,11 +1723,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const [displayLat, displayLng] = displayCoordinates.get(`behavioral-health:${service.id}`) ?? [service.lat, service.lng];
 
         const marker = L.marker([displayLat, displayLng], {
-          pane: MAP_PANES.behavioralHealth,
           icon: behavioralHealthIcon,
+          pane: MAP_PANES.behavioralHealth,
           zIndexOffset: POINT_MARKER_PRIORITY.base,
-          interactive: true,
-          bubblingMouseEvents: true,
         }) as MapPointMarker;
 
         marker.__pointKind = 'behavioralHealth';
@@ -1770,15 +1769,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
+        // Native DOM click backup — same pattern as provider markers
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
+            });
+          }
+        });
+
         behavioralHealthMarkerRef.current!.addLayer(marker);
-        // Native DOM click backup — attached immediately after addLayer
-        const bhIconEl = marker.getElement?.();
-        if (bhIconEl) {
-          bhIconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-            nativeEvent.stopPropagation();
-            selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
-          });
-        }
       });
     }
 
