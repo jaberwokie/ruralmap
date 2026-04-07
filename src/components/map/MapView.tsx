@@ -1646,22 +1646,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-leaflet', event, marker);
-        });
-
-        // Native DOM click backup — fires even when Leaflet's internal
-        // event dispatch doesn't propagate through custom panes.
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'service-marker-native' });
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
-            });
-          }
-        });
+        // Click handled by group-level handler on servicePresenceMarkerRef
+        // No individual .on('click') — group handler is the single source of truth.
 
         marker.bindTooltip(
           `
@@ -1721,20 +1707,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity({ type: 'ruralService', service }, 'bh-marker-leaflet', event, marker);
-        });
-
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'bh-marker-native' });
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'bh-marker-native', null, marker);
-            });
-          }
-        });
+        // Click handled by group-level handler on behavioralHealthMarkerRef
+        // No individual .on('click') — group handler is the single source of truth.
 
         marker.bindTooltip(
           `
