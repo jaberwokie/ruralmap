@@ -2502,6 +2502,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             </div>
           </div>
           <p className="text-[8px] text-muted-foreground/50 mt-1">FCC BDC J25 · Confidence: Medium</p>
+          <p className="text-[8px] text-muted-foreground/40 mt-0.5 leading-snug">Geographic availability, not signal quality. Rural counties may appear lower despite coverage in towns.</p>
         </div>
       )}
       {DEBUG_ENABLED && (
