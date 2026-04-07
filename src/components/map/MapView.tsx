@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
