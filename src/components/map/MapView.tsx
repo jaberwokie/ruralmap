@@ -2432,14 +2432,20 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                   </div>
                 </div>
               )}
-              {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
+               {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
                 <div className="border-t border-border/70 pt-1 space-y-0.5">
-                  <CountyHoverMetricRow label="Broadband" value={countyHoverPreview.broadbandStatus} />
-                  {typeof countyHoverPreview.broadbandServedPercent === 'number' && (
-                    <CountyHoverMetricRow label="Served" value={`${countyHoverPreview.broadbandServedPercent}%`} />
+                  <CountyHoverMetricRow label="Readiness" value={countyHoverPreview.broadbandReadiness ?? countyHoverPreview.broadbandStatus} />
+                  {typeof countyHoverPreview.pct_100_20_plus === 'number' && (
+                    <CountyHoverMetricRow label="≥100/20" value={`${countyHoverPreview.pct_100_20_plus}%`} />
                   )}
-                  {typeof countyHoverPreview.broadbandUnservedPercent === 'number' && countyHoverPreview.broadbandUnservedPercent > 0 && (
-                    <CountyHoverMetricRow label="Unserved" value={`${countyHoverPreview.broadbandUnservedPercent}%`} />
+                  {typeof countyHoverPreview.pct_below_25_3 === 'number' && countyHoverPreview.pct_below_25_3 > 0 && (
+                    <CountyHoverMetricRow label="<25/3" value={`${countyHoverPreview.pct_below_25_3}%`} />
+                  )}
+                  {typeof countyHoverPreview.broadbandSatelliteShare === 'number' && countyHoverPreview.broadbandSatelliteShare >= 30 && (
+                    <CountyHoverMetricRow label="Satellite" value={`${countyHoverPreview.broadbandSatelliteShare}%`} />
+                  )}
+                  {countyHoverPreview.broadbandUneven && (
+                    <div className="text-[9px] text-engagement-watch mt-0.5">⚠ Uneven coverage</div>
                   )}
                 </div>
               )}
