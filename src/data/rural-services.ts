@@ -145,11 +145,11 @@ export const ruralServices: RuralService[] = [
   { id: "rs-85", name: "DPBH-Rural Clinics: Elko", category: "Mental Health", county: "Elko", city: "Elko", address: "1825 Pinion Road, Suite A, Elko, NV 89801", phone: "(775) 738-8021", lat: 40.83164, lng: -115.73502 },
 
   // ── Esmeralda ──
-  { id: "rs-86", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Esmeralda", city: "Goldfield", phone: "(775) 751-1118", lat: 37.7085, lng: -117.2354, notes: "city-center approx" },
+  { id: "rs-86", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Esmeralda", city: "Goldfield", address: "Goldfield, NV 89013", phone: "(775) 751-1118", lat: 37.7085, lng: -117.2354, notes: "city-center approx; no street address available" },
   { id: "rs-87", name: "Consolidated Agencies of Human Services", category: "Family Services", county: "Esmeralda", city: "Hawthorne", address: "924 5th Street, Hawthorne, NV 89415", phone: "(775) 945-2471", lat: 38.5260, lng: -118.6290, notes: "Serves Esmeralda from Hawthorne" },
 
   // ── Eureka ──
-  { id: "rs-88", name: "Churchill County Social Services (serves Eureka)", category: "Coordinated Entry", county: "Eureka", city: "Eureka", phone: "(775) 423-1412", lat: 39.65989, lng: -116.002, notes: "city-center approx" },
+  { id: "rs-88", name: "Churchill County Social Services (serves Eureka)", category: "Coordinated Entry", county: "Eureka", city: "Eureka", address: "Eureka, NV 89316", phone: "(775) 423-1412", lat: 39.5130, lng: -115.9610, notes: "city-center approx; served remotely from Churchill" },
   { id: "rs-89", name: "Food Pantry by Eureka Senior Center", category: "Food", county: "Eureka", city: "Eureka", address: "20 Gold Street, Eureka, NV 89316", phone: "(775) 237-5597", lat: 39.5130, lng: -115.9610 },
   { id: "rs-90", name: "White Pine County Social Services (serves Eureka)", category: "Family Services", county: "Eureka", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24987, lng: -114.88695 },
   // 20 W Gold St → same as rs-89
@@ -190,13 +190,13 @@ export const ruralServices: RuralService[] = [
   { id: "rs-116", name: "DPBH-Rural Clinics: Battle Mountain", category: "Mental Health", county: "Lander", city: "Battle Mountain", address: "825 North 2nd Street, Battle Mountain, NV 89820", phone: "(775) 635-5753", lat: 40.64811, lng: -116.93651 },
 
   // ── Lincoln ──
-  { id: "rs-117", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Lincoln", city: "Pioche", phone: "(775) 751-1118", lat: 37.61809, lng: -114.51101, notes: "city-center approx" },
-  { id: "rs-118", name: "Emergency Food Assistance - Lincoln County", category: "Food", county: "Lincoln", city: "Pioche", phone: "(775) 962-8084", lat: 37.9296, lng: -114.4524, notes: "city-center approx" },
+  { id: "rs-117", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Lincoln", city: "Pioche", address: "Pioche, NV 89043", phone: "(775) 751-1118", lat: 37.9296, lng: -114.4524, notes: "city-center approx; no street address available" },
+  { id: "rs-118", name: "Emergency Food Assistance - Lincoln County", category: "Food", county: "Lincoln", city: "Pioche", address: "Pioche, NV 89043", phone: "(775) 962-8084", lat: 37.9296, lng: -114.4524, notes: "city-center approx; no street address available" },
   { id: "rs-119", name: "Lincoln County Community Connection", category: "Food", county: "Lincoln", city: "Caliente", address: "30 Lincoln Street, Caliente, NV 89008", phone: "(775) 726-3325", lat: 37.61511, lng: -114.51214 },
   { id: "rs-120", name: "Alamo Senior Center", category: "Senior Services", county: "Lincoln", city: "Alamo", address: "759 Box Canyon Road, Alamo, NV 89001", phone: "(775) 725-3340", lat: 37.35915, lng: -115.18725 },
   { id: "rs-121", name: "Pioche Senior Center", category: "Senior Services", county: "Lincoln", city: "Pioche", address: "410 Field Street, Pioche, NV 89043", phone: "(775) 962-5378", lat: 37.93337, lng: -114.44997 },
   { id: "rs-122", name: "Caliente Olson Senior Center", category: "Senior Services", county: "Lincoln", city: "Caliente", address: "240 Front Street, Caliente, NV 89008", phone: "(775) 726-3740", lat: 37.61211, lng: -114.51581 },
-  { id: "rs-123", name: "EmployNV Career Hub Lincoln County", category: "Employment", county: "Lincoln", city: "Caliente", phone: "(775) 726-3800", lat: 37.6147, lng: -114.5119, notes: "city-center approx" },
+  { id: "rs-123", name: "EmployNV Career Hub Lincoln County", category: "Employment", county: "Lincoln", city: "Caliente", address: "Caliente, NV 89008", phone: "(775) 726-3800", lat: 37.6147, lng: -114.5119, notes: "city-center approx; no street address available" },
   // 700 N Spring St → matches h10: 37.6226, -114.5136
   { id: "rs-124", name: "Lincoln County Medical Associates - Caliente", category: "Physical Health", county: "Lincoln", city: "Caliente", address: "700 N Spring Street, Caliente, NV 89008", phone: "(775) 726-8051", lat: 37.6226, lng: -114.5136 },
   { id: "rs-125", name: "Lincoln County Medical Associates - Alamo", category: "Physical Health", county: "Lincoln", city: "Alamo", address: "33 Joshua Tree Street, Alamo, NV 89001", phone: "(775) 726-8059", lat: 37.36136, lng: -115.16777 },
@@ -231,7 +231,7 @@ export const ruralServices: RuralService[] = [
   { id: "rs-149", name: "DPBH-Rural Clinics: Yerington", category: "Mental Health", county: "Lyon", city: "Yerington", address: "215 W. Bridge Street, Suite 5, Yerington, NV 89447", phone: "(775) 687-2199", lat: 38.98286, lng: -119.1659 },
 
   // ── Mineral ──
-  { id: "rs-150", name: "Lyon County Human Services (serves Mineral)", category: "Coordinated Entry", county: "Mineral", city: "Hawthorne", phone: "(775) 577-5009", lat: 38.53303, lng: -118.62137, notes: "city-center approx" },
+  { id: "rs-150", name: "Lyon County Human Services (serves Mineral)", category: "Coordinated Entry", county: "Mineral", city: "Hawthorne", address: "Hawthorne, NV 89415", phone: "(775) 577-5009", lat: 38.53303, lng: -118.62137, notes: "city-center approx; served remotely from Lyon" },
   { id: "rs-151", name: "SNAP - Dept of Welfare Mineral", category: "Food", county: "Mineral", city: "Hawthorne", address: "1000 C Street, Hawthorne, NV 89415", phone: "(775) 945-3602", lat: 38.52912, lng: -118.63111 },
   // 924 5th St → 38.5260, -118.6290
   { id: "rs-152", name: "Consolidated Agencies of Human Services (WIC)", category: "Food", county: "Mineral", city: "Hawthorne", address: "924 5th Street, Hawthorne, NV 89415", phone: "(775) 945-2471", lat: 38.52781, lng: -118.62411 },
