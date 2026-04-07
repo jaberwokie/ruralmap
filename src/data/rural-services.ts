@@ -269,11 +269,11 @@ export const ruralServices: RuralService[] = [
   // 297 11th St → 39.2480, -114.8870
   { id: "rs-172", name: "White Pine County Social Services", category: "Coordinated Entry", county: "White Pine", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24581, lng: -114.88711 },
   { id: "rs-173", name: "White Pine County Social Services (Shelter)", category: "Shelter", county: "White Pine", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24987, lng: -114.88695 },
-  { id: "rs-174", name: "Nevada Legal Services Ely", category: "Legal", county: "White Pine", city: "Ely", phone: "(775) 289-8522", lat: 39.26399, lng: -114.85575, notes: "city-center approx" },
-  { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", phone: "(775) 289-4091", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
+  { id: "rs-174", name: "Nevada Legal Services Ely", category: "Legal", county: "White Pine", city: "Ely", address: "725 Railroad St, Ely, NV 89301", phone: "(775) 289-8522", lat: 39.2480, lng: -114.8870, notes: "street-level approx" },
+  { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", address: "59 Campton St, Ely, NV 89301", phone: "(775) 289-4091", lat: 39.2480, lng: -114.8860, notes: "street-level approx" },
   { id: "rs-176", name: "DCFS White Pine", category: "Family Services", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.24831, lng: -114.87812 },
-  { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", phone: "(775) 289-3582", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
-  { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", phone: "(775) 289-1640", lat: 39.2470, lng: -114.8880, notes: "city-center approx" },
+  { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", address: "1900 Bobcat Dr, Ely, NV 89301", phone: "(775) 289-3582", lat: 39.2530, lng: -114.8750, notes: "street-level approx" },
+  { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.24831, lng: -114.87812, notes: "co-located with DCFS White Pine" },
 ];
 
 /** Unique counties present in the rural services dataset */
