@@ -684,6 +684,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     armInteractionGuard('marker');
     if (marker) selectPointMarkerRef.current(marker);
     logMapSelectionDebug('selectMarkerEntity-called', entity, { source });
+    const eName = (entity as any)?.facility?.name ?? (entity as any)?.service?.name ?? (entity as any)?.name ?? 'unknown';
+    const eType = (entity as any)?.type ?? 'unknown';
+    debugMarkerClick(eType, eName, marker);
     onEntityClickRef.current?.(entity);
   }, [armInteractionGuard, logMapSelectionDebug, stopInteractionEvent]);
 
@@ -699,6 +702,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     armInteractionGuard('county');
     clearSelectedPointMarkerRef.current();
     logMapSelectionDebug('selectCountyEntity-called', entity, { source });
+    debugCountyClick(county);
     onEntityClickRef.current?.(entity);
   }, [armInteractionGuard, hasActiveMarkerGuard, logMapSelectionDebug, stopInteractionEvent]);
 
@@ -1294,6 +1298,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
       clearSelectedPointMarkerRef.current();
       logMapSelectionDebug('background-click-clear-executed', null, { source: 'map-background' });
+      debugMapClear();
       onMapClickRef.current?.();
     });
     map.on('zoomend', () => setMapZoom(map.getZoom()));
