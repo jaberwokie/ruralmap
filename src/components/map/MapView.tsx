@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
+import { DEBUG_CLICKS, debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -694,6 +694,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     onEntityClickRef.current?.(entity);
   }, [armInteractionGuard, logMapSelectionDebug, stopInteractionEvent]);
 
+  // Stable ref so group-level handlers (bound once at map init) always
+  // call the latest selectMarkerEntity without stale closures.
+  const selectMarkerEntityRef = useRef(selectMarkerEntity);
+  selectMarkerEntityRef.current = selectMarkerEntity;
+
   const selectCountyEntity = useCallback((county: string | null | undefined, source: string, originalEvent?: L.LeafletEvent | Event | null) => {
     if (!county) return;
     const entity: MapEntity = { type: 'county', county };
@@ -1230,21 +1235,29 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     engagementGapRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.featureGroup().addTo(map);
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
-    // Group-level click handler for service markers — same safety-net pattern
-    // as the MarkerClusterGroup handlers that make provider markers reliable.
+    // Group-level click handler for service markers — authoritative, uses ref
+    // to avoid stale closure since this is bound once at map init.
     (servicePresenceMarkerRef.current as any).on('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
+      const layer = e.layer || e.propagatedFrom || e.sourceTarget;
+      const marker = layer as MapPointMarker | undefined;
+      if (DEBUG_CLICKS) {
+        console.log('[service-group-click] layer:', layer, 'entity:', marker?.__entity);
+      }
       if (marker?.__entity) {
-        selectMarkerEntity(marker.__entity as PointSelectionEntity, 'service-group-click', e, marker);
+        selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity, 'service-group-click', e, marker);
       }
     });
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
-    // Group-level click handler for behavioral health markers
+    // Group-level click handler for behavioral health markers — authoritative
     (behavioralHealthMarkerRef.current as any).on('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
+      const layer = e.layer || e.propagatedFrom || e.sourceTarget;
+      const marker = layer as MapPointMarker | undefined;
+      if (DEBUG_CLICKS) {
+        console.log('[bh-group-click] layer:', layer, 'entity:', marker?.__entity);
+      }
       if (marker?.__entity) {
-        selectMarkerEntity(marker.__entity as PointSelectionEntity, 'bh-group-click', e, marker);
+        selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity, 'bh-group-click', e, marker);
       }
     });
     markersRef.current = markerClusterFactory?.({
@@ -1633,22 +1646,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-leaflet', event, marker);
-        });
-
-        // Native DOM click backup — fires even when Leaflet's internal
-        // event dispatch doesn't propagate through custom panes.
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'service-marker-native' });
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
-            });
-          }
-        });
+        // Click handled by group-level handler on servicePresenceMarkerRef
+        // No individual .on('click') — group handler is the single source of truth.
 
         marker.bindTooltip(
           `
@@ -1708,20 +1707,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity({ type: 'ruralService', service }, 'bh-marker-leaflet', event, marker);
-        });
-
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'bh-marker-native' });
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'bh-marker-native', null, marker);
-            });
-          }
-        });
+        // Click handled by group-level handler on behavioralHealthMarkerRef
+        // No individual .on('click') — group handler is the single source of truth.
 
         marker.bindTooltip(
           `
