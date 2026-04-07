@@ -1762,6 +1762,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         );
 
         behavioralHealthMarkerRef.current!.addLayer(marker);
+        // Native DOM click backup — attached immediately after addLayer
+        const bhIconEl = marker.getElement?.();
+        if (bhIconEl) {
+          bhIconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+            nativeEvent.stopPropagation();
+            selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
+          });
+        }
       });
     }
 
