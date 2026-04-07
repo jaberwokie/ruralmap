@@ -400,11 +400,7 @@
   pointer-events: none !important;
 }
 
-/* Interactive marker panes */
-.leaflet-markers-pane-pane,
-.leaflet-provider-markers-pane-pane {
-  pointer-events: auto !important;
-}
+/* All marker icons inside any pane are clickable */
 .leaflet-markers-pane-pane .leaflet-marker-icon,
 .leaflet-provider-markers-pane-pane .leaflet-marker-icon {
   pointer-events: auto !important;
