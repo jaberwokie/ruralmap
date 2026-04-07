@@ -136,7 +136,11 @@ function initializeAllPanes(map: L.Map) {
   Object.entries(PANE_CONFIG).forEach(([key, cfg]) => {
     const pane = map.createPane(cfg.id);
     pane.style.zIndex = String(cfg.zIndex);
-    pane.style.pointerEvents = cfg.interactive ? 'auto' : 'none';
+    // ALL pane divs are pointer-events: none. Interactive elements (marker
+    // icons via .leaflet-marker-icon and SVG paths via .leaflet-interactive)
+    // opt in at the element level. This prevents higher-z pane divs from
+    // blocking clicks on markers/polygons in lower-z panes.
+    pane.style.pointerEvents = 'none';
     if (import.meta.env.DEV) {
       pane.addEventListener('click', () => {
         console.debug('[Pane Click]', { pane: key, id: cfg.id, interactive: cfg.interactive });
