@@ -694,6 +694,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     onEntityClickRef.current?.(entity);
   }, [armInteractionGuard, logMapSelectionDebug, stopInteractionEvent]);
 
+  // Stable ref so group-level handlers (bound once at map init) always
+  // call the latest selectMarkerEntity without stale closures.
+  const selectMarkerEntityRef = useRef(selectMarkerEntity);
+  selectMarkerEntityRef.current = selectMarkerEntity;
+
   const selectCountyEntity = useCallback((county: string | null | undefined, source: string, originalEvent?: L.LeafletEvent | Event | null) => {
     if (!county) return;
     const entity: MapEntity = { type: 'county', county };
