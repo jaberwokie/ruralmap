@@ -803,6 +803,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   );
 
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
+  const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), []);
 
   const filteredRuralServices = useMemo(() => {
     let result = ruralServices;
