@@ -10,7 +10,7 @@ import { ruralServices } from '@/data/rural-services';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
-import { MapEntity } from '@/components/map/CoverageDetailPanel';
+import { MapEntity } from '@/types/entities';
 import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
