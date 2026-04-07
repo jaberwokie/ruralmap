@@ -1211,37 +1211,73 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
         if (!cell) return null;
         const feasibility = getCountyMobileFeasibility(county);
         const note = getCellularOperationalNote(cell);
+        const reliability = getReliabilityCategory(cell);
         return (
           <DetailSection title="Cellular Coverage" isOpen={isOpen('cellular')} onToggle={() => toggle('cellular')}>
             <div className="space-y-1.5">
               <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Signal className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Reliability</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Readiness</span>
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Reliability</span>
-                    <span className={`font-bold ${RELIABILITY_COLORS[cell.reliabilityCategory]}`}>{cell.reliabilityCategory}</span>
+                    <span className="text-muted-foreground">Readiness</span>
+                    <span className={`font-bold ${CELLULAR_READINESS_COLORS[cell.operationalCellularReadiness]}`}>{cell.operationalCellularReadiness}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Carriers</span>
-                    <span className="font-medium text-foreground">{formatCarriers(cell.carriers)}</span>
+                    <span className="font-medium text-foreground">{formatCarriers(cell)}</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Signal Score</span>
-                    <span className="font-medium tabular-nums text-foreground">{cell.signalStrengthScore}/100</span>
+                    <span className="text-muted-foreground">Overlap</span>
+                    <span className="font-medium tabular-nums text-foreground">{cell.carrierOverlapScore} of 3</span>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Signal Distribution</div>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Strong (5G+LTE)</span>
+                    <span className="font-bold tabular-nums text-foreground">{cell.strongSignalPct}%</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Moderate (LTE)</span>
+                    <span className="font-bold tabular-nums text-foreground">{cell.moderateSignalPct}%</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Weak / None</span>
+                    <span className="font-bold tabular-nums text-foreground">{cell.weakOrNonePct}%</span>
+                  </div>
+                </div>
+              </div>
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Carrier Coverage</div>
+                <div className="space-y-0.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Verizon</span>
+                    <span className="font-medium tabular-nums text-foreground">{cell.verizonCoveragePct}% <span className="text-muted-foreground/60">({cell.verizon5gPct}% 5G)</span></span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">AT&T</span>
+                    <span className="font-medium tabular-nums text-foreground">{cell.attCoveragePct}% <span className="text-muted-foreground/60">({cell.att5gPct}% 5G)</span></span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">T-Mobile</span>
+                    <span className="font-medium tabular-nums text-foreground">{cell.tmobileCoveragePct}% <span className="text-muted-foreground/60">({cell.tmobile5gPct}% 5G)</span></span>
                   </div>
                 </div>
               </div>
               {feasibility && (
                 <div className="flex justify-between text-[11px] px-0.5">
                   <span className="text-muted-foreground">Mobile Feasibility</span>
-                  <span className={`font-semibold ${RELIABILITY_COLORS[cell.reliabilityCategory]}`}>{feasibility.replace(' Mobile Feasibility', '')}</span>
+                  <span className={`font-semibold ${CELLULAR_READINESS_COLORS[cell.operationalCellularReadiness]}`}>{feasibility.replace(' Mobile Feasibility', '')}</span>
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
               {cell.notes && <p className="text-[9px] italic text-muted-foreground/60">{cell.notes}</p>}
+              <p className="text-[9px] italic text-muted-foreground/40">Confidence: {cell.fieldReliabilityConfidence} — FCC modeled data</p>
             </div>
           </DetailSection>
         );
