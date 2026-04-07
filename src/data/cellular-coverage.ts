@@ -1,62 +1,53 @@
 /**
  * County-level cellular coverage data for Nevada.
  *
- * Derived from FCC BDC Mobile Broadband Provider Summary, J25 (March 2026).
- * National carrier technology profiles + Nevada geographic modeling.
+ * Derived from FCC BDC Nevada mobile availability geometry
+ * (4G LTE and 5G-NR, J25 31mar2026).
  *
- * fieldReliabilityConfidence is "Medium" because FCC data is modeled coverage,
- * not field-measured signal strength.
+ * This dataset does NOT include carrier-specific breakdowns.
+ * fieldReliabilityConfidence is "Medium" — FCC geometry is modeled, not field-measured.
  */
+
+const cellularJson: CountyCellularData[] = [
+  { countyName: "Carson City", lteCoveragePct: 94.2, fiveGCoveragePct: 92.1, strongSignalPct: 92.1, moderateSignalPct: 2.1, weakOrNonePct: 5.8, operationalCellularReadiness: "High", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Churchill", lteCoveragePct: 75.9, fiveGCoveragePct: 29.0, strongSignalPct: 29.0, moderateSignalPct: 46.9, weakOrNonePct: 24.1, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Clark", lteCoveragePct: 75.6, fiveGCoveragePct: 59.4, strongSignalPct: 59.4, moderateSignalPct: 16.2, weakOrNonePct: 24.4, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Douglas", lteCoveragePct: 86.3, fiveGCoveragePct: 76.7, strongSignalPct: 76.7, moderateSignalPct: 9.7, weakOrNonePct: 13.7, operationalCellularReadiness: "High", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Elko", lteCoveragePct: 56.9, fiveGCoveragePct: 42.7, strongSignalPct: 42.7, moderateSignalPct: 14.2, weakOrNonePct: 43.1, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Esmeralda", lteCoveragePct: 74.8, fiveGCoveragePct: 32.1, strongSignalPct: 32.1, moderateSignalPct: 42.7, weakOrNonePct: 25.2, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Eureka", lteCoveragePct: 81.4, fiveGCoveragePct: 49.9, strongSignalPct: 49.9, moderateSignalPct: 31.5, weakOrNonePct: 18.6, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Humboldt", lteCoveragePct: 60.3, fiveGCoveragePct: 28.5, strongSignalPct: 28.5, moderateSignalPct: 31.8, weakOrNonePct: 39.7, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Lander", lteCoveragePct: 75.3, fiveGCoveragePct: 43.1, strongSignalPct: 43.1, moderateSignalPct: 32.2, weakOrNonePct: 24.7, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Lincoln", lteCoveragePct: 45.5, fiveGCoveragePct: 19.2, strongSignalPct: 19.2, moderateSignalPct: 26.3, weakOrNonePct: 54.5, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Lyon", lteCoveragePct: 83.0, fiveGCoveragePct: 69.5, strongSignalPct: 69.5, moderateSignalPct: 13.5, weakOrNonePct: 17.0, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Mineral", lteCoveragePct: 61.3, fiveGCoveragePct: 30.6, strongSignalPct: 30.6, moderateSignalPct: 30.7, weakOrNonePct: 38.7, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Nye", lteCoveragePct: 50.6, fiveGCoveragePct: 25.6, strongSignalPct: 25.6, moderateSignalPct: 25.0, weakOrNonePct: 49.4, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Pershing", lteCoveragePct: 54.6, fiveGCoveragePct: 33.3, strongSignalPct: 33.3, moderateSignalPct: 21.3, weakOrNonePct: 45.4, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Storey", lteCoveragePct: 92.1, fiveGCoveragePct: 85.6, strongSignalPct: 85.6, moderateSignalPct: 6.4, weakOrNonePct: 7.9, operationalCellularReadiness: "High", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "Washoe", lteCoveragePct: 43.5, fiveGCoveragePct: 29.4, strongSignalPct: 29.4, moderateSignalPct: 14.1, weakOrNonePct: 56.5, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+  { countyName: "White Pine", lteCoveragePct: 58.1, fiveGCoveragePct: 43.3, strongSignalPct: 43.3, moderateSignalPct: 14.8, weakOrNonePct: 41.9, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", dataSource: "FCC BDC Nevada mobile availability geometry (4G LTE and 5G-NR, J25 31mar2026)", dataLimitations: "County-level technology coverage derived from Nevada-only FCC H3 geometry. No carrier-specific provider network breakdown is available in these uploaded files." },
+];
 
 export type OperationalCellularReadiness = 'High' | 'Mixed' | 'Low';
 
 export interface CountyCellularData {
   countyName: string;
-  verizonCoveragePct: number;
-  attCoveragePct: number;
-  tmobileCoveragePct: number;
-  verizon5gPct: number;
-  att5gPct: number;
-  tmobile5gPct: number;
-  carrierOverlapScore: number; // 0–3
+  lteCoveragePct: number;
+  fiveGCoveragePct: number;
   strongSignalPct: number;
   moderateSignalPct: number;
   weakOrNonePct: number;
   operationalCellularReadiness: OperationalCellularReadiness;
   fieldReliabilityConfidence: string;
-  notes: string | null;
-  fccSource: string;
+  dataSource: string;
+  dataLimitations: string;
 }
 
 // ── Backward-compatible types for downstream consumers ──
 export type CellularReliability = 'Strong' | 'Moderate' | 'Weak' | 'None';
 
-export interface CarrierPresence {
-  verizon: boolean;
-  att: boolean;
-  tmobile: boolean;
-}
-
-/** Inline FCC-derived data — generated from FCC BDC J25 (March 2026) */
-export const COUNTY_CELLULAR_DATA: CountyCellularData[] = [
-  { countyName: "Carson City", verizonCoveragePct: 92, attCoveragePct: 90, tmobileCoveragePct: 88, verizon5gPct: 65, att5gPct: 55, tmobile5gPct: 70, carrierOverlapScore: 3, strongSignalPct: 76, moderateSignalPct: 14, weakOrNonePct: 10, operationalCellularReadiness: "High", fieldReliabilityConfidence: "Medium", notes: "Metro area — full multi-carrier coverage", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Churchill", verizonCoveragePct: 55, attCoveragePct: 42, tmobileCoveragePct: 30, verizon5gPct: 8, att5gPct: 5, tmobile5gPct: 10, carrierOverlapScore: 3, strongSignalPct: 9, moderateSignalPct: 33, weakOrNonePct: 58, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors; Large county — significant dead zones off-highway", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Clark", verizonCoveragePct: 92, attCoveragePct: 90, tmobileCoveragePct: 88, verizon5gPct: 65, att5gPct: 55, tmobile5gPct: 70, carrierOverlapScore: 3, strongSignalPct: 76, moderateSignalPct: 14, weakOrNonePct: 10, operationalCellularReadiness: "High", fieldReliabilityConfidence: "Medium", notes: "Metro area — full multi-carrier coverage", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Douglas", verizonCoveragePct: 78, attCoveragePct: 70, tmobileCoveragePct: 55, verizon5gPct: 20, att5gPct: 15, tmobile5gPct: 25, carrierOverlapScore: 3, strongSignalPct: 24, moderateSignalPct: 44, weakOrNonePct: 32, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Elko", verizonCoveragePct: 55, attCoveragePct: 42, tmobileCoveragePct: 30, verizon5gPct: 8, att5gPct: 5, tmobile5gPct: 10, carrierOverlapScore: 3, strongSignalPct: 9, moderateSignalPct: 33, weakOrNonePct: 58, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors; Large county — significant dead zones off-highway", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Esmeralda", verizonCoveragePct: 8, attCoveragePct: 5, tmobileCoveragePct: 3, verizon5gPct: 0, att5gPct: 0, tmobile5gPct: 0, carrierOverlapScore: 0, strongSignalPct: 0, moderateSignalPct: 5, weakOrNonePct: 95, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", notes: "No meaningful cellular infrastructure", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Eureka", verizonCoveragePct: 8, attCoveragePct: 5, tmobileCoveragePct: 3, verizon5gPct: 0, att5gPct: 0, tmobile5gPct: 0, carrierOverlapScore: 0, strongSignalPct: 0, moderateSignalPct: 5, weakOrNonePct: 95, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", notes: "No meaningful cellular infrastructure", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Humboldt", verizonCoveragePct: 55, attCoveragePct: 42, tmobileCoveragePct: 30, verizon5gPct: 8, att5gPct: 5, tmobile5gPct: 10, carrierOverlapScore: 3, strongSignalPct: 9, moderateSignalPct: 33, weakOrNonePct: 58, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors; Large county — significant dead zones off-highway", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Lander", verizonCoveragePct: 55, attCoveragePct: 42, tmobileCoveragePct: 30, verizon5gPct: 8, att5gPct: 5, tmobile5gPct: 10, carrierOverlapScore: 3, strongSignalPct: 9, moderateSignalPct: 33, weakOrNonePct: 58, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors; Large county — significant dead zones off-highway", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Lincoln", verizonCoveragePct: 22, attCoveragePct: 12, tmobileCoveragePct: 8, verizon5gPct: 0, att5gPct: 0, tmobile5gPct: 0, carrierOverlapScore: 1, strongSignalPct: 0, moderateSignalPct: 14, weakOrNonePct: 86, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", notes: "Single-carrier dependency — no redundancy", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Lyon", verizonCoveragePct: 78, attCoveragePct: 70, tmobileCoveragePct: 55, verizon5gPct: 20, att5gPct: 15, tmobile5gPct: 25, carrierOverlapScore: 3, strongSignalPct: 24, moderateSignalPct: 44, weakOrNonePct: 32, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Mineral", verizonCoveragePct: 18, attCoveragePct: 25, tmobileCoveragePct: 10, verizon5gPct: 0, att5gPct: 0, tmobile5gPct: 0, carrierOverlapScore: 2, strongSignalPct: 0, moderateSignalPct: 18, weakOrNonePct: 82, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", notes: null, fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Nye", verizonCoveragePct: 45, attCoveragePct: 40, tmobileCoveragePct: 35, verizon5gPct: 10, att5gPct: 8, tmobile5gPct: 12, carrierOverlapScore: 3, strongSignalPct: 12, moderateSignalPct: 28, weakOrNonePct: 60, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", notes: null, fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Pershing", verizonCoveragePct: 55, attCoveragePct: 42, tmobileCoveragePct: 30, verizon5gPct: 8, att5gPct: 5, tmobile5gPct: 10, carrierOverlapScore: 3, strongSignalPct: 9, moderateSignalPct: 33, weakOrNonePct: 58, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors; Large county — significant dead zones off-highway", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Storey", verizonCoveragePct: 78, attCoveragePct: 70, tmobileCoveragePct: 55, verizon5gPct: 20, att5gPct: 15, tmobile5gPct: 25, carrierOverlapScore: 3, strongSignalPct: 24, moderateSignalPct: 44, weakOrNonePct: 32, operationalCellularReadiness: "Mixed", fieldReliabilityConfidence: "Medium", notes: "Coverage concentrated along highway corridors", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "Washoe", verizonCoveragePct: 92, attCoveragePct: 90, tmobileCoveragePct: 88, verizon5gPct: 65, att5gPct: 55, tmobile5gPct: 70, carrierOverlapScore: 3, strongSignalPct: 76, moderateSignalPct: 14, weakOrNonePct: 10, operationalCellularReadiness: "High", fieldReliabilityConfidence: "Medium", notes: "Metro area — full multi-carrier coverage", fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-  { countyName: "White Pine", verizonCoveragePct: 35, attCoveragePct: 30, tmobileCoveragePct: 15, verizon5gPct: 3, att5gPct: 2, tmobile5gPct: 0, carrierOverlapScore: 2, strongSignalPct: 2, moderateSignalPct: 25, weakOrNonePct: 73, operationalCellularReadiness: "Low", fieldReliabilityConfidence: "Medium", notes: null, fccSource: "FCC BDC Mobile Broadband Provider Summary, J25 (March 2026)" },
-];
+/** FCC-derived data loaded from public/data/nevada_cellular.json */
+export const COUNTY_CELLULAR_DATA: CountyCellularData[] = cellularJson as CountyCellularData[];
 
 /** Lookup map */
 export const CELLULAR_BY_COUNTY = new Map(
@@ -69,26 +60,10 @@ export const getCountyCellular = (countyName: string): CountyCellularData | unde
 
 /** Derive a backward-compatible reliability category from signal distribution */
 export const getReliabilityCategory = (data: CountyCellularData): CellularReliability => {
-  if (data.strongSignalPct >= 40 && data.carrierOverlapScore >= 2) return 'Strong';
-  if (data.moderateSignalPct >= 20 && data.carrierOverlapScore >= 1) return 'Moderate';
-  if (data.strongSignalPct + data.moderateSignalPct >= 10) return 'Weak';
+  if (data.strongSignalPct >= 50) return 'Strong';
+  if (data.strongSignalPct >= 25) return 'Moderate';
+  if (data.strongSignalPct + data.moderateSignalPct >= 15) return 'Weak';
   return 'None';
-};
-
-/** Derive carrier presence booleans */
-export const getCarrierPresence = (data: CountyCellularData): CarrierPresence => ({
-  verizon: data.verizonCoveragePct > 15,
-  att: data.attCoveragePct > 15,
-  tmobile: data.tmobileCoveragePct > 15,
-});
-
-/** Format carrier presence as compact string (e.g. "V · A · T") */
-export const formatCarriers = (data: CountyCellularData): string => {
-  const parts: string[] = [];
-  if (data.verizonCoveragePct > 15) parts.push('V');
-  if (data.attCoveragePct > 15) parts.push('A');
-  if (data.tmobileCoveragePct > 15) parts.push('T');
-  return parts.length > 0 ? parts.join(' · ') : '—';
 };
 
 /** Readiness color tokens */
