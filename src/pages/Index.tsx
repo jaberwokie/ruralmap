@@ -17,7 +17,7 @@ const Index = () => {
   const layerState = useMapLayers();
   const selection = useMapSelection();
   const filterState = useMapFilters();
-  const { broadbandReady } = useBroadbandData();
+  
   const facilityData = useFacilityData(filterState.filters);
 
   const tutorial = useTutorialState({
@@ -115,7 +115,7 @@ const Index = () => {
           coverageRadiusKm={layerState.coverageRadiusKm}
           topProvidersOnly={filterState.topProvidersOnly}
           engagementRateBelow20Only={filterState.engagementRateBelow20Only}
-          broadbandReady={broadbandReady}
+          
           tutorialStepKey={tutorial.tutorialStepKey}
         />
         <CoverageDetailPanel
