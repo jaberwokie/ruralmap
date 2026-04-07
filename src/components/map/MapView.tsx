@@ -1686,6 +1686,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         );
 
         servicePresenceMarkerRef.current!.addLayer(marker);
+        // Native DOM click backup — attached immediately after addLayer
+        const svcIconEl = marker.getElement?.();
+        if (svcIconEl) {
+          svcIconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+            nativeEvent.stopPropagation();
+            selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
+          });
+        }
       });
     }
 
