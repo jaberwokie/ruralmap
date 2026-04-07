@@ -83,7 +83,7 @@ export const ruralServices: RuralService[] = [
   { id: "rs-36", name: "Churchill County Social Services - PATH", category: "Shelter", county: "Churchill", city: "Fallon", address: "270 S. Maine Street, Suite B, Fallon, NV 89406", phone: "(775) 423-6695", lat: 39.4724, lng: -118.77729 },
   { id: "rs-37", name: "Stepping Stones Youth Shelter (FPST)", category: "Shelter", county: "Churchill", city: "Fallon", address: "2101 Agency Road, Fallon, NV 89406", phone: "(775) 423-1132", lat: 39.46731, lng: -118.76104 },
   { id: "rs-38", name: "Churchill County Social Services (RRH)", category: "Supportive Housing", county: "Churchill", city: "Fallon", address: "270 S. Maine Street, Suite B, Fallon, NV 89406", phone: "(775) 423-6695", lat: 39.4724, lng: -118.77729 },
-  { id: "rs-39", name: "New Frontier - Room for Ruth (Women)", category: "Recovery/Boarding", county: "Churchill", city: "Fallon", phone: "(775) 423-1412", lat: 39.47608, lng: -118.77395, notes: "city-center approx" },
+  { id: "rs-39", name: "New Frontier - Room for Ruth (Women)", category: "Recovery/Boarding", county: "Churchill", city: "Fallon", address: "1490 Grimes St, Fallon, NV 89406", phone: "(775) 423-1412", lat: 39.47173, lng: -118.7948, notes: "co-located with New Frontier Treatment Center" },
   // 96 N Broadway → 39.4760, -118.7780
   { id: "rs-40", name: "The Lighthouse at Fallon Christian Fellowship (Men)", category: "Recovery/Boarding", county: "Churchill", city: "Fallon", address: "96 N Broadway, Fallon, NV 89406", phone: "(775) 423-6360", lat: 39.47514, lng: -118.77708 },
   { id: "rs-41", name: "Fallon Daily Bread", category: "Food", county: "Churchill", city: "Fallon", address: "280 E Stillwater Street, Fallon, NV", phone: "(775) 423-4714", lat: 39.4755, lng: -118.7740 },
