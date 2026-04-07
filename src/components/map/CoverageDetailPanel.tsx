@@ -46,7 +46,6 @@ interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
-  memberVolumeLayerOn?: boolean;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -160,7 +159,7 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120 }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -213,7 +212,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVo
             Select a map element to view details.
           </p>
         ) : (
-          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />
+          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
         )}
       </div>
     </div>
@@ -222,14 +221,14 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVo
 
 // ── Renderer per entity type ──
 
-const EntityContent = ({ entity, coverageRadiusKm, memberVolumeLayerOn }: { entity: MapEntity; coverageRadiusKm: number; memberVolumeLayerOn: boolean }) => {
+const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; coverageRadiusKm: number }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
     case 'facility': return <FacilityContent facility={entity.facility} />;
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
-    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
     case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     default: return null;
