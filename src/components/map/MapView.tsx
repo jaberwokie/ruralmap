@@ -1663,8 +1663,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
-        // Click handled by group-level handler on servicePresenceMarkerRef
-        // No individual .on('click') — group handler is the single source of truth.
+        marker.on('click', (event: L.LeafletEvent) => {
+          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker', event, marker);
+        });
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
+            });
+          }
+        });
 
         marker.bindTooltip(
           `
@@ -1728,8 +1738,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           resetHoverPriority(marker);
           onEntityHoverRef.current?.(null);
         });
-        // Click handled by group-level handler on behavioralHealthMarkerRef
-        // No individual .on('click') — group handler is the single source of truth.
+        marker.on('click', (event: L.LeafletEvent) => {
+          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker', event, marker);
+        });
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
+            });
+          }
+        });
 
         marker.bindTooltip(
           `
