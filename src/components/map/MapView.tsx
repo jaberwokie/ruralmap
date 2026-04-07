@@ -102,41 +102,47 @@ const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): nu
 
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
-const MAP_PANES = {
-  stateOutline: 'state-outline-pane',
-  countyPolygons: 'county-polygons-pane',
-  countyBorders: 'county-borders-pane',
-  broadbandOverlay: 'broadband-overlay-pane',
-  cellularOverlay: 'cellular-overlay-pane',
-  operationalAreas: 'operational-areas-pane',
-  driveRadii: 'drive-radii-pane',
-  gapOverlays: 'gap-overlays-pane',
-  groupedMarkers: 'grouped-markers-pane',
-  servicePresence: 'service-presence-pane',
-  behavioralHealth: 'behavioral-health-pane',
-  responseCapabilityMarkers: 'response-capability-markers-pane',
-  facilityMarkers: 'facility-markers-pane',
-  labels: 'labels-pane',
-  highlights: 'highlights-pane',
+// ═══════════════════════════════════════════════════════════
+// AUTHORITATIVE PANE CONFIGURATION — single source of truth
+// interactive: true  → pointer-events: auto  (receives clicks)
+// interactive: false → pointer-events: none  (decorative only)
+// ═══════════════════════════════════════════════════════════
+const PANE_CONFIG = {
+  stateOutline:              { id: 'state-outline-pane',              zIndex: 320, interactive: false },
+  countyPolygons:            { id: 'county-polygons-pane',            zIndex: 330, interactive: true  },
+  broadbandOverlay:          { id: 'broadband-overlay-pane',          zIndex: 335, interactive: false },
+  cellularOverlay:           { id: 'cellular-overlay-pane',           zIndex: 336, interactive: false },
+  countyBorders:             { id: 'county-borders-pane',             zIndex: 340, interactive: false },
+  operationalAreas:          { id: 'operational-areas-pane',          zIndex: 350, interactive: false },
+  driveRadii:                { id: 'drive-radii-pane',                zIndex: 360, interactive: false },
+  gapOverlays:               { id: 'gap-overlays-pane',               zIndex: 370, interactive: true  },
+  groupedMarkers:            { id: 'grouped-markers-pane',            zIndex: 705, interactive: true  },
+  servicePresence:           { id: 'service-presence-pane',           zIndex: 710, interactive: true  },
+  behavioralHealth:          { id: 'behavioral-health-pane',          zIndex: 711, interactive: true  },
+  responseCapabilityMarkers: { id: 'response-capability-markers-pane',zIndex: 715, interactive: true  },
+  facilityMarkers:           { id: 'facility-markers-pane',           zIndex: 720, interactive: true  },
+  labels:                    { id: 'labels-pane',                     zIndex: 730, interactive: false },
+  highlights:                { id: 'highlights-pane',                 zIndex: 740, interactive: false },
 } as const;
 
-const PANE_Z_INDEX: Record<(typeof MAP_PANES)[keyof typeof MAP_PANES], number> = {
-  [MAP_PANES.stateOutline]: 320,
-  [MAP_PANES.countyPolygons]: 330,
-  [MAP_PANES.broadbandOverlay]: 335,
-  [MAP_PANES.cellularOverlay]: 336,
-  [MAP_PANES.countyBorders]: 340,
-  [MAP_PANES.operationalAreas]: 350,
-  [MAP_PANES.driveRadii]: 360,
-  [MAP_PANES.gapOverlays]: 370,
-  [MAP_PANES.groupedMarkers]: 705,
-  [MAP_PANES.servicePresence]: 710,
-  [MAP_PANES.behavioralHealth]: 711,
-  [MAP_PANES.responseCapabilityMarkers]: 715,
-  [MAP_PANES.facilityMarkers]: 720,
-  [MAP_PANES.labels]: 730,
-  [MAP_PANES.highlights]: 740,
-};
+// Derived lookup maps for backward-compat with existing layer code
+const MAP_PANES = Object.fromEntries(
+  Object.entries(PANE_CONFIG).map(([k, v]) => [k, v.id])
+) as { [K in keyof typeof PANE_CONFIG]: (typeof PANE_CONFIG)[K]['id'] };
+
+// Centralized pane initializer — called once during map setup
+function initializeAllPanes(map: L.Map) {
+  Object.entries(PANE_CONFIG).forEach(([key, cfg]) => {
+    const pane = map.createPane(cfg.id);
+    pane.style.zIndex = String(cfg.zIndex);
+    pane.style.pointerEvents = cfg.interactive ? 'auto' : 'none';
+    if (import.meta.env.DEV) {
+      pane.addEventListener('click', () => {
+        console.debug('[Pane Click]', { pane: key, id: cfg.id, interactive: cfg.interactive });
+      }, true);
+    }
+  });
+}
 
 const LEAFLET_UI_PANE_Z_INDEX = {
   markerPane: 700,
