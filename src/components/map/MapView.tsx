@@ -1191,10 +1191,23 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // NOTE: Leaflet's interactive SVG paths need the SVG container to allow events,
     // so we set pointer-events on the pane div but let the SVG renderer's own
     // container pass events through to interactive paths.
+    // Panes that contain interactive markers need pointer-events enabled.
+    // Overlay/polygon panes use 'none' so they don't block clicks on markers beneath.
+    const INTERACTIVE_PANES = new Set<string>([
+      MAP_PANES.countyPolygons,
+      MAP_PANES.groupedMarkers,
+      MAP_PANES.servicePresence,
+      MAP_PANES.behavioralHealth,
+      MAP_PANES.responseCapabilityMarkers,
+      MAP_PANES.facilityMarkers,
+      MAP_PANES.gapOverlays,
+    ]);
     Object.entries(PANE_Z_INDEX).forEach(([paneName, zIndex]) => {
       const pane = map.createPane(paneName);
       pane.style.zIndex = String(zIndex);
-      pane.style.pointerEvents = 'none';
+      if (!INTERACTIVE_PANES.has(paneName)) {
+        pane.style.pointerEvents = 'none';
+      }
     });
 
     const markerPane = map.getPane('markerPane');
