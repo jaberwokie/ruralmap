@@ -1235,21 +1235,29 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     engagementGapRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.featureGroup().addTo(map);
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
-    // Group-level click handler for service markers — same safety-net pattern
-    // as the MarkerClusterGroup handlers that make provider markers reliable.
+    // Group-level click handler for service markers — authoritative, uses ref
+    // to avoid stale closure since this is bound once at map init.
     (servicePresenceMarkerRef.current as any).on('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
+      const layer = e.layer || e.propagatedFrom || e.sourceTarget;
+      const marker = layer as MapPointMarker | undefined;
+      if (DEBUG_CLICKS) {
+        console.log('[service-group-click] layer:', layer, 'entity:', marker?.__entity);
+      }
       if (marker?.__entity) {
-        selectMarkerEntity(marker.__entity as PointSelectionEntity, 'service-group-click', e, marker);
+        selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity, 'service-group-click', e, marker);
       }
     });
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
-    // Group-level click handler for behavioral health markers
+    // Group-level click handler for behavioral health markers — authoritative
     (behavioralHealthMarkerRef.current as any).on('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
+      const layer = e.layer || e.propagatedFrom || e.sourceTarget;
+      const marker = layer as MapPointMarker | undefined;
+      if (DEBUG_CLICKS) {
+        console.log('[bh-group-click] layer:', layer, 'entity:', marker?.__entity);
+      }
       if (marker?.__entity) {
-        selectMarkerEntity(marker.__entity as PointSelectionEntity, 'bh-group-click', e, marker);
+        selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity, 'bh-group-click', e, marker);
       }
     });
     markersRef.current = markerClusterFactory?.({
