@@ -17,7 +17,7 @@ import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/cover
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { BROADBAND_BY_COUNTY, type BroadbandStatus, type OperationalBroadbandReadiness } from '@/data/broadband-coverage';
-import { CELLULAR_BY_COUNTY, formatCarriers, type CellularReliability } from '@/data/cellular-coverage';
+import { CELLULAR_BY_COUNTY, formatCarriers, getReliabilityCategory, type CellularReliability, type OperationalCellularReadiness } from '@/data/cellular-coverage';
 import buffer from '@turf/buffer';
 import difference from '@turf/difference';
 import intersect from '@turf/intersect';
@@ -925,8 +925,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       const cellData = CELLULAR_BY_COUNTY.get(name);
       if (cellData) {
-        metric.cellularReliability = cellData.reliabilityCategory;
-        metric.cellularCarriers = formatCarriers(cellData.carriers);
+        metric.cellularReliability = getReliabilityCategory(cellData);
+        metric.cellularCarriers = formatCarriers(cellData);
       }
 
       metricsByCounty.set(name, metric);
@@ -2371,11 +2371,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     cellularRef.current.clearLayers();
     if (!layers.cellularCoverage) return;
 
-    const RELIABILITY_FILL: Record<import('@/data/cellular-coverage').CellularReliability, string> = {
-      Strong: 'hsla(160, 55%, 40%, 0.14)',
-      Moderate: 'hsla(44, 90%, 50%, 0.16)',
-      Weak: 'hsla(20, 85%, 55%, 0.16)',
-      None: 'hsla(240, 5%, 60%, 0.14)',
+    const READINESS_FILL: Record<import('@/data/cellular-coverage').OperationalCellularReadiness, string> = {
+      High: 'hsla(160, 55%, 40%, 0.14)',
+      Mixed: 'hsla(44, 90%, 50%, 0.16)',
+      Low: 'hsla(20, 85%, 55%, 0.16)',
     };
 
     nevadaCounties.forEach((county) => {
@@ -2389,7 +2388,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         style: {
           color: 'transparent',
           weight: 0,
-          fillColor: RELIABILITY_FILL[cell.reliabilityCategory],
+          fillColor: READINESS_FILL[cell.operationalCellularReadiness],
           fillOpacity: 1,
         },
         interactive: false,
@@ -2482,25 +2481,22 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       )}
       {layers.cellularCoverage && (
         <div className={`absolute ${layers.broadbandAccess ? 'bottom-[5.5rem]' : 'bottom-4'} left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm`}>
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Cellular Coverage</p>
+          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Cellular Readiness</p>
           <div className="space-y-0.5">
             <div className="flex items-center gap-1.5 text-[10px]">
               <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 55%, 40%, 0.35)' }} />
-              <span className="text-foreground/80">Strong</span>
+              <span className="text-foreground/80">High</span>
             </div>
             <div className="flex items-center gap-1.5 text-[10px]">
               <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(44, 90%, 50%, 0.35)' }} />
-              <span className="text-foreground/80">Moderate</span>
+              <span className="text-foreground/80">Mixed</span>
             </div>
             <div className="flex items-center gap-1.5 text-[10px]">
               <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(20, 85%, 55%, 0.35)' }} />
-              <span className="text-foreground/80">Weak</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(240, 5%, 60%, 0.35)' }} />
-              <span className="text-foreground/80">None</span>
+              <span className="text-foreground/80">Low</span>
             </div>
           </div>
+          <p className="text-[8px] text-muted-foreground/50 mt-1">FCC BDC J25 · Confidence: Medium</p>
         </div>
       )}
       {DEBUG_ENABLED && (
