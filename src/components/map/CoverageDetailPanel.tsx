@@ -38,15 +38,12 @@ const GAP_COUNTIES = (() => {
   return gaps;
 })();
 
-// Re-export MapEntity from shared types for backward compatibility
-export type { MapEntity } from '@/types/entities';
 import type { MapEntity } from '@/types/entities';
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
-  memberVolumeLayerOn?: boolean;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -160,7 +157,7 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVolumeLayerOn = false }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120 }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -213,7 +210,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVo
             Select a map element to view details.
           </p>
         ) : (
-          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />
+          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
         )}
       </div>
     </div>
@@ -222,14 +219,14 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberVo
 
 // ── Renderer per entity type ──
 
-const EntityContent = ({ entity, coverageRadiusKm, memberVolumeLayerOn }: { entity: MapEntity; coverageRadiusKm: number; memberVolumeLayerOn: boolean }) => {
+const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; coverageRadiusKm: number }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
     case 'facility': return <FacilityContent facility={entity.facility} />;
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
-    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} memberVolumeLayerOn={memberVolumeLayerOn} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
     case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     default: return null;
@@ -1059,7 +1056,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
@@ -1086,7 +1083,7 @@ const CountyContent = ({ county, coverageRadiusKm, memberVolumeLayerOn = false }
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
 
       <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        {memberVolumeLayerOn && <MemberVolumeSection county={county} />}
+        <MemberVolumeSection county={county} />
         <EngagementPriorityCard county={county} />
       </DetailSection>
 
@@ -1625,7 +1622,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 };
 
 // ── Rural Service Group ──
-const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVolumeLayerOn = false }: { county: string; services: RuralService[]; coverageRadiusKm: number; memberVolumeLayerOn?: boolean }) => {
+const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
   const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
@@ -1700,7 +1697,7 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, memberVo
         <GapContextAlerts county={county} serviceCount={services.length} />
       </DetailSection>
 
-      {memberVolumeLayerOn && (
+      {(
         <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
           <MemberVolumeSection county={county} />
           <EngagementPriorityCard county={county} />
