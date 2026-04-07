@@ -1,10 +1,10 @@
 /**
  * Cellular/mobile feasibility classification for operational decision support.
- * Uses FCC-derived data.
+ * Uses FCC BDC Nevada geometry-derived data.
  */
 
-import type { CountyCellularData, OperationalCellularReadiness, CellularReliability } from '@/data/cellular-coverage';
-import { getCountyCellular, getReliabilityCategory } from '@/data/cellular-coverage';
+import type { CountyCellularData, CellularReliability } from '@/data/cellular-coverage';
+import { getCountyCellular } from '@/data/cellular-coverage';
 import { getCountyRemoteFeasibility } from '@/utils/broadbandFeasibility';
 
 export type MobileFeasibility = 'High Mobile Feasibility' | 'Moderate Mobile Feasibility' | 'Low Mobile Feasibility';
