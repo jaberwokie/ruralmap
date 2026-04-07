@@ -1,10 +1,36 @@
 /**
- * County-level cellular coverage data for rural Nevada.
+ * County-level cellular coverage data for Nevada.
  *
- * Mock/placeholder data — replace with real carrier coverage data later.
- * Structure is designed to be swappable without changing downstream logic.
+ * Derived from FCC BDC Mobile Broadband Provider Summary, J25 (March 2026).
+ * National carrier technology profiles + Nevada geographic modeling.
+ *
+ * fieldReliabilityConfidence is "Medium" because FCC data is modeled coverage,
+ * not field-measured signal strength.
  */
 
+import cellularJson from '/data/nevada_cellular.json';
+
+export type OperationalCellularReadiness = 'High' | 'Mixed' | 'Low';
+
+export interface CountyCellularData {
+  countyName: string;
+  verizonCoveragePct: number;
+  attCoveragePct: number;
+  tmobileCoveragePct: number;
+  verizon5gPct: number;
+  att5gPct: number;
+  tmobile5gPct: number;
+  carrierOverlapScore: number; // 0–3
+  strongSignalPct: number;
+  moderateSignalPct: number;
+  weakOrNonePct: number;
+  operationalCellularReadiness: OperationalCellularReadiness;
+  fieldReliabilityConfidence: string;
+  notes: string | null;
+  fccSource: string;
+}
+
+// ── Backward-compatible types for downstream consumers ──
 export type CellularReliability = 'Strong' | 'Moderate' | 'Weak' | 'None';
 
 export interface CarrierPresence {
@@ -13,69 +39,10 @@ export interface CarrierPresence {
   tmobile: boolean;
 }
 
-export interface CountyCellularData {
-  countyName: string;
-  carriers: CarrierPresence;
-  /** 0–100 composite signal strength score */
-  signalStrengthScore: number;
-  /** Derived from score + carrier availability */
-  reliabilityCategory: CellularReliability;
-  notes?: string;
-}
+/** Load from generated JSON */
+export const COUNTY_CELLULAR_DATA: CountyCellularData[] = (cellularJson as CountyCellularData[]);
 
-/** Derive reliability from signal score and carrier presence */
-export const deriveCellularReliability = (
-  signalStrengthScore: number,
-  carriers: CarrierPresence,
-): CellularReliability => {
-  const carrierCount = [carriers.verizon, carriers.att, carriers.tmobile].filter(Boolean).length;
-  if (carrierCount === 0) return 'None';
-  if (signalStrengthScore >= 65 && carrierCount >= 2) return 'Strong';
-  if (signalStrengthScore >= 35 && carrierCount >= 1) return 'Moderate';
-  if (signalStrengthScore >= 10) return 'Weak';
-  return 'None';
-};
-
-const county = (
-  countyName: string,
-  signalStrengthScore: number,
-  carriers: CarrierPresence,
-  notes?: string,
-): CountyCellularData => ({
-  countyName,
-  carriers,
-  signalStrengthScore,
-  reliabilityCategory: deriveCellularReliability(signalStrengthScore, carriers),
-  notes,
-});
-
-const c = (v: boolean, a: boolean, t: boolean): CarrierPresence => ({ verizon: v, att: a, tmobile: t });
-
-/**
- * Mock cellular data for rural Nevada counties.
- * Replace with real carrier coverage data.
- */
-export const COUNTY_CELLULAR_DATA: CountyCellularData[] = [
-  county('Elko',        55, c(true, true, false),   'Coverage along I-80 corridor; dead zones in backcountry'),
-  county('Humboldt',    45, c(true, false, false),   'Winnemucca has Verizon; rural areas spotty'),
-  county('Lander',      30, c(true, false, false),   'Battle Mountain has limited signal; gaps south'),
-  county('Eureka',      12, c(false, false, false),  'Extremely sparse — nearly no reliable coverage'),
-  county('White Pine',  50, c(true, true, false),    'Ely has service; gaps on Highway 93 south'),
-  county('Nye',         60, c(true, true, true),     'Pahrump well-covered; Tonopah area weaker'),
-  county('Lincoln',     25, c(true, false, false),   'Caliente has weak signal; Highway 93 gaps'),
-  county('Pershing',    35, c(true, false, false),   'I-80 corridor only; Lovelock marginal'),
-  county('Mineral',     28, c(false, true, false),   'Hawthorne has AT&T; surrounding area poor'),
-  county('Esmeralda',    5, c(false, false, false),  'No meaningful cellular infrastructure'),
-  county('Lyon',        72, c(true, true, true),     'Fernley and Dayton well-served'),
-  county('Churchill',   65, c(true, true, false),    'Fallon has good coverage; NAS Fallon area served'),
-  county('Douglas',     78, c(true, true, true),     'Minden/Gardnerville — strong multi-carrier'),
-  county('Storey',      70, c(true, true, false),    'Virginia City corridor covered'),
-  county('Carson City', 85, c(true, true, true),     'Urban — full multi-carrier coverage'),
-  county('Clark',       90, c(true, true, true),     'Metro Las Vegas — strong coverage'),
-  county('Washoe',      88, c(true, true, true),     'Reno/Sparks metro — strong coverage'),
-];
-
-/** Lookup map for O(1) access by county name */
+/** Lookup map */
 export const CELLULAR_BY_COUNTY = new Map(
   COUNTY_CELLULAR_DATA.map((d) => [d.countyName, d]),
 );
@@ -84,11 +51,42 @@ export const CELLULAR_BY_COUNTY = new Map(
 export const getCountyCellular = (countyName: string): CountyCellularData | undefined =>
   CELLULAR_BY_COUNTY.get(countyName);
 
+/** Derive a backward-compatible reliability category from signal distribution */
+export const getReliabilityCategory = (data: CountyCellularData): CellularReliability => {
+  if (data.strongSignalPct >= 40 && data.carrierOverlapScore >= 2) return 'Strong';
+  if (data.moderateSignalPct >= 20 && data.carrierOverlapScore >= 1) return 'Moderate';
+  if (data.strongSignalPct + data.moderateSignalPct >= 10) return 'Weak';
+  return 'None';
+};
+
+/** Derive carrier presence booleans */
+export const getCarrierPresence = (data: CountyCellularData): CarrierPresence => ({
+  verizon: data.verizonCoveragePct > 15,
+  att: data.attCoveragePct > 15,
+  tmobile: data.tmobileCoveragePct > 15,
+});
+
 /** Format carrier presence as compact string (e.g. "V · A · T") */
-export const formatCarriers = (carriers: CarrierPresence): string => {
+export const formatCarriers = (data: CountyCellularData): string => {
+  const parts: string[] = [];
+  if (data.verizonCoveragePct > 15) parts.push('V');
+  if (data.attCoveragePct > 15) parts.push('A');
+  if (data.tmobileCoveragePct > 15) parts.push('T');
+  return parts.length > 0 ? parts.join(' · ') : '—';
+};
+
+/** Format carrier presence from CarrierPresence object (legacy compat) */
+export const formatCarrierPresence = (carriers: CarrierPresence): string => {
   const parts: string[] = [];
   if (carriers.verizon) parts.push('V');
   if (carriers.att) parts.push('A');
   if (carriers.tmobile) parts.push('T');
   return parts.length > 0 ? parts.join(' · ') : '—';
+};
+
+/** Readiness color tokens */
+export const READINESS_COLORS: Record<OperationalCellularReadiness, string> = {
+  High: 'text-staffing-high',
+  Mixed: 'text-engagement-watch',
+  Low: 'text-destructive',
 };
