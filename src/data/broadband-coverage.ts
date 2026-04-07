@@ -2,40 +2,74 @@
  * County-level broadband coverage data for rural Nevada.
  *
  * Loads real FCC-derived data from /data/nevada_broadband.json at runtime.
- * Fetched once and cached for the session lifetime.
+ * Uses distribution-based model — NOT max-value-across-technologies.
  */
 
-export type DominantTechnology = 'Fiber' | 'Fixed Wireless' | 'Satellite' | 'Mixed' | 'Unknown' | 'Any Technology';
+export type OperationalBroadbandReadiness = 'High' | 'Mixed' | 'Low';
 export type BroadbandStatus = 'Served' | 'Underserved' | 'Unserved';
 
 export interface CountyBroadbandData {
   countyName: string;
+  /** % of county with ≥100/20 Mbps from any terrestrial technology */
+  pct_100_20_plus: number;
+  /** % of county with 25/3–100/20 Mbps */
+  pct_25_3_to_100_20: number;
+  /** % of county below 25/3 Mbps (satellite-only or no coverage) */
+  pct_below_25_3: number;
+  /** Technology share percentages (should sum to ~100) */
+  fiberShare: number;
+  cableShare: number;
+  fixedWirelessShare: number;
+  satelliteShare: number;
+  /** Whether coverage varies significantly across the county */
+  coverageUnevenness: boolean;
+  /** Derived operational readiness */
+  operationalReadiness: OperationalBroadbandReadiness;
+  /** Legacy compat — derived from distribution */
+  broadbandStatus: BroadbandStatus;
+  /** Legacy compat — derived from shares */
+  dominantTechnology: string;
+  /** Served/underserved/unserved percents for legacy compat */
   servedPercent: number;
   underservedPercent: number;
   unservedPercent: number;
-  dominantTechnology: DominantTechnology;
-  broadbandStatus: BroadbandStatus;
   notes?: string;
 }
-
-/** Derive broadband status from percentages */
-export const deriveBroadbandStatus = (
-  servedPercent: number,
-  _underservedPercent: number,
-  unservedPercent: number,
-): BroadbandStatus => {
-  if (servedPercent >= 60) return 'Served';
-  if (unservedPercent >= 40) return 'Unserved';
-  return 'Underserved';
-};
 
 // ── Normalize county name: strip trailing " County", trim ──
 const normalizeCountyName = (raw: string): string =>
   raw.replace(/\s+County$/i, '').trim();
 
-const coerceStatus = (raw: unknown, s: number, u2: number, u3: number): BroadbandStatus => {
-  if (raw === 'Served' || raw === 'Underserved' || raw === 'Unserved') return raw;
-  return deriveBroadbandStatus(s, u2, u3);
+/** Derive operational readiness from distribution + technology mix */
+export const deriveOperationalReadiness = (
+  pct100: number,
+  satelliteShare: number,
+  fiberShare: number,
+  cableShare: number,
+): OperationalBroadbandReadiness => {
+  const terrestrialShare = fiberShare + cableShare;
+  if (pct100 >= 70 && terrestrialShare >= 50) return 'High';
+  if (pct100 <= 30 || satelliteShare >= 55) return 'Low';
+  return 'Mixed';
+};
+
+/** Derive broadband status from distribution */
+export const deriveBroadbandStatus = (
+  pct100: number,
+  pctBelow25: number,
+): BroadbandStatus => {
+  if (pct100 >= 70) return 'Served';
+  if (pctBelow25 >= 50) return 'Unserved';
+  return 'Underserved';
+};
+
+/** Derive dominant technology label from shares */
+const deriveDominantTech = (fiber: number, cable: number, fw: number, sat: number): string => {
+  const max = Math.max(fiber, cable, fw, sat);
+  if (max === fiber) return 'Fiber';
+  if (max === cable) return 'Cable';
+  if (max === fw) return 'Fixed Wireless';
+  return 'Satellite';
 };
 
 // ── Shared mutable arrays/maps — consumers import these references ──
@@ -54,19 +88,37 @@ const parseRecords = (raw: unknown[]): CountyBroadbandData[] =>
     .filter((r): r is Record<string, unknown> => !!r && typeof r === 'object')
     .map((r) => {
       const countyName = normalizeCountyName(String(r.countyName ?? ''));
-      const servedPercent = Number(r.servedPercent ?? 0);
-      const underservedPercent = Number(r.underservedPercent ?? 0);
-      const unservedPercent = Number(r.unservedPercent ?? 0);
-      const dominantTechnology = (r.dominantTechnology ?? 'Unknown') as DominantTechnology;
-      const broadbandStatus = coerceStatus(r.broadbandStatus, servedPercent, underservedPercent, unservedPercent);
-      return { countyName, servedPercent, underservedPercent, unservedPercent, dominantTechnology, broadbandStatus };
+      const pct_100_20_plus = Number(r.pct_100_20_plus ?? 0);
+      const pct_25_3_to_100_20 = Number(r.pct_25_3_to_100_20 ?? 0);
+      const pct_below_25_3 = Number(r.pct_below_25_3 ?? 0);
+      const fiberShare = Number(r.fiberShare ?? 0);
+      const cableShare = Number(r.cableShare ?? 0);
+      const fixedWirelessShare = Number(r.fixedWirelessShare ?? 0);
+      const satelliteShare = Number(r.satelliteShare ?? 0);
+      const coverageUnevenness = Boolean(r.coverageUnevenness);
+      const notes = r.notes ? String(r.notes) : undefined;
+
+      const operationalReadiness = deriveOperationalReadiness(pct_100_20_plus, satelliteShare, fiberShare, cableShare);
+      const broadbandStatus = deriveBroadbandStatus(pct_100_20_plus, pct_below_25_3);
+      const dominantTechnology = deriveDominantTech(fiberShare, cableShare, fixedWirelessShare, satelliteShare);
+
+      // Legacy compat mapping
+      const servedPercent = pct_100_20_plus;
+      const underservedPercent = pct_25_3_to_100_20;
+      const unservedPercent = pct_below_25_3;
+
+      return {
+        countyName, pct_100_20_plus, pct_25_3_to_100_20, pct_below_25_3,
+        fiberShare, cableShare, fixedWirelessShare, satelliteShare,
+        coverageUnevenness, operationalReadiness, broadbandStatus, dominantTechnology,
+        servedPercent, underservedPercent, unservedPercent, notes,
+      };
     })
     .filter((d) => d.countyName.length > 0);
 
 /**
  * Fetch the broadband dataset from /data/nevada_broadband.json.
  * Safe to call multiple times — deduplicates.
- * Returns true if data loaded successfully.
  */
 export const loadBroadbandData = (): Promise<boolean> => {
   if (_loadPromise) return _loadPromise;
@@ -78,7 +130,6 @@ export const loadBroadbandData = (): Promise<boolean> => {
       if (!Array.isArray(json)) throw new Error('Expected array');
       const records = parseRecords(json);
 
-      // Mutate shared exported references in place so all consumers see data
       COUNTY_BROADBAND_DATA.length = 0;
       COUNTY_BROADBAND_DATA.push(...records);
       BROADBAND_BY_COUNTY.clear();
@@ -94,7 +145,6 @@ export const loadBroadbandData = (): Promise<boolean> => {
   return _loadPromise;
 };
 
-/** Get broadband data for a county, returns undefined if not found.
- *  Normalizes the input name to handle "County" suffix variants. */
+/** Get broadband data for a county, returns undefined if not found. */
 export const getCountyBroadband = (countyName: string): CountyBroadbandData | undefined =>
   BROADBAND_BY_COUNTY.get(normalizeCountyName(countyName));

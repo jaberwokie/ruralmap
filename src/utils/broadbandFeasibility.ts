@@ -1,34 +1,26 @@
 /**
  * Broadband feasibility classification for operational decision support.
  *
- * Evaluates whether a county can support remote/telehealth service
- * delivery based on broadband coverage data.
+ * Uses distribution-based county broadband data to evaluate
+ * whether remote/telehealth service delivery is viable.
  */
 
-import type { CountyBroadbandData, DominantTechnology } from '@/data/broadband-coverage';
+import type { CountyBroadbandData, OperationalBroadbandReadiness } from '@/data/broadband-coverage';
 import { getCountyBroadband } from '@/data/broadband-coverage';
 
 export type RemoteFeasibility = 'High Remote Feasibility' | 'Moderate Remote Feasibility' | 'Low Remote Feasibility';
 
-const STRONG_TECHNOLOGIES = new Set<DominantTechnology>(['Fiber', 'Mixed']);
-const WEAK_TECHNOLOGIES = new Set<DominantTechnology>(['Satellite', 'Unknown']);
-
 /**
- * Evaluate remote service feasibility from broadband data.
+ * Evaluate remote service feasibility from broadband distribution data.
  */
 export const getRemoteFeasibility = (data: CountyBroadbandData): RemoteFeasibility => {
-  if (data.servedPercent >= 55 && STRONG_TECHNOLOGIES.has(data.dominantTechnology)) {
-    return 'High Remote Feasibility';
-  }
-  if (data.unservedPercent >= 45 || WEAK_TECHNOLOGIES.has(data.dominantTechnology)) {
-    return 'Low Remote Feasibility';
-  }
+  if (data.operationalReadiness === 'High') return 'High Remote Feasibility';
+  if (data.operationalReadiness === 'Low') return 'Low Remote Feasibility';
   return 'Moderate Remote Feasibility';
 };
 
 /**
  * Get remote feasibility for a county by name.
- * Returns null if no broadband data exists for the county.
  */
 export const getCountyRemoteFeasibility = (countyName: string): RemoteFeasibility | null => {
   const data = getCountyBroadband(countyName);
@@ -37,18 +29,28 @@ export const getCountyRemoteFeasibility = (countyName: string): RemoteFeasibilit
 };
 
 /**
- * Generate a short operational interpretation string for a county's broadband status.
+ * Generate operational interpretation based on distribution data.
  */
 export const getBroadbandOperationalNote = (data: CountyBroadbandData): string => {
-  const feasibility = getRemoteFeasibility(data);
-  switch (feasibility) {
-    case 'High Remote Feasibility':
-      return 'Telehealth and remote coordination are viable primary delivery methods.';
-    case 'Moderate Remote Feasibility':
-      return 'Hybrid deployment recommended — remote where possible, in-person for coverage gaps.';
-    case 'Low Remote Feasibility':
-      return 'Mobile-first or in-person deployment is likely required. Broadband limitations restrict remote service delivery.';
+  const parts: string[] = [];
+
+  if (data.operationalReadiness === 'High') {
+    parts.push('Telehealth and remote coordination are viable primary delivery methods.');
+  } else if (data.operationalReadiness === 'Low') {
+    parts.push('Mobile-first or in-person deployment is likely required. Broadband limitations restrict remote service delivery.');
+  } else {
+    parts.push('Hybrid deployment recommended — remote where possible, in-person for coverage gaps.');
   }
+
+  if (data.coverageUnevenness) {
+    parts.push('Coverage varies significantly across this county — do not assume uniform access.');
+  }
+
+  if (data.satelliteShare >= 50) {
+    parts.push(`${data.satelliteShare.toFixed(0)}% of coverage is satellite-only, which is unreliable for real-time telehealth.`);
+  }
+
+  return parts.join(' ');
 };
 
 /** Feasibility color token class names */
@@ -63,4 +65,11 @@ export const FEASIBILITY_SHORT_LABELS: Record<RemoteFeasibility, string> = {
   'High Remote Feasibility': 'High',
   'Moderate Remote Feasibility': 'Moderate',
   'Low Remote Feasibility': 'Low',
+};
+
+/** Readiness colors */
+export const READINESS_COLORS: Record<OperationalBroadbandReadiness, string> = {
+  'High': 'text-staffing-high',
+  'Mixed': 'text-engagement-watch',
+  'Low': 'text-destructive',
 };
