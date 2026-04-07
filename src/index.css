@@ -384,3 +384,14 @@
 .leaflet-marker-shadow {
   pointer-events: auto !important;
 }
+
+/* Ensure interactive SVG paths (county hit areas, engagement gap polygons, etc.)
+   remain clickable even when their parent pane has pointer-events: none.
+   Leaflet adds .leaflet-interactive to paths created with interactive: true.
+   The SVG container also needs pointer-events restored so hit-testing works. */
+.leaflet-pane svg {
+  pointer-events: none;
+}
+.leaflet-pane svg .leaflet-interactive {
+  pointer-events: auto;
+}
