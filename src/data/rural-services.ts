@@ -41,7 +41,7 @@ export const ruralServices: RuralService[] = [
   { id: "rs-1", name: "Carson City Health & Human Services", category: "Coordinated Entry", county: "Carson City", city: "Carson City", address: "900 East Long Street, Carson City, NV 89706", phone: "(775) 887-2110", lat: 39.17415, lng: -119.75815 },
   { id: "rs-2", name: "Advocates to End Domestic Violence", category: "Shelter", county: "Carson City", city: "Carson City", address: "3640 Gordon Street, Carson City, NV 89702", phone: "(775) 883-7654", lat: 39.17819, lng: -119.72636 },
   { id: "rs-3", name: "FISH - FOCUS House (Men's Shelter)", category: "Shelter", county: "Carson City", city: "Carson City", address: "138 E Long St, Carson City, NV 89706", phone: "(775) 882-3474", lat: 39.17417, lng: -119.76628, notes: "co-located with FISH Food Pantry" },
-  { id: "rs-4", name: "FISH - Wylie House (Women & Family)", category: "Shelter", county: "Carson City", city: "Carson City", address: "408 Hot Springs Rd, Carson City, NV 89706", phone: "(775) 882-3474", lat: 39.1640, lng: -119.7700, notes: "street-level approx" },
+  { id: "rs-4", name: "FISH - Wylie House (Women & Family)", category: "Shelter", county: "Carson City", city: "Carson City", address: "408 Hot Springs Rd, Carson City, NV 89706", phone: "(775) 882-3474", lat: 39.18363, lng: -119.76475, notes: "street-level approx" },
   { id: "rs-5", name: "Carson City Health & Human Services (PSH/RRH)", category: "Supportive Housing", county: "Carson City", city: "Carson City", address: "900 E. Long Street, Carson City, NV 89706", phone: "(775) 887-2110", lat: 39.17291, lng: -119.75711 },
   { id: "rs-6", name: "Nation's Finest - SSVF Program", category: "Supportive Housing", county: "Carson City", city: "Carson City", address: "106 E. Adams Street, Suite 203, Carson City, NV 89706", phone: "(775) 360-2155", lat: 39.17349, lng: -119.76669 },
   { id: "rs-7", name: "Volunteer Attorneys for Rural Nevadans (VARN)", category: "Legal", county: "Carson City", city: "Carson City", address: "412 W. John Street, Suite C, Carson City, NV 89703", phone: "(775) 883-8278", lat: 39.17121, lng: -119.76964 },
@@ -245,12 +245,12 @@ export const ruralServices: RuralService[] = [
 
   // ── Nye ──
   { id: "rs-158", name: "Nevada Outreach Training Organization", category: "Coordinated Entry", county: "Nye", city: "Pahrump", address: "1397 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-1118", lat: 36.2080, lng: -115.9840, notes: "co-located with Family Centers of Nevada" },
-  { id: "rs-159", name: "Nye County Social Services", category: "Shelter", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7075", lat: 36.2078, lng: -115.9720, notes: "street-level approx" },
-  { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", address: "1600 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 727-9970", lat: 36.2080, lng: -115.9780, notes: "street-level approx" },
-  { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7300", lat: 36.2078, lng: -115.9720, notes: "co-located with Nye County Social Services" },
-  { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", address: "1370 W Basin Ave, Pahrump, NV 89060", phone: "(775) 727-5008", lat: 36.2058, lng: -116.0100, notes: "street-level approx" },
+  { id: "rs-159", name: "Nye County Social Services", category: "Shelter", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7075", lat: 36.19286, lng: -115.97831, notes: "street-level approx" },
+  { id: "rs-160", name: "NyE Communities Coalition", category: "Food", county: "Nye", city: "Pahrump", address: "1600 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 727-9970", lat: 36.18391, lng: -116.03006, notes: "street-level approx" },
+  { id: "rs-161", name: "DCFS Nye County", category: "Family Services", county: "Nye", city: "Pahrump", address: "1981 E Calvada Blvd, Pahrump, NV 89048", phone: "(775) 751-7300", lat: 36.19286, lng: -115.97831, notes: "co-located with Nye County Social Services" },
+  { id: "rs-162", name: "Pahrump Senior Center", category: "Senior Services", county: "Nye", city: "Pahrump", address: "1370 W Basin Ave, Pahrump, NV 89060", phone: "(775) 727-5008", lat: 36.21969, lng: -116.03799, notes: "street-level approx" },
   // 360 S Lola Ln → matches h1: 36.2142, -116.0248
-  { id: "rs-164", name: "Desert View Hospital BH Services", category: "Mental Health", county: "Nye", city: "Pahrump", address: "360 S Lola Ln, Pahrump, NV", phone: "(775) 751-7500", lat: 36.2142, lng: -116.0248 },
+  { id: "rs-164", name: "Desert View Hospital BH Services", category: "Mental Health", county: "Nye", city: "Pahrump", address: "360 S Lola Ln, Pahrump, NV", phone: "(775) 751-7500", lat: 36.25836, lng: -116.02377 },
 
   // ── Pershing ──
   // 1005 E Broadway Ave → 40.1793, -118.4734
@@ -271,9 +271,9 @@ export const ruralServices: RuralService[] = [
   { id: "rs-173", name: "White Pine County Social Services (Shelter)", category: "Shelter", county: "White Pine", city: "Ely", address: "297 11th Street, Ely, NV 89301", phone: "(775) 293-6528", lat: 39.24987, lng: -114.88695 },
   { id: "rs-174", name: "Nevada Legal Services Ely", category: "Legal", county: "White Pine", city: "Ely", address: "725 Railroad St, Ely, NV 89301", phone: "(775) 289-8522", lat: 39.2480, lng: -114.8870, notes: "street-level approx" },
   { id: "rs-175", name: "White Pine Food Pantry", category: "Food", county: "White Pine", city: "Ely", address: "59 Campton St, Ely, NV 89301", phone: "(775) 289-4091", lat: 39.2480, lng: -114.8860, notes: "street-level approx" },
-  { id: "rs-176", name: "DCFS White Pine", category: "Family Services", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.24831, lng: -114.87812 },
-  { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", address: "1900 Bobcat Dr, Ely, NV 89301", phone: "(775) 289-3582", lat: 39.2530, lng: -114.8750, notes: "street-level approx" },
-  { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.24831, lng: -114.87812, notes: "co-located with DCFS White Pine" },
+  { id: "rs-176", name: "DCFS White Pine", category: "Family Services", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.26399, lng: -114.85575 },
+  { id: "rs-177", name: "White Pine Senior Center", category: "Senior Services", county: "White Pine", city: "Ely", address: "1900 Bobcat Dr, Ely, NV 89301", phone: "(775) 289-3582", lat: 39.23482, lng: -114.87505, notes: "street-level approx" },
+  { id: "rs-180", name: "DPBH-Rural Clinics: Ely", category: "Mental Health", county: "White Pine", city: "Ely", address: "1010 E Aultman St, Ely, NV 89301", phone: "(775) 289-1640", lat: 39.26399, lng: -114.85575, notes: "co-located with DCFS White Pine" },
 ];
 
 /** Unique counties present in the rural services dataset */
