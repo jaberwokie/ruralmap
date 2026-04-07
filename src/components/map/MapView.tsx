@@ -1192,29 +1192,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // ALL custom panes use pointer-events: none on the pane <div>.
     // This prevents higher-z panes from blocking clicks on lower-z panes.
     // Interactive elements get pointer-events restored at the element level:
-    //   - Marker icons: via CSS (.leaflet-marker-icon { pointer-events: auto !important })
-    //   - SVG paths: via Leaflet's `interactive: true` which sets pointer-events on the <path>
-    // NOTE: Leaflet's interactive SVG paths need the SVG container to allow events,
-    // so we set pointer-events on the pane div but let the SVG renderer's own
-    // container pass events through to interactive paths.
-    // Panes that contain interactive markers need pointer-events enabled.
-    // Overlay/polygon panes use 'none' so they don't block clicks on markers beneath.
-    const INTERACTIVE_PANES = new Set<string>([
-      MAP_PANES.countyPolygons,
-      MAP_PANES.groupedMarkers,
-      MAP_PANES.servicePresence,
-      MAP_PANES.behavioralHealth,
-      MAP_PANES.responseCapabilityMarkers,
-      MAP_PANES.facilityMarkers,
-      MAP_PANES.gapOverlays,
-    ]);
-    Object.entries(PANE_Z_INDEX).forEach(([paneName, zIndex]) => {
-      const pane = map.createPane(paneName);
-      pane.style.zIndex = String(zIndex);
-      if (!INTERACTIVE_PANES.has(paneName)) {
-        pane.style.pointerEvents = 'none';
-      }
-    });
+    // Initialize all panes from the single authoritative PANE_CONFIG
+    initializeAllPanes(map);
 
     const markerPane = map.getPane('markerPane');
     const tooltipPane = map.getPane('tooltipPane');
