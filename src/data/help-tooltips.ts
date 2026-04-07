@@ -114,7 +114,7 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   cellularCoverage: {
     label: 'Cellular Coverage',
     explanation:
-      'Shows cellular signal reliability by county. Reliability is derived from carrier availability and composite signal strength. Helps assess whether phone-based coordination and mobile engagement are viable.',
+      'Displays LTE and 5G coverage by county using FCC availability data. Indicates where cellular service is present, not carrier-specific networks or signal strength. Used to assess feasibility for mobile engagement and coordination.',
   },
   tier1Legend: {
     label: 'Tier 1',
