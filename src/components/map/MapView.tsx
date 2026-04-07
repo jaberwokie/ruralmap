@@ -1230,8 +1230,23 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     engagementGapRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.featureGroup().addTo(map);
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
+    // Group-level click handler for service markers — same safety-net pattern
+    // as the MarkerClusterGroup handlers that make provider markers reliable.
+    (servicePresenceMarkerRef.current as any).on('click', (e: any) => {
+      const marker = e.layer as MapPointMarker | undefined;
+      if (marker?.__entity) {
+        selectMarkerEntity(marker.__entity as PointSelectionEntity, 'service-group-click', e, marker);
+      }
+    });
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
+    // Group-level click handler for behavioral health markers
+    (behavioralHealthMarkerRef.current as any).on('click', (e: any) => {
+      const marker = e.layer as MapPointMarker | undefined;
+      if (marker?.__entity) {
+        selectMarkerEntity(marker.__entity as PointSelectionEntity, 'bh-group-click', e, marker);
+      }
+    });
     markersRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
