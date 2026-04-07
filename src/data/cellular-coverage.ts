@@ -8,7 +8,9 @@
  * not field-measured signal strength.
  */
 
-import cellularJson from '/data/nevada_cellular.json';
+// @ts-ignore — Vite resolves JSON from public/
+const cellularJson: CountyCellularData[] = await fetch('/data/nevada_cellular.json').then(r => r.json()).catch(() => []);
+
 
 export type OperationalCellularReadiness = 'High' | 'Mixed' | 'Low';
 
