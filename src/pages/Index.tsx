@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
@@ -9,128 +9,77 @@ import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
 import { useTutorialState } from '@/hooks/useTutorialState';
 import type { MapEntity } from '@/types/entities';
+import type { Facility } from '@/data/facilities';
 
 const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-
-  // ── Domain hooks ──
-  const layerState = useMapLayers();
+  const layers = useMapLayers();
   const selection = useMapSelection();
-  const filterState = useMapFilters();
-  
-  const facilityData = useFacilityData(filterState.filters);
-
+  const filters = useMapFilters();
+  const facility = useFacilityData(filters.filters);
   const tutorial = useTutorialState({
-    getSnapshot: layerState.snapshot,
-    restoreSnapshot: layerState.restore,
-    setLayers: layerState.actions.setLayers,
+    getSnapshot: layers.snapshot,
+    restoreSnapshot: layers.restore,
+    setLayers: layers.actions.setLayers,
     setMobileSidebarOpen,
     clearSelection: selection.actions.clearSelection,
   });
 
-  // ── Event handlers that bridge hook domains ──
-  const handleEntityClick = useCallback((entity: MapEntity | null) => {
-    selection.actions.selectEntity(entity);
-  }, [selection.actions]);
-
-  const handleCountySelect = useCallback((county: string) => {
-    selection.actions.selectCounty(county);
-    setMobileSidebarOpen(false);
-  }, [selection.actions]);
-
-  const handleFacilityClickFromSidebar = useCallback((facility: import('@/data/facilities').Facility) => {
-    handleEntityClick({ type: 'facility', facility });
-    setMobileSidebarOpen(false);
-  }, [handleEntityClick]);
+  const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
+  const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
+  const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
-      {/* Mobile header */}
       <div className="md:hidden flex items-center justify-between p-3 bg-card border-b border-border">
         <div>
           <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
           <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
         </div>
-        <button
-          onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-          className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium"
-        >
+        <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium">
           {mobileSidebarOpen ? 'Map' : 'Filters'}
         </button>
       </div>
 
-      {/* Sidebar */}
       <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 h-[calc(100vh-52px)] md:h-full`}>
         <Sidebar
-          layer={{
-            layers: layerState.layers,
-            onToggleLayer: layerState.actions.toggleLayer,
-            coverageRadius: layerState.coverageRadius,
-            coverageGaps: layerState.coverageGaps,
-            onCoverageRadiusChange: layerState.actions.setCoverageRadius,
-            onCoverageGapsChange: layerState.actions.setCoverageGaps,
-            radiusKm: layerState.radiusKm,
-            onRadiusChange: layerState.actions.setRadiusKm,
-            coverageRadiusKm: layerState.coverageRadiusKm,
-            onCoverageRadiusKmChange: layerState.actions.setCoverageRadiusKm,
-          }}
-          filter={{
-            searchQuery: filterState.searchQuery,
-            onSearchChange: filterState.actions.setSearchQuery,
-            filters: filterState.filters,
-            onFiltersChange: filterState.actions.setFilters,
-            topProvidersOnly: filterState.topProvidersOnly,
-            onTopProvidersOnlyChange: filterState.actions.setTopProvidersOnly,
-            engagementRateBelow20Only: filterState.engagementRateBelow20Only,
-            onEngagementRateBelow20OnlyChange: filterState.actions.setEngagementRateBelow20Only,
-          }}
-          facility={{
-            allFacilities: facilityData.facilities,
-            facilities: facilityData.filteredFacilities,
-            onAddFacilities: facilityData.addFacilities,
-            onFacilityClick: handleFacilityClickFromSidebar,
-          }}
-          selection={{
-            selectedFteId: selection.activeFteId,
-            onFteCardClick: selection.actions.handleFteCardClick,
-            onCountySelect: handleCountySelect,
-          }}
+          layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm }}
+          filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
+          facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
+          selection={{ selectedFteId: selection.activeFteId, onFteCardClick: selection.actions.handleFteCardClick, onCountySelect: onCounty }}
           onReplayTutorial={tutorial.replayTutorial}
           tutorialStepKey={tutorial.tutorialStepKey}
         />
       </div>
 
-      {/* Map + Detail Panel + Tutorial */}
       <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 relative h-[calc(100vh-52px)] md:h-full`}>
         <MapView
-          facilities={facilityData.filteredFacilities}
-          allFacilities={facilityData.facilities}
-          layers={layerState.layers}
-          typeFilters={filterState.filters.types}
-          countyFilters={filterState.filters.counties}
-          serviceCategoryFilters={filterState.filters.serviceCategories}
-          onFacilityClick={(facility) => handleEntityClick({ type: 'facility', facility })}
+          facilities={facility.filteredFacilities}
+          allFacilities={facility.facilities}
+          layers={layers.layers}
+          typeFilters={filters.filters.types}
+          countyFilters={filters.filters.counties}
+          serviceCategoryFilters={filters.filters.serviceCategories}
+          onFacilityClick={(f) => onEntity({ type: 'facility', facility: f })}
           onMapClick={selection.actions.handleMapClick}
-          searchQuery={filterState.searchQuery}
-          radiusKm={layerState.radiusKm}
-          coverageRadius={layerState.coverageRadius}
-          coverageGaps={layerState.coverageGaps}
-          onEntityClick={handleEntityClick}
+          searchQuery={filters.searchQuery}
+          radiusKm={layers.radiusKm}
+          coverageRadius={layers.coverageRadius}
+          coverageGaps={layers.coverageGaps}
+          onEntityClick={onEntity}
           onEntityHover={selection.actions.setHoverEntity}
           selectedCounty={selection.selectedCounty}
           onFteHubClick={selection.actions.handleFteHubClick}
           selectedFteId={selection.activeFteId}
-          coverageRadiusKm={layerState.coverageRadiusKm}
-          topProvidersOnly={filterState.topProvidersOnly}
-          engagementRateBelow20Only={filterState.engagementRateBelow20Only}
-          
+          coverageRadiusKm={layers.coverageRadiusKm}
+          topProvidersOnly={filters.topProvidersOnly}
+          engagementRateBelow20Only={filters.engagementRateBelow20Only}
           tutorialStepKey={tutorial.tutorialStepKey}
         />
         <CoverageDetailPanel
           entity={selection.lockedEntity}
           onClear={selection.actions.clearSelection}
-          coverageRadiusKm={layerState.coverageRadiusKm}
-          memberVolumeLayerOn={true}
+          coverageRadiusKm={layers.coverageRadiusKm}
         />
         <MapTutorialOverlay
           introOpen={tutorial.tutorialIntroOpen}
