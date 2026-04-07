@@ -1183,18 +1183,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // Marker panes must use pointer-events: none so higher-z empty panes
     // don't block clicks on markers in lower-z panes. Individual marker
     // icons already have pointer-events: auto via Leaflet defaults.
-    // Panes that need direct click interaction (hit areas, interactive overlays).
+    // Panes that contain interactive layers (hit areas, clickable overlays, clickable markers).
     // All other panes are pointer-events: none so they don't block clicks on panes below.
+    // Marker panes use pointer-events: none on the pane itself, but individual
+    // marker icons get pointer-events: auto via CSS (.leaflet-marker-icon).
     const interactivePaneNames = new Set<string>([
-      MAP_PANES.countyPolygons,  // county hit areas live here
+      MAP_PANES.countyPolygons,   // county hit areas + utilization choropleth
+      MAP_PANES.gapOverlays,      // engagement gap polygons (clickable)
     ]);
     Object.entries(PANE_Z_INDEX).forEach(([paneName, zIndex]) => {
       const pane = map.createPane(paneName);
       pane.style.zIndex = String(zIndex);
-      // Only the county hit-area pane needs pointer-events: auto.
-      // Marker panes use pointer-events: none on the pane, but individual
-      // marker icons get pointer-events: auto via CSS (.leaflet-marker-icon).
-      // Overlay panes (broadband, cellular, borders, etc.) must NOT intercept clicks.
       pane.style.pointerEvents = interactivePaneNames.has(paneName) ? 'auto' : 'none';
     });
 
