@@ -22,32 +22,48 @@ import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type Respons
 
 // LayerState imported from @/types/layers
 
-interface SidebarProps {
+export interface SidebarLayerProps {
   layers: LayerState;
   onToggleLayer: (layer: keyof LayerState) => void;
-  allFacilities: Facility[];
-  facilities: Facility[];
-  onAddFacilities: (facilities: Facility[]) => void;
-  searchQuery: string;
-  onSearchChange: (query: string) => void;
-  onFacilityClick: (facility: Facility) => void;
-  filters: Filters;
-  onFiltersChange: (filters: Filters) => void;
-  radiusKm: number;
-  onRadiusChange: (km: number) => void;
   coverageRadius: boolean;
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
   onCoverageGapsChange: (checked: boolean) => void;
-  selectedFteId?: string | null;
-  onFteCardClick?: (fteId: string) => void;
-  coverageRadiusKm?: number;
+  radiusKm: number;
+  onRadiusChange: (km: number) => void;
+  coverageRadiusKm: number;
   onCoverageRadiusKmChange?: (km: number) => void;
+}
+
+export interface SidebarFilterProps {
+  searchQuery: string;
+  onSearchChange: (query: string) => void;
+  filters: Filters;
+  onFiltersChange: (filters: Filters) => void;
   topProvidersOnly: boolean;
   onTopProvidersOnlyChange: (checked: boolean) => void;
   engagementRateBelow20Only: boolean;
   onEngagementRateBelow20OnlyChange: (checked: boolean) => void;
+}
+
+export interface SidebarFacilityProps {
+  allFacilities: Facility[];
+  facilities: Facility[];
+  onAddFacilities: (facilities: Facility[]) => void;
+  onFacilityClick: (facility: Facility) => void;
+}
+
+export interface SidebarSelectionProps {
+  selectedFteId?: string | null;
+  onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
+}
+
+interface SidebarProps {
+  layer: SidebarLayerProps;
+  filter: SidebarFilterProps;
+  facility: SidebarFacilityProps;
+  selection: SidebarSelectionProps;
   onReplayTutorial?: () => void;
   tutorialStepKey?: MapTutorialStepKey | null;
 }
