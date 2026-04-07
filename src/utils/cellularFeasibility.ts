@@ -1,10 +1,11 @@
 /**
  * Cellular/mobile feasibility classification for operational decision support.
- * Now uses FCC-derived data instead of mock estimates.
+ * Uses FCC-derived data.
  */
 
 import type { CountyCellularData, OperationalCellularReadiness, CellularReliability } from '@/data/cellular-coverage';
 import { getCountyCellular, getReliabilityCategory } from '@/data/cellular-coverage';
+import { getCountyRemoteFeasibility } from '@/utils/broadbandFeasibility';
 
 export type MobileFeasibility = 'High Mobile Feasibility' | 'Moderate Mobile Feasibility' | 'Low Mobile Feasibility';
 
@@ -34,7 +35,7 @@ export const getCellularOperationalNote = (data: CountyCellularData): string => 
   }
 };
 
-/** Color token class names using backward-compatible reliability categories */
+/** Color token class names */
 export const RELIABILITY_COLORS: Record<CellularReliability, string> = {
   'Strong': 'text-staffing-high',
   'Moderate': 'text-engagement-watch',
@@ -57,7 +58,6 @@ export const getOperationalConnectivityProfile = (countyName: string): Operation
   const data = getCountyCellular(countyName);
   if (!data) return null;
 
-  const { getCountyRemoteFeasibility } = require('@/utils/broadbandFeasibility');
   const broadband = getCountyRemoteFeasibility(countyName);
 
   const bbHigh = broadband === 'High Remote Feasibility';
