@@ -10,7 +10,7 @@ import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOA
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { getCountyBroadband } from '@/data/broadband-coverage';
-import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS } from '@/utils/broadbandFeasibility';
+import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS, READINESS_COLORS } from '@/utils/broadbandFeasibility';
 import { getCountyCellular, formatCarriers } from '@/data/cellular-coverage';
 import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
 
@@ -1135,35 +1135,68 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
               <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                 <div className="flex items-center gap-1.5 mb-1">
                   <Wifi className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Status</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Speed Distribution</span>
                 </div>
                 <div className="space-y-0.5">
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Broadband Status</span>
-                    <span className="font-bold text-foreground">{bb.broadbandStatus}</span>
+                    <span className="text-muted-foreground">≥100/20 Mbps</span>
+                    <span className="font-bold tabular-nums text-foreground">{bb.pct_100_20_plus}%</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Served</span>
-                    <span className="font-medium tabular-nums text-foreground">{bb.servedPercent}%</span>
+                    <span className="text-muted-foreground">25/3–100/20</span>
+                    <span className="font-medium tabular-nums text-foreground">{bb.pct_25_3_to_100_20}%</span>
                   </div>
                   <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Underserved</span>
-                    <span className="font-medium tabular-nums text-foreground">{bb.underservedPercent}%</span>
-                  </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Unserved</span>
-                    <span className="font-medium tabular-nums text-foreground">{bb.unservedPercent}%</span>
-                  </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Technology</span>
-                    <span className="font-medium text-foreground">{bb.dominantTechnology}</span>
+                    <span className="text-muted-foreground">&lt;25/3 Mbps</span>
+                    <span className="font-medium tabular-nums text-foreground">{bb.pct_below_25_3}%</span>
                   </div>
                 </div>
+              </div>
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <Wifi className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                  <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Technology Mix</span>
+                </div>
+                <div className="space-y-0.5">
+                  {bb.fiberShare > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Fiber</span>
+                      <span className="font-medium tabular-nums text-foreground">{bb.fiberShare}%</span>
+                    </div>
+                  )}
+                  {bb.cableShare > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Cable</span>
+                      <span className="font-medium tabular-nums text-foreground">{bb.cableShare}%</span>
+                    </div>
+                  )}
+                  {bb.fixedWirelessShare > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Fixed Wireless</span>
+                      <span className="font-medium tabular-nums text-foreground">{bb.fixedWirelessShare}%</span>
+                    </div>
+                  )}
+                  {bb.satelliteShare > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Satellite</span>
+                      <span className={`font-medium tabular-nums ${bb.satelliteShare >= 50 ? 'text-destructive' : 'text-foreground'}`}>{bb.satelliteShare}%</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex justify-between text-[11px] px-0.5">
+                <span className="text-muted-foreground">Operational Readiness</span>
+                <span className={`font-semibold ${READINESS_COLORS[bb.operationalReadiness]}`}>{bb.operationalReadiness}</span>
               </div>
               {feasibility && (
                 <div className="flex justify-between text-[11px] px-0.5">
                   <span className="text-muted-foreground">Remote Feasibility</span>
                   <span className={`font-semibold ${FEASIBILITY_COLORS[feasibility]}`}>{feasibility.replace(' Remote Feasibility', '')}</span>
+                </div>
+              )}
+              {bb.coverageUnevenness && (
+                <div className="rounded-md border border-engagement-watch/30 bg-engagement-watch/5 px-2 py-1 text-[10px] text-engagement-watch">
+                  ⚠ Coverage varies significantly across this county — do not assume uniform access.
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
