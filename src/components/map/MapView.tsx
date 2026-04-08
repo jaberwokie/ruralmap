@@ -1692,18 +1692,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        // Native DOM click backup — same pattern as provider markers
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
+        servicePresenceMarkerRef.current!.addLayer(marker);
+      });
+
+      // Deferred native DOM click backup for ALL service markers.
+      // marker.once('add') fires before the DOM element exists for most markers
+      // in a featureGroup. requestAnimationFrame guarantees the browser has
+      // rendered the icon elements before we attach native listeners.
+      requestAnimationFrame(() => {
+        servicePresenceMarkerRef.current?.eachLayer((layer) => {
+          const m = layer as MapPointMarker;
+          const iconEl = m.getElement?.();
+          if (iconEl && !(iconEl as any).__nativeClickBound) {
+            (iconEl as any).__nativeClickBound = true;
             iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
               nativeEvent.stopPropagation();
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
+              selectMarkerEntityRef.current(m.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, m);
             });
           }
         });
-
-        servicePresenceMarkerRef.current!.addLayer(marker);
       });
     }
 
@@ -1769,18 +1776,22 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        // Native DOM click backup — same pattern as provider markers
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
+        behavioralHealthMarkerRef.current!.addLayer(marker);
+      });
+
+      // Deferred native DOM click backup for ALL behavioral health markers.
+      requestAnimationFrame(() => {
+        behavioralHealthMarkerRef.current?.eachLayer((layer) => {
+          const m = layer as MapPointMarker;
+          const iconEl = m.getElement?.();
+          if (iconEl && !(iconEl as any).__nativeClickBound) {
+            (iconEl as any).__nativeClickBound = true;
             iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
               nativeEvent.stopPropagation();
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
+              selectMarkerEntityRef.current(m.__entity as PointSelectionEntity | undefined, 'bh-marker-native', null, m);
             });
           }
         });
-
-        behavioralHealthMarkerRef.current!.addLayer(marker);
       });
     }
 
