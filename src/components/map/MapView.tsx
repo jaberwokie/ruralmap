@@ -1278,10 +1278,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }) ?? null;
     markersRef.current?.addTo(map);
 
-    // Facility cluster group click handler (same pattern as pointCluster)
+    // Facility cluster group click handler — uses stable ref
     (markersRef.current as any)?.on?.('click', (e: any) => {
       const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntity(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
+      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
     });
     topProviderMarkersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
