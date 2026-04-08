@@ -1669,25 +1669,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
+        // Add to MarkerClusterGroup — same click interception path as providers.
+        // Also add to featureGroup for layer visibility toggling (debug panel).
+        pointClusterRef.current!.addLayer(marker);
         servicePresenceMarkerRef.current!.addLayer(marker);
-      });
-
-      // Deferred native DOM click backup for ALL service markers.
-      // marker.once('add') fires before the DOM element exists for most markers
-      // in a featureGroup. requestAnimationFrame guarantees the browser has
-      // rendered the icon elements before we attach native listeners.
-      requestAnimationFrame(() => {
-        servicePresenceMarkerRef.current?.eachLayer((layer) => {
-          const m = layer as MapPointMarker;
-          const iconEl = m.getElement?.();
-          if (iconEl && !(iconEl as any).__nativeClickBound) {
-            (iconEl as any).__nativeClickBound = true;
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              selectMarkerEntityRef.current(m.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, m);
-            });
-          }
-        });
       });
     }
 
@@ -1753,22 +1738,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
+        // Add to MarkerClusterGroup — same click interception path as providers.
+        pointClusterRef.current!.addLayer(marker);
         behavioralHealthMarkerRef.current!.addLayer(marker);
-      });
-
-      // Deferred native DOM click backup for ALL behavioral health markers.
-      requestAnimationFrame(() => {
-        behavioralHealthMarkerRef.current?.eachLayer((layer) => {
-          const m = layer as MapPointMarker;
-          const iconEl = m.getElement?.();
-          if (iconEl && !(iconEl as any).__nativeClickBound) {
-            (iconEl as any).__nativeClickBound = true;
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              selectMarkerEntityRef.current(m.__entity as PointSelectionEntity | undefined, 'bh-marker-native', null, m);
-            });
-          }
-        });
       });
     }
 
