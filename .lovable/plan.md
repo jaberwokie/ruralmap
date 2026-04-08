@@ -1,63 +1,68 @@
 
-Fix the actual remaining failure instead of repeating the earlier wrong assumption.
+Goal: restore green and purple pin selection so a first click always locks the service into the detail panel.
 
 What I found:
-- The detail panel path is already wired for `facility` and `ruralService` entities.
-- `Index.tsx` is using `lockedEntity` directly, so county fallback is not the main blocker now.
-- `MapView.tsx` already adds green and purple pins to dedicated layer groups and already attaches `marker.on('click')`.
-- The likely remaining break is the marker DOM hit area, not the panel renderer:
-  - `getSharedPinSvgMarkup()` creates a 28×28 wrapper, but the visible/clickable SVG inside it is still only 14×14.
-  - The pin graphic is stroke-only with `fill="transparent"`, so a lot of the apparent target can still miss.
-  - That fits your symptom exactly: hover tooltip may appear, but single-click on a green pin like Carlin still does not reliably lock selection and populate Details.
+- The detail panel is already wired for non-provider services: `CoverageDetailPanel` handles `type: 'ruralService'`.
+- Green and purple pins are still created in a different runtime path than providers.
+- Providers are effectively on a hardened path:
+  - created as `MapPointMarker`
+  - stored in a cluster group used for working provider selection
+  - explicit `marker.on('click', ...)`
+  - extra native DOM fallback on `marker.once('add', ...)`
+- Green/purple markers are still split:
+  - created in their own loops
+  - added to a separate cluster group (`pointClusterRef`)
+  - no equivalent DOM fallback
+  - legacy refs (`servicePresenceMarkerRef`, `behavioralHealthMarkerRef`) are still present but not actually used for the real clickable markers
+- So the panel renderer is not the blocker now. The remaining break is the incomplete/non-unified marker interaction path for service and behavioral-health markers.
 
-Plan:
-1. Make the entire 28×28 marker wrapper truly clickable
-   - Update `src/components/map/pinVisuals.ts`
-   - Keep the visual design the same.
-   - Add an invisible full-hitbox element or explicit pointer-event behavior so the whole wrapper receives clicks, not just the tiny SVG stroke.
-
-2. Normalize point selection into one helper in `src/components/map/MapView.tsx`
-   - Create one internal selection function for all point markers:
-     - stop propagation
-     - set click guard
-     - apply selected priority
-     - send `marker.__entity`
+Implementation plan:
+1. Replace the split green/purple marker setup with one shared point-marker helper
+   - Build one helper that creates a `MapPointMarker`, assigns pane, entity, tooltip, hover priority, click binding, and fallback binding.
    - Use it for:
-     - green service pins
-     - purple behavioral health pins
-     - red/blue provider pins
-     - cluster-group click fallbacks
+     - green service markers
+     - purple behavioral-health markers
+     - keep provider markers aligned with the same contract where practical
 
-3. Remove duplicated direct entity payload creation inside click handlers
-   - Use `marker.__entity` as the single source of truth for clicked marker data.
-   - This avoids any mismatch between rendered marker type and panel entity type.
+2. Put green and purple markers on the same authoritative selection contract as providers
+   - Bind Leaflet click first with the same `selectMarkerEntity` flow providers use.
+   - Add native DOM click only as fallback, not as the primary path.
+   - Guard against duplicate selection calls when both Leaflet and fallback fire.
 
-4. Preserve panel logic, but harden it against silent failure
-   - Keep `CoverageDetailPanel.tsx` branching by `entity.type`.
-   - If a valid `ruralService` arrives, it must always render `RuralServiceContent`.
-   - Do not allow empty-panel behavior from optional missing fields.
+3. Remove the incomplete split state around service/BH marker groups
+   - Stop keeping separate “marker refs” that are cleared but never receive the actual clickable markers.
+   - Make the real rendered green/purple markers live in the authoritative marker collection used for click handling.
+   - Keep any non-click decorative layers separate only if needed.
 
-5. Clean up the panel console warning at the same time
-   - Fix the `Function components cannot be given refs` warning in `CoverageDetailPanel.tsx`.
-   - This is separate from the map click bug, but it should be removed because it can affect panel interaction reliability and accordion behavior.
+4. Normalize green/purple payloads exactly to the detail-panel contract
+   - Ensure every green/purple marker always sets:
+     - `__entity = { type: 'ruralService', service }`
+     - stable `__entityId`
+     - stable `__entityName`
+   - Ensure the shared selection helper always passes that payload through unchanged.
 
-6. Verify the exact failing case after the hit-area fix
-   - Re-test the Carlin green pin specifically.
-   - Then re-test:
-     - green service pins
-     - purple behavioral-health pins
-     - red hospital pins
-     - blue clinic pins
-   - Confirm each single click updates the right-side Details panel immediately with the correct entity.
+5. Harden persistence and click guard behavior
+   - Make green/purple clicks use the same marker guard and selected-marker priority logic as providers.
+   - Prevent map background reset from clearing a marker click in the same interaction cycle.
+
+6. Clean up layer ownership so the fix applies to all rendered green/purple pins
+   - Apply the shared helper inside the full service and behavioral-health rendering loops, not to one subset.
+   - Confirm every rendered green/purple marker gets the same pane, click binding, and fallback registration.
+
+7. Validation after implementation
+   - Click multiple green pins across different counties.
+   - Click multiple purple pins across different counties.
+   - Confirm first click opens `ruralService` detail content each time.
+   - Confirm county selection is replaced by the clicked green/purple pin.
+   - Confirm provider pins still work unchanged.
+   - Confirm broadband/cellular overlays still display without stealing clicks.
 
 Files to update:
-- `src/components/map/pinVisuals.ts`
 - `src/components/map/MapView.tsx`
-- `src/components/map/CoverageDetailPanel.tsx`
+- only touch `src/index.css` if one small pointer-events correction is still needed after unifying the marker helper
 
 Expected end state:
-- Clicking the green Carlin pin opens `RuralServiceContent` in the Details panel.
-- All visible pin types use one consistent click-to-selection path.
-- No stale county content overrides a clicked pin.
-- Accordion sections still work.
-- The current ref warning is gone.
+- Every green and purple pin uses the same reliable selection pipeline.
+- Clicking any green or purple pin immediately populates the detail panel.
+- Selection persists after click.
+- Provider clicks, county clicks, and broadband/cellular overlays continue to work.
