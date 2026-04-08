@@ -1654,6 +1654,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker', event, marker);
         });
 
+        // Native DOM click backup — same pattern as provider markers
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'service-marker-native' });
+              selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
+            });
+          }
+        });
+
         marker.bindTooltip(
           `
             <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
@@ -1721,6 +1733,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         marker.on('click', (event: L.LeafletEvent) => {
           selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker', event, marker);
+        });
+
+        // Native DOM click backup — same pattern as provider markers
+        marker.once('add', () => {
+          const iconEl = marker.getElement?.();
+          if (iconEl) {
+            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
+              nativeEvent.stopPropagation();
+              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'behavioral-health-marker-native' });
+              selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
+            });
+          }
         });
 
         marker.bindTooltip(
