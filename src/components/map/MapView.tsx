@@ -1308,9 +1308,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // MarkerClusterGroup intercepts DOM clicks on child markers; individual
     // marker.on('click') may not fire reliably. This listener catches all
     // child-marker clicks via the cluster group's own event system.
+    // Uses stable ref to avoid stale closure (bound once at map init).
     (pointClusterRef.current as any)?.on?.('click', (e: any) => {
       const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntity(marker?.__entity as PointSelectionEntity | undefined, 'declutter-cluster-marker', e, marker);
+      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'cluster-group-click', e, marker);
     });
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
