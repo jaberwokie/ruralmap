@@ -1740,7 +1740,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
         // Add to MarkerClusterGroup — same click interception path as providers.
         pointClusterRef.current!.addLayer(marker);
-        behavioralHealthMarkerRef.current!.addLayer(marker);
       });
     }
 
