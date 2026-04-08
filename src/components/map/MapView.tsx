@@ -1670,9 +1670,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         );
 
         // Add to MarkerClusterGroup — same click interception path as providers.
-        // Also add to featureGroup for layer visibility toggling (debug panel).
+        // The cluster group's on('click') handler (line ~1311) catches all
+        // child marker clicks reliably, matching the provider interaction contract.
         pointClusterRef.current!.addLayer(marker);
-        servicePresenceMarkerRef.current!.addLayer(marker);
       });
     }
 
