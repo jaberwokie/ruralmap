@@ -1256,31 +1256,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     engagementGapRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.featureGroup().addTo(map);
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
-    // Group-level click handler for service markers — authoritative, uses ref
-    // to avoid stale closure since this is bound once at map init.
-    (servicePresenceMarkerRef.current as any).on('click', (e: any) => {
-      const layer = e.layer || e.propagatedFrom || e.sourceTarget;
-      const marker = layer as MapPointMarker | undefined;
-      if (DEBUG_CLICKS) {
-        console.log('[service-group-click] layer:', layer, 'entity:', marker?.__entity);
-      }
-      if (marker?.__entity) {
-        selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity, 'service-group-click', e, marker);
-      }
-    });
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
-    // Group-level click handler for behavioral health markers — authoritative
-    (behavioralHealthMarkerRef.current as any).on('click', (e: any) => {
-      const layer = e.layer || e.propagatedFrom || e.sourceTarget;
-      const marker = layer as MapPointMarker | undefined;
-      if (DEBUG_CLICKS) {
-        console.log('[bh-group-click] layer:', layer, 'entity:', marker?.__entity);
-      }
-      if (marker?.__entity) {
-        selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity, 'bh-group-click', e, marker);
-      }
-    });
     markersRef.current = markerClusterFactory?.({
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
@@ -1301,10 +1278,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }) ?? null;
     markersRef.current?.addTo(map);
 
-    // Facility cluster group click handler (same pattern as pointCluster)
+    // Facility cluster group click handler — uses stable ref
     (markersRef.current as any)?.on?.('click', (e: any) => {
       const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntity(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
+      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
     });
     topProviderMarkersRef.current = L.layerGroup().addTo(map);
     pointClusterRef.current = markerClusterFactory?.({
@@ -1331,9 +1308,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // MarkerClusterGroup intercepts DOM clicks on child markers; individual
     // marker.on('click') may not fire reliably. This listener catches all
     // child-marker clicks via the cluster group's own event system.
+    // Uses stable ref to avoid stale closure (bound once at map init).
     (pointClusterRef.current as any)?.on?.('click', (e: any) => {
       const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntity(marker?.__entity as PointSelectionEntity | undefined, 'declutter-cluster-marker', e, marker);
+      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'cluster-group-click', e, marker);
     });
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
@@ -1692,25 +1670,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        servicePresenceMarkerRef.current!.addLayer(marker);
-      });
-
-      // Deferred native DOM click backup for ALL service markers.
-      // marker.once('add') fires before the DOM element exists for most markers
-      // in a featureGroup. requestAnimationFrame guarantees the browser has
-      // rendered the icon elements before we attach native listeners.
-      requestAnimationFrame(() => {
-        servicePresenceMarkerRef.current?.eachLayer((layer) => {
-          const m = layer as MapPointMarker;
-          const iconEl = m.getElement?.();
-          if (iconEl && !(iconEl as any).__nativeClickBound) {
-            (iconEl as any).__nativeClickBound = true;
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              selectMarkerEntityRef.current(m.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, m);
-            });
-          }
-        });
+        // Add to MarkerClusterGroup — same click interception path as providers.
+        // The cluster group's on('click') handler (line ~1311) catches all
+        // child marker clicks reliably, matching the provider interaction contract.
+        pointClusterRef.current!.addLayer(marker);
       });
     }
 
@@ -1776,22 +1739,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         );
 
-        behavioralHealthMarkerRef.current!.addLayer(marker);
-      });
-
-      // Deferred native DOM click backup for ALL behavioral health markers.
-      requestAnimationFrame(() => {
-        behavioralHealthMarkerRef.current?.eachLayer((layer) => {
-          const m = layer as MapPointMarker;
-          const iconEl = m.getElement?.();
-          if (iconEl && !(iconEl as any).__nativeClickBound) {
-            (iconEl as any).__nativeClickBound = true;
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              selectMarkerEntityRef.current(m.__entity as PointSelectionEntity | undefined, 'bh-marker-native', null, m);
-            });
-          }
-        });
+        // Add to MarkerClusterGroup — same click interception path as providers.
+        pointClusterRef.current!.addLayer(marker);
       });
     }
 
