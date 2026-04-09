@@ -1322,14 +1322,15 @@ const useAccordion = (defaultSection: string) => {
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const hasPhone = !!phone;
-  const hasDirections = !!(address || (lat && lng));
+  const hasDirections = !!(lat && lng) || !!address;
   const normalizedWebsite = normalizeWebsite(website);
   if (!hasPhone && !hasDirections && !normalizedWebsite) return null;
 
-  const directionsUrl = address
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + (city ? `, ${city}, NV` : ''))}`
-    : lat && lng
+  // Always prefer coordinates for reliability; fall back to address string only if no coords
+  const directionsUrl = lat && lng
     ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    : address
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + (city ? `, ${city}, NV` : ''))}`
     : '#';
 
   return (
