@@ -1840,6 +1840,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
                 <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
                   <div className="text-xs font-medium text-foreground">{svc.serviceName}</div>
                   <div className="text-[10px] text-muted-foreground">{svc.serviceType}</div>
+                  <OperationalInlineBadges meta={svc.operational} />
                   {svc.description && <div className="text-[10px] text-muted-foreground mt-0.5">{svc.description}</div>}
                   {svc.phone && (
                     <div className="mt-0.5">
