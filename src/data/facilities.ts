@@ -1,3 +1,5 @@
+import type { ServiceOperationalMeta } from '@/types/medicaid';
+
 export type FacilityType = 'hospital' | 'clinic' | 'tier1';
 export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
 export type AccessType = 'Frontier' | 'Rural' | 'Near-Urban';
@@ -22,6 +24,8 @@ export interface Facility {
   service?: string;
   volume?: number;
   accessType?: AccessType;
+  /** Medicaid participation and operational metadata */
+  operational?: Partial<ServiceOperationalMeta>;
 }
 
 export const defaultFacilities: Facility[] = [
