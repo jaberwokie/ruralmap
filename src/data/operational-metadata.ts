@@ -54,8 +54,25 @@ export interface OperationalTag {
   verificationSource: string;
   /** Date of verification (YYYY-MM-DD or descriptive) */
   verificationDate: string;
-  /** Optional human note */
+  /** Optional human note (legacy alias for verificationNotes) */
   notes?: string;
+
+  /** Structured verification notes — preferred over `notes` for new entries */
+  verificationNotes?: string;
+
+  // ── Provider identity fields (populate during verification, not before) ──
+
+  /** NPI number — primary federal provider identifier */
+  npi?: string;
+
+  /** Legal name on enrollment record (may differ from display name) */
+  organizationLegalName?: string;
+
+  /** Address confirmed during verification (may differ from service listing) */
+  serviceAddress?: string;
+
+  /** State license or certification identifier */
+  licenseIdentifier?: string;
 
   // ── Future fields (do not require now) ──
   // isTribalProvider?: boolean | null;
