@@ -577,3 +577,30 @@ export const getTribalNationsByCounty = (county: string): TribalNation[] =>
 
 /** Count of all tribally operated services */
 export const totalTribalServices = tribalNations.reduce((n, t) => n + t.triballyOperatedServices.length, 0);
+
+/** Load GeoJSON polygon boundaries and attach to tribal nation records */
+export async function loadTribalBoundaries(): Promise<void> {
+  try {
+    const resp = await fetch('/data/tribal_nations_boundaries.json');
+    if (!resp.ok) return;
+    const geojson = await resp.json() as GeoJSON.FeatureCollection;
+    for (const feature of geojson.features) {
+      const tribeId = feature.properties?.tribeId as string | undefined;
+      if (!tribeId) continue;
+      const tribe = TRIBAL_NATION_BY_ID.get(tribeId);
+      if (tribe && feature.geometry) {
+        tribe.geometry = feature.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon;
+      }
+    }
+  } catch (e) {
+    console.warn('[TribalNations] Failed to load boundary GeoJSON:', e);
+  }
+}
+
+/** Whether boundaries have been loaded */
+let _boundariesLoaded = false;
+export async function ensureTribalBoundaries(): Promise<void> {
+  if (_boundariesLoaded) return;
+  _boundariesLoaded = true;
+  await loadTribalBoundaries();
+}
