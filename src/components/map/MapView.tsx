@@ -50,6 +50,7 @@ interface MapViewProps {
     engagementGap: boolean;
     broadbandAccess: boolean;
     cellularCoverage: boolean;
+    tribalNations: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
