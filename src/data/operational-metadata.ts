@@ -29,6 +29,11 @@ export type DeferredReason =
   | 'insufficient_source_match'
   | 'lower_priority_followup';
 
+export type VerificationConfidence =
+  | 'direct'
+  | 'inferred_strong'
+  | 'inferred_limited';
+
 export interface OperationalTag {
   entityId: string;
   entityType: EntityType;
@@ -41,6 +46,9 @@ export interface OperationalTag {
 
   /** Required when verificationStatus = 'deferred' */
   deferredReason?: DeferredReason;
+
+  /** Required when verificationStatus = verified_participating or verified_non_participating */
+  verificationConfidence?: VerificationConfidence;
 
   /** Source used to verify the participation value */
   verificationSource: string;
@@ -133,16 +141,16 @@ export const operationalTags: OperationalTag[] = [
   // Non-clinical rural services remain untagged (unknown).
 
   // ── FQHC sites (federally required to accept Medicaid) ──
-  { entityId: 'rs-78',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Elko Community Health Center — FQHC site' },
-  { entityId: 'rs-79',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Wendover Community Health Center — FQHC site' },
-  { entityId: 'rs-80',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Carlin Community Health Center — FQHC site' },
-  { entityId: 'rs-81',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Jackpot Community Health Center — FQHC site' },
+  { entityId: 'rs-78',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Elko Community Health Center — FQHC site' },
+  { entityId: 'rs-79',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Wendover Community Health Center — FQHC site' },
+  { entityId: 'rs-80',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Carlin Community Health Center — FQHC site' },
+  { entityId: 'rs-81',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Jackpot Community Health Center — FQHC site' },
 
   // ── Tribal health (IHS-funded) ──
-  { entityId: 'rs-63',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'IHS/tribal health center enrollment', verificationDate: '2026-04', notes: 'Washoe Tribal Health Center — Gardnerville' },
+  { entityId: 'rs-63',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'IHS/tribal health center enrollment', verificationDate: '2026-04', notes: 'Washoe Tribal Health Center — Gardnerville' },
 
   // ── Major health system (enrolled) ──
-  { entityId: 'rs-144', entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'Banner Health system Medicaid enrollment', verificationDate: '2026-04', notes: 'Banner Health Center Fernley' },
+  { entityId: 'rs-144', entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'inferred_strong', verificationSource: 'Banner Health system Medicaid enrollment', verificationDate: '2026-04', notes: 'Banner Health Center Fernley — system-level enrollment, not site-specific confirmation' },
 
   // ── Deferred: county public health nurses (not direct Medicaid billing entities) ──
   { entityId: 'rs-62',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'public_health_nonstandard', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Douglas County Community Health Nurse' },
