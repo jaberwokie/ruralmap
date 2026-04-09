@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
-import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -327,6 +327,9 @@ const Sidebar = ({
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
+  const [csvDragActive, setCsvDragActive] = useState(false);
+  const [csvImportState, setCsvImportState] = useState<'idle' | 'processing' | 'preview' | 'success' | 'error'>('idle');
+  const [csvParsed, setCsvParsed] = useState<{ valid: Facility[]; invalidCount: number; errors: string[]; totalRows: number } | null>(null);
   const [filtersOpen, setFiltersOpen] = useState(true);
   const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
@@ -438,20 +441,30 @@ const Sidebar = ({
     return trimmed;
   };
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processCSVFile = useCallback((file: File) => {
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      toast.error('Only CSV files are accepted.');
+      setCsvImportState('error');
+      return;
+    }
+    console.log('[csv-import] File selected:', file.name);
+    setCsvImportState('processing');
+    setCsvParsed(null);
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      toast.error('Failed to read file.');
+      setCsvImportState('error');
+    };
     reader.onload = (event) => {
       let text = event.target?.result as string;
-      if (!text) { toast.error('Failed to read file.'); return; }
+      if (!text) { toast.error('Failed to read file.'); setCsvImportState('error'); return; }
 
       // Strip BOM
       if (text.startsWith('\uFEFF')) text = text.substring(1);
 
       const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { toast.error('CSV file has no data rows.'); return; }
+      if (lines.length < 2) { toast.error('CSV file has no data rows.'); setCsvImportState('error'); return; }
 
       const headers = parseCSVLine(stripLineQuotes(lines[0]));
       const norm = headers.map(normalizeHeader);
@@ -473,23 +486,32 @@ const Sidebar = ({
       const tierIdx = find('tier');
 
       if (nameIdx === -1 || latIdx === -1 || lngIdx === -1) {
-        toast.error('Missing required columns: name, latitude, longitude.');
+        const missing = [nameIdx === -1 && 'name', latIdx === -1 && 'latitude', lngIdx === -1 && 'longitude'].filter(Boolean).join(', ');
+        toast.error(`Missing required columns: ${missing}`);
+        setCsvImportState('error');
+        setCsvParsed({ valid: [], invalidCount: 0, errors: [`Missing required columns: ${missing}`], totalRows: lines.length - 1 });
         return;
       }
 
-      const newFacilities: Facility[] = [];
+      const valid: Facility[] = [];
+      const errors: string[] = [];
+      let invalidCount = 0;
+
       for (let i = 1; i < lines.length; i++) {
         const cols = parseCSVLine(stripLineQuotes(lines[i]));
+        const name = cols[nameIdx]?.trim();
         const lat = parseFloat(cols[latIdx]);
         const lng = parseFloat(cols[lngIdx]);
-        if (isNaN(lat) || isNaN(lng)) continue;
+
+        if (!name) { invalidCount++; errors.push(`Row ${i}: missing name`); continue; }
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { invalidCount++; errors.push(`Row ${i}: invalid coordinates for "${name}"`); continue; }
 
         const rawType = (typeIdx !== -1 ? cols[typeIdx] || '' : '').toLowerCase();
         const type: FacilityType = rawType.includes('hospital') ? 'hospital' : 'clinic';
 
-        newFacilities.push({
+        valid.push({
           id: `csv-${Date.now()}-${i}`,
-          name: cols[nameIdx] || `Facility ${i}`,
+          name,
           type,
           city: cityIdx !== -1 ? cols[cityIdx] || '' : '',
           county: countyIdx !== -1 ? cols[countyIdx] || '' : '',
@@ -500,16 +522,53 @@ const Sidebar = ({
         });
       }
 
-      if (newFacilities.length > 0) {
-        onAddFacilities(newFacilities);
-        toast.success(`Imported ${newFacilities.length} facilities.`);
-      } else {
-        toast.error('No valid facilities found in the CSV.');
-      }
+      console.log(`[csv-import] Parsed: ${valid.length} valid, ${invalidCount} invalid out of ${lines.length - 1} rows`);
+      setCsvParsed({ valid, invalidCount, errors, totalRows: lines.length - 1 });
+      setCsvImportState(valid.length > 0 ? 'preview' : 'error');
+      if (valid.length === 0) toast.error('No valid rows found in the CSV.');
     };
     reader.readAsText(file);
+  }, []);
+
+  const handleCSVUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processCSVFile(file);
     e.target.value = '';
-  };
+  }, [processCSVFile]);
+
+  const confirmImport = useCallback(() => {
+    if (!csvParsed || csvParsed.valid.length === 0) return;
+    onAddFacilities(csvParsed.valid);
+    toast.success(`Imported ${csvParsed.valid.length} facilities.`);
+    console.log(`[csv-import] Imported ${csvParsed.valid.length} facilities`);
+    setCsvImportState('success');
+    setTimeout(() => { setCsvImportState('idle'); setCsvParsed(null); }, 3000);
+  }, [csvParsed, onAddFacilities]);
+
+  const resetImport = useCallback(() => {
+    setCsvImportState('idle');
+    setCsvParsed(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCsvDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCsvDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCsvDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processCSVFile(file);
+  }, [processCSVFile]);
 
   const displayFacilities = searchQuery
     ? facilities.filter(f =>
@@ -1233,24 +1292,121 @@ const Sidebar = ({
           Data Import
         </button>
         {csvOpen && (
-          <div className="mb-3">
+          <div className="mb-3 space-y-2">
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv"
+              accept=".csv,text/csv"
               onChange={handleCSVUpload}
               className="hidden"
             />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 h-16 border border-dashed border-border rounded-md text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors duration-200"
-            >
-              <Upload className="w-4 h-4" />
-              <span>Drop CSV or click to upload</span>
-            </button>
-            <p className="text-[10px] text-muted-foreground mt-1.5 px-1">
-              Required: name, latitude, longitude. Optional: type, city, county, tier.
-            </p>
+
+            {csvImportState === 'idle' || csvImportState === 'error' ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed rounded-md text-xs transition-colors duration-200 ${
+                    csvDragActive
+                      ? 'border-primary bg-primary/5 text-foreground'
+                      : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{csvDragActive ? 'Drop file here' : 'Drop CSV or click to upload'}</span>
+                </button>
+                <p className="text-[10px] text-muted-foreground px-1">
+                  Required: name, latitude, longitude. Optional: type, city, county, tier.
+                </p>
+                {csvImportState === 'error' && csvParsed && csvParsed.errors.length > 0 && (
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 space-y-0.5">
+                    {csvParsed.errors.slice(0, 5).map((err, i) => (
+                      <p key={i} className="text-[10px] text-destructive">{err}</p>
+                    ))}
+                    {csvParsed.errors.length > 5 && (
+                      <p className="text-[10px] text-destructive">…and {csvParsed.errors.length - 5} more</p>
+                    )}
+                    <button type="button" onClick={resetImport} className="text-[10px] text-primary hover:underline mt-1">
+                      Try again
+                    </button>
+                  </div>
+                )}
+              </>
+            ) : csvImportState === 'processing' ? (
+              <div className="w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed border-border rounded-md text-xs text-muted-foreground">
+                <span className="animate-pulse">Processing…</span>
+              </div>
+            ) : csvImportState === 'preview' && csvParsed ? (
+              <div className="space-y-2">
+                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Total rows</span>
+                    <span className="font-medium text-foreground">{csvParsed.totalRows}</span>
+                  </div>
+                  <div className="flex justify-between text-[11px]">
+                    <span className="text-muted-foreground">Valid</span>
+                    <span className="font-medium text-primary">{csvParsed.valid.length}</span>
+                  </div>
+                  {csvParsed.invalidCount > 0 && (
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-muted-foreground">Invalid (skipped)</span>
+                      <span className="font-medium text-destructive">{csvParsed.invalidCount}</span>
+                    </div>
+                  )}
+                </div>
+
+                {csvParsed.errors.length > 0 && (
+                  <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 space-y-0.5">
+                    {csvParsed.errors.slice(0, 3).map((err, i) => (
+                      <p key={i} className="text-[10px] text-destructive">{err}</p>
+                    ))}
+                    {csvParsed.errors.length > 3 && (
+                      <p className="text-[10px] text-destructive">…and {csvParsed.errors.length - 3} more</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Preview table */}
+                <div className="rounded-md border border-border overflow-hidden">
+                  <div className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground px-2 py-1 bg-secondary/70">
+                    Preview ({Math.min(csvParsed.valid.length, 5)} of {csvParsed.valid.length})
+                  </div>
+                  <div className="divide-y divide-border">
+                    {csvParsed.valid.slice(0, 5).map((f, i) => (
+                      <div key={i} className="flex items-center gap-1.5 px-2 py-1 text-[10px]">
+                        <span className="font-medium text-foreground truncate flex-1">{f.name}</span>
+                        <span className="text-muted-foreground tabular-nums">{f.lat.toFixed(2)}, {f.lng.toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-1.5">
+                  <button
+                    type="button"
+                    onClick={confirmImport}
+                    className="flex-1 rounded-md bg-primary px-2 py-1.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    Import {csvParsed.valid.length} rows
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetImport}
+                    className="rounded-md border border-border bg-secondary px-2 py-1.5 text-[11px] font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : csvImportState === 'success' ? (
+              <div className="w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed border-primary/40 bg-primary/5 rounded-md text-xs text-primary">
+                <Check className="w-4 h-4" />
+                <span>Import complete</span>
+              </div>
+            ) : null}
           </div>
         )}
       </div>
