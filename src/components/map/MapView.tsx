@@ -400,7 +400,7 @@ type MapPointMarker = L.Marker & {
   __pointKind?: PointMarkerKind;
   __providerType?: 'hospital' | 'clinic';
   __baseZIndexOffset?: number;
-  __priorityState?: 'default' | 'hovered' | 'selected';
+  __priorityState?: 'default' | 'selected';
   __entity?: MapEntity;
   __entityType?: MapEntity['type'];
   __entityId?: string;
