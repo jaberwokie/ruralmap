@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Facility, defaultFacilities, auditFacilityClassifications, auditFacilityConfidence } from '@/data/facilities';
 import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
+import { enrichFacilities, auditOperationalCoverage } from '@/utils/operationalEnrichment';
+import { ruralServices } from '@/data/rural-services';
 import type { Filters } from '@/types/filters';
 
 export interface UseFacilityDataReturn {
