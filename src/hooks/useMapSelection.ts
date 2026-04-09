@@ -4,7 +4,7 @@ import { COUNTY_FTE_MAP } from '@/data/fte-capacity';
 
 export interface MapSelectionState {
   lockedEntity: MapEntity | null;
-  hoverEntity: MapEntity | null;
+  
   selectedFteId: string | null;
   selectedCounty: string | null;
   activeFteId: string | null;
@@ -12,7 +12,7 @@ export interface MapSelectionState {
 
 export interface MapSelectionActions {
   selectEntity: (entity: MapEntity | null) => void;
-  setHoverEntity: (entity: MapEntity | null) => void;
+  
   clearSelection: () => void;
   selectCounty: (county: string) => void;
   selectFte: (fteId: string) => void;
@@ -28,7 +28,7 @@ export interface UseMapSelectionReturn extends MapSelectionState {
 
 export const useMapSelection = (): UseMapSelectionReturn => {
   const [lockedEntity, setLockedEntity] = useState<MapEntity | null>(null);
-  const [hoverEntity, setHoverEntity] = useState<MapEntity | null>(null);
+  
   const [selectedFteId, setSelectedFteId] = useState<string | null>(null);
 
   const selectedCounty = useMemo(() => {
@@ -54,7 +54,6 @@ export const useMapSelection = (): UseMapSelectionReturn => {
 
   const clearSelection = useCallback(() => {
     setLockedEntity(null);
-    setHoverEntity(null);
     setSelectedFteId(null);
   }, []);
 
@@ -91,7 +90,6 @@ export const useMapSelection = (): UseMapSelectionReturn => {
 
   const actions: MapSelectionActions = useMemo(() => ({
     selectEntity,
-    setHoverEntity,
     clearSelection,
     selectCounty,
     selectFte,
@@ -103,7 +101,7 @@ export const useMapSelection = (): UseMapSelectionReturn => {
 
   return {
     lockedEntity,
-    hoverEntity,
+    hoverEntity: null,
     selectedFteId,
     selectedCounty,
     activeFteId,

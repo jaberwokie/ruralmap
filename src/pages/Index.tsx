@@ -67,7 +67,7 @@ const Index = () => {
           coverageRadius={layers.coverageRadius}
           coverageGaps={layers.coverageGaps}
           onEntityClick={onEntity}
-          onEntityHover={selection.actions.setHoverEntity}
+          
           selectedCounty={selection.selectedCounty}
           onFteHubClick={selection.actions.handleFteHubClick}
           selectedFteId={selection.activeFteId}
