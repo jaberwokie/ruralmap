@@ -180,8 +180,8 @@ const renderProviderTypeVisual = (dimmed = false, size = 12) => (
   </span>
 );
 
-const renderProviderLocationsInlineLegend = (dimmed = false) => (
-  <span className={`hidden items-center gap-2 text-[10px] text-muted-foreground xl:flex ${dimmed ? 'opacity-60' : ''}`}>
+const renderProviderLocationsBelowLegend = (dimmed = false) => (
+  <span className={`flex items-center gap-3 text-[10px] text-muted-foreground ${dimmed ? 'opacity-60' : ''}`}>
     <span className="flex items-center gap-1">
       <span className="h-1.5 w-1.5 rounded-full bg-hospital" />
       <span>Hospital</span>
