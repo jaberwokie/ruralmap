@@ -722,6 +722,9 @@ const Sidebar = ({
           </div>
         )}
 
+      </div>
+
+      <div className="px-4 pb-3">
         <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
                 <div data-tutorial="section-core-map">
@@ -1215,7 +1218,6 @@ const Sidebar = ({
                   )}
                 </div>
               </div>
-          </div>
         </div>
       </div>
 
