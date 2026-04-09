@@ -440,3 +440,18 @@
 .map-pin-selected svg {
   stroke-width: 2.5;
 }
+
+/* Remove default focus outline from Leaflet SVG paths (tribal polygons, etc.) */
+.leaflet-pane svg path:focus,
+.leaflet-pane svg path:focus-visible {
+  outline: none !important;
+}
+
+/* Tribal Nation selected state — stronger boundary, no rectangle */
+.leaflet-tribal-nations-pane-pane svg path:focus,
+.leaflet-tribal-nations-pane-pane svg path:focus-visible,
+.leaflet-tribal-nations-pane-pane svg:focus,
+.leaflet-tribal-nations-pane-pane svg:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
