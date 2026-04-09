@@ -162,3 +162,37 @@ export const auditOperationalCoverage = (
     ruralServices: countParticipation(services.map((s) => s.operational)),
   };
 };
+
+// ── Global Verified Access Summary (dev only) ──
+
+export const logVerifiedAccessSummary = () => {
+  if (!import.meta.env.DEV) return;
+
+  let directVerified = 0;
+  let inferredStrong = 0;
+  let needsVerification = 0;
+  let deferred = 0;
+  let other = 0;
+
+  for (const tag of operationalTags) {
+    const status = tag.verificationStatus;
+    if (status === 'verified_participating' || status === 'verified_non_participating') {
+      if (tag.verificationConfidence === 'direct') directVerified++;
+      else if (tag.verificationConfidence === 'inferred_strong') inferredStrong++;
+      else directVerified++; // facility tags without explicit confidence are direct
+    } else if (status === 'needs_verification') {
+      needsVerification++;
+    } else if (status === 'deferred') {
+      deferred++;
+    } else {
+      // Tags without verificationStatus (legacy facility tags)
+      if (tag.isNevadaMedicaidParticipating === true) directVerified++;
+      else if (tag.isNevadaMedicaidParticipating === false) other++;
+      else needsVerification++;
+    }
+  }
+
+  console.info(
+    `[Verified Access Summary] direct: ${directVerified} | inferred_strong: ${inferredStrong} | needs_verification: ${needsVerification} | deferred: ${deferred} | other: ${other} | total tags: ${operationalTags.length}`,
+  );
+};
