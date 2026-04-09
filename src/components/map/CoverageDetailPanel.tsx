@@ -1322,7 +1322,76 @@ const useAccordion = (defaultSection: string) => {
   return { isOpen, toggle };
 };
 
-// ── Action Buttons Row ──
+// ── Operational Indicators ──
+const OperationalBadges = ({ meta }: { meta?: Partial<ServiceOperationalMeta> | null }) => {
+  if (!meta) return null;
+  const resolved = resolveOperationalMeta(meta);
+
+  // Only show if at least one field has meaningful data
+  const hasData = resolved.medicaidParticipationStatus !== 'unknown'
+    || resolved.isTribalProvider
+    || resolved.isTriballyOperated
+    || resolved.isCrossBorderService;
+  if (!hasData) return null;
+
+  return (
+    <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-0.5">
+      {resolved.medicaidParticipationStatus !== 'unknown' && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">NV Medicaid Participating</span>
+          <span className={`font-medium ${PARTICIPATION_STATUS_COLORS[resolved.medicaidParticipationStatus]}`}>
+            {PARTICIPATION_STATUS_LABELS[resolved.medicaidParticipationStatus]}
+          </span>
+        </div>
+      )}
+      {resolved.isTribalProvider && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Tribal Provider</span>
+          <span className="font-medium text-foreground">Yes</span>
+        </div>
+      )}
+      {resolved.isTriballyOperated && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Tribally Operated</span>
+          <span className="font-medium text-foreground">Yes</span>
+        </div>
+      )}
+      {resolved.isCrossBorderService && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Cross-border</span>
+          <span className="font-medium text-muted-foreground">Yes — reimbursement verification may be needed</span>
+        </div>
+      )}
+      {resolved.reimbursementNotes && (
+        <p className="text-[10px] text-muted-foreground italic mt-0.5">{resolved.reimbursementNotes}</p>
+      )}
+    </div>
+  );
+};
+
+/** Inline operational indicator for service lists (compact) */
+const OperationalInlineBadges = ({ meta }: { meta?: Partial<ServiceOperationalMeta> | null }) => {
+  if (!meta) return null;
+  const resolved = resolveOperationalMeta(meta);
+  const badges: string[] = [];
+
+  if (resolved.medicaidParticipationStatus === 'participating') badges.push('NV Medicaid');
+  if (resolved.medicaidParticipationStatus === 'non_participating') badges.push('Non-participating');
+  if (resolved.isTribalProvider) badges.push('Tribal Provider');
+  if (resolved.isCrossBorderService) badges.push('Cross-border');
+
+  if (badges.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-0.5">
+      {badges.map(b => (
+        <span key={b} className="rounded border border-border bg-secondary/70 px-1 py-0 text-[9px] text-muted-foreground">{b}</span>
+      ))}
+    </div>
+  );
+};
+
+
 const ActionButtonRow = ({ phone, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const isMobile = useIsMobile();
   const normalizedWebsite = normalizeWebsite(website);
