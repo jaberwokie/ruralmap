@@ -149,8 +149,8 @@ export const operationalTags: OperationalTag[] = [
   // ── Tribal health (IHS-funded) ──
   { entityId: 'rs-63',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'IHS/tribal health center enrollment', verificationDate: '2026-04', notes: 'Washoe Tribal Health Center — Gardnerville' },
 
-  // ── Major health system (enrolled) ──
-  { entityId: 'rs-144', entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'inferred_strong', verificationSource: 'Banner Health system Medicaid enrollment', verificationDate: '2026-04', notes: 'Banner Health Center Fernley — system-level enrollment, not site-specific confirmation' },
+  // ── Major health system (no site-level confirmation) ──
+  { entityId: 'rs-144', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'Banner Health system Medicaid enrollment — system-level only', verificationDate: '2026-04', notes: 'Likely participating based on Banner Health system enrollment, but no site-specific Fernley confirmation found' },
 
   // ── Deferred: county public health nurses (not direct Medicaid billing entities) ──
   { entityId: 'rs-62',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'public_health_nonstandard', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Douglas County Community Health Nurse' },
@@ -175,15 +175,15 @@ export const operationalTags: OperationalTag[] = [
   // rs-49: Fallon Family Wellness Center — independent practice, no system enrollment evidence
   { entityId: 'rs-49',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'No DHCFP or HRSA match found', verificationDate: '2026-04', notes: 'Fallon Family Wellness Center — independent practice, no enrollment confirmation available' },
   // rs-92: Eureka County Medical Clinic — sole county clinic, likely county-operated
-  { entityId: 'rs-92',  entityType: 'ruralService', isNevadaMedicaidParticipating: true, verificationStatus: 'verified_participating', verificationConfidence: 'inferred_strong', verificationSource: 'County-operated sole rural clinic — consistent with NV Medicaid rural participation', verificationDate: '2026-04', notes: 'Eureka County Medical Clinic — only clinical site in county, county-operated' },
+  { entityId: 'rs-92',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'No direct enrollment confirmation', verificationDate: '2026-04', notes: 'Likely participating based on sole county clinic role, but no enrollment confirmation found' },
   // rs-105: Golden Valley Medical Center — Winnemucca; independent, no system match
   { entityId: 'rs-105', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'No DHCFP or HRSA match found', verificationDate: '2026-04', notes: 'Golden Valley Medical Center — Winnemucca; independent clinic, no enrollment confirmation available' },
   // rs-115: Austin Medical Clinic — sole provider in remote Lander County community
-  { entityId: 'rs-115', entityType: 'ruralService', isNevadaMedicaidParticipating: true, verificationStatus: 'verified_participating', verificationConfidence: 'inferred_strong', verificationSource: 'Sole rural provider in isolated community — consistent with NV Medicaid rural participation', verificationDate: '2026-04', notes: 'Austin Medical Clinic — only clinical access point in Austin, Lander County' },
+  { entityId: 'rs-115', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'No direct enrollment confirmation', verificationDate: '2026-04', notes: 'Likely participating based on sole provider role in isolated Austin community, but no enrollment confirmation found' },
   // rs-124: Lincoln County Medical Associates — Caliente
-  { entityId: 'rs-124', entityType: 'ruralService', isNevadaMedicaidParticipating: true, verificationStatus: 'verified_participating', verificationConfidence: 'inferred_strong', verificationSource: 'Sole rural provider group in Lincoln County — consistent with NV Medicaid rural participation', verificationDate: '2026-04', notes: 'Lincoln County Medical Associates — Caliente; primary clinical access for southern Lincoln County' },
+  { entityId: 'rs-124', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'No direct enrollment confirmation', verificationDate: '2026-04', notes: 'Likely participating based on sole provider group role in Lincoln County, but no enrollment confirmation found' },
   // rs-125: Lincoln County Medical Associates — Alamo (same practice as rs-124, second site)
-  { entityId: 'rs-125', entityType: 'ruralService', isNevadaMedicaidParticipating: true, verificationStatus: 'verified_participating', verificationConfidence: 'inferred_strong', verificationSource: 'Same practice as rs-124, second site in Lincoln County', verificationDate: '2026-04', notes: 'Lincoln County Medical Associates — Alamo; satellite of Caliente practice' },
+  { entityId: 'rs-125', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'insufficient_source_match', verificationSource: 'No direct enrollment confirmation', verificationDate: '2026-04', notes: 'Likely participating based on satellite of Lincoln County practice, but no enrollment confirmation found' },
 ];
 
 // ── Lookup index built once at import time ──
