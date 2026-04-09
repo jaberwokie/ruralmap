@@ -1693,14 +1693,33 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
   const normalizedWeb = normalizeWebsite(tribe.website);
   const hasContact = !!(tribe.phone || normalizedWeb);
   const services = tribe.triballyOperatedServices;
+  const parent = getParentTribe(tribe);
+  const subEntities = getSubEntities(tribe.id);
+
+  // Collect services from sub-entities as well
+  const allServices = [
+    ...services,
+    ...subEntities.flatMap(sub => sub.triballyOperatedServices),
+  ];
+
+  const categoryLabel = tribe.category === 'Band' ? 'Tribal Band'
+    : tribe.category === 'Community' ? 'Tribal Community'
+    : tribe.category === 'Colony' ? 'Tribal Colony'
+    : 'Tribal Nation';
 
   return (
     <>
       <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-tribal-nation flex items-center gap-1">
-        <Landmark className="w-3 h-3" /> Tribal Nation
+        <Landmark className="w-3 h-3" /> {categoryLabel}
       </div>
       <p className="text-sm font-semibold text-foreground mb-0.5">{tribe.name}</p>
-      <p className="text-[11px] text-muted-foreground mb-2">{tribe.tribalGroup}</p>
+      <p className="text-[11px] text-muted-foreground mb-0.5">{tribe.tribalGroup}</p>
+      {parent && (
+        <p className="text-[10px] text-muted-foreground mb-1">Part of {parent.name}</p>
+      )}
+      {subEntities.length > 0 && (
+        <p className="text-[10px] text-muted-foreground mb-1">{subEntities.length} constituent {subEntities.length === 1 ? 'band/community' : 'bands/communities'}</p>
+      )}
 
       {tribe.summary && <p className="text-xs text-muted-foreground mb-2">{tribe.summary}</p>}
 
