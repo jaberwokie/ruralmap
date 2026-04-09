@@ -1348,6 +1348,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Load tribal nation polygon boundaries
+  useEffect(() => {
+    ensureTribalBoundaries().then(() => setTribalBoundariesReady(true));
+  }, []);
+
   // Draw state boundary
   useEffect(() => {
     if (!stateBoundaryRef.current) return;
