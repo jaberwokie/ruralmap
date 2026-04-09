@@ -1326,26 +1326,40 @@ type DirectionsTarget = {
   city?: string | null;
 };
 
+const GOOGLE_DIRECTIONS_PREFIX = 'https://www.google.com/maps/dir/?api=1&destination=';
+
 const hasValidCoordinate = (value: number | null | undefined): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 
+const normalizeDirectionsAddress = (address?: string | null, city?: string | null): string | null => {
+  const normalized = [address, city]
+    .map((part) => part?.trim().replace(/\s+/g, ' '))
+    .filter(Boolean)
+    .join(', ')
+    .trim();
+
+  return normalized || null;
+};
+
 const buildDirectionsUrl = ({ lat, lng, address, city }: DirectionsTarget): string | null => {
   if (hasValidCoordinate(lat) && hasValidCoordinate(lng)) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    return `${GOOGLE_DIRECTIONS_PREFIX}${lat},${lng}`;
   }
 
-  const trimmedAddress = address?.trim();
-  if (!trimmedAddress) return null;
+  const normalizedAddress = normalizeDirectionsAddress(address, city);
+  if (!normalizedAddress) return null;
 
-  const destination = [trimmedAddress, city?.trim()].filter(Boolean).join(', ');
-  return destination
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`
-    : null;
+  return `${GOOGLE_DIRECTIONS_PREFIX}${encodeURIComponent(normalizedAddress)}`;
 };
 
 const openDirections = (target: DirectionsTarget) => {
   const url = buildDirectionsUrl(target);
-  if (!url) return false;
+  if (!url || !url.startsWith(GOOGLE_DIRECTIONS_PREFIX)) return false;
+
+  const usedPath = hasValidCoordinate(target.lat) && hasValidCoordinate(target.lng) ? 'coordinates' : 'address';
+  if (import.meta.env.DEV) {
+    console.info('[directions]', { url, usedPath });
+  }
 
   const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
   if (openedWindow) {
