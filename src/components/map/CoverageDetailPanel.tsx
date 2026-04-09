@@ -1508,7 +1508,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         website={facility.website}
       />
 
-      <OperationalBadges meta={facility.operational} />
+      <OperationalBadges meta={facility.operational} alwaysShowMedicaid />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
@@ -1659,7 +1659,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
         website={service.website}
       />
 
-      <OperationalBadges meta={service.operational} />
+      <OperationalBadges meta={service.operational} alwaysShowMedicaid />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
