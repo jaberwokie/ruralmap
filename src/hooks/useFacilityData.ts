@@ -2,7 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { Facility, defaultFacilities, auditFacilityClassifications, auditFacilityConfidence } from '@/data/facilities';
 import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
-import { enrichFacilities, auditOperationalCoverage } from '@/utils/operationalEnrichment';
+import { enrichFacilities, auditOperationalCoverage, logVerifiedAccessSummary } from '@/utils/operationalEnrichment';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { auditServiceClassification, getTaggingQueue, getQueueSummary, getDeferredSummary, getConfidenceSummary } from '@/utils/operationalServiceClass';
 import type { Filters } from '@/types/filters';
@@ -45,6 +45,7 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     console.info('[Facility Classification Audit]', auditFacilityClassifications(facilities));
     console.info('[Facility Confidence Audit]', auditFacilityConfidence(facilities));
     console.info('[Operational Coverage Audit]', auditOperationalCoverage(facilities, enrichedRuralServices));
+    logVerifiedAccessSummary();
     const classAudit = auditServiceClassification(enrichedRuralServices);
     console.info('[Service Class Audit]');
     console.table(classAudit.rows);
