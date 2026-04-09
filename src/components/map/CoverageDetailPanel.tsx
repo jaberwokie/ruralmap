@@ -1391,7 +1391,7 @@ const OperationalInlineBadges = ({ meta }: { meta?: Partial<ServiceOperationalMe
   );
 };
 
-      <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
+// ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const isMobile = useIsMobile();
   const normalizedWebsite = normalizeWebsite(website);
