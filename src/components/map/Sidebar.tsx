@@ -569,6 +569,8 @@ const Sidebar = ({
     const file = e.dataTransfer.files?.[0];
     if (file) processCSVFile(file);
   }, [processCSVFile]);
+
+  const displayFacilities = searchQuery
     ? facilities.filter(f =>
         f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
