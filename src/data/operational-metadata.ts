@@ -29,6 +29,11 @@ export type DeferredReason =
   | 'insufficient_source_match'
   | 'lower_priority_followup';
 
+export type VerificationConfidence =
+  | 'direct'
+  | 'inferred_strong'
+  | 'inferred_limited';
+
 export interface OperationalTag {
   entityId: string;
   entityType: EntityType;
@@ -41,6 +46,9 @@ export interface OperationalTag {
 
   /** Required when verificationStatus = 'deferred' */
   deferredReason?: DeferredReason;
+
+  /** Required when verificationStatus = verified_participating or verified_non_participating */
+  verificationConfidence?: VerificationConfidence;
 
   /** Source used to verify the participation value */
   verificationSource: string;
