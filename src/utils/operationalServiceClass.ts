@@ -6,7 +6,7 @@
  */
 
 import type { RuralService, RuralServiceCategory, OperationalServiceClass } from '@/data/rural-services';
-import { getOperationalTagIndex, type VerificationStatus, type DeferredReason } from '@/data/operational-metadata';
+import { getOperationalTagIndex, type VerificationStatus, type VerificationConfidence, type DeferredReason } from '@/data/operational-metadata';
 
 // ── Category-based classification ──
 
@@ -232,6 +232,36 @@ export const getDeferredSummary = (queue: TaggingQueueEntry[]): DeferredReasonSu
 
   return Array.from(buckets.entries()).map(([reason, ids]) => ({
     reason,
+    count: ids.length,
+    entityIds: ids,
+  }));
+};
+
+// ── Verification Confidence Summary ──
+
+export interface ConfidenceSummaryRow {
+  confidence: VerificationConfidence | 'none';
+  count: number;
+  entityIds: string[];
+}
+
+export const getConfidenceSummary = (queue: TaggingQueueEntry[]): ConfidenceSummaryRow[] => {
+  const verified = queue.filter(
+    (e) => e.verificationStatus === 'verified_participating' || e.verificationStatus === 'verified_non_participating',
+  );
+  const index = getOperationalTagIndex();
+  const buckets = new Map<VerificationConfidence | 'none', string[]>();
+
+  for (const entry of verified) {
+    const tag = index.get(entry.id);
+    const conf: VerificationConfidence | 'none' = tag?.verificationConfidence ?? 'none';
+    const list = buckets.get(conf) ?? [];
+    list.push(entry.id);
+    buckets.set(conf, list);
+  }
+
+  return Array.from(buckets.entries()).map(([confidence, ids]) => ({
+    confidence,
     count: ids.length,
     entityIds: ids,
   }));
