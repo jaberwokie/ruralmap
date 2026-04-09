@@ -1354,15 +1354,17 @@ const isGoogleDirectionsUrl = (url: string | null | undefined): url is string =>
 
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
+  const isMobile = useIsMobile();
   const hasPhone = !!phone;
   const normalizedWebsite = normalizeWebsite(website);
   const directionsUrl = buildDirectionsUrl({ lat, lng, address, city });
   const hasDirections = isGoogleDirectionsUrl(directionsUrl);
-  if (!hasPhone && !hasDirections && !normalizedWebsite) return null;
+  const showCall = hasPhone && isMobile;
+  if (!showCall && !hasDirections && !normalizedWebsite) return null;
 
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
-      {hasPhone && (
+      {showCall && (
         <a
           href={`tel:${phone!.replace(/[^\d+]/g, '')}`}
           className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
