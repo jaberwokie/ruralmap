@@ -2335,50 +2335,53 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
 
-  // ── Tribal Nations polygons ──
+  // ── Tribal Nations polygons (real GeoJSON boundaries) ──
   useEffect(() => {
     if (!tribalNationsRef.current || !mapRef.current) return;
     tribalNationsRef.current.clearLayers();
     if (!layers.tribalNations) return;
 
     tribalNations.forEach((tribe) => {
-      // Compute radius from actual land base acreage when available
-      // Formula: radius = sqrt(acres × 4046.86 / π)  — treating land as a circle
-      // Minimum 800m for usability; no artificial inflation
-      const acreageRadiusM = tribe.landBaseAcres
-        ? Math.sqrt((tribe.landBaseAcres * 4046.86) / Math.PI)
-        : null;
-      const radiusMeters = Math.max(acreageRadiusM ?? 2000, 800);
-      const circle = L.circle([tribe.lat, tribe.lng], {
+      if (!tribe.geometry) return;
+
+      const feature: GeoJSON.Feature = {
+        type: 'Feature',
+        properties: { tribeId: tribe.id },
+        geometry: tribe.geometry,
+      };
+
+      const layer = L.geoJSON(feature as any, {
         pane: MAP_PANES.tribalNations,
-        radius: radiusMeters,
-        color: 'hsl(30, 65%, 45%)',
-        weight: 1.5,
-        fillColor: 'hsla(30, 65%, 50%, 0.12)',
-        fillOpacity: 1,
+        style: {
+          color: 'hsl(30, 65%, 45%)',
+          weight: 1.5,
+          fillColor: 'hsla(30, 65%, 50%, 0.12)',
+          fillOpacity: 1,
+          interactive: true,
+        },
         interactive: true,
         bubblingMouseEvents: false,
-      });
+        onEachFeature: (_feat, lyr) => {
+          // Ensure pointer-events on the SVG paths
+          lyr.on('add', () => {
+            const el = (lyr as any)._path as HTMLElement | undefined;
+            if (el) el.style.pointerEvents = 'auto';
+          });
 
-      // Ensure the SVG path gets pointer-events so clicks reach through the pane
-      circle.on('add', () => {
-        const el = (circle as any)._path as HTMLElement | undefined;
-        if (el) el.style.pointerEvents = 'auto';
-      });
+          lyr.bindTooltip(tribe.name, {
+            direction: 'top',
+            className: 'leaflet-tooltip',
+          });
 
-      circle.bindTooltip(tribe.name, {
-        direction: 'top',
-        offset: [0, -8],
-        className: 'leaflet-tooltip',
-      });
+          lyr.on('click', (event: L.LeafletEvent) => {
+            L.DomEvent.stopPropagation(event as any);
+            armInteractionGuard('marker');
+            onEntityClick?.({ type: 'tribalNation', tribe });
+          });
+        },
+      } as any);
 
-      circle.on('click', (event: L.LeafletEvent) => {
-        L.DomEvent.stopPropagation(event as any);
-        armInteractionGuard('marker');
-        onEntityClick?.({ type: 'tribalNation', tribe });
-      });
-
-      tribalNationsRef.current!.addLayer(circle);
+      tribalNationsRef.current!.addLayer(layer);
     });
   }, [layers.tribalNations, onEntityClick]);
 

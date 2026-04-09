@@ -26,12 +26,12 @@ export interface TribalNation {
   summary?: string;
   locationDescription: string;
   counties: string[];
-  /** Representative point for map marker / polygon centroid */
+  /** Representative point (centroid) */
   lat: number;
   lng: number;
-  /** Approximate polygon radius in km for visual representation */
-  approximateRadiusKm?: number;
   landBaseAcres?: number;
+  /** GeoJSON polygon geometry loaded at runtime */
+  geometry?: GeoJSON.Polygon | GeoJSON.MultiPolygon;
   tribalMembers?: number;
   residentPopulation?: number;
   phone?: string;
