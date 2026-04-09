@@ -37,7 +37,7 @@ export const LAYER_REGISTRY: LayerDefinition[] = [
   },
   {
     id: 'services',
-    label: 'Service',
+    label: 'Services',
     group: 'coreMap',
     defaultVisible: true,
     diagnosticLayerIds: ['service-presence-halos', 'service-presence-markers'],
