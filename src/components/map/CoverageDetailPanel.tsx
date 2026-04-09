@@ -1664,6 +1664,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 
       <OperationalBadges meta={service.operational} />
 
+      <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="w-3 h-3 flex-shrink-0" />
