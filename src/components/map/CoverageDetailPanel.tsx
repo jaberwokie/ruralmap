@@ -1654,6 +1654,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 
 // ── Tribal Nation ──
 const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
+  const { isOpen, toggle } = useAccordion('location');
   const normalizedWeb = normalizeWebsite(tribe.website);
   const hasContact = !!(tribe.phone || normalizedWeb);
   const services = tribe.triballyOperatedServices;
