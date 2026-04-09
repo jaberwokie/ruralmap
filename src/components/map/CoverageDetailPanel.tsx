@@ -1332,7 +1332,7 @@ const hasValidCoordinate = (value: number | null | undefined): value is number =
   typeof value === 'number' && Number.isFinite(value);
 
 const normalizeDirectionsAddress = (address?: string | null, city?: string | null): string | null => {
-  const normalized = [address, city]
+  const normalized = [address]
     .map((part) => part?.trim().replace(/\s+/g, ' '))
     .filter(Boolean)
     .join(', ')
@@ -1341,49 +1341,23 @@ const normalizeDirectionsAddress = (address?: string | null, city?: string | nul
   return normalized || null;
 };
 
-const buildDirectionsUrl = ({ lat, lng, address, city }: DirectionsTarget): string | null => {
+const buildDirectionsHref = ({ lat, lng, address, city: _city }: DirectionsTarget): string | null => {
   if (hasValidCoordinate(lat) && hasValidCoordinate(lng)) {
     return `${GOOGLE_DIRECTIONS_PREFIX}${lat},${lng}`;
   }
 
-  const normalizedAddress = normalizeDirectionsAddress(address, city);
+  const normalizedAddress = normalizeDirectionsAddress(address);
   if (!normalizedAddress) return null;
 
   return `${GOOGLE_DIRECTIONS_PREFIX}${encodeURIComponent(normalizedAddress)}`;
-};
-
-const openDirections = (target: DirectionsTarget) => {
-  const url = buildDirectionsUrl(target);
-  if (!url || !url.startsWith(GOOGLE_DIRECTIONS_PREFIX)) return false;
-
-  const usedPath = hasValidCoordinate(target.lat) && hasValidCoordinate(target.lng) ? 'coordinates' : 'address';
-  if (import.meta.env.DEV) {
-    console.info('[directions]', { url, usedPath });
-  }
-
-  const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
-  if (openedWindow) {
-    openedWindow.opener = null;
-    return true;
-  }
-
-  const fallbackLink = document.createElement('a');
-  fallbackLink.href = url;
-  fallbackLink.target = '_blank';
-  fallbackLink.rel = 'noopener noreferrer';
-  fallbackLink.style.display = 'none';
-  document.body.appendChild(fallbackLink);
-  fallbackLink.click();
-  document.body.removeChild(fallbackLink);
-  return true;
 };
 
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const hasPhone = !!phone;
   const normalizedWebsite = normalizeWebsite(website);
-  const directionsUrl = buildDirectionsUrl({ lat, lng, address, city });
-  const hasDirections = !!directionsUrl;
+  const directionsHref = buildDirectionsHref({ lat, lng, address, city });
+  const hasDirections = !!directionsHref && directionsHref.startsWith(GOOGLE_DIRECTIONS_PREFIX);
   if (!hasPhone && !hasDirections && !normalizedWebsite) return null;
 
   return (
@@ -1399,21 +1373,27 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Call
         </a>
       )}
-      {(hasDirections || hasPhone || normalizedWebsite) && (
-        <button
-          type="button"
-          className={`inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium transition-colors ${hasDirections ? 'bg-secondary/60 text-foreground hover:bg-secondary' : 'bg-secondary/30 text-muted-foreground cursor-not-allowed opacity-60'}`}
-          title={hasDirections ? 'Get directions' : 'Directions unavailable'}
-          disabled={!hasDirections}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            openDirections({ lat, lng, address, city });
-          }}
+      {hasDirections ? (
+        <a
+          href={directionsHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
+          title="Get directions"
+          onClick={e => e.stopPropagation()}
         >
           <Navigation className="w-3 h-3" />
           Directions
-        </button>
+        </a>
+      ) : (
+        <span
+          className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-border bg-secondary/30 px-2 py-1 text-[10px] font-medium text-muted-foreground opacity-60"
+          title="Directions unavailable"
+          aria-disabled="true"
+        >
+          <Navigation className="w-3 h-3" />
+          Directions
+        </span>
       )}
       {normalizedWebsite && (
         <a
@@ -1428,6 +1408,9 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Website
         </a>
       )}
+      {import.meta.env.DEV && hasDirections ? (
+        <span className="basis-full text-[9px] text-muted-foreground break-all">{directionsHref}</span>
+      ) : null}
     </div>
   );
 };
