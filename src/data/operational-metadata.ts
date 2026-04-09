@@ -117,14 +117,48 @@ export const operationalTags: OperationalTag[] = [
   { entityId: 't15', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Serenity Counseling LLC — needs individual verification' },
 
   // ──────────────────────────────────────────────
-  // RURAL SERVICES (rs-1 through rs-173)
+  // RURAL SERVICES — billable_clinical (Physical Health)
   // ──────────────────────────────────────────────
-  // Most rural services are social service organizations (shelters, food banks,
-  // legal aid, housing) that are NOT Medicaid billable services.
-  // Only tag clinical/reimbursable services when verified.
-  //
-  // Leave all rs-* entries untagged for now.
-  // They default to unknown, which is correct.
+  // Only billable_clinical services are actively tagged in this pass.
+  // Non-clinical rural services remain untagged (unknown).
+
+  // ── FQHC sites (federally required to accept Medicaid) ──
+  { entityId: 'rs-78',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Elko Community Health Center — FQHC site' },
+  { entityId: 'rs-79',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Wendover Community Health Center — FQHC site' },
+  { entityId: 'rs-80',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Carlin Community Health Center — FQHC site' },
+  { entityId: 'rs-81',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Jackpot Community Health Center — FQHC site' },
+
+  // ── Tribal health (IHS-funded) ──
+  { entityId: 'rs-63',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'IHS/tribal health center enrollment', verificationDate: '2026-04', notes: 'Washoe Tribal Health Center — Gardnerville' },
+
+  // ── Major health system (enrolled) ──
+  { entityId: 'rs-144', entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'Banner Health system Medicaid enrollment', verificationDate: '2026-04', notes: 'Banner Health Center Fernley' },
+
+  // ── Deferred: county public health nurses (not direct Medicaid billing entities) ──
+  { entityId: 'rs-62',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Douglas County Community Health Nurse' },
+  { entityId: 'rs-114', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Lander County Community Health Nurse' },
+  { entityId: 'rs-142', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Dayton Community Health Nurse' },
+  { entityId: 'rs-156', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Mineral County Health Nurse' },
+
+  // ── Deferred: health districts (administrative, not billing) ──
+  { entityId: 'rs-48',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Public health district — administrative', verificationDate: '2026-04', notes: 'Central Nevada Health District — Fallon' },
+  { entityId: 'rs-93',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Public health district — administrative', verificationDate: '2026-04', notes: 'Central Nevada Health District Eureka' },
+
+  // ── Deferred: support/resource orgs (not clinical billing) ──
+  { entityId: 'rs-25',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Resource/support org — not a billing provider', verificationDate: '2026-04', notes: 'Cancer Resource Center — Carson City' },
+
+  // ── Deferred: duplicate with facility layer ──
+  { entityId: 'rs-157', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Duplicate — exists as facility h8', verificationDate: '2026-04', notes: 'Mt. Grant General Hospital — already tagged in facilities' },
+  { entityId: 'rs-168', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Duplicate — exists as facility h11', verificationDate: '2026-04', notes: 'Pershing General Hospital — already tagged in facilities' },
+
+  // ── Needs verification: remaining billable_clinical ──
+  { entityId: 'rs-26',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Sierra Nevada Health Center — Carson City' },
+  { entityId: 'rs-49',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Fallon Family Wellness Center' },
+  { entityId: 'rs-92',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Eureka County Medical Clinic' },
+  { entityId: 'rs-105', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Golden Valley Medical Center — Winnemucca' },
+  { entityId: 'rs-115', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Austin Medical Clinic' },
+  { entityId: 'rs-124', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Lincoln County Medical Associates — Caliente' },
+  { entityId: 'rs-125', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Lincoln County Medical Associates — Alamo' },
 ];
 
 // ── Lookup index built once at import time ──
