@@ -8,7 +8,7 @@ import { Info } from 'lucide-react';
 import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { ruralServices } from '@/data/rural-services';
+import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';

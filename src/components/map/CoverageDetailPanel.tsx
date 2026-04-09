@@ -4,7 +4,8 @@ import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, Alert
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
-import { RuralService, ruralServices } from '@/data/rural-services';
+import { RuralService } from '@/data/rural-services';
+import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
