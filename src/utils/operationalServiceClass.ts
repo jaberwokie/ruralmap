@@ -6,7 +6,7 @@
  */
 
 import type { RuralService, RuralServiceCategory, OperationalServiceClass } from '@/data/rural-services';
-import { getOperationalTagIndex, type VerificationStatus } from '@/data/operational-metadata';
+import { getOperationalTagIndex, type VerificationStatus, type DeferredReason } from '@/data/operational-metadata';
 
 // ── Category-based classification ──
 
@@ -136,6 +136,7 @@ export interface TaggingQueueEntry {
   county: string;
   class: OperationalServiceClass;
   verificationStatus: VerificationStatus;
+  deferredReason?: DeferredReason;
 }
 
 const resolveVerificationStatus = (
@@ -145,10 +146,14 @@ const resolveVerificationStatus = (
   const index = getOperationalTagIndex();
   const tag = index.get(serviceId);
   if (tag?.verificationStatus) return tag.verificationStatus;
-  // Derive from participation value if tag exists but no explicit status
   if (participatingValue === true) return 'verified_participating';
   if (participatingValue === false) return 'verified_non_participating';
   return 'needs_verification';
+};
+
+const resolveDeferredReason = (serviceId: string): DeferredReason | undefined => {
+  const index = getOperationalTagIndex();
+  return index.get(serviceId)?.deferredReason;
 };
 
 /**
@@ -170,6 +175,7 @@ export const getTaggingQueue = (services: RuralService[]): TaggingQueueEntry[] =
       county: s.county,
       class: s.operationalServiceClass ?? 'unknown',
       verificationStatus: resolveVerificationStatus(s.id, s.operational?.isNevadaMedicaidParticipating),
+      deferredReason: resolveDeferredReason(s.id),
     }));
 };
 
@@ -204,4 +210,29 @@ export const getQueueSummary = (queue: TaggingQueueEntry[]): QueueClassSummary[]
       total: b.needs_verification + b.verified_participating + b.verified_non_participating + b.deferred,
     };
   }).filter((r) => r.total > 0);
+};
+
+// ── Deferred Reason Summary ──
+
+export interface DeferredReasonSummary {
+  reason: DeferredReason;
+  count: number;
+  entityIds: string[];
+}
+
+export const getDeferredSummary = (queue: TaggingQueueEntry[]): DeferredReasonSummary[] => {
+  const deferred = queue.filter((e) => e.verificationStatus === 'deferred' && e.deferredReason);
+  const buckets = new Map<DeferredReason, string[]>();
+
+  for (const entry of deferred) {
+    const list = buckets.get(entry.deferredReason!) ?? [];
+    list.push(entry.id);
+    buckets.set(entry.deferredReason!, list);
+  }
+
+  return Array.from(buckets.entries()).map(([reason, ids]) => ({
+    reason,
+    count: ids.length,
+    entityIds: ids,
+  }));
 };
