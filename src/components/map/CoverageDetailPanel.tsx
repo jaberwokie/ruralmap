@@ -1371,9 +1371,8 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
       {hasDirections ? (
         <a
           href={directionsUrl}
-          target="_top"
+          target="_blank"
           rel="noopener noreferrer"
-          data-external-google-link="true"
           className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
           title="Get directions"
         >
