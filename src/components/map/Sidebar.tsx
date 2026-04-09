@@ -713,7 +713,7 @@ const Sidebar = ({
                                 : key === 'serviceLocations'
                                   ? 'toggle-provider-locations'
                                   : undefined,
-                          inlineLegend: key === 'serviceLocations' ? renderProviderLocationsInlineLegend(!layers.serviceLocations) : undefined,
+                          belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
                         });
                       })}
                     </div>
