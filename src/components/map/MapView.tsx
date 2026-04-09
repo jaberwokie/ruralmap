@@ -34,6 +34,7 @@ import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisu
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
+import { tribalNations, type TribalNation } from '@/data/tribal-nations';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -49,6 +50,7 @@ interface MapViewProps {
     engagementGap: boolean;
     broadbandAccess: boolean;
     cellularCoverage: boolean;
+    tribalNations: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -117,6 +119,8 @@ const PANE_CONFIG = {
   basePolygons:    { id: 'base-polygons-pane',    zIndex: 200, interactive: false },
   // Visual-only coverage overlays — never interactive
   coverage:        { id: 'coverage-pane',          zIndex: 300, interactive: false },
+  // Tribal Nation polygons — interactive, between coverage and county
+  tribalNations:   { id: 'tribal-nations-pane',    zIndex: 350, interactive: true },
   // County hit areas — interactive for click/hover
   countyInteractive: { id: 'county-interactive-pane', zIndex: 400, interactive: true },
   // All clickable non-provider markers
@@ -144,6 +148,7 @@ const MAP_PANES = {
   facilityMarkers:           PANE_CONFIG.providerMarkers.id,
   labels:                    PANE_CONFIG.basePolygons.id,
   highlights:                PANE_CONFIG.basePolygons.id,
+  tribalNations:             PANE_CONFIG.tribalNations.id,
 } as const;
 
 // Centralized pane initializer — called once during map setup
@@ -644,6 +649,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
   const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
+  const tribalNationsRef = useRef<L.LayerGroup | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
   const [debugOpen, setDebugOpen] = useState(false);
@@ -1246,6 +1252,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     countyBorderRef.current = L.layerGroup().addTo(map);
     broadbandRef.current = L.layerGroup().addTo(map);
     cellularRef.current = L.layerGroup().addTo(map);
+    tribalNationsRef.current = L.layerGroup().addTo(map);
     coverageGreyRef.current = L.layerGroup().addTo(map);
     operationalCoverageRef.current = L.layerGroup().addTo(map);
     operationalResponseMarkerRef.current = L.layerGroup().addTo(map);
@@ -2327,6 +2334,41 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapLabelRef.current!);
     });
   }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
+
+  // ── Tribal Nations polygons ──
+  useEffect(() => {
+    if (!tribalNationsRef.current || !mapRef.current) return;
+    tribalNationsRef.current.clearLayers();
+    if (!layers.tribalNations) return;
+
+    tribalNations.forEach((tribe) => {
+      // Render as a circle polygon using the approximate radius
+      const radiusMeters = (tribe.approximateRadiusKm ?? 5) * 1000;
+      const circle = L.circle([tribe.lat, tribe.lng], {
+        pane: MAP_PANES.tribalNations,
+        radius: radiusMeters,
+        color: 'hsl(30, 65%, 45%)',
+        weight: 1.5,
+        fillColor: 'hsla(30, 65%, 50%, 0.12)',
+        fillOpacity: 1,
+        interactive: true,
+      });
+
+      circle.bindTooltip(tribe.name, {
+        direction: 'top',
+        offset: [0, -8],
+        className: 'leaflet-tooltip',
+      });
+
+      circle.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        armInteractionGuard('marker');
+        onEntityClick?.({ type: 'tribalNation', tribe });
+      });
+
+      tribalNationsRef.current!.addLayer(circle);
+    });
+  }, [layers.tribalNations, onEntityClick]);
 
   // ── Broadband Access choropleth ──
   useEffect(() => {

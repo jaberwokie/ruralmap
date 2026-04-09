@@ -44,6 +44,9 @@
     --frontier-zone: 240 5% 64%;
     --service-presence: 142 56% 42%;
     --behavioral-health: 272 56% 48%;
+    --tribal-nation: 30 65% 50%;
+    --tribal-nation-fill: 30 65% 50% / 0.12;
+    --tribal-nation-border: 30 65% 45% / 0.65;
     --response-active: 174 50% 40%;
     --response-active-fill: 174 50% 45% / 0.25;
     --response-active-border: 174 50% 40% / 0.6;

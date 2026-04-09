@@ -29,6 +29,13 @@ export const LAYER_REGISTRY: LayerDefinition[] = [
     diagnosticLayerIds: ['county-hit-areas', 'county-borders', 'county-labels'],
   },
   {
+    id: 'tribalNations',
+    label: 'Tribal Nations',
+    group: 'coreMap',
+    defaultVisible: false,
+    diagnosticLayerIds: ['tribal-nation-polygons'],
+  },
+  {
     id: 'services',
     label: 'Service',
     group: 'coreMap',
@@ -126,6 +133,7 @@ export const buildDefaultLayerState = (): LayerState => {
 // The keys that belong in LayerState (not coverage toggles)
 const defaultLayerKeys: Record<string, true> = {
   counties: true,
+  tribalNations: true,
   services: true,
   behavioralHealth: true,
   serviceLocations: true,

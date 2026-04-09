@@ -12,6 +12,11 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'Shows Nevada county boundaries for geographic reference. This helps users orient the map by county and understand where operational conditions are occurring.',
   },
+  tribalNations: {
+    label: 'Tribal Nations',
+    explanation:
+      'Displays Nevada\'s federally recognized Tribal Nations as land areas on the map. Click a Tribal Nation area to view details including contact information, tribal programs, and tribally operated services. Data sourced from the Nevada Department of Native American Affairs.',
+  },
   countiesLegend: {
     label: 'County Boundaries Legend',
     explanation:
