@@ -1350,15 +1350,7 @@ const buildDirectionsUrl = ({ lat, lng, address, city: _city }: DirectionsTarget
 const isGoogleDirectionsUrl = (url: string | null | undefined): url is string =>
   typeof url === 'string' && url.startsWith(GOOGLE_DIRECTIONS_PREFIX);
 
-const navigateToDirections = (url: string) => {
-  if (!isGoogleDirectionsUrl(url)) return;
-  try {
-    window.top!.location.href = url;
-  } catch {
-    // Cross-origin (e.g. preview iframe) — fall back to current frame
-    window.location.href = url;
-  }
-};
+// navigateToDirections removed — using plain <a> tag instead
 
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
