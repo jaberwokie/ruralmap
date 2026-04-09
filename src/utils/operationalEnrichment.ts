@@ -8,7 +8,7 @@
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import type { ServiceOperationalMeta } from '@/types/medicaid';
-import { getOperationalTagIndex, type OperationalTag } from '@/data/operational-metadata';
+import { getOperationalTagIndex, operationalTags, type OperationalTag } from '@/data/operational-metadata';
 
 // ── Enrichment ──
 
