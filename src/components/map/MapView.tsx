@@ -127,6 +127,8 @@ const PANE_CONFIG = {
   markers:         { id: 'markers-pane',           zIndex: 650, interactive: true },
   // Provider markers — highest marker layer
   providerMarkers: { id: 'provider-markers-pane',  zIndex: 660, interactive: true },
+  // State boundary mask — covers outside Nevada, above markers
+  stateMask:       { id: 'state-mask-pane',        zIndex: 680, interactive: false },
   // Popup pane for tooltips
   uiPopups:        { id: 'ui-popups-pane',         zIndex: 700, interactive: true },
 } as const;
