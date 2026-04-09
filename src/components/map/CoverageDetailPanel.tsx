@@ -1791,11 +1791,28 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
         </DetailSection>
       )}
 
-      {/* Tribally Operated Services */}
-      <DetailSection title="Tribally Operated Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={services.length || undefined}>
-        {services.length > 0 ? (
+      {/* Sub-entities (bands/communities) */}
+      {subEntities.length > 0 && (
+        <DetailSection title={tribe.category === 'Tribe' && subEntities[0]?.category === 'Band' ? 'Bands' : 'Communities'} isOpen={isOpen('subentities')} onToggle={() => toggle('subentities')} count={subEntities.length}>
           <div className="space-y-1.5">
-            {services.map(svc => {
+            {subEntities.map(sub => (
+              <div key={sub.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                <div className="text-xs font-medium text-foreground">{sub.name}</div>
+                <div className="text-[10px] text-muted-foreground">{sub.locationDescription}</div>
+                {sub.landBaseAcres && (
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{sub.landBaseAcres.toLocaleString()} acres</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Tribally Operated Services */}
+      <DetailSection title="Tribally Operated Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={allServices.length || undefined}>
+        {allServices.length > 0 ? (
+          <div className="space-y-1.5">
+            {allServices.map(svc => {
               const svcWeb = normalizeWebsite(svc.website);
               return (
                 <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
