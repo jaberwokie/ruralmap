@@ -1356,6 +1356,10 @@ const resolveRoutingTierDisplay = (
     if (tag.verificationConfidence === 'direct') {
       return 'recommended';
     }
+    // Legacy facility tags without verificationStatus are treated as direct
+    if (!tag.verificationStatus && tag.isNevadaMedicaidParticipating === true) {
+      return 'recommended';
+    }
     // inferred or missing confidence → not recommended
     return 'available_unverified';
   }
