@@ -3,7 +3,8 @@ import { Facility, defaultFacilities, auditFacilityClassifications, auditFacilit
 import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { enrichFacilities, auditOperationalCoverage } from '@/utils/operationalEnrichment';
-import { ruralServices } from '@/data/rural-services';
+import { enrichedRuralServices } from '@/data/enriched-rural-services';
+import { auditServiceClassification } from '@/utils/operationalServiceClass';
 import type { Filters } from '@/types/filters';
 
 export interface UseFacilityDataReturn {
@@ -43,7 +44,8 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     buildFacilityValidationIndex(facilities);
     console.info('[Facility Classification Audit]', auditFacilityClassifications(facilities));
     console.info('[Facility Confidence Audit]', auditFacilityConfidence(facilities));
-    console.info('[Operational Coverage Audit]', auditOperationalCoverage(facilities, ruralServices));
+    console.info('[Operational Coverage Audit]', auditOperationalCoverage(facilities, enrichedRuralServices));
+    console.info('[Service Class Audit]', auditServiceClassification(enrichedRuralServices));
   }, [facilities]);
 
   return { facilities, filteredFacilities, addFacilities };
