@@ -1320,48 +1320,12 @@ const useAccordion = (defaultSection: string) => {
   return { isOpen, toggle };
 };
 
-type DirectionsTarget = {
-  lat?: number | null;
-  lng?: number | null;
-  address?: string | null;
-  city?: string | null;
-};
-
-const GOOGLE_DIRECTIONS_PREFIX = 'https://www.google.com/maps/dir/?api=1&destination=';
-
-const hasValidCoordinate = (value: number | null | undefined): value is number =>
-  typeof value === 'number' && Number.isFinite(value);
-
-const normalizeDirectionsAddress = (address?: string | null): string | null => {
-  const normalized = address?.trim().replace(/\s+/g, ' ');
-  return normalized || null;
-};
-
-const buildDirectionsUrl = ({ lat, lng, address, city: _city }: DirectionsTarget): string | null => {
-  if (hasValidCoordinate(lat) && hasValidCoordinate(lng)) {
-    return `${GOOGLE_DIRECTIONS_PREFIX}${lat},${lng}`;
-  }
-
-  const normalizedAddress = normalizeDirectionsAddress(address);
-  if (!normalizedAddress) return null;
-
-  return `${GOOGLE_DIRECTIONS_PREFIX}${encodeURIComponent(normalizedAddress)}`;
-};
-
-const isGoogleDirectionsUrl = (url: string | null | undefined): url is string =>
-  typeof url === 'string' && url.startsWith(GOOGLE_DIRECTIONS_PREFIX);
-
-// navigateToDirections removed — using plain <a> tag instead
-
 // ── Action Buttons Row ──
-const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
+const ActionButtonRow = ({ phone, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const isMobile = useIsMobile();
-  const hasPhone = !!phone;
   const normalizedWebsite = normalizeWebsite(website);
-  const directionsUrl = buildDirectionsUrl({ lat, lng, address, city });
-  const hasDirections = isGoogleDirectionsUrl(directionsUrl);
-  const showCall = hasPhone && isMobile;
-  if (!showCall && !hasDirections && !normalizedWebsite) return null;
+  const showCall = !!phone && isMobile;
+  if (!showCall && !normalizedWebsite) return null;
 
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -1376,27 +1340,6 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Call
         </a>
       )}
-      {hasDirections && directionsUrl ? (
-        <a
-          href={directionsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-secondary"
-          title="Get directions"
-          onClick={e => e.stopPropagation()}
-        >
-          <Navigation className="w-3 h-3" />
-          Directions
-        </a>
-      ) : (
-        <span
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/30 px-2 py-1 text-[10px] font-medium text-muted-foreground opacity-60 cursor-not-allowed"
-          title="Directions unavailable"
-        >
-          <Navigation className="w-3 h-3" />
-          Directions
-        </span>
-      )}
       {normalizedWebsite && (
         <a
           href={normalizedWebsite}
@@ -1410,9 +1353,6 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Website
         </a>
       )}
-      {import.meta.env.DEV && hasDirections ? (
-        <span className="basis-full text-[9px] text-muted-foreground break-all">{directionsUrl}</span>
-      ) : null}
     </div>
   );
 };
