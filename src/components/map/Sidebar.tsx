@@ -1402,7 +1402,7 @@ const Sidebar = ({
                 </div>
               </div>
             ) : csvImportState === 'success' ? (
-              <div className="w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed border-green-300 bg-green-50/50 rounded-md text-xs text-green-700">
+              <div className="w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed border-primary/40 bg-primary/5 rounded-md text-xs text-primary">
                 <Check className="w-4 h-4" />
                 <span>Import complete</span>
               </div>
