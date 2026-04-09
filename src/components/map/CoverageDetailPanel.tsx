@@ -1659,7 +1659,14 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
         website={service.website}
       />
 
-      <OperationalBadges meta={service.operational} alwaysShowMedicaid />
+      <OperationalBadges
+        meta={service.operational}
+        alwaysShowMedicaid={
+          service.operationalServiceClass === 'billable_clinical' ||
+          service.operationalServiceClass === 'behavioral_health_clinical' ||
+          service.operationalServiceClass === 'tribal_clinical'
+        }
+      />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
