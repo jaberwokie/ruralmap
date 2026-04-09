@@ -425,3 +425,15 @@
 .leaflet-county-interactive-pane-pane svg .leaflet-interactive {
   pointer-events: auto;
 }
+
+/* Selected pin visual state — subtle ring + scale */
+.map-pin-selected {
+  filter: drop-shadow(0 0 4px hsl(var(--ring) / 0.7));
+  transform: scale(1.25) !important;
+  transform-origin: center bottom;
+  z-index: 9999 !important;
+  transition: transform 0.12s ease-out, filter 0.12s ease-out;
+}
+.map-pin-selected svg {
+  stroke-width: 2.5;
+}
