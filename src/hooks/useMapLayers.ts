@@ -14,7 +14,7 @@ const DEFAULT_LAYERS: LayerState = {
   engagementGap: false,
   broadbandAccess: false,
   cellularCoverage: false,
-  tribalNations: false,
+  tribalNations: true,
 };
 
 const DEFAULT_COVERAGE: CoverageState = {

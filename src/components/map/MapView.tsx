@@ -119,10 +119,10 @@ const PANE_CONFIG = {
   basePolygons:    { id: 'base-polygons-pane',    zIndex: 200, interactive: false },
   // Visual-only coverage overlays — never interactive
   coverage:        { id: 'coverage-pane',          zIndex: 300, interactive: false },
-  // Tribal Nation polygons — interactive, between coverage and county
-  tribalNations:   { id: 'tribal-nations-pane',    zIndex: 350, interactive: true },
   // County hit areas — interactive for click/hover
-  countyInteractive: { id: 'county-interactive-pane', zIndex: 400, interactive: true },
+  countyInteractive: { id: 'county-interactive-pane', zIndex: 350, interactive: true },
+  // Tribal Nation polygons — interactive, ABOVE county layer
+  tribalNations:   { id: 'tribal-nations-pane',    zIndex: 450, interactive: true },
   // All clickable non-provider markers
   markers:         { id: 'markers-pane',           zIndex: 650, interactive: true },
   // Provider markers — highest marker layer
@@ -2352,6 +2352,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         fillColor: 'hsla(30, 65%, 50%, 0.12)',
         fillOpacity: 1,
         interactive: true,
+        bubblingMouseEvents: false,
+      });
+
+      // Ensure the SVG path gets pointer-events so clicks reach through the pane
+      circle.on('add', () => {
+        const el = (circle as any)._path as HTMLElement | undefined;
+        if (el) el.style.pointerEvents = 'auto';
       });
 
       circle.bindTooltip(tribe.name, {
