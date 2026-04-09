@@ -1,9 +1,21 @@
 /**
- * Nevada Tribal Nations — sourced from the Nevada Department of Native American Affairs
- * Tribal Directory (https://dnaa.nv.gov/tribal-nations/tribal-directory/)
+ * Nevada Tribal Nations — Directory-first model aligned to the
+ * Nevada Department of Native American Affairs (DNAA) Tribal Directory
+ * https://dnaa.nv.gov/tribal-nations/tribal-directory/
  *
- * Tribal groups: Waší∙šiw (Washoe), Numu (Northern Paiute), Newe (Western Shoshone),
- *                Nuwuvi (Southern Paiute), Pipa Aha Macav (Mojave)
+ * This file is the single source of truth for Tribal government/directory
+ * records.  Land-boundary polygons are stored separately in
+ * /public/data/tribal_nations_boundaries.json and linked at runtime via
+ * tribeId.  One directory record may have 0, 1, or many land polygons.
+ *
+ * DNAA lists 28 entries across these structural levels:
+ *   - 19 independent Tribes / Colonies
+ *   - Te-Moak Tribe (parent) + 4 Bands
+ *   - Washoe Tribe (parent) + 4 Community Councils
+ *
+ * Tribal groups: Waší∙šiw (Washoe), Numu (Northern Paiute),
+ *                Newe (Western Shoshone), Nuwuvi (Southern Paiute),
+ *                Pipa Aha Macav (Mojave)
  */
 
 export interface TribalService {
@@ -19,10 +31,17 @@ export interface TribalService {
   lng?: number;
 }
 
+export type TribalCategory = 'Tribe' | 'Band' | 'Colony' | 'Community';
+
 export interface TribalNation {
   id: string;
   name: string;
+  /** Common / short name if different from official */
+  alternateName?: string;
   tribalGroup: string;
+  category: TribalCategory;
+  /** For sub-entities (bands, community councils) — the parent tribe id */
+  parentTribeId?: string;
   summary?: string;
   locationDescription: string;
   counties: string[];
@@ -30,8 +49,10 @@ export interface TribalNation {
   lat: number;
   lng: number;
   landBaseAcres?: number;
-  /** GeoJSON polygon geometry loaded at runtime */
+  /** GeoJSON polygon geometry loaded at runtime — may be undefined if no boundary data exists */
   geometry?: GeoJSON.Polygon | GeoJSON.MultiPolygon;
+  /** A tribe may have multiple separate land polygons; all attached here */
+  geometries?: Array<GeoJSON.Polygon | GeoJSON.MultiPolygon>;
   tribalMembers?: number;
   residentPopulation?: number;
   phone?: string;
@@ -50,22 +71,27 @@ export interface TribalNation {
 const parsePrograms = (text: string): string[] =>
   text.split(/,\s*/).map(s => s.trim()).filter(Boolean);
 
+const DNAA_DIR = 'https://dnaa.nv.gov/tribal-nations/tribal-directory/';
+
 export const tribalNations: TribalNation[] = [
+  // ═══════════════════════════════════════════════════════════
+  // INDEPENDENT TRIBES / COLONIES (19)
+  // ═══════════════════════════════════════════════════════════
   {
     id: 'confederate-goshute',
     name: 'Confederate Tribes of Goshute',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'The Goshute Reservation straddles the Nevada-Utah border in White Pine County, Nevada and Tooele and Juab Counties of Utah.',
     locationDescription: 'Astride the Nevada-Utah border in White Pine County, Nevada. 75 miles south of Wendover, Utah.',
     counties: ['White Pine'],
-    lat: 40.13,
-    lng: -114.15,
+    lat: 40.13, lng: -114.15,
     landBaseAcres: 108933,
     tribalMembers: 600,
     residentPopulation: 15,
     phone: '(435) 234-1138',
     website: 'https://ctgr.us/home/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'May 20, 1912 by Executive Order',
     tribalPrograms: parsePrograms('Enrollment, Alcohol & Drug, Education, Day Care, Child Development, Health Clinic Services, Judicial, Transportation, Housing Authority, Senior Citizen, Law enforcement/Tribal Police, Environmental Protection'),
@@ -79,16 +105,16 @@ export const tribalNations: TribalNation[] = [
     id: 'duck-valley',
     name: 'Duck Valley Shoshone-Paiute Tribe',
     tribalGroup: 'Newe (Western Shoshone) / Numu (Northern Paiute)',
+    category: 'Tribe',
     summary: 'The reservation straddles the Nevada-Idaho border, approximately 100 miles north of Elko. One of the largest tribal landholdings in the state.',
     locationDescription: 'Nevada-Idaho border, approximately 100 miles north of Elko on Highway 225.',
     counties: ['Elko'],
-    lat: 41.95,
-    lng: -116.08,
+    lat: 41.95, lng: -116.08,
     landBaseAcres: 289819,
     tribalMembers: 2132,
     phone: '(208) 759-3100',
     website: 'https://www.shopaitribes.org/spt/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'April 16, 1877 by Executive Order',
     tribalPrograms: parsePrograms('Enrollment, Fire Management, Food Distribution, Education, Health Clinic Services, Land Office, Stop Violence, Human Resources, TERO, Recreation, Judicial/Tribal Court, Environmental Protection, Water & Sanitation, Wildlife & Parks, Day Care, Finance, Vocational Rehab, Economic Development'),
@@ -103,17 +129,17 @@ export const tribalNations: TribalNation[] = [
     id: 'duckwater',
     name: 'Duckwater Shoshone Tribe',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'Located in a remote area of Nye County, approximately 19 miles northwest of State Route 379.',
     locationDescription: '19 miles northwest of State Route 379, Current, Nye County.',
     counties: ['Nye'],
-    lat: 38.84,
-    lng: -115.69,
+    lat: 38.84, lng: -115.69,
     landBaseAcres: 31229,
     tribalMembers: 383,
     residentPopulation: 150,
     phone: '(775) 863-0227',
     website: 'https://duckwatertribe.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'November 13, 1940',
     tribalPrograms: parsePrograms('Enrollment, Education, Day Care, Gym, Health Clinic Services, Natural Resources, Senior Services, Law Enforcement/Tribal Police, Judicial/Tribal Court, Housing, Planning'),
@@ -126,17 +152,17 @@ export const tribalNations: TribalNation[] = [
     id: 'ely-shoshone',
     name: 'Ely Shoshone Tribe',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'Located in three separate areas on the southwest and southeast sides of Ely in White Pine County.',
     locationDescription: 'Southwest and southeast sides of the City of Ely, White Pine County.',
     counties: ['White Pine'],
-    lat: 39.24,
-    lng: -114.89,
+    lat: 39.24, lng: -114.89,
     landBaseAcres: 3625,
     tribalMembers: 650,
     residentPopulation: 250,
     phone: '(775) 289-3013',
     website: 'https://www.elyshoshonetribe.com/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'September 28, 1930',
     tribalPrograms: parsePrograms('Enrollment, Education, Health Clinic Services, Housing Authority, Planning/Grant Department, Social Services, Judicial/Law Enforcement, Environmental Protection, Language/Culture, Alcohol and Drug Prevention, Elder'),
@@ -150,17 +176,17 @@ export const tribalNations: TribalNation[] = [
     id: 'fallon-paiute-shoshone',
     name: 'Fallon Paiute Shoshone Tribe',
     tribalGroup: 'Numu (Northern Paiute) / Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'Located northeast of Fallon in Churchill County, the reservation and colony are core to the regional tribal presence.',
     locationDescription: '2 miles northeast of Fallon, Churchill County.',
     counties: ['Churchill'],
-    lat: 39.49,
-    lng: -118.74,
+    lat: 39.49, lng: -118.74,
     landBaseAcres: 8199,
     tribalMembers: 1400,
     residentPopulation: 250,
     phone: '(775) 423-6075',
     website: 'https://www.fpst.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'April 20, 1907',
     tribalPrograms: parsePrograms('Cultural/language Preservation, Education, Day Care, Health Clinic Services, Housing Authority, Judicial/Tribal Court, Law Enforcement/Tribal Police, Environmental Protection, NAGPRA, Human Resources, Natural Resources, TERO, Grants, Community Development'),
@@ -174,16 +200,16 @@ export const tribalNations: TribalNation[] = [
     id: 'fort-mojave',
     name: 'Fort Mojave Indian Tribe',
     tribalGroup: 'Pipa Aha Macav (Mojave)',
+    category: 'Tribe',
     summary: 'The Fort Mojave reservation spans Arizona, California, and Nevada, with 5,582 acres in Nevada near the Colorado River at the state\'s southernmost tip.',
     locationDescription: 'Southernmost tip of Nevada, near the Colorado River where it borders Arizona and California.',
     counties: ['Clark'],
-    lat: 35.05,
-    lng: -114.63,
+    lat: 35.05, lng: -114.63,
     landBaseAcres: 5582,
     tribalMembers: 1500,
     phone: '(760) 629-4591',
     website: 'https://www.fortmojaveindiantribe.com/about-us/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     established: '1870',
     businesses: ['Avi Resort & Casino'],
     servicedBy: 'BIA-Colorado River Agency, Parker, Arizona',
@@ -193,17 +219,17 @@ export const tribalNations: TribalNation[] = [
     id: 'fort-mcdermitt',
     name: 'Fort McDermitt Paiute-Shoshone Tribe',
     tribalGroup: 'Numu (Northern Paiute) / Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'Located near McDermitt at the Nevada-Oregon border, the reservation spans both states in Humboldt County.',
     locationDescription: '4 miles southeast of McDermitt, Humboldt County. Spans the Nevada-Oregon border.',
     counties: ['Humboldt'],
-    lat: 41.95,
-    lng: -117.72,
+    lat: 41.95, lng: -117.72,
     landBaseAcres: 19094,
     tribalMembers: 1100,
     residentPopulation: 500,
     phone: '(775) 532-8259',
     website: 'https://fmpst.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'January 17, 1936',
     tribalPrograms: parsePrograms('Education, Tribal Court, Housing, Environmental Protection, Human Services, Finance'),
@@ -215,16 +241,16 @@ export const tribalNations: TribalNation[] = [
     id: 'las-vegas-paiute',
     name: 'Las Vegas Paiute Tribe',
     tribalGroup: 'Nuwuvi (Southern Paiute)',
+    category: 'Tribe',
     summary: 'Located within Las Vegas city limits and north along US 95, one of the smallest but most urban tribal nations in Nevada.',
     locationDescription: 'West side of north Main Street, one mile north of downtown Las Vegas, Clark County. Also north of Las Vegas along US 95.',
     counties: ['Clark'],
-    lat: 36.19,
-    lng: -115.16,
+    lat: 36.19, lng: -115.16,
     landBaseAcres: 3908,
     tribalMembers: 56,
     phone: '(702) 386-3926',
     website: 'https://www.lvpaiutetribe.com/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (2-year terms)',
     established: 'April 17, 1912',
     tribalPrograms: parsePrograms('Enrollment, Alcohol & Drug, Education, Health Clinic Services, Social Services, Substance Abuse Prevention, Mental Health, Law Enforcement/Tribal Police, Air Quality, Child Development'),
@@ -239,17 +265,17 @@ export const tribalNations: TribalNation[] = [
     id: 'lovelock-paiute',
     name: 'Lovelock Paiute Tribe',
     tribalGroup: 'Numu (Northern Paiute)',
+    category: 'Colony',
     summary: 'Located within Pershing County, approximately 90 miles east of Reno along Interstate 80.',
     locationDescription: 'Within Pershing County, approximately 90 miles east of Reno along I-80.',
     counties: ['Pershing'],
-    lat: 40.18,
-    lng: -118.47,
+    lat: 40.18, lng: -118.47,
     landBaseAcres: 20,
     tribalMembers: 217,
     residentPopulation: 153,
     phone: '(775) 273-7861',
     website: 'https://www.paiutetribelovelock.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'September 4, 1907',
     tribalPrograms: parsePrograms('Enrollment, Headstart, Housing Authority, Social Services/ICWA, Judicial/Tribal Court, Law Enforcement/Tribal Police, Health Services, Johnson O\'Malley, Elder, Daycare, Youth'),
@@ -263,17 +289,17 @@ export const tribalNations: TribalNation[] = [
     id: 'moapa-paiute',
     name: 'Moapa Band of Paiutes',
     tribalGroup: 'Nuwuvi (Southern Paiute)',
+    category: 'Band',
     summary: 'Located approximately 55 miles northeast of Las Vegas near the Valley of Fire State Park in Clark County.',
     locationDescription: '8 miles west of Glendale, junction of State Route 168 and I-15, approximately 55 miles northeast of Las Vegas.',
     counties: ['Clark'],
-    lat: 36.68,
-    lng: -114.59,
+    lat: 36.68, lng: -114.59,
     landBaseAcres: 71294,
     tribalMembers: 420,
     residentPopulation: 420,
     phone: '(702) 865-2787',
     website: 'https://www.moapabandofpaiutes.com/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'March 12, 1873 by Executive Order',
     tribalPrograms: parsePrograms('Enrollment, Headstart, Health Clinic Services, Housing Authority, Social Services/ICWA, Judicial/Tribal Court, Law Enforcement/Tribal Police, Agriculture/Irrigation, Environmental, Vocational Rehabilitation, TERO, Project INPUT'),
@@ -287,17 +313,17 @@ export const tribalNations: TribalNation[] = [
     id: 'pyramid-lake',
     name: 'Pyramid Lake Paiute Tribe',
     tribalGroup: 'Numu (Northern Paiute)',
+    category: 'Tribe',
     summary: 'One of the largest reservations in Nevada at 475,000 acres, located 35 miles northeast of Reno. Stewards of Pyramid Lake.',
     locationDescription: '35 miles northeast of Reno, spanning Washoe, Lyon, and Storey Counties.',
     counties: ['Washoe', 'Lyon', 'Storey'],
-    lat: 40.05,
-    lng: -119.55,
+    lat: 40.05, lng: -119.55,
     landBaseAcres: 475000,
     tribalMembers: 2253,
     residentPopulation: 1332,
     phone: '(775) 574-1000',
     website: 'https://plpt.nsn.us/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (2-year terms)',
     established: 'March 23, 1859 by Executive Order',
     tribalPrograms: parsePrograms('Enrollment, Education, Day Care, Health Clinic Services, Housing Authority, Library, Public Utilities, Maintenance, Senior Citizen, Victims Services, Social Services/ICWA, Parks & Recreation, Johnson O\'Malley, Taxation, Judicial/Tribal Court, Law Enforcement/Tribal Police, Rangers, Environment Protection/GAP, Fishery Restoration/Protection, Water Resources'),
@@ -312,17 +338,17 @@ export const tribalNations: TribalNation[] = [
     id: 'reno-sparks',
     name: 'Reno-Sparks Indian Colony',
     tribalGroup: 'Waší∙šiw (Washoe) / Numu (Paiute) / Newe (Shoshone)',
+    category: 'Colony',
     summary: 'A multi-tribal urban colony with lands in the Reno metropolitan area and Hungry Valley, supporting one of the largest urban Native populations in the state.',
     locationDescription: 'Reno Community adjacent to City of Reno near East Second and Mill Streets. Hungry Valley Community approximately 17 miles north.',
     counties: ['Washoe'],
-    lat: 39.50,
-    lng: -119.79,
+    lat: 39.50, lng: -119.79,
     landBaseAcres: 13434,
     tribalMembers: 1153,
     residentPopulation: 1539,
     phone: '(775) 329-2936',
     website: 'https://www.rsic.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'April 13, 1917',
     tribalPrograms: parsePrograms('Health Clinic Services, Economic Development, Enrollment, Senior Citizen, Cultural Resources/Language, Archives & Records, Education, Adult Vocational Training, CHR, Maintenance, Environmental Protection, Landscaping, Fleet Management, Transit Services, Family Support, Head Start, Public Relations, Housing, Utility District, Finance, Social Services/ICWA, Recreation, Taxation Department, Judicial/Tribal Court, Probation, Emergency Management, Buildings and Grounds, Construction Services, Human Resources, Library'),
@@ -336,16 +362,16 @@ export const tribalNations: TribalNation[] = [
     id: 'summit-lake',
     name: 'Summit Lake Paiute Tribe',
     tribalGroup: 'Numu (Northern Paiute)',
+    category: 'Tribe',
     summary: 'Located in a remote area of Humboldt County, approximately 35 miles west of Denio. Summit Lake is a terminal lake with 600-900 acres of surface water.',
     locationDescription: 'Approximately 35 miles west of Denio, Humboldt County. Access via State Route 140.',
     counties: ['Humboldt'],
-    lat: 41.50,
-    lng: -118.98,
+    lat: 41.50, lng: -118.98,
     landBaseAcres: 12573,
     tribalMembers: 120,
     phone: '(775) 827-9670',
     website: 'https://www.summitlaketribe.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'January 14, 1913 by Executive Order',
     tribalPrograms: parsePrograms('Aid to Tribal Government, Enrollment, Indian Child Welfare, Education/Employment, Housing, Roads, Range Conservation, Fisheries Management, Fish and Wildlife Hatchery, Clean Water Act, Non-Point Source Protection'),
@@ -356,13 +382,13 @@ export const tribalNations: TribalNation[] = [
     id: 'timbisha-shoshone',
     name: 'Timbisha Shoshone Tribe',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'Nevada land base is located near Scotty\'s Junction in Nye County and in Lida, Esmeralda County. The tribe also has land in California.',
     locationDescription: 'Near Scotty\'s Junction on Highway 395 South, Nye County, and in Lida, Esmeralda County.',
     counties: ['Nye', 'Esmeralda'],
-    lat: 37.35,
-    lng: -117.35,
+    lat: 37.35, lng: -117.35,
     phone: '(760) 872-3614',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'November 1, 2000 by Act of Congress — 5,500 acres in Nevada',
     servicedBy: 'BIA-Central California Agency, Sacramento, CA',
@@ -372,17 +398,17 @@ export const tribalNations: TribalNation[] = [
     id: 'walker-river',
     name: 'Walker River Paiute Tribe',
     tribalGroup: 'Numu (Northern Paiute)',
+    category: 'Tribe',
     summary: 'One of the largest reservations in Nevada at 325,000 acres, located 100 miles southeast of Reno with headquarters in Schurz.',
     locationDescription: '100 miles southeast of Reno. Portions in Churchill, Lyon, and Mineral Counties.',
     counties: ['Mineral', 'Lyon', 'Churchill'],
-    lat: 38.94,
-    lng: -118.81,
+    lat: 38.94, lng: -118.81,
     landBaseAcres: 325000,
     tribalMembers: 3311,
     residentPopulation: 1200,
     phone: '(775) 773-2306',
     website: 'https://www.wrpt.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'March 19, 1859 by Executive Order',
     tribalPrograms: parsePrograms('Enrollment, Utility Services, Cultural/Language Preservation, Alcohol & Drug, Education, HeadStart/Daycare, Health Clinic Services, Housing, Social Services, Taxation, TERO, Judicial Program/Tribal Court, Law Enforcement/Tribal Police, Economic Development, Human Resources, Environmental Protection/Air Quality, Water Resources, Roads, EMS'),
@@ -397,15 +423,15 @@ export const tribalNations: TribalNation[] = [
     id: 'winnemucca-colony',
     name: 'Winnemucca Indian Colony',
     tribalGroup: 'Numu (Northern Paiute) / Newe (Western Shoshone)',
+    category: 'Colony',
     summary: 'An urban colony located in Humboldt County, three-quarters of a mile south of downtown Winnemucca.',
     locationDescription: 'One block west of Bridge Street, three-quarters mile south of downtown Winnemucca, Humboldt County.',
     counties: ['Humboldt'],
-    lat: 40.96,
-    lng: -117.74,
+    lat: 40.96, lng: -117.74,
     landBaseAcres: 340,
     phone: '(775) 329-5800',
     website: 'https://winnemuccaindiancolony.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms)',
     established: 'June 18, 1917 by Executive Order',
     servicedBy: 'BIA-Western Nevada Agency, Carson City',
@@ -415,17 +441,17 @@ export const tribalNations: TribalNation[] = [
     id: 'yerington-paiute',
     name: 'Yerington Paiute Tribe',
     tribalGroup: 'Numu (Northern Paiute)',
+    category: 'Tribe',
     summary: 'Located in Lyon County with two main landholdings: the Yerington Colony adjacent to the city of Yerington and the Campbell Ranch about 10 miles north.',
     locationDescription: 'Lyon County, with Yerington Colony adjacent to city and Campbell Ranch about 10 miles north.',
     counties: ['Lyon'],
-    lat: 38.99,
-    lng: -119.17,
+    lat: 38.99, lng: -119.17,
     landBaseAcres: 1635,
     tribalMembers: 1500,
     residentPopulation: 400,
     phone: '(775) 783-0200',
     website: 'https://yeringtonpaiute.us/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'May 18, 1916',
     tribalPrograms: parsePrograms('Law Enforcement/Tribal Police, Health Clinic, Education, Housing Authority, Enrollment, Commodity Food, Adult Vocational Training, Education/Tutoring, Elder, Social Services/ICWA, Judicial/Tribal Council, Agriculture/Irrigation, Environmental Protection, Home Visitation, Summer Foods, Johnson O\'Malley'),
@@ -439,38 +465,62 @@ export const tribalNations: TribalNation[] = [
     id: 'yomba-shoshone',
     name: 'Yomba Shoshone Tribe',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Tribe',
     summary: 'Located approximately 47 miles south of Austin along the Reese River in Nye County.',
     locationDescription: '47 miles south of Austin by State Route 21 at Reese River, Nye County.',
     counties: ['Nye'],
-    lat: 38.89,
-    lng: -117.27,
+    lat: 38.89, lng: -117.27,
     landBaseAcres: 4681,
     tribalMembers: 186,
     residentPopulation: 144,
     phone: '(775) 964-6535',
     website: 'http://www.yombatribe.org/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (6-member)',
     established: 'June 18, 1934 by Indian Reorganization Act',
     tribalPrograms: parsePrograms('Enrollment, Diabetes, Housing, Social Services/ICWA, Judicial/Tribal Court, Environmental Protection/GAP, Law Enforcement/Tribal Police'),
     servicedBy: 'BIA-Western Nevada Agency, Carson City',
     triballyOperatedServices: [],
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // TE-MOAK TRIBE (parent) + 4 BANDS
+  // ═══════════════════════════════════════════════════════════
+  {
+    id: 'te-moak',
+    name: 'Te-Moak Tribe of Western Shoshone',
+    tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Tribe',
+    summary: 'A coalition government headquartered in Elko, serving four distinct Shoshone Bands: Battle Mountain, Elko, South Fork, and Wells. The Te-Moak Tribal Council has jurisdiction over all tribal lands, though bands retain sovereignty over other affairs.',
+    locationDescription: 'Headquarters in Elko, Nevada. Tribal lands across Elko and Lander Counties.',
+    counties: ['Elko', 'Lander'],
+    lat: 40.83, lng: -115.76,
+    phone: '(775) 738-9251',
+    website: 'https://www.temoaktribe.com/',
+    directoryUrl: DNAA_DIR,
+    governingBody: 'Te-Moak Tribal Council',
+    established: 'Constitution and By-Laws adopted August 24, 1938, amended 1982',
+    notes: 'Parent tribal government for four bands: Battle Mountain, Elko, South Fork, and Wells.',
+    servicedBy: 'BIA-Eastern Nevada Agency, Elko, NV',
+    triballyOperatedServices: [],
+  },
   {
     id: 'te-moak-battle-mountain',
     name: 'Te-Moak Tribe — Battle Mountain Band',
+    alternateName: 'Battle Mountain Band Council',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Band',
+    parentTribeId: 'te-moak',
     summary: 'One of four bands of the Te-Moak Tribe of Western Shoshone. The Battle Mountain Reservation is on the west side of Battle Mountain city limits.',
     locationDescription: 'West side of the city of Battle Mountain, Lander County.',
     counties: ['Lander'],
-    lat: 40.63,
-    lng: -116.88,
+    lat: 40.63, lng: -116.88,
     landBaseAcres: 683,
     tribalMembers: 516,
     residentPopulation: 165,
     phone: '(775) 635-2004',
     website: 'https://www.temoaktribe.com/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'June 17, 1917 by Executive Order',
     tribalPrograms: parsePrograms('Education, Health Clinic Services, Social Services/ICWA, Taxation, Environmental Protection, Library, Prevention, Housing Authority, Enrollment, Judicial, Traffic Safety'),
@@ -483,18 +533,20 @@ export const tribalNations: TribalNation[] = [
   {
     id: 'te-moak-elko',
     name: 'Te-Moak Tribe — Elko Band',
+    alternateName: 'Elko Band Council',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Band',
+    parentTribeId: 'te-moak',
     summary: 'One of four bands of the Te-Moak Tribe. The Elko Colony is in northeastern Nevada adjacent to the city of Elko.',
     locationDescription: 'Adjacent to the city of Elko, Elko County.',
     counties: ['Elko'],
-    lat: 40.84,
-    lng: -115.77,
+    lat: 40.84, lng: -115.77,
     landBaseAcres: 193,
     tribalMembers: 1600,
     residentPopulation: 700,
     phone: '(775) 738-8889',
     website: 'http://elkobandcouncil.com/index.html',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'March 23, 1918 by Executive Order',
     tribalPrograms: parsePrograms('Social Services/ICWA, Senior Services, Recreation, Southern Band Health Center Services, Headstart, JPTA, Environmental Program, Maintenance, Law Enforcement, Health Department, Domestic Violence, Alcohol and Drug, Daycare, Tutoring/Education'),
@@ -507,18 +559,20 @@ export const tribalNations: TribalNation[] = [
   {
     id: 'te-moak-south-fork',
     name: 'Te-Moak Tribe — South Fork Band',
+    alternateName: 'South Fork Band Council',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Band',
+    parentTribeId: 'te-moak',
     summary: 'One of four bands of the Te-Moak Tribe. The South Fork Reservation covers approximately 13,050 acres in northeastern Nevada.',
     locationDescription: '28 miles south of the city of Elko, Elko County.',
     counties: ['Elko'],
-    lat: 40.57,
-    lng: -115.82,
+    lat: 40.57, lng: -115.82,
     landBaseAcres: 13049,
     tribalMembers: 260,
     residentPopulation: 120,
     phone: '(775) 744-4273',
     website: 'https://www.temoaktribe.com/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'June 18, 1934 by Indian Reorganization Act',
     servicedBy: 'BIA-Eastern Nevada Agency, Elko, NV',
@@ -527,18 +581,20 @@ export const tribalNations: TribalNation[] = [
   {
     id: 'te-moak-wells',
     name: 'Te-Moak Tribe — Wells Band',
+    alternateName: 'Wells Band Council',
     tribalGroup: 'Newe (Western Shoshone)',
+    category: 'Band',
+    parentTribeId: 'te-moak',
     summary: 'One of four bands of the Te-Moak Tribe. The Wells Colony is in northeastern Nevada, just west of the city of Wells.',
     locationDescription: 'Just west of the city of Wells, Elko County.',
     counties: ['Elko'],
-    lat: 41.10,
-    lng: -114.97,
+    lat: 41.10, lng: -114.97,
     landBaseAcres: 80,
     tribalMembers: 209,
     residentPopulation: 177,
     phone: '(775) 752-3045',
     website: 'https://www.temoaktribe.com/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (3-year terms)',
     established: 'October 15, 1977 by PL 95-133',
     tribalPrograms: parsePrograms('Adult Vocational Training, Education, Housing, Community Health, Environmental/GAP, Tribal Police, Finance, Health/Substance Abuse Prevention, Social Services, Diabetes'),
@@ -548,21 +604,106 @@ export const tribalNations: TribalNation[] = [
       { id: 'wells-health', tribeId: 'te-moak-wells', serviceName: 'Wells Band Community Health', serviceType: 'Community Health', lat: 41.10, lng: -114.97 },
     ],
   },
+
+  // ═══════════════════════════════════════════════════════════
+  // WASHOE TRIBE (parent) + 4 COMMUNITY COUNCILS
+  // ═══════════════════════════════════════════════════════════
   {
     id: 'washoe-tribe',
     name: 'Washoe Tribe of Nevada & California',
     tribalGroup: 'Waší∙šiw (Washoe)',
+    category: 'Tribe',
     summary: 'Governed by a council representing four residential communities: Carson Colony, Dresslerville Community, Stewart Community, and Woodfords Community (California). Total land base of approximately 64,300 acres in Douglas County.',
     locationDescription: 'Four communities: Carson Colony (Carson City), Dresslerville (south of Gardnerville), Stewart Community (Carson City), Woodfords (Alpine County, CA). Tribal headquarters in Gardnerville.',
     counties: ['Douglas', 'Carson City'],
-    lat: 38.88,
-    lng: -119.73,
+    lat: 38.88, lng: -119.73,
     landBaseAcres: 64300,
     phone: '(775) 265-8600',
     website: 'https://washoetribe.us/',
-    directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
+    directoryUrl: DNAA_DIR,
     governingBody: 'Tribal Council (4-year terms, representatives from each community)',
     established: 'March 26, 1917',
+    servicedBy: 'BIA-Western Nevada Agency, Carson City',
+    triballyOperatedServices: [],
+  },
+  {
+    id: 'washoe-carson-colony',
+    name: 'Washoe Tribe — Carson Colony',
+    alternateName: 'Carson Colony Community Council',
+    tribalGroup: 'Waší∙šiw (Washoe)',
+    category: 'Community',
+    parentTribeId: 'washoe-tribe',
+    summary: 'One of four residential communities of the Washoe Tribe, located in Carson City.',
+    locationDescription: 'One half mile west of U.S. Highway 395 in Carson City, NV.',
+    counties: ['Carson City'],
+    lat: 39.15, lng: -119.77,
+    landBaseAcres: 160,
+    phone: '(775) 265-8600',
+    website: 'https://washoetribe.us/',
+    directoryUrl: DNAA_DIR,
+    governingBody: 'Community Council (4-year terms)',
+    established: 'March 26, 1917',
+    servicedBy: 'BIA-Western Nevada Agency, Carson City',
+    triballyOperatedServices: [],
+  },
+  {
+    id: 'washoe-dresslerville',
+    name: 'Washoe Tribe — Dresslerville Community',
+    alternateName: 'Dresslerville Community Council',
+    tribalGroup: 'Waší∙šiw (Washoe)',
+    category: 'Community',
+    parentTribeId: 'washoe-tribe',
+    summary: 'One of four residential communities of the Washoe Tribe, located south of Gardnerville.',
+    locationDescription: 'One half mile west of US Highway 395, south of Gardnerville, NV.',
+    counties: ['Douglas'],
+    lat: 38.92, lng: -119.74,
+    landBaseAcres: 40,
+    phone: '(775) 265-8600',
+    website: 'https://washoetribe.us/',
+    directoryUrl: DNAA_DIR,
+    governingBody: 'Community Council (4-year terms)',
+    established: 'May 16, 1917',
+    servicedBy: 'BIA-Western Nevada Agency, Carson City',
+    triballyOperatedServices: [],
+  },
+  {
+    id: 'washoe-stewart',
+    name: 'Washoe Tribe — Stewart Community',
+    alternateName: 'Stewart Community Council',
+    tribalGroup: 'Waší∙šiw (Washoe)',
+    category: 'Community',
+    parentTribeId: 'washoe-tribe',
+    summary: 'One of four residential communities of the Washoe Tribe, located in Carson City.',
+    locationDescription: 'Carson City, Nevada.',
+    counties: ['Carson City'],
+    lat: 39.13, lng: -119.76,
+    phone: '(775) 265-8600',
+    website: 'https://washoetribe.us/',
+    directoryUrl: DNAA_DIR,
+    governingBody: 'Community Council (4-year terms)',
+    established: 'July 20, 1990',
+    notes: 'Enfranchised by amendment to Washoe Tribal Constitution. 2,933.59 acres set aside in 1983.',
+    servicedBy: 'BIA-Western Nevada Agency, Carson City',
+    triballyOperatedServices: [],
+  },
+  {
+    id: 'washoe-woodfords',
+    name: 'Washoe Tribe — Woodfords Community',
+    alternateName: 'Woodfords Community Council',
+    tribalGroup: 'Waší∙šiw (Washoe)',
+    category: 'Community',
+    parentTribeId: 'washoe-tribe',
+    summary: 'One of four residential communities of the Washoe Tribe, located in Alpine County, California.',
+    locationDescription: 'Approximately 5 miles from the Nevada/California border in Alpine County, CA.',
+    counties: [],
+    lat: 38.77, lng: -119.83,
+    landBaseAcres: 80,
+    phone: '(775) 265-8600',
+    website: 'https://www.woodfordscommunitycouncil.org/',
+    directoryUrl: DNAA_DIR,
+    governingBody: 'Community Council (4-year terms)',
+    established: 'July 31, 1971 by PL 91-362',
+    notes: 'Located in California. Included in directory for completeness as a Washoe Tribe community.',
     servicedBy: 'BIA-Western Nevada Agency, Carson City',
     triballyOperatedServices: [],
   },
@@ -578,18 +719,52 @@ export const getTribalNationsByCounty = (county: string): TribalNation[] =>
 /** Count of all tribally operated services */
 export const totalTribalServices = tribalNations.reduce((n, t) => n + t.triballyOperatedServices.length, 0);
 
-/** Load GeoJSON polygon boundaries and attach to tribal nation records */
+/** Get sub-entities (bands/communities) for a parent tribe */
+export const getSubEntities = (parentId: string): TribalNation[] =>
+  tribalNations.filter(t => t.parentTribeId === parentId);
+
+/** Get the parent tribe for a sub-entity */
+export const getParentTribe = (tribe: TribalNation): TribalNation | undefined =>
+  tribe.parentTribeId ? TRIBAL_NATION_BY_ID.get(tribe.parentTribeId) : undefined;
+
+/**
+ * Load GeoJSON polygon boundaries and attach to tribal nation records.
+ * One directory record may receive multiple geometry features if the GeoJSON
+ * contains several polygons with the same tribeId.
+ */
 export async function loadTribalBoundaries(): Promise<void> {
   try {
     const resp = await fetch('/data/tribal_nations_boundaries.json');
     if (!resp.ok) return;
     const geojson = await resp.json() as GeoJSON.FeatureCollection;
+
+    // Collect all geometries per tribeId
+    const geoMap = new Map<string, Array<GeoJSON.Polygon | GeoJSON.MultiPolygon>>();
     for (const feature of geojson.features) {
       const tribeId = feature.properties?.tribeId as string | undefined;
-      if (!tribeId) continue;
+      if (!tribeId || !feature.geometry) continue;
+      const list = geoMap.get(tribeId) ?? [];
+      list.push(feature.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon);
+      geoMap.set(tribeId, list);
+    }
+
+    // Attach to directory records
+    for (const [tribeId, geometries] of geoMap) {
       const tribe = TRIBAL_NATION_BY_ID.get(tribeId);
-      if (tribe && feature.geometry) {
-        tribe.geometry = feature.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon;
+      if (!tribe) continue;
+      tribe.geometries = geometries;
+      // Keep backward-compat single geometry (first feature)
+      tribe.geometry = geometries[0];
+    }
+
+    // Log reconciliation summary in dev
+    if (import.meta.env.DEV) {
+      const dirCount = tribalNations.length;
+      const withGeo = tribalNations.filter(t => t.geometries && t.geometries.length > 0).length;
+      const withoutGeo = tribalNations.filter(t => !t.geometries || t.geometries.length === 0);
+      console.info(`[TribalNations Reconciliation] DNAA directory: 28 | App directory: ${dirCount} | With polygons: ${withGeo} | Without polygons: ${dirCount - withGeo}`);
+      if (withoutGeo.length > 0) {
+        console.info('[TribalNations] Tribes without polygon geometry:', withoutGeo.map(t => t.name));
       }
     }
   } catch (e) {
