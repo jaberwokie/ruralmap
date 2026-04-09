@@ -16,12 +16,21 @@
 
 export type EntityType = 'facility' | 'ruralService';
 
+export type VerificationStatus =
+  | 'needs_verification'
+  | 'verified_participating'
+  | 'verified_non_participating'
+  | 'deferred';
+
 export interface OperationalTag {
   entityId: string;
   entityType: EntityType;
 
   /** true = participating, false = non-participating, null/undefined = unknown */
   isNevadaMedicaidParticipating?: boolean | null;
+
+  /** Verification workflow state */
+  verificationStatus?: VerificationStatus;
 
   /** Source used to verify the participation value */
   verificationSource: string;
