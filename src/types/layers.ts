@@ -9,6 +9,7 @@ export interface LayerState {
   engagementGap: boolean;
   broadbandAccess: boolean;
   cellularCoverage: boolean;
+  tribalNations: boolean;
 }
 
 export interface CoverageState {
