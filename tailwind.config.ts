@@ -52,6 +52,7 @@ export default {
         tier1: "hsl(var(--tier1))",
         "service-presence": "hsl(var(--service-presence))",
         "behavioral-health": "hsl(var(--behavioral-health))",
+        "tribal-nation": "hsl(var(--tribal-nation))",
         "response-active": "hsl(var(--response-active))",
         "response-scheduled": "hsl(var(--response-scheduled))",
         "response-remote": "hsl(var(--response-remote))",
