@@ -4,7 +4,7 @@ import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCoun
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
-import { type TribalNation } from '@/data/tribal-nations';
+import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
@@ -1693,14 +1693,33 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
   const normalizedWeb = normalizeWebsite(tribe.website);
   const hasContact = !!(tribe.phone || normalizedWeb);
   const services = tribe.triballyOperatedServices;
+  const parent = getParentTribe(tribe);
+  const subEntities = getSubEntities(tribe.id);
+
+  // Collect services from sub-entities as well
+  const allServices = [
+    ...services,
+    ...subEntities.flatMap(sub => sub.triballyOperatedServices),
+  ];
+
+  const categoryLabel = tribe.category === 'Band' ? 'Tribal Band'
+    : tribe.category === 'Community' ? 'Tribal Community'
+    : tribe.category === 'Colony' ? 'Tribal Colony'
+    : 'Tribal Nation';
 
   return (
     <>
       <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-tribal-nation flex items-center gap-1">
-        <Landmark className="w-3 h-3" /> Tribal Nation
+        <Landmark className="w-3 h-3" /> {categoryLabel}
       </div>
       <p className="text-sm font-semibold text-foreground mb-0.5">{tribe.name}</p>
-      <p className="text-[11px] text-muted-foreground mb-2">{tribe.tribalGroup}</p>
+      <p className="text-[11px] text-muted-foreground mb-0.5">{tribe.tribalGroup}</p>
+      {parent && (
+        <p className="text-[10px] text-muted-foreground mb-1">Part of {parent.name}</p>
+      )}
+      {subEntities.length > 0 && (
+        <p className="text-[10px] text-muted-foreground mb-1">{subEntities.length} constituent {subEntities.length === 1 ? 'band/community' : 'bands/communities'}</p>
+      )}
 
       {tribe.summary && <p className="text-xs text-muted-foreground mb-2">{tribe.summary}</p>}
 
@@ -1772,11 +1791,28 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
         </DetailSection>
       )}
 
-      {/* Tribally Operated Services */}
-      <DetailSection title="Tribally Operated Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={services.length || undefined}>
-        {services.length > 0 ? (
+      {/* Sub-entities (bands/communities) */}
+      {subEntities.length > 0 && (
+        <DetailSection title={tribe.category === 'Tribe' && subEntities[0]?.category === 'Band' ? 'Bands' : 'Communities'} isOpen={isOpen('subentities')} onToggle={() => toggle('subentities')} count={subEntities.length}>
           <div className="space-y-1.5">
-            {services.map(svc => {
+            {subEntities.map(sub => (
+              <div key={sub.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                <div className="text-xs font-medium text-foreground">{sub.name}</div>
+                <div className="text-[10px] text-muted-foreground">{sub.locationDescription}</div>
+                {sub.landBaseAcres && (
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{sub.landBaseAcres.toLocaleString()} acres</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Tribally Operated Services */}
+      <DetailSection title="Tribally Operated Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={allServices.length || undefined}>
+        {allServices.length > 0 ? (
+          <div className="space-y-1.5">
+            {allServices.map(svc => {
               const svcWeb = normalizeWebsite(svc.website);
               return (
                 <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">

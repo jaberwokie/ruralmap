@@ -26,8 +26,8 @@ const App = () => {
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      const destination = window.top ?? window;
-      destination.location.assign(href);
+      // Use window.location directly — window.top may be cross-origin in preview iframes
+      window.location.assign(href);
     };
 
     document.addEventListener('click', handleGoogleExternalClick, true);
