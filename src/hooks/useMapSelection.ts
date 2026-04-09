@@ -101,7 +101,6 @@ export const useMapSelection = (): UseMapSelectionReturn => {
 
   return {
     lockedEntity,
-    hoverEntity: null,
     selectedFteId,
     selectedCounty,
     activeFteId,
