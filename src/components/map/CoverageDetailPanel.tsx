@@ -1368,23 +1368,28 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Call
         </a>
       )}
-      <button
-        type="button"
-        className={`inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium transition-colors ${hasDirections ? 'bg-secondary/60 text-foreground hover:bg-secondary' : 'bg-secondary/30 text-muted-foreground cursor-not-allowed opacity-60'}`}
-        title={hasDirections ? 'Get directions' : 'Directions unavailable'}
-        disabled={!hasDirections}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!directionsUrl || !directionsUrl.startsWith(GOOGLE_DIRECTIONS_PREFIX)) return;
-          const usedPath = hasValidCoordinate(lat) && hasValidCoordinate(lng) ? 'coordinates' : 'address';
-          console.info('[directions]', { url: directionsUrl, usedPath });
-          window.location.assign(directionsUrl);
-        }}
-      >
-        <Navigation className="w-3 h-3" />
-        Directions
-      </button>
+      {hasDirections ? (
+        <a
+          href={directionsUrl}
+          target="_top"
+          rel="noopener noreferrer"
+          data-external-google-link="true"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
+          title="Get directions"
+        >
+          <Navigation className="w-3 h-3" />
+          Directions
+        </a>
+      ) : (
+        <span
+          className="inline-flex cursor-not-allowed items-center gap-1 rounded-md border border-border bg-secondary/30 px-2 py-1 text-[10px] font-medium text-muted-foreground opacity-60"
+          title="Directions unavailable"
+          aria-disabled="true"
+        >
+          <Navigation className="w-3 h-3" />
+          Directions
+        </span>
+      )}
       {normalizedWebsite && (
         <a
           href={normalizedWebsite}
