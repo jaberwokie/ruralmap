@@ -1,3 +1,5 @@
+import type { ServiceOperationalMeta } from '@/types/medicaid';
+
 export type RuralServiceCategory =
   | 'Coordinated Entry'
   | 'Shelter'
@@ -33,6 +35,8 @@ export interface RuralService {
   notes?: string;
   lat: number;
   lng: number;
+  /** Medicaid participation and operational metadata */
+  operational?: Partial<ServiceOperationalMeta>;
 }
 
 export const ruralServices: RuralService[] = [

@@ -15,6 +15,8 @@ import { getCountyBroadband } from '@/data/broadband-coverage';
 import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS, READINESS_COLORS } from '@/utils/broadbandFeasibility';
 import { getCountyCellular, getReliabilityCategory, READINESS_COLORS as CELLULAR_READINESS_COLORS } from '@/data/cellular-coverage';
 import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
+import { resolveOperationalMeta, PARTICIPATION_STATUS_LABELS, PARTICIPATION_STATUS_COLORS } from '@/types/medicaid';
+import type { ServiceOperationalMeta } from '@/types/medicaid';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1320,6 +1322,75 @@ const useAccordion = (defaultSection: string) => {
   return { isOpen, toggle };
 };
 
+// ── Operational Indicators ──
+const OperationalBadges = ({ meta }: { meta?: Partial<ServiceOperationalMeta> | null }) => {
+  if (!meta) return null;
+  const resolved = resolveOperationalMeta(meta);
+
+  // Only show if at least one field has meaningful data
+  const hasData = resolved.medicaidParticipationStatus !== 'unknown'
+    || resolved.isTribalProvider
+    || resolved.isTriballyOperated
+    || resolved.isCrossBorderService;
+  if (!hasData) return null;
+
+  return (
+    <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-0.5">
+      {resolved.medicaidParticipationStatus !== 'unknown' && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">NV Medicaid Participating</span>
+          <span className={`font-medium ${PARTICIPATION_STATUS_COLORS[resolved.medicaidParticipationStatus]}`}>
+            {PARTICIPATION_STATUS_LABELS[resolved.medicaidParticipationStatus]}
+          </span>
+        </div>
+      )}
+      {resolved.isTribalProvider && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Tribal Provider</span>
+          <span className="font-medium text-foreground">Yes</span>
+        </div>
+      )}
+      {resolved.isTriballyOperated && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Tribally Operated</span>
+          <span className="font-medium text-foreground">Yes</span>
+        </div>
+      )}
+      {resolved.isCrossBorderService && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Cross-border</span>
+          <span className="font-medium text-muted-foreground">Yes — reimbursement verification may be needed</span>
+        </div>
+      )}
+      {resolved.reimbursementNotes && (
+        <p className="text-[10px] text-muted-foreground italic mt-0.5">{resolved.reimbursementNotes}</p>
+      )}
+    </div>
+  );
+};
+
+/** Inline operational indicator for service lists (compact) */
+const OperationalInlineBadges = ({ meta }: { meta?: Partial<ServiceOperationalMeta> | null }) => {
+  if (!meta) return null;
+  const resolved = resolveOperationalMeta(meta);
+  const badges: string[] = [];
+
+  if (resolved.medicaidParticipationStatus === 'participating') badges.push('NV Medicaid');
+  if (resolved.medicaidParticipationStatus === 'non_participating') badges.push('Non-participating');
+  if (resolved.isTribalProvider) badges.push('Tribal Provider');
+  if (resolved.isCrossBorderService) badges.push('Cross-border');
+
+  if (badges.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1 mt-0.5">
+      {badges.map(b => (
+        <span key={b} className="rounded border border-border bg-secondary/70 px-1 py-0 text-[9px] text-muted-foreground">{b}</span>
+      ))}
+    </div>
+  );
+};
+
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const isMobile = useIsMobile();
@@ -1439,6 +1510,8 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         city={facility.city}
         website={facility.website}
       />
+
+      <OperationalBadges meta={facility.operational} />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
@@ -1588,6 +1661,8 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
         city={service.city}
         website={service.website}
       />
+
+      <OperationalBadges meta={service.operational} />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
@@ -1765,6 +1840,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
                 <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
                   <div className="text-xs font-medium text-foreground">{svc.serviceName}</div>
                   <div className="text-[10px] text-muted-foreground">{svc.serviceType}</div>
+                  <OperationalInlineBadges meta={svc.operational} />
                   {svc.description && <div className="text-[10px] text-muted-foreground mt-0.5">{svc.description}</div>}
                   {svc.phone && (
                     <div className="mt-0.5">

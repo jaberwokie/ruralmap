@@ -29,6 +29,8 @@ export interface TribalService {
   website?: string;
   lat?: number;
   lng?: number;
+  /** Medicaid participation and operational metadata */
+  operational?: Partial<import('@/types/medicaid').ServiceOperationalMeta>;
 }
 
 export type TribalCategory = 'Tribe' | 'Band' | 'Colony' | 'Community';
