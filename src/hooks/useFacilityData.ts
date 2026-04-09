@@ -4,7 +4,7 @@ import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { enrichFacilities, auditOperationalCoverage } from '@/utils/operationalEnrichment';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
-import { auditServiceClassification } from '@/utils/operationalServiceClass';
+import { auditServiceClassification, getTaggingQueue } from '@/utils/operationalServiceClass';
 import type { Filters } from '@/types/filters';
 
 export interface UseFacilityDataReturn {
@@ -45,7 +45,13 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     console.info('[Facility Classification Audit]', auditFacilityClassifications(facilities));
     console.info('[Facility Confidence Audit]', auditFacilityConfidence(facilities));
     console.info('[Operational Coverage Audit]', auditOperationalCoverage(facilities, enrichedRuralServices));
-    console.info('[Service Class Audit]', auditServiceClassification(enrichedRuralServices));
+    const classAudit = auditServiceClassification(enrichedRuralServices);
+    console.info('[Service Class Audit]');
+    console.table(classAudit.rows);
+    const queue = getTaggingQueue(enrichedRuralServices);
+    const needsVerification = queue.filter(q => q.status === 'needs_verification');
+    console.info(`[Tagging Queue] ${queue.length} priority services, ${needsVerification.length} need verification`);
+    if (needsVerification.length > 0) console.table(needsVerification);
   }, [facilities]);
 
   return { facilities, filteredFacilities, addFacilities };

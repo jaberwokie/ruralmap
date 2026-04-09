@@ -83,29 +83,82 @@ export const classifyAllRuralServices = (services: RuralService[]): RuralService
 
 // ── Audit ──
 
-export interface ServiceClassAudit {
-  billable_clinical: number;
-  tribal_clinical: number;
-  behavioral_health_clinical: number;
-  supportive_nonbilling: number;
+export interface ClassParticipationRow {
+  class: OperationalServiceClass;
+  participating: number;
+  nonParticipating: number;
   unknown: number;
   total: number;
 }
 
+export interface ServiceClassAudit {
+  rows: ClassParticipationRow[];
+  total: number;
+}
+
+const CLASSES: OperationalServiceClass[] = [
+  'billable_clinical',
+  'tribal_clinical',
+  'behavioral_health_clinical',
+  'supportive_nonbilling',
+  'unknown',
+];
+
 export const auditServiceClassification = (services: RuralService[]): ServiceClassAudit => {
-  const counts: ServiceClassAudit = {
-    billable_clinical: 0,
-    tribal_clinical: 0,
-    behavioral_health_clinical: 0,
-    supportive_nonbilling: 0,
-    unknown: 0,
-    total: services.length,
-  };
+  const buckets = new Map<OperationalServiceClass, { p: number; n: number; u: number }>();
+  for (const cls of CLASSES) buckets.set(cls, { p: 0, n: 0, u: 0 });
 
   for (const s of services) {
     const cls = s.operationalServiceClass ?? 'unknown';
-    counts[cls]++;
+    const b = buckets.get(cls) ?? { p: 0, n: 0, u: 0 };
+    if (s.operational?.isNevadaMedicaidParticipating === true) b.p++;
+    else if (s.operational?.isNevadaMedicaidParticipating === false) b.n++;
+    else b.u++;
   }
 
-  return counts;
+  const rows: ClassParticipationRow[] = CLASSES
+    .map((cls) => {
+      const b = buckets.get(cls)!;
+      return { class: cls, participating: b.p, nonParticipating: b.n, unknown: b.u, total: b.p + b.n + b.u };
+    })
+    .filter((r) => r.total > 0);
+
+  return { rows, total: services.length };
+};
+
+// ── Tagging Queue (dev) ──
+
+export interface TaggingQueueEntry {
+  id: string;
+  name: string;
+  category: string;
+  county: string;
+  class: OperationalServiceClass;
+  status: 'participating' | 'non_participating' | 'needs_verification';
+}
+
+/**
+ * Generate a tagging queue for services that need Medicaid verification.
+ * Only includes priority classes (billable_clinical, behavioral_health_clinical, tribal_clinical).
+ */
+export const getTaggingQueue = (services: RuralService[]): TaggingQueueEntry[] => {
+  const priorityClasses = new Set<OperationalServiceClass>([
+    'billable_clinical',
+    'behavioral_health_clinical',
+    'tribal_clinical',
+  ]);
+
+  return services
+    .filter((s) => priorityClasses.has(s.operationalServiceClass ?? 'unknown'))
+    .map((s) => ({
+      id: s.id,
+      name: s.name,
+      category: s.category,
+      county: s.county,
+      class: s.operationalServiceClass ?? 'unknown',
+      status:
+        s.operational?.isNevadaMedicaidParticipating === true ? 'participating' as const :
+        s.operational?.isNevadaMedicaidParticipating === false ? 'non_participating' as const :
+        'needs_verification' as const,
+    }));
 };
