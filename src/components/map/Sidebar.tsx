@@ -1348,7 +1348,7 @@ const Sidebar = ({
                   </div>
                   <div className="flex justify-between text-[11px]">
                     <span className="text-muted-foreground">Valid</span>
-                    <span className="font-medium text-green-600">{csvParsed.valid.length}</span>
+                    <span className="font-medium text-primary">{csvParsed.valid.length}</span>
                   </div>
                   {csvParsed.invalidCount > 0 && (
                     <div className="flex justify-between text-[11px]">
