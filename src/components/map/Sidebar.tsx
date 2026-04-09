@@ -694,7 +694,7 @@ const Sidebar = ({
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
                       {renderSectionIntro(SECTION_META.coreMap.question, SECTION_META.coreMap.helper)}
-                      {(['counties', 'services', 'behavioralHealth', 'serviceLocations'] as const).map((key) => {
+                      {(['counties', 'tribalNations', 'services', 'behavioralHealth', 'serviceLocations'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         return renderLayerToggleRow({
                           label,
