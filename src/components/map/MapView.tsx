@@ -127,6 +127,8 @@ const PANE_CONFIG = {
   markers:         { id: 'markers-pane',           zIndex: 650, interactive: true },
   // Provider markers — highest marker layer
   providerMarkers: { id: 'provider-markers-pane',  zIndex: 660, interactive: true },
+  // State boundary mask — covers outside Nevada, above markers
+  stateMask:       { id: 'state-mask-pane',        zIndex: 680, interactive: false },
   // Popup pane for tooltips
   uiPopups:        { id: 'ui-popups-pane',         zIndex: 700, interactive: true },
 } as const;
@@ -1353,11 +1355,44 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     ensureTribalBoundaries().then(() => setTribalBoundariesReady(true));
   }, []);
 
-  // Draw state boundary
+  // Draw state boundary + inverse mask to visually clip content outside Nevada
   useEffect(() => {
     if (!stateBoundaryRef.current) return;
     stateBoundaryRef.current.clearLayers();
 
+    // Inverse mask: a world-covering polygon with Nevada boundary as a hole
+    // This renders white fill over everything outside Nevada
+    const worldOuter: [number, number][] = [
+      [-90, -180], [-90, 180], [90, 180], [90, -180], [-90, -180],
+    ];
+    const nevadaHole = nevadaBoundaryGeoJSON.coordinates[0] as [number, number][];
+    const maskFeature: Feature<Polygon> = {
+      type: 'Feature',
+      properties: {},
+      geometry: {
+        type: 'Polygon',
+        // GeoJSON: first ring = outer, subsequent rings = holes
+        coordinates: [
+          worldOuter.map(([lat, lng]) => [lng, lat]),
+          nevadaHole,
+        ],
+      },
+    };
+
+    const maskLayer = L.geoJSON(maskFeature as any, {
+      pane: PANE_CONFIG.stateMask.id,
+      style: {
+        color: 'transparent',
+        weight: 0,
+        fillColor: '#ffffff',
+        fillOpacity: 0.85,
+      },
+      interactive: false,
+      smoothFactor: 0,
+    } as any);
+    stateBoundaryRef.current.addLayer(maskLayer);
+
+    // State outline stroke on top
     const geoLayer = createGeoJsonLayer(
       NEVADA_FEATURE,
       MAP_PANES.stateOutline,
