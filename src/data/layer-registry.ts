@@ -32,7 +32,7 @@ export const LAYER_REGISTRY: LayerDefinition[] = [
     id: 'tribalNations',
     label: 'Tribal Nations',
     group: 'coreMap',
-    defaultVisible: false,
+    defaultVisible: true,
     diagnosticLayerIds: ['tribal-nation-polygons'],
   },
   {
