@@ -23,6 +23,17 @@ export const RURAL_SERVICE_CATEGORIES: RuralServiceCategory[] = [
   'Substance Use', 'Mental Health',
 ];
 
+/**
+ * Operational service classification for triage.
+ * Determines whether a service is potentially Medicaid-billable.
+ */
+export type OperationalServiceClass =
+  | 'billable_clinical'
+  | 'tribal_clinical'
+  | 'behavioral_health_clinical'
+  | 'supportive_nonbilling'
+  | 'unknown';
+
 export interface RuralService {
   id: string;
   name: string;
@@ -37,6 +48,8 @@ export interface RuralService {
   lng: number;
   /** Medicaid participation and operational metadata */
   operational?: Partial<ServiceOperationalMeta>;
+  /** Operational triage class — provisional, overrideable */
+  operationalServiceClass?: OperationalServiceClass;
 }
 
 export const ruralServices: RuralService[] = [
