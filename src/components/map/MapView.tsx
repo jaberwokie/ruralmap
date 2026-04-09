@@ -60,7 +60,7 @@ interface MapViewProps {
   coverageRadius: boolean;
   coverageGaps: boolean;
   onEntityClick?: (entity: MapEntity | null) => void;
-  onEntityHover?: (entity: MapEntity | null) => void;
+  
   selectedCounty?: string | null;
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
@@ -616,7 +616,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, onEntityHover, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -656,8 +656,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onMapClickRef.current = onMapClick;
   const onEntityClickRef = useRef(onEntityClick);
   onEntityClickRef.current = onEntityClick;
-  const onEntityHoverRef = useRef(onEntityHover);
-  onEntityHoverRef.current = onEntityHover;
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
   const interactionGuardUntilRef = useRef(0);
@@ -1642,14 +1640,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         }
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'service-marker', pointKind: marker.__pointKind });
 
-        marker.on('mouseover', () => {
-          prioritizeOnHover(marker);
-          onEntityHoverRef.current?.({ type: 'ruralService', service });
-        });
-        marker.on('mouseout', () => {
-          resetHoverPriority(marker);
-          onEntityHoverRef.current?.(null);
-        });
+        // No hover interaction for pins — click only
         marker.on('click', (event: L.LeafletEvent) => {
           selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker', event, marker);
         });
@@ -1723,14 +1714,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         }
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'behavioral-health-marker', pointKind: marker.__pointKind });
 
-        marker.on('mouseover', () => {
-          prioritizeOnHover(marker);
-          onEntityHoverRef.current?.({ type: 'ruralService', service });
-        });
-        marker.on('mouseout', () => {
-          resetHoverPriority(marker);
-          onEntityHoverRef.current?.(null);
-        });
+        // No hover interaction for pins — click only
         marker.on('click', (event: L.LeafletEvent) => {
           selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker', event, marker);
         });
@@ -1811,12 +1795,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         applyMarkerPriority(marker, 'default');
         logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'facility-marker', pointKind: marker.__pointKind });
 
-        marker.on('mouseover', () => {
-          prioritizeOnHover(marker);
-        });
-        marker.on('mouseout', () => {
-          resetHoverPriority(marker);
-        });
+        // No hover interaction for pins — click only
 
         marker.on('click', (event: L.LeafletEvent) => {
           selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'facility-marker', event, marker);
