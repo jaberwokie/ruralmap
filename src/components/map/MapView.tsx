@@ -1564,26 +1564,24 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       })),
     ], effectiveZoom);
 
-    const applyMarkerPriority = (marker: MapPointMarker, state: 'default' | 'hovered' | 'selected') => {
+    const applyMarkerPriority = (marker: MapPointMarker, state: 'default' | 'selected') => {
       const baseOffset = marker.__baseZIndexOffset ?? POINT_MARKER_PRIORITY.base;
       const resolvedOffset = state === 'selected'
         ? baseOffset + POINT_MARKER_PRIORITY.selectedBoost
-        : state === 'hovered'
-          ? baseOffset + POINT_MARKER_PRIORITY.hoveredBoost
-          : baseOffset;
+        : baseOffset;
 
       marker.__priorityState = state;
       marker.setZIndexOffset(resolvedOffset);
-    };
 
-    const prioritizeOnHover = (marker: MapPointMarker) => {
-      if (marker.__priorityState === 'selected') return;
-      applyMarkerPriority(marker, 'hovered');
-    };
-
-    const resetHoverPriority = (marker: MapPointMarker) => {
-      if (marker.__priorityState === 'selected') return;
-      applyMarkerPriority(marker, 'default');
+      // Toggle visual selected class on DOM element
+      const el = marker.getElement?.();
+      if (el) {
+        if (state === 'selected') {
+          el.classList.add('map-pin-selected');
+        } else {
+          el.classList.remove('map-pin-selected');
+        }
+      }
     };
 
     const prioritizeOnSelection = (marker: MapPointMarker) => {
