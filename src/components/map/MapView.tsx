@@ -650,6 +650,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
   const tribalNationsRef = useRef<L.LayerGroup | null>(null);
+  const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
   const [debugOpen, setDebugOpen] = useState(false);
