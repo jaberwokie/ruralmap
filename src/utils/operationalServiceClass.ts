@@ -6,7 +6,7 @@
  */
 
 import type { RuralService, RuralServiceCategory, OperationalServiceClass } from '@/data/rural-services';
-import { getOperationalTagIndex, type VerificationStatus } from '@/data/operational-metadata';
+import { getOperationalTagIndex, type VerificationStatus, type DeferredReason } from '@/data/operational-metadata';
 
 // ── Category-based classification ──
 

@@ -22,6 +22,13 @@ export type VerificationStatus =
   | 'verified_non_participating'
   | 'deferred';
 
+export type DeferredReason =
+  | 'duplicate_entity'
+  | 'public_health_nonstandard'
+  | 'not_a_direct_billing_site'
+  | 'insufficient_source_match'
+  | 'lower_priority_followup';
+
 export interface OperationalTag {
   entityId: string;
   entityType: EntityType;
@@ -31,6 +38,9 @@ export interface OperationalTag {
 
   /** Verification workflow state */
   verificationStatus?: VerificationStatus;
+
+  /** Required when verificationStatus = 'deferred' */
+  deferredReason?: DeferredReason;
 
   /** Source used to verify the participation value */
   verificationSource: string;
@@ -135,21 +145,21 @@ export const operationalTags: OperationalTag[] = [
   { entityId: 'rs-144', entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationSource: 'Banner Health system Medicaid enrollment', verificationDate: '2026-04', notes: 'Banner Health Center Fernley' },
 
   // ── Deferred: county public health nurses (not direct Medicaid billing entities) ──
-  { entityId: 'rs-62',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Douglas County Community Health Nurse' },
-  { entityId: 'rs-114', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Lander County Community Health Nurse' },
-  { entityId: 'rs-142', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Dayton Community Health Nurse' },
-  { entityId: 'rs-156', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Mineral County Health Nurse' },
+  { entityId: 'rs-62',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'public_health_nonstandard', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Douglas County Community Health Nurse' },
+  { entityId: 'rs-114', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'public_health_nonstandard', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Lander County Community Health Nurse' },
+  { entityId: 'rs-142', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'public_health_nonstandard', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Dayton Community Health Nurse' },
+  { entityId: 'rs-156', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'public_health_nonstandard', verificationSource: 'County public health — not a billing entity', verificationDate: '2026-04', notes: 'Mineral County Health Nurse' },
 
   // ── Deferred: health districts (administrative, not billing) ──
-  { entityId: 'rs-48',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Public health district — administrative', verificationDate: '2026-04', notes: 'Central Nevada Health District — Fallon' },
-  { entityId: 'rs-93',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Public health district — administrative', verificationDate: '2026-04', notes: 'Central Nevada Health District Eureka' },
+  { entityId: 'rs-48',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'not_a_direct_billing_site', verificationSource: 'Public health district — administrative', verificationDate: '2026-04', notes: 'Central Nevada Health District — Fallon' },
+  { entityId: 'rs-93',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'not_a_direct_billing_site', verificationSource: 'Public health district — administrative', verificationDate: '2026-04', notes: 'Central Nevada Health District Eureka' },
 
   // ── Deferred: support/resource orgs (not clinical billing) ──
-  { entityId: 'rs-25',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Resource/support org — not a billing provider', verificationDate: '2026-04', notes: 'Cancer Resource Center — Carson City' },
+  { entityId: 'rs-25',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'not_a_direct_billing_site', verificationSource: 'Resource/support org — not a billing provider', verificationDate: '2026-04', notes: 'Cancer Resource Center — Carson City' },
 
   // ── Deferred: duplicate with facility layer ──
-  { entityId: 'rs-157', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Duplicate — exists as facility h8', verificationDate: '2026-04', notes: 'Mt. Grant General Hospital — already tagged in facilities' },
-  { entityId: 'rs-168', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', verificationSource: 'Duplicate — exists as facility h11', verificationDate: '2026-04', notes: 'Pershing General Hospital — already tagged in facilities' },
+  { entityId: 'rs-157', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'duplicate_entity', verificationSource: 'Duplicate — exists as facility h8', verificationDate: '2026-04', notes: 'Mt. Grant General Hospital — already tagged in facilities' },
+  { entityId: 'rs-168', entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'deferred', deferredReason: 'duplicate_entity', verificationSource: 'Duplicate — exists as facility h11', verificationDate: '2026-04', notes: 'Pershing General Hospital — already tagged in facilities' },
 
   // ── Needs verification: remaining billable_clinical ──
   { entityId: 'rs-26',  entityType: 'ruralService', isNevadaMedicaidParticipating: null, verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Sierra Nevada Health Center — Carson City' },
