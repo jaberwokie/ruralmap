@@ -17,6 +17,7 @@ import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_CO
 import { getCountyCellular, getReliabilityCategory, READINESS_COLORS as CELLULAR_READINESS_COLORS } from '@/data/cellular-coverage';
 import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
 import { resolveOperationalMeta, PARTICIPATION_STATUS_LABELS, PARTICIPATION_STATUS_COLORS } from '@/types/medicaid';
+import { getOperationalTagIndex } from '@/data/operational-metadata';
 import type { ServiceOperationalMeta } from '@/types/medicaid';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
