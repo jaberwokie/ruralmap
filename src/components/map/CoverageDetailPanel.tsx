@@ -1344,23 +1344,28 @@ const resolveRoutingTierDisplay = (
   meta?: Partial<ServiceOperationalMeta> | null,
 ): RoutingTierDisplay => {
   const resolved = resolveOperationalMeta(meta);
+  const tag = entityId ? getOperationalTagIndex().get(entityId) : undefined;
+
+  // Deferred entities are always fallback regardless of participation value
+  if (tag?.verificationStatus === 'deferred') {
+    return 'fallback';
+  }
 
   // Only "Recommended" if participating AND direct confidence
-  if (resolved.isNevadaMedicaidParticipating === true && entityId) {
-    const tag = getOperationalTagIndex().get(entityId);
-    if (tag?.verificationConfidence === 'direct') {
+  if (resolved.isNevadaMedicaidParticipating === true && tag) {
+    if (tag.verificationConfidence === 'direct') {
       return 'recommended';
     }
     // inferred or missing confidence → not recommended
     return 'available_unverified';
   }
 
-  if (resolved.medicaidParticipationStatus === 'unknown') {
-    return 'available_unverified';
+  if (resolved.medicaidParticipationStatus === 'non_participating') {
+    return 'fallback';
   }
 
-  // non_participating or other
-  return 'fallback';
+  // unknown or untagged
+  return 'available_unverified';
 };
 
 // ── Operational Indicators ──
