@@ -730,24 +730,30 @@ const Sidebar = ({
                       {(['counties', 'tribalNations', 'serviceLocations', 'behavioralHealth', 'services'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         const count = coreMapCounts[key];
-                        return renderLayerToggleRow({
-                          label,
-                          icon,
-                          iconClassName: colorClassName,
-                          checked: layers[key],
-                          onCheckedChange: () => onToggleLayer(key),
-                          helpKey: key,
-                          subtitle: count || undefined,
-                          dataTutorial:
-                            key === 'services'
-                              ? 'toggle-services'
-                              : key === 'behavioralHealth'
-                                ? 'toggle-behavioral-health'
-                                : key === 'serviceLocations'
-                                  ? 'toggle-provider-locations'
-                                  : undefined,
-                          belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
-                        });
+                        const dividerBefore = key === 'serviceLocations' || key === 'services';
+                        return (
+                          <div key={key}>
+                            {dividerBefore && <div className="my-1 border-t border-border/40" />}
+                            {renderLayerToggleRow({
+                              label,
+                              icon,
+                              iconClassName: colorClassName,
+                              checked: layers[key],
+                              onCheckedChange: () => onToggleLayer(key),
+                              helpKey: key,
+                              subtitle: count || undefined,
+                              dataTutorial:
+                                key === 'services'
+                                  ? 'toggle-services'
+                                  : key === 'behavioralHealth'
+                                    ? 'toggle-behavioral-health'
+                                    : key === 'serviceLocations'
+                                      ? 'toggle-provider-locations'
+                                      : undefined,
+                              belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
+                            })}
+                          </div>
+                        );
                       })}
                     </div>
                   )}
