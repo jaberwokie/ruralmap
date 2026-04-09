@@ -26,12 +26,12 @@ export interface TribalNation {
   summary?: string;
   locationDescription: string;
   counties: string[];
-  /** Representative point for map marker / polygon centroid */
+  /** Representative point (centroid) */
   lat: number;
   lng: number;
-  /** Approximate polygon radius in km for visual representation */
-  approximateRadiusKm?: number;
   landBaseAcres?: number;
+  /** GeoJSON polygon geometry loaded at runtime */
+  geometry?: GeoJSON.Polygon | GeoJSON.MultiPolygon;
   tribalMembers?: number;
   residentPopulation?: number;
   phone?: string;
@@ -60,7 +60,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['White Pine'],
     lat: 40.13,
     lng: -114.15,
-    approximateRadiusKm: 18,
     landBaseAcres: 108933,
     tribalMembers: 600,
     residentPopulation: 15,
@@ -85,7 +84,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Elko'],
     lat: 41.95,
     lng: -116.08,
-    approximateRadiusKm: 25,
     landBaseAcres: 289819,
     tribalMembers: 2132,
     phone: '(208) 759-3100',
@@ -110,7 +108,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Nye'],
     lat: 38.84,
     lng: -115.69,
-    approximateRadiusKm: 8,
     landBaseAcres: 31229,
     tribalMembers: 383,
     residentPopulation: 150,
@@ -134,7 +131,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['White Pine'],
     lat: 39.24,
     lng: -114.89,
-    approximateRadiusKm: 4,
     landBaseAcres: 3625,
     tribalMembers: 650,
     residentPopulation: 250,
@@ -159,7 +155,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Churchill'],
     lat: 39.49,
     lng: -118.74,
-    approximateRadiusKm: 6,
     landBaseAcres: 8199,
     tribalMembers: 1400,
     residentPopulation: 250,
@@ -184,7 +179,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Clark'],
     lat: 35.05,
     lng: -114.63,
-    approximateRadiusKm: 6,
     landBaseAcres: 5582,
     tribalMembers: 1500,
     phone: '(760) 629-4591',
@@ -204,7 +198,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Humboldt'],
     lat: 41.95,
     lng: -117.72,
-    approximateRadiusKm: 10,
     landBaseAcres: 19094,
     tribalMembers: 1100,
     residentPopulation: 500,
@@ -227,7 +220,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Clark'],
     lat: 36.19,
     lng: -115.16,
-    approximateRadiusKm: 4,
     landBaseAcres: 3908,
     tribalMembers: 56,
     phone: '(702) 386-3926',
@@ -252,7 +244,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Pershing'],
     lat: 40.18,
     lng: -118.47,
-    approximateRadiusKm: 2,
     landBaseAcres: 20,
     tribalMembers: 217,
     residentPopulation: 153,
@@ -277,7 +268,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Clark'],
     lat: 36.68,
     lng: -114.59,
-    approximateRadiusKm: 15,
     landBaseAcres: 71294,
     tribalMembers: 420,
     residentPopulation: 420,
@@ -302,7 +292,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Washoe', 'Lyon', 'Storey'],
     lat: 40.05,
     lng: -119.55,
-    approximateRadiusKm: 30,
     landBaseAcres: 475000,
     tribalMembers: 2253,
     residentPopulation: 1332,
@@ -328,7 +317,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Washoe'],
     lat: 39.50,
     lng: -119.79,
-    approximateRadiusKm: 5,
     landBaseAcres: 13434,
     tribalMembers: 1153,
     residentPopulation: 1539,
@@ -353,7 +341,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Humboldt'],
     lat: 41.50,
     lng: -118.98,
-    approximateRadiusKm: 8,
     landBaseAcres: 12573,
     tribalMembers: 120,
     phone: '(775) 827-9670',
@@ -374,7 +361,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Nye', 'Esmeralda'],
     lat: 37.35,
     lng: -117.35,
-    approximateRadiusKm: 6,
     phone: '(760) 872-3614',
     directoryUrl: 'https://dnaa.nv.gov/tribal-nations/tribal-directory/',
     governingBody: 'Tribal Council (4-year terms)',
@@ -391,7 +377,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Mineral', 'Lyon', 'Churchill'],
     lat: 38.94,
     lng: -118.81,
-    approximateRadiusKm: 25,
     landBaseAcres: 325000,
     tribalMembers: 3311,
     residentPopulation: 1200,
@@ -417,7 +402,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Humboldt'],
     lat: 40.96,
     lng: -117.74,
-    approximateRadiusKm: 2,
     landBaseAcres: 340,
     phone: '(775) 329-5800',
     website: 'https://winnemuccaindiancolony.org/',
@@ -436,7 +420,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Lyon'],
     lat: 38.99,
     lng: -119.17,
-    approximateRadiusKm: 5,
     landBaseAcres: 1635,
     tribalMembers: 1500,
     residentPopulation: 400,
@@ -461,7 +444,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Nye'],
     lat: 38.89,
     lng: -117.27,
-    approximateRadiusKm: 5,
     landBaseAcres: 4681,
     tribalMembers: 186,
     residentPopulation: 144,
@@ -483,7 +465,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Lander'],
     lat: 40.63,
     lng: -116.88,
-    approximateRadiusKm: 3,
     landBaseAcres: 683,
     tribalMembers: 516,
     residentPopulation: 165,
@@ -508,7 +489,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Elko'],
     lat: 40.84,
     lng: -115.77,
-    approximateRadiusKm: 3,
     landBaseAcres: 193,
     tribalMembers: 1600,
     residentPopulation: 700,
@@ -533,7 +513,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Elko'],
     lat: 40.57,
     lng: -115.82,
-    approximateRadiusKm: 8,
     landBaseAcres: 13049,
     tribalMembers: 260,
     residentPopulation: 120,
@@ -554,7 +533,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Elko'],
     lat: 41.10,
     lng: -114.97,
-    approximateRadiusKm: 2,
     landBaseAcres: 80,
     tribalMembers: 209,
     residentPopulation: 177,
@@ -579,7 +557,6 @@ export const tribalNations: TribalNation[] = [
     counties: ['Douglas', 'Carson City'],
     lat: 38.88,
     lng: -119.73,
-    approximateRadiusKm: 10,
     landBaseAcres: 64300,
     phone: '(775) 265-8600',
     website: 'https://washoetribe.us/',
@@ -600,3 +577,30 @@ export const getTribalNationsByCounty = (county: string): TribalNation[] =>
 
 /** Count of all tribally operated services */
 export const totalTribalServices = tribalNations.reduce((n, t) => n + t.triballyOperatedServices.length, 0);
+
+/** Load GeoJSON polygon boundaries and attach to tribal nation records */
+export async function loadTribalBoundaries(): Promise<void> {
+  try {
+    const resp = await fetch('/data/tribal_nations_boundaries.json');
+    if (!resp.ok) return;
+    const geojson = await resp.json() as GeoJSON.FeatureCollection;
+    for (const feature of geojson.features) {
+      const tribeId = feature.properties?.tribeId as string | undefined;
+      if (!tribeId) continue;
+      const tribe = TRIBAL_NATION_BY_ID.get(tribeId);
+      if (tribe && feature.geometry) {
+        tribe.geometry = feature.geometry as GeoJSON.Polygon | GeoJSON.MultiPolygon;
+      }
+    }
+  } catch (e) {
+    console.warn('[TribalNations] Failed to load boundary GeoJSON:', e);
+  }
+}
+
+/** Whether boundaries have been loaded */
+let _boundariesLoaded = false;
+export async function ensureTribalBoundaries(): Promise<void> {
+  if (_boundariesLoaded) return;
+  _boundariesLoaded = true;
+  await loadTribalBoundaries();
+}
