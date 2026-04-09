@@ -719,8 +719,13 @@ const Sidebar = ({
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="space-y-3 border-t border-border pt-3">
+      </div>
+
+      <div className="px-4 pb-3">
+        <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
                 <div data-tutorial="section-core-map">
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
@@ -1213,9 +1218,7 @@ const Sidebar = ({
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
 
       <div className="mx-4 border-t border-border" />

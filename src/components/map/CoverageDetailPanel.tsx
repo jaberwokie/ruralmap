@@ -1352,7 +1352,12 @@ const isGoogleDirectionsUrl = (url: string | null | undefined): url is string =>
 
 const navigateToDirections = (url: string) => {
   if (!isGoogleDirectionsUrl(url)) return;
-  window.top!.location.href = url;
+  try {
+    window.top!.location.href = url;
+  } catch {
+    // Cross-origin (e.g. preview iframe) — fall back to current frame
+    window.location.href = url;
+  }
 };
 
 // ── Action Buttons Row ──
