@@ -1350,15 +1350,7 @@ const buildDirectionsUrl = ({ lat, lng, address, city: _city }: DirectionsTarget
 const isGoogleDirectionsUrl = (url: string | null | undefined): url is string =>
   typeof url === 'string' && url.startsWith(GOOGLE_DIRECTIONS_PREFIX);
 
-const navigateToDirections = (url: string) => {
-  if (!isGoogleDirectionsUrl(url)) return;
-  try {
-    window.top!.location.href = url;
-  } catch {
-    // Cross-origin (e.g. preview iframe) — fall back to current frame
-    window.location.href = url;
-  }
-};
+// navigateToDirections removed — using plain <a> tag instead
 
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
@@ -1381,20 +1373,27 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Call
         </a>
       )}
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          if (!isGoogleDirectionsUrl(directionsUrl)) return;
-          navigateToDirections(directionsUrl);
-        }}
-        disabled={!hasDirections}
-        className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:bg-secondary/30 disabled:text-muted-foreground disabled:opacity-60"
-        title={hasDirections ? 'Get directions' : 'Directions unavailable'}
-      >
-        <Navigation className="w-3 h-3" />
-        Directions
-      </button>
+      {hasDirections && directionsUrl ? (
+        <a
+          href={directionsUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-secondary"
+          title="Get directions"
+          onClick={e => e.stopPropagation()}
+        >
+          <Navigation className="w-3 h-3" />
+          Directions
+        </a>
+      ) : (
+        <span
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/30 px-2 py-1 text-[10px] font-medium text-muted-foreground opacity-60 cursor-not-allowed"
+          title="Directions unavailable"
+        >
+          <Navigation className="w-3 h-3" />
+          Directions
+        </span>
+      )}
       {normalizedWebsite && (
         <a
           href={normalizedWebsite}
