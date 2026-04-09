@@ -1319,19 +1319,58 @@ const useAccordion = (defaultSection: string) => {
   return { isOpen, toggle };
 };
 
+type DirectionsTarget = {
+  lat?: number | null;
+  lng?: number | null;
+  address?: string | null;
+  city?: string | null;
+};
+
+const hasValidCoordinate = (value: number | null | undefined): value is number =>
+  typeof value === 'number' && Number.isFinite(value);
+
+const buildDirectionsUrl = ({ lat, lng, address, city }: DirectionsTarget): string | null => {
+  if (hasValidCoordinate(lat) && hasValidCoordinate(lng)) {
+    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+  }
+
+  const trimmedAddress = address?.trim();
+  if (!trimmedAddress) return null;
+
+  const destination = [trimmedAddress, city?.trim()].filter(Boolean).join(', ');
+  return destination
+    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`
+    : null;
+};
+
+const openDirections = (target: DirectionsTarget) => {
+  const url = buildDirectionsUrl(target);
+  if (!url) return false;
+
+  const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
+  if (openedWindow) {
+    openedWindow.opener = null;
+    return true;
+  }
+
+  const fallbackLink = document.createElement('a');
+  fallbackLink.href = url;
+  fallbackLink.target = '_blank';
+  fallbackLink.rel = 'noopener noreferrer';
+  fallbackLink.style.display = 'none';
+  document.body.appendChild(fallbackLink);
+  fallbackLink.click();
+  document.body.removeChild(fallbackLink);
+  return true;
+};
+
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const hasPhone = !!phone;
-  const hasDirections = !!(lat && lng) || !!address;
   const normalizedWebsite = normalizeWebsite(website);
+  const directionsUrl = buildDirectionsUrl({ lat, lng, address, city });
+  const hasDirections = !!directionsUrl;
   if (!hasPhone && !hasDirections && !normalizedWebsite) return null;
-
-  // Always prefer coordinates for reliability; fall back to address string only if no coords
-  const directionsUrl = lat && lng
-    ? `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
-    : address
-    ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + (city ? `, ${city}, NV` : ''))}`
-    : '#';
 
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
@@ -1346,18 +1385,21 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Call
         </a>
       )}
-      {hasDirections && (
-        <a
-          href={directionsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
-          title="Get directions"
-          onClick={e => e.stopPropagation()}
+      {(hasDirections || hasPhone || normalizedWebsite) && (
+        <button
+          type="button"
+          className={`inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[10px] font-medium transition-colors ${hasDirections ? 'bg-secondary/60 text-foreground hover:bg-secondary' : 'bg-secondary/30 text-muted-foreground cursor-not-allowed opacity-60'}`}
+          title={hasDirections ? 'Get directions' : 'Directions unavailable'}
+          disabled={!hasDirections}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openDirections({ lat, lng, address, city });
+          }}
         >
           <Navigation className="w-3 h-3" />
           Directions
-        </a>
+        </button>
       )}
       {normalizedWebsite && (
         <a
@@ -1670,7 +1712,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 
       {tribe.summary && <p className="text-xs text-muted-foreground mb-2">{tribe.summary}</p>}
 
-      <ActionButtonRow phone={tribe.phone} website={tribe.website} />
+      <ActionButtonRow phone={tribe.phone} lat={tribe.lat} lng={tribe.lng} website={tribe.website} />
 
       {/* Location */}
       <DetailSection title="Location" isOpen={isOpen('location')} onToggle={() => toggle('location')}>
