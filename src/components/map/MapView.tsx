@@ -2342,8 +2342,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!layers.tribalNations) return;
 
     tribalNations.forEach((tribe) => {
-      // Render as a circle polygon using the approximate radius
-      const radiusMeters = (tribe.approximateRadiusKm ?? 5) * 1000;
+      // Compute radius from actual land base acreage when available
+      // Formula: radius = sqrt(acres × 4046.86 / π)  — treating land as a circle
+      // Minimum 800m for usability; no artificial inflation
+      const acreageRadiusM = tribe.landBaseAcres
+        ? Math.sqrt((tribe.landBaseAcres * 4046.86) / Math.PI)
+        : null;
+      const radiusMeters = Math.max(acreageRadiusM ?? 2000, 800);
       const circle = L.circle([tribe.lat, tribe.lng], {
         pane: MAP_PANES.tribalNations,
         radius: radiusMeters,
