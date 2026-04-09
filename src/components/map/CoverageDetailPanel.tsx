@@ -4,7 +4,7 @@ import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCoun
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
-import { type TribalNation } from '@/data/tribal-nations';
+import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
