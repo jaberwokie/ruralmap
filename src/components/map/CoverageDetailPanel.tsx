@@ -1321,8 +1321,8 @@ const useAccordion = (defaultSection: string) => {
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const hasPhone = !!phone;
   const hasDirections = !!(address || (lat && lng));
-  const hasWebsite = !!website && isValidUrl(website);
-  if (!hasPhone && !hasDirections && !hasWebsite) return null;
+  const normalizedWebsite = normalizeWebsite(website);
+  if (!hasPhone && !hasDirections && !normalizedWebsite) return null;
 
   const directionsUrl = address
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + (city ? `, ${city}, NV` : ''))}`
@@ -1356,9 +1356,9 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Directions
         </a>
       )}
-      {hasWebsite && (
+      {normalizedWebsite && (
         <a
-          href={website}
+          href={normalizedWebsite}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
@@ -1373,8 +1373,23 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
   );
 };
 
-const isValidUrl = (str: string): boolean => {
-  try { new URL(str); return true; } catch { return false; }
+/** Normalize a website string: trim, add https:// if missing scheme, then validate. */
+const normalizeWebsite = (raw: string | undefined | null): string | null => {
+  if (!raw) return null;
+  let url = raw.trim();
+  if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) url = `https://${url}`;
+  try { new URL(url); return url; } catch { return null; }
+};
+
+const isValidUrl = (str: string): boolean => normalizeWebsite(str) !== null;
+
+/** Extract a readable hostname label from a URL string. */
+const websiteDisplayLabel = (url: string): string => {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    return host.length > 35 ? host.slice(0, 32) + '…' : host;
+  } catch { return 'Website'; }
 };
 
 // ── Copy Address helper ──
@@ -1416,7 +1431,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const fullAddress = facility.address ? `${facility.address}, ${facility.city}, NV` : undefined;
 
   const hasServices = !!facility.service;
-  const hasContact = !!(facility.phone || (facility.website && isValidUrl(facility.website)));
+  const hasContact = !!(facility.phone || normalizeWebsite(facility.website));
   const hasAccess = !!(facility.type === 'hospital' || facility.accessType);
   const util = getFacilityUtilization(facility);
 
@@ -1496,12 +1511,12 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
               <a href={`tel:${facility.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{facility.phone}</a>
             </div>
           )}
-          {facility.website && isValidUrl(facility.website) && (
+          {(() => { const href = normalizeWebsite(facility.website); return href ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              <a href={facility.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>Visit Website</a>
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(href)}</a>
             </div>
-          )}
+          ) : null; })()}
         </DetailSection>
       )}
 
@@ -1563,7 +1578,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
   const { isOpen, toggle } = useAccordion('provider');
   const isBH = isBehavioralHealthService(service);
   const fullAddress = service.address ? `${service.address}, ${service.city}, NV` : undefined;
-  const hasContact = !!(service.phone || (service.website && isValidUrl(service.website)));
+  const hasContact = !!(service.phone || normalizeWebsite(service.website));
   const categoryColor = CATEGORY_COLORS[service.category] ?? 'bg-secondary text-foreground';
 
   return (
@@ -1623,12 +1638,12 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
               <a href={`tel:${service.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{service.phone}</a>
             </div>
           )}
-          {service.website && isValidUrl(service.website) && (
+          {(() => { const href = normalizeWebsite(service.website); return href ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              <a href={service.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>Visit Website</a>
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(href)}</a>
             </div>
-          )}
+          ) : null; })()}
         </DetailSection>
       )}
     </>
