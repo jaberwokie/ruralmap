@@ -16,7 +16,7 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
   const [importedFacilities, setImportedFacilities] = useState<Facility[]>([]);
 
   const facilities = useMemo(
-    () => [...defaultFacilities, ...importedFacilities],
+    () => enrichFacilities([...defaultFacilities, ...importedFacilities]),
     [importedFacilities],
   );
 
@@ -43,6 +43,7 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     buildFacilityValidationIndex(facilities);
     console.info('[Facility Classification Audit]', auditFacilityClassifications(facilities));
     console.info('[Facility Confidence Audit]', auditFacilityConfidence(facilities));
+    console.info('[Operational Coverage Audit]', auditOperationalCoverage(facilities, ruralServices));
   }, [facilities]);
 
   return { facilities, filteredFacilities, addFacilities };
