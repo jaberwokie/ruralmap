@@ -104,35 +104,35 @@ export const operationalTags: OperationalTag[] = [
   // Mixed participation — tagged individually as verified.
 
   // t1 — Beautiful Mind of Las Vegas LLC: private practice, not confirmed in NV Medicaid
-  { entityId: 't1',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Beautiful Mind of Las Vegas LLC — needs individual verification' },
+  { entityId: 't1',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Beautiful Mind of Las Vegas LLC — needs individual verification' },
   // t2 — Family Centers of Nevada LLC: community BH provider
-  { entityId: 't2',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Family Centers of Nevada LLC — needs individual verification' },
+  { entityId: 't2',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Family Centers of Nevada LLC — needs individual verification' },
   // t3 — Carson City Community Counseling Center: community-based, likely participating
-  { entityId: 't3',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Carson City Community Counseling Center — needs individual verification' },
+  { entityId: 't3',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Carson City Community Counseling Center — needs individual verification' },
   // t4 — Mindspace, LLC: private practice
-  { entityId: 't4',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Mindspace, LLC — needs individual verification' },
+  { entityId: 't4',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Mindspace, LLC — needs individual verification' },
   // t5 — Aspire Therapeutic Solutions LLC: private practice
-  { entityId: 't5',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Aspire Therapeutic Solutions LLC — needs individual verification' },
+  { entityId: 't5',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Aspire Therapeutic Solutions LLC — needs individual verification' },
   // t6 — Behavioral Health and Psychotherapy Services, LLC
-  { entityId: 't6',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Behavioral Health and Psychotherapy Services, LLC — needs individual verification' },
+  { entityId: 't6',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Behavioral Health and Psychotherapy Services, LLC — needs individual verification' },
   // t7 — Carson Tahoe Physician Clinics: part of Carson Tahoe Health system
   { entityId: 't7',  entityType: 'facility', isNevadaMedicaidParticipating: true,  verificationSource: 'Carson Tahoe Health system enrollment', verificationDate: '2026-04', notes: 'Carson Tahoe Physician Clinics — BH' },
   // t8 — State of Nevada: Medicaid participating by definition
   { entityId: 't8',  entityType: 'facility', isNevadaMedicaidParticipating: true,  verificationSource: 'State agency', verificationDate: '2026-04', notes: 'State of Nevada behavioral health' },
   // t9 — Always Reach Out Behavioral Health LLC
-  { entityId: 't9',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Always Reach Out Behavioral Health LLC — needs individual verification' },
+  { entityId: 't9',  entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Always Reach Out Behavioral Health LLC — needs individual verification' },
   // t10 — Janell Anderson, LCSW, PLLC: individual practitioner
-  { entityId: 't10', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Janell Anderson, LCSW, PLLC — needs individual verification' },
+  { entityId: 't10', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Janell Anderson, LCSW, PLLC — needs individual verification' },
   // t11 — Battle Born Counseling Center
-  { entityId: 't11', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Battle Born Counseling Center — needs individual verification' },
+  { entityId: 't11', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Battle Born Counseling Center — needs individual verification' },
   // t12 — Oasis in the Desert Counseling, LLC
-  { entityId: 't12', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Oasis in the Desert Counseling, LLC — needs individual verification' },
+  { entityId: 't12', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Oasis in the Desert Counseling, LLC — needs individual verification' },
   // t13 — Dynamic Medical Group LLC
-  { entityId: 't13', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Dynamic Medical Group LLC — needs individual verification' },
+  { entityId: 't13', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Dynamic Medical Group LLC — needs individual verification' },
   // t14 — Dr. Ronald Pak, PsyD LLC
-  { entityId: 't14', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Dr. Ronald Pak, PsyD LLC — needs individual verification' },
+  { entityId: 't14', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Dr. Ronald Pak, PsyD LLC — needs individual verification' },
   // t15 — Serenity Counseling LLC
-  { entityId: 't15', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Serenity Counseling LLC — needs individual verification' },
+  { entityId: 't15', entityType: 'facility', isNevadaMedicaidParticipating: null,  verificationStatus: 'needs_verification', verificationSource: 'Not yet verified', verificationDate: '2026-04', notes: 'Serenity Counseling LLC — needs individual verification' },
 
   // ──────────────────────────────────────────────
   // RURAL SERVICES — billable_clinical (Physical Health)
