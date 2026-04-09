@@ -2371,7 +2371,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           // Ensure pointer-events on the SVG paths
           lyr.on('add', () => {
             const el = (lyr as any)._path as HTMLElement | undefined;
-            if (el) el.style.pointerEvents = 'auto';
+            if (el) {
+              el.style.pointerEvents = 'auto';
+              el.style.outline = 'none';
+              el.setAttribute('tabindex', '-1');
+            }
           });
 
           lyr.bindTooltip(tribe.name, {
