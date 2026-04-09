@@ -1380,7 +1380,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     };
 
     const maskLayer = L.geoJSON(maskFeature as any, {
-      pane: MAP_PANES.stateOutline,
+      pane: PANE_CONFIG.stateMask.id,
       style: {
         color: 'transparent',
         weight: 0,
