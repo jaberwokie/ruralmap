@@ -1431,7 +1431,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const fullAddress = facility.address ? `${facility.address}, ${facility.city}, NV` : undefined;
 
   const hasServices = !!facility.service;
-  const hasContact = !!(facility.phone || (facility.website && isValidUrl(facility.website)));
+  const hasContact = !!(facility.phone || normalizeWebsite(facility.website));
   const hasAccess = !!(facility.type === 'hospital' || facility.accessType);
   const util = getFacilityUtilization(facility);
 
@@ -1578,7 +1578,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
   const { isOpen, toggle } = useAccordion('provider');
   const isBH = isBehavioralHealthService(service);
   const fullAddress = service.address ? `${service.address}, ${service.city}, NV` : undefined;
-  const hasContact = !!(service.phone || (service.website && isValidUrl(service.website)));
+  const hasContact = !!(service.phone || normalizeWebsite(service.website));
   const categoryColor = CATEGORY_COLORS[service.category] ?? 'bg-secondary text-foreground';
 
   return (
