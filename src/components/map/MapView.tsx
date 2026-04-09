@@ -34,6 +34,7 @@ import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisu
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
+import { tribalNations, type TribalNation } from '@/data/tribal-nations';
 
 interface MapViewProps {
   facilities: Facility[];
