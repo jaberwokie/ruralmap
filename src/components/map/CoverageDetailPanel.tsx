@@ -1324,20 +1324,16 @@ const useAccordion = (defaultSection: string) => {
 };
 
 // ── Operational Indicators ──
-const OperationalBadges = ({ meta }: { meta?: Partial<ServiceOperationalMeta> | null }) => {
-  if (!meta) return null;
+const OperationalBadges = ({ meta, alwaysShowMedicaid = false }: { meta?: Partial<ServiceOperationalMeta> | null; alwaysShowMedicaid?: boolean }) => {
   const resolved = resolveOperationalMeta(meta);
 
-  // Only show if at least one field has meaningful data
-  const hasData = resolved.medicaidParticipationStatus !== 'unknown'
-    || resolved.isTribalProvider
-    || resolved.isTriballyOperated
-    || resolved.isCrossBorderService;
-  if (!hasData) return null;
+  const showMedicaid = alwaysShowMedicaid || resolved.medicaidParticipationStatus !== 'unknown';
+  const hasExtra = resolved.isTribalProvider || resolved.isTriballyOperated || resolved.isCrossBorderService;
+  if (!showMedicaid && !hasExtra) return null;
 
   return (
     <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-0.5">
-      {resolved.medicaidParticipationStatus !== 'unknown' && (
+      {showMedicaid && (
         <div className="flex justify-between text-[10px]">
           <span className="text-muted-foreground">NV Medicaid Participating</span>
           <span className={`font-medium ${PARTICIPATION_STATUS_COLORS[resolved.medicaidParticipationStatus]}`}>
@@ -1512,7 +1508,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         website={facility.website}
       />
 
-      <OperationalBadges meta={facility.operational} />
+      <OperationalBadges meta={facility.operational} alwaysShowMedicaid />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
@@ -1663,7 +1659,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
         website={service.website}
       />
 
-      <OperationalBadges meta={service.operational} />
+      <OperationalBadges meta={service.operational} alwaysShowMedicaid />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">

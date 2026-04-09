@@ -38,34 +38,22 @@ const mergeTag = (
   if (!tag) return existing;
   const fromTag = tagToPartialMeta(tag);
   if (!existing) return fromTag;
-  // Existing data wins — tag fills gaps only
   return { ...fromTag, ...existing };
 };
 
 export const enrichFacilities = (facilities: Facility[]): Facility[] => {
   const index = getOperationalTagIndex();
-  let matched = 0;
-  let unmatched = 0;
 
   const enriched = facilities.map((f) => {
     const tag = index.get(f.id);
     if (tag) {
-      matched++;
       return { ...f, operational: mergeTag(f.operational, tag) };
     }
     return f;
   });
 
-  // Dev audit: count tags that didn't match any entity
   if (import.meta.env.DEV) {
-    const facilityIds = new Set(facilities.map((f) => f.id));
-    for (const [tagId, tag] of index) {
-      if (tag.entityType === 'facility' && !facilityIds.has(tagId)) {
-        unmatched++;
-        console.warn(`[Operational Enrichment] Unmatched facility tag: ${tagId}`);
-      }
-    }
-    console.info(`[Operational Enrichment] Facilities: ${matched} matched, ${unmatched} unmatched tags`);
+    runEnrichmentVerification(facilities, 'facility');
   }
 
   return enriched;
@@ -73,64 +61,104 @@ export const enrichFacilities = (facilities: Facility[]): Facility[] => {
 
 export const enrichRuralServices = (services: RuralService[]): RuralService[] => {
   const index = getOperationalTagIndex();
-  let matched = 0;
-  let unmatched = 0;
 
   const enriched = services.map((s) => {
     const tag = index.get(s.id);
     if (tag) {
-      matched++;
       return { ...s, operational: mergeTag(s.operational, tag) };
     }
     return s;
   });
 
   if (import.meta.env.DEV) {
-    const serviceIds = new Set(services.map((s) => s.id));
-    for (const [tagId, tag] of index) {
-      if (tag.entityType === 'ruralService' && !serviceIds.has(tagId)) {
-        unmatched++;
-        console.warn(`[Operational Enrichment] Unmatched service tag: ${tagId}`);
-      }
-    }
-    console.info(`[Operational Enrichment] Services: ${matched} matched, ${unmatched} unmatched tags`);
+    runEnrichmentVerification(services, 'ruralService');
   }
 
   return enriched;
 };
 
-// ── Dev Audit Summary ──
+// ── Verification Pass (dev only) ──
+
+interface VerificationRow {
+  tagId: string;
+  matched: boolean;
+  entityName?: string;
+  entityType: string;
+  participationValue: string;
+  verificationSource: string;
+}
+
+const runEnrichmentVerification = (
+  entities: Array<{ id: string; name: string }>,
+  entityType: 'facility' | 'ruralService',
+) => {
+  const index = getOperationalTagIndex();
+  const entityMap = new Map(entities.map((e) => [e.id, e.name]));
+  const rows: VerificationRow[] = [];
+  const unmatched: { tagId: string; source: string; notes?: string }[] = [];
+
+  for (const [tagId, tag] of index) {
+    if (tag.entityType !== entityType) continue;
+
+    const entityName = entityMap.get(tagId);
+    if (entityName) {
+      rows.push({
+        tagId,
+        matched: true,
+        entityName,
+        entityType,
+        participationValue:
+          tag.isNevadaMedicaidParticipating === true ? 'Yes' :
+          tag.isNevadaMedicaidParticipating === false ? 'No' : 'Unknown',
+        verificationSource: tag.verificationSource,
+      });
+    } else {
+      unmatched.push({ tagId, source: tag.verificationSource, notes: tag.notes });
+    }
+  }
+
+  if (rows.length > 0) {
+    console.info(
+      `[Operational Verification] ${entityType}: ${rows.length} matched tags`,
+    );
+    console.table(rows);
+  }
+
+  if (unmatched.length > 0) {
+    console.warn(
+      `[Operational Verification] ${entityType}: ${unmatched.length} UNMATCHED tags`,
+    );
+    console.table(unmatched);
+  }
+};
+
+// ── Dev Audit Summary (grouped by category) ──
 
 export interface OperationalAuditSummary {
   totalEntities: number;
-  participating: number;
-  nonParticipating: number;
-  unknown: number;
+  facilities: { participating: number; nonParticipating: number; unknown: number };
+  ruralServices: { participating: number; nonParticipating: number; unknown: number };
 }
+
+const countParticipation = (ops: Array<Partial<ServiceOperationalMeta> | undefined>) => {
+  let participating = 0;
+  let nonParticipating = 0;
+  let unknown = 0;
+  for (const op of ops) {
+    if (op?.isNevadaMedicaidParticipating === true) participating++;
+    else if (op?.isNevadaMedicaidParticipating === false) nonParticipating++;
+    else unknown++;
+  }
+  return { participating, nonParticipating, unknown };
+};
 
 export const auditOperationalCoverage = (
   facilities: Facility[],
   services: RuralService[],
 ): OperationalAuditSummary => {
-  const all = [
-    ...facilities.map((f) => f.operational),
-    ...services.map((s) => s.operational),
-  ];
-
-  let participating = 0;
-  let nonParticipating = 0;
-  let unknown = 0;
-
-  for (const op of all) {
-    if (op?.isNevadaMedicaidParticipating === true) participating++;
-    else if (op?.isNevadaMedicaidParticipating === false) nonParticipating++;
-    else unknown++;
-  }
-
   return {
-    totalEntities: all.length,
-    participating,
-    nonParticipating,
-    unknown,
+    totalEntities: facilities.length + services.length,
+    facilities: countParticipation(facilities.map((f) => f.operational)),
+    ruralServices: countParticipation(services.map((s) => s.operational)),
   };
 };
