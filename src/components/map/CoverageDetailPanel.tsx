@@ -1741,15 +1741,27 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
       <DetailSection title="Tribally Operated Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={services.length || undefined}>
         {services.length > 0 ? (
           <div className="space-y-1.5">
-            {services.map(svc => (
-              <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
-                <div className="text-xs font-medium text-foreground">{svc.serviceName}</div>
-                <div className="text-[10px] text-muted-foreground">{svc.serviceType}</div>
-                {svc.phone && (
-                  <a href={`tel:${svc.phone.replace(/[^\d+]/g, '')}`} className="text-[10px] text-primary hover:underline" onClick={e => e.stopPropagation()}>{svc.phone}</a>
-                )}
-              </div>
-            ))}
+            {services.map(svc => {
+              const svcWeb = normalizeWebsite(svc.website);
+              return (
+                <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                  <div className="text-xs font-medium text-foreground">{svc.serviceName}</div>
+                  <div className="text-[10px] text-muted-foreground">{svc.serviceType}</div>
+                  {svc.description && <div className="text-[10px] text-muted-foreground mt-0.5">{svc.description}</div>}
+                  {svc.phone && (
+                    <div className="mt-0.5">
+                      <a href={`tel:${svc.phone.replace(/[^\d+]/g, '')}`} className="text-[10px] text-primary hover:underline" onClick={e => e.stopPropagation()}>{svc.phone}</a>
+                    </div>
+                  )}
+                  {svcWeb && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <ExternalLink className="w-2.5 h-2.5 text-primary flex-shrink-0" />
+                      <a href={svcWeb} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(svcWeb)}</a>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ) : (
           <p className="text-xs text-muted-foreground italic">No tribally operated services currently listed in this dataset.</p>
