@@ -4,7 +4,7 @@ import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { enrichFacilities, auditOperationalCoverage } from '@/utils/operationalEnrichment';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
-import { auditServiceClassification, getTaggingQueue, getQueueSummary, getDeferredSummary } from '@/utils/operationalServiceClass';
+import { auditServiceClassification, getTaggingQueue, getQueueSummary, getDeferredSummary, getConfidenceSummary } from '@/utils/operationalServiceClass';
 import type { Filters } from '@/types/filters';
 
 export interface UseFacilityDataReturn {
@@ -53,6 +53,11 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     console.info(`[Tagging Queue] ${queue.length} priority services, ${needsVerification.length} need verification`);
     console.info('[Queue Summary]');
     console.table(getQueueSummary(queue));
+    const confidenceSummary = getConfidenceSummary(queue);
+    if (confidenceSummary.length > 0) {
+      console.info('[Verification Confidence]');
+      console.table(confidenceSummary);
+    }
     const deferredSummary = getDeferredSummary(queue);
     if (deferredSummary.length > 0) {
       console.info('[Deferred Breakdown]');
