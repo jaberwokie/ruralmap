@@ -1321,8 +1321,8 @@ const useAccordion = (defaultSection: string) => {
 const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const hasPhone = !!phone;
   const hasDirections = !!(address || (lat && lng));
-  const hasWebsite = !!website && isValidUrl(website);
-  if (!hasPhone && !hasDirections && !hasWebsite) return null;
+  const normalizedWebsite = normalizeWebsite(website);
+  if (!hasPhone && !hasDirections && !normalizedWebsite) return null;
 
   const directionsUrl = address
     ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + (city ? `, ${city}, NV` : ''))}`
@@ -1356,9 +1356,9 @@ const ActionButtonRow = ({ phone, address, lat, lng, city, website }: { phone?: 
           Directions
         </a>
       )}
-      {hasWebsite && (
+      {normalizedWebsite && (
         <a
-          href={website}
+          href={normalizedWebsite}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
