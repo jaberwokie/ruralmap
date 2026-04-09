@@ -2352,6 +2352,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         fillColor: 'hsla(30, 65%, 50%, 0.12)',
         fillOpacity: 1,
         interactive: true,
+        bubblingMouseEvents: false,
+      });
+
+      // Ensure the SVG path gets pointer-events so clicks reach through the pane
+      circle.on('add', () => {
+        const el = (circle as any)._path as HTMLElement | undefined;
+        if (el) el.style.pointerEvents = 'auto';
       });
 
       circle.bindTooltip(tribe.name, {
