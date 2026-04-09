@@ -523,6 +523,7 @@ const Sidebar = ({
     helpKey,
     dataTutorial,
     inlineLegend,
+    belowLegend,
   }: {
     label: string;
     icon: LucideIcon;
@@ -532,24 +533,25 @@ const Sidebar = ({
     helpKey?: string;
     dataTutorial?: string;
     inlineLegend?: ReactNode;
+    belowLegend?: ReactNode;
   }) => (
-    <div
-      className={TOGGLE_ROW_CLASSNAME}
-      data-tutorial={dataTutorial}
-    >
-      <button
-        type="button"
-        onClick={() => onCheckedChange(!checked)}
-        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
-      >
-        {renderLayerIcon(icon, iconClassName, !checked)}
-        <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
-      </button>
-      {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
-      <div className="ml-2 flex shrink-0 items-center justify-end gap-0.5">
-        {helpKey ? renderHelpIcon(helpKey) : null}
-        <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
+    <div data-tutorial={dataTutorial}>
+      <div className={TOGGLE_ROW_CLASSNAME}>
+        <button
+          type="button"
+          onClick={() => onCheckedChange(!checked)}
+          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+        >
+          {renderLayerIcon(icon, iconClassName, !checked)}
+          <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+        </button>
+        {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
+        <div className="ml-2 flex shrink-0 items-center justify-end gap-0.5">
+          {helpKey ? renderHelpIcon(helpKey) : null}
+          <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
+        </div>
       </div>
+      {belowLegend ? <div className="pl-7 pb-0.5">{belowLegend}</div> : null}
     </div>
   );
 
