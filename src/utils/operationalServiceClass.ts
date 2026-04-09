@@ -6,6 +6,7 @@
  */
 
 import type { RuralService, RuralServiceCategory, OperationalServiceClass } from '@/data/rural-services';
+import { getOperationalTagIndex, type VerificationStatus } from '@/data/operational-metadata';
 
 // ── Category-based classification ──
 
@@ -134,12 +135,24 @@ export interface TaggingQueueEntry {
   category: string;
   county: string;
   class: OperationalServiceClass;
-  status: 'participating' | 'non_participating' | 'needs_verification';
+  verificationStatus: VerificationStatus;
 }
 
+const resolveVerificationStatus = (
+  serviceId: string,
+  participatingValue?: boolean | null,
+): VerificationStatus => {
+  const index = getOperationalTagIndex();
+  const tag = index.get(serviceId);
+  if (tag?.verificationStatus) return tag.verificationStatus;
+  // Derive from participation value if tag exists but no explicit status
+  if (participatingValue === true) return 'verified_participating';
+  if (participatingValue === false) return 'verified_non_participating';
+  return 'needs_verification';
+};
+
 /**
- * Generate a tagging queue for services that need Medicaid verification.
- * Only includes priority classes (billable_clinical, behavioral_health_clinical, tribal_clinical).
+ * Generate a tagging queue for priority-class services.
  */
 export const getTaggingQueue = (services: RuralService[]): TaggingQueueEntry[] => {
   const priorityClasses = new Set<OperationalServiceClass>([
@@ -156,9 +169,39 @@ export const getTaggingQueue = (services: RuralService[]): TaggingQueueEntry[] =
       category: s.category,
       county: s.county,
       class: s.operationalServiceClass ?? 'unknown',
-      status:
-        s.operational?.isNevadaMedicaidParticipating === true ? 'participating' as const :
-        s.operational?.isNevadaMedicaidParticipating === false ? 'non_participating' as const :
-        'needs_verification' as const,
+      verificationStatus: resolveVerificationStatus(s.id, s.operational?.isNevadaMedicaidParticipating),
     }));
+};
+
+// ── Queue Summary ──
+
+export interface QueueClassSummary {
+  class: OperationalServiceClass;
+  needs_verification: number;
+  verified_participating: number;
+  verified_non_participating: number;
+  deferred: number;
+  total: number;
+}
+
+export const getQueueSummary = (queue: TaggingQueueEntry[]): QueueClassSummary[] => {
+  const classes: OperationalServiceClass[] = ['billable_clinical', 'behavioral_health_clinical', 'tribal_clinical'];
+  const buckets = new Map<string, Record<VerificationStatus, number>>();
+  for (const cls of classes) {
+    buckets.set(cls, { needs_verification: 0, verified_participating: 0, verified_non_participating: 0, deferred: 0 });
+  }
+
+  for (const entry of queue) {
+    const b = buckets.get(entry.class);
+    if (b) b[entry.verificationStatus]++;
+  }
+
+  return classes.map((cls) => {
+    const b = buckets.get(cls)!;
+    return {
+      class: cls,
+      ...b,
+      total: b.needs_verification + b.verified_participating + b.verified_non_participating + b.deferred,
+    };
+  }).filter((r) => r.total > 0);
 };
