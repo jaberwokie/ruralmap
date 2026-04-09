@@ -1559,7 +1559,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         website={facility.website}
       />
 
-      <OperationalBadges meta={facility.operational} alwaysShowMedicaid />
+      <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
 
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
@@ -1712,6 +1712,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 
       <OperationalBadges
         meta={service.operational}
+        entityId={service.id}
         alwaysShowMedicaid={
           service.operationalServiceClass === 'billable_clinical' ||
           service.operationalServiceClass === 'behavioral_health_clinical' ||
