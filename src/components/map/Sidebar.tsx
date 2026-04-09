@@ -6,7 +6,9 @@ import { MapTutorialStepKey } from '@/data/map-tutorial';
 import { toast } from 'sonner';
 import type { Filters } from '@/types/filters';
 import type { LayerState } from '@/types/layers';
-import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { RURAL_SERVICE_CATEGORIES, ruralServices } from '@/data/rural-services';
+import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
+import { tribalNations } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCESS_TIER_LABELS } from '@/utils/providerAccessTiers';
@@ -71,7 +73,7 @@ interface SidebarProps {
 const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', colorClassName: 'text-muted-foreground', icon: MapIcon },
   { key: 'tribalNations' as const, label: 'Tribal Nations', colorClassName: 'text-tribal-nation', icon: Landmark },
-  { key: 'services' as const, label: 'Service', colorClassName: 'text-service-presence', icon: Layers3 },
+  { key: 'services' as const, label: 'Services', colorClassName: 'text-service-presence', icon: Layers3 },
   { key: 'behavioralHealth' as const, label: 'Behavioral Health', colorClassName: 'text-behavioral-health', icon: Headphones },
   { key: 'serviceLocations' as const, label: 'Provider Locations', colorClassName: 'text-foreground', icon: MapPin },
   { key: 'operationalCoverage' as const, label: 'Response Capability', colorClassName: 'text-response-active', icon: Radio },
@@ -342,7 +344,34 @@ const Sidebar = ({
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
   const clinicCount = facilities.filter(f => f.type === 'clinic').length;
-  const totalCount = facilities.length;
+  const providerCount = hospitalCount + clinicCount;
+
+  // Core Map layer counts (reactive to filters)
+  const countyCount = nevadaCounties.length;
+  const tribalNationCount = tribalNations.length;
+
+  const filteredServices = useMemo(() => {
+    let result = ruralServices.filter(isCommunitySupportService);
+    if (filters.counties.size > 0) result = result.filter(s => filters.counties.has(s.county));
+    return result;
+  }, [filters.counties]);
+
+  const filteredBhServices = useMemo(() => {
+    let result = ruralServices.filter(isBehavioralHealthService);
+    if (filters.counties.size > 0) result = result.filter(s => filters.counties.has(s.county));
+    return result;
+  }, [filters.counties]);
+
+  const serviceCount = filteredServices.length;
+  const bhCount = filteredBhServices.length;
+
+  const coreMapCounts: Record<string, string> = {
+    counties: `${countyCount} Counties`,
+    tribalNations: `${tribalNationCount}`,
+    services: `${serviceCount}`,
+    behavioralHealth: `${bhCount}`,
+    serviceLocations: `${providerCount}`,
+  };
 
   // Unique counties from all facilities
   const allCounties = useMemo(() => {
@@ -578,9 +607,6 @@ const Sidebar = ({
 
       {/* Stats Bar */}
       <div className="px-4 pb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-        <span className="text-muted-foreground">
-          <span className="font-mono font-medium text-foreground">{totalCount}</span> Total
-        </span>
         <span className="text-muted-foreground flex items-center gap-1">
           <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
           <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
@@ -698,8 +724,10 @@ const Sidebar = ({
                       {renderSectionIntro(SECTION_META.coreMap.question, SECTION_META.coreMap.helper)}
                       {(['counties', 'tribalNations', 'services', 'behavioralHealth', 'serviceLocations'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
+                        const count = coreMapCounts[key];
+                        const displayLabel = count ? `${label} (${count})` : label;
                         return renderLayerToggleRow({
-                          label,
+                          label: displayLabel,
                           icon,
                           iconClassName: colorClassName,
                           checked: layers[key],
