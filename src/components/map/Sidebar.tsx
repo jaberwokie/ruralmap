@@ -367,10 +367,10 @@ const Sidebar = ({
 
   const coreMapCounts: Record<string, string> = {
     counties: `${countyCount} Counties`,
-    tribalNations: `${tribalNationCount}`,
-    services: `${serviceCount}`,
-    behavioralHealth: `${bhCount}`,
-    serviceLocations: `${providerCount}`,
+    tribalNations: `${tribalNationCount} Tribal Nations`,
+    services: `${serviceCount} Services`,
+    behavioralHealth: `${bhCount} Locations`,
+    serviceLocations: `${providerCount} Locations`,
   };
 
   // Unique counties from all facilities
