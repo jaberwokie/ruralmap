@@ -441,20 +441,30 @@ const Sidebar = ({
     return trimmed;
   };
 
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processCSVFile = useCallback((file: File) => {
+    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
+      toast.error('Only CSV files are accepted.');
+      setCsvImportState('error');
+      return;
+    }
+    console.log('[csv-import] File selected:', file.name);
+    setCsvImportState('processing');
+    setCsvParsed(null);
 
     const reader = new FileReader();
+    reader.onerror = () => {
+      toast.error('Failed to read file.');
+      setCsvImportState('error');
+    };
     reader.onload = (event) => {
       let text = event.target?.result as string;
-      if (!text) { toast.error('Failed to read file.'); return; }
+      if (!text) { toast.error('Failed to read file.'); setCsvImportState('error'); return; }
 
       // Strip BOM
       if (text.startsWith('\uFEFF')) text = text.substring(1);
 
       const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { toast.error('CSV file has no data rows.'); return; }
+      if (lines.length < 2) { toast.error('CSV file has no data rows.'); setCsvImportState('error'); return; }
 
       const headers = parseCSVLine(stripLineQuotes(lines[0]));
       const norm = headers.map(normalizeHeader);
@@ -476,23 +486,32 @@ const Sidebar = ({
       const tierIdx = find('tier');
 
       if (nameIdx === -1 || latIdx === -1 || lngIdx === -1) {
-        toast.error('Missing required columns: name, latitude, longitude.');
+        const missing = [nameIdx === -1 && 'name', latIdx === -1 && 'latitude', lngIdx === -1 && 'longitude'].filter(Boolean).join(', ');
+        toast.error(`Missing required columns: ${missing}`);
+        setCsvImportState('error');
+        setCsvParsed({ valid: [], invalidCount: 0, errors: [`Missing required columns: ${missing}`], totalRows: lines.length - 1 });
         return;
       }
 
-      const newFacilities: Facility[] = [];
+      const valid: Facility[] = [];
+      const errors: string[] = [];
+      let invalidCount = 0;
+
       for (let i = 1; i < lines.length; i++) {
         const cols = parseCSVLine(stripLineQuotes(lines[i]));
+        const name = cols[nameIdx]?.trim();
         const lat = parseFloat(cols[latIdx]);
         const lng = parseFloat(cols[lngIdx]);
-        if (isNaN(lat) || isNaN(lng)) continue;
+
+        if (!name) { invalidCount++; errors.push(`Row ${i}: missing name`); continue; }
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { invalidCount++; errors.push(`Row ${i}: invalid coordinates for "${name}"`); continue; }
 
         const rawType = (typeIdx !== -1 ? cols[typeIdx] || '' : '').toLowerCase();
         const type: FacilityType = rawType.includes('hospital') ? 'hospital' : 'clinic';
 
-        newFacilities.push({
+        valid.push({
           id: `csv-${Date.now()}-${i}`,
-          name: cols[nameIdx] || `Facility ${i}`,
+          name,
           type,
           city: cityIdx !== -1 ? cols[cityIdx] || '' : '',
           county: countyIdx !== -1 ? cols[countyIdx] || '' : '',
@@ -503,18 +522,53 @@ const Sidebar = ({
         });
       }
 
-      if (newFacilities.length > 0) {
-        onAddFacilities(newFacilities);
-        toast.success(`Imported ${newFacilities.length} facilities.`);
-      } else {
-        toast.error('No valid facilities found in the CSV.');
-      }
+      console.log(`[csv-import] Parsed: ${valid.length} valid, ${invalidCount} invalid out of ${lines.length - 1} rows`);
+      setCsvParsed({ valid, invalidCount, errors, totalRows: lines.length - 1 });
+      setCsvImportState(valid.length > 0 ? 'preview' : 'error');
+      if (valid.length === 0) toast.error('No valid rows found in the CSV.');
     };
     reader.readAsText(file);
-    e.target.value = '';
-  };
+  }, []);
 
-  const displayFacilities = searchQuery
+  const handleCSVUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processCSVFile(file);
+    e.target.value = '';
+  }, [processCSVFile]);
+
+  const confirmImport = useCallback(() => {
+    if (!csvParsed || csvParsed.valid.length === 0) return;
+    onAddFacilities(csvParsed.valid);
+    toast.success(`Imported ${csvParsed.valid.length} facilities.`);
+    console.log(`[csv-import] Imported ${csvParsed.valid.length} facilities`);
+    setCsvImportState('success');
+    setTimeout(() => { setCsvImportState('idle'); setCsvParsed(null); }, 3000);
+  }, [csvParsed, onAddFacilities]);
+
+  const resetImport = useCallback(() => {
+    setCsvImportState('idle');
+    setCsvParsed(null);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCsvDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCsvDragActive(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setCsvDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processCSVFile(file);
+  }, [processCSVFile]);
     ? facilities.filter(f =>
         f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
