@@ -1672,7 +1672,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
       <ActionButtonRow phone={tribe.phone} website={tribe.website} />
 
       {/* Location */}
-      <DetailSection title="Location" isOpen={true} onToggle={() => {}}>
+      <DetailSection title="Location" isOpen={isOpen('location')} onToggle={() => toggle('location')}>
         <p className="text-xs text-muted-foreground">{tribe.locationDescription}</p>
         {tribe.counties.length > 0 && (
           <div className="flex flex-wrap gap-1 mt-1.5">
@@ -1690,7 +1690,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 
       {/* Population */}
       {(tribe.tribalMembers || tribe.residentPopulation) && (
-        <DetailSection title="Population" isOpen={false} onToggle={() => {}}>
+        <DetailSection title="Population" isOpen={isOpen('population')} onToggle={() => toggle('population')}>
           <div className="space-y-1 text-xs text-muted-foreground">
             {tribe.tribalMembers && <div>Tribal members: <span className="font-medium text-foreground">{tribe.tribalMembers.toLocaleString()}</span></div>}
             {tribe.residentPopulation && <div>Resident population: <span className="font-medium text-foreground">{tribe.residentPopulation.toLocaleString()}</span></div>}
@@ -1700,7 +1700,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 
       {/* Contact */}
       {hasContact && (
-        <DetailSection title="Contact Information" isOpen={false} onToggle={() => {}}>
+        <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
           {tribe.phone && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
               <Phone className="w-3 h-3 flex-shrink-0" />
@@ -1718,7 +1718,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 
       {/* Governance */}
       {(tribe.governingBody || tribe.established) && (
-        <DetailSection title="Governance" isOpen={false} onToggle={() => {}}>
+        <DetailSection title="Governance" isOpen={isOpen('governance')} onToggle={() => toggle('governance')}>
           <div className="space-y-1 text-xs text-muted-foreground">
             {tribe.governingBody && <div>{tribe.governingBody}</div>}
             {tribe.established && <div className="text-[11px]">Est. {tribe.established}</div>}
@@ -1728,7 +1728,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 
       {/* Tribal Programs */}
       {tribe.tribalPrograms && tribe.tribalPrograms.length > 0 && (
-        <DetailSection title="Tribal Programs" isOpen={false} onToggle={() => {}}>
+        <DetailSection title="Tribal Programs" isOpen={isOpen('programs')} onToggle={() => toggle('programs')}>
           <div className="flex flex-wrap gap-1">
             {tribe.tribalPrograms.map((p, i) => (
               <span key={i} className="rounded-full border border-border bg-secondary/70 px-1.5 py-0.5 text-[10px] text-muted-foreground">{p}</span>
@@ -1738,7 +1738,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
       )}
 
       {/* Tribally Operated Services */}
-      <DetailSection title="Tribally Operated Services" isOpen={true} onToggle={() => {}}>
+      <DetailSection title="Tribally Operated Services" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={services.length || undefined}>
         {services.length > 0 ? (
           <div className="space-y-1.5">
             {services.map(svc => (
