@@ -49,9 +49,14 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     console.info('[Service Class Audit]');
     console.table(classAudit.rows);
     const queue = getTaggingQueue(enrichedRuralServices);
-    const needsVerification = queue.filter(q => q.status === 'needs_verification');
+    const needsVerification = queue.filter(q => q.verificationStatus === 'needs_verification');
     console.info(`[Tagging Queue] ${queue.length} priority services, ${needsVerification.length} need verification`);
-    if (needsVerification.length > 0) console.table(needsVerification);
+    console.info('[Queue Summary]');
+    console.table(getQueueSummary(queue));
+    if (needsVerification.length > 0) {
+      console.info('[Needs Verification]');
+      console.table(needsVerification);
+    }
   }, [facilities]);
 
   return { facilities, filteredFacilities, addFacilities };
