@@ -1638,12 +1638,12 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
               <a href={`tel:${service.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{service.phone}</a>
             </div>
           )}
-          {service.website && isValidUrl(service.website) && (
+          {(() => { const href = normalizeWebsite(service.website); return href ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              <a href={service.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>Visit Website</a>
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(href)}</a>
             </div>
-          )}
+          ) : null; })()}
         </DetailSection>
       )}
     </>
