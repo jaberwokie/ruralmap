@@ -2389,7 +2389,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       tribalNationsRef.current!.addLayer(layer);
     });
-  }, [layers.tribalNations, onEntityClick]);
+  }, [layers.tribalNations, onEntityClick, tribalBoundariesReady]);
 
   // ── Broadband Access choropleth ──
   useEffect(() => {
