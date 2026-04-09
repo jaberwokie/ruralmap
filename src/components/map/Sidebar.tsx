@@ -553,6 +553,7 @@ const Sidebar = ({
     dataTutorial,
     inlineLegend,
     belowLegend,
+    subtitle,
   }: {
     label: string;
     icon: LucideIcon;
@@ -563,6 +564,7 @@ const Sidebar = ({
     dataTutorial?: string;
     inlineLegend?: ReactNode;
     belowLegend?: ReactNode;
+    subtitle?: string;
   }) => (
     <div data-tutorial={dataTutorial}>
       <div className={TOGGLE_ROW_CLASSNAME}>
@@ -572,7 +574,10 @@ const Sidebar = ({
           className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
         >
           {renderLayerIcon(icon, iconClassName, !checked)}
-          <span className={`truncate text-xs ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+          <span className="min-w-0 flex-1">
+            <span className={`block text-xs leading-snug ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
+            {subtitle && <span className="block text-[10px] leading-tight text-muted-foreground/70">{subtitle}</span>}
+          </span>
         </button>
         {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
         <div className="ml-2 flex shrink-0 items-center justify-end gap-0.5">
@@ -725,14 +730,14 @@ const Sidebar = ({
                       {(['counties', 'tribalNations', 'services', 'behavioralHealth', 'serviceLocations'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         const count = coreMapCounts[key];
-                        const displayLabel = count ? `${label} (${count})` : label;
                         return renderLayerToggleRow({
-                          label: displayLabel,
+                          label,
                           icon,
                           iconClassName: colorClassName,
                           checked: layers[key],
                           onCheckedChange: () => onToggleLayer(key),
                           helpKey: key,
+                          subtitle: count || undefined,
                           dataTutorial:
                             key === 'services'
                               ? 'toggle-services'
