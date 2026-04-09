@@ -2334,6 +2334,41 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
 
+  // ── Tribal Nations polygons ──
+  useEffect(() => {
+    if (!tribalNationsRef.current || !mapRef.current) return;
+    tribalNationsRef.current.clearLayers();
+    if (!layers.tribalNations) return;
+
+    tribalNations.forEach((tribe) => {
+      // Render as a circle polygon using the approximate radius
+      const radiusMeters = (tribe.approximateRadiusKm ?? 5) * 1000;
+      const circle = L.circle([tribe.lat, tribe.lng], {
+        pane: MAP_PANES.tribalNations,
+        radius: radiusMeters,
+        color: 'hsl(30, 65%, 45%)',
+        weight: 1.5,
+        fillColor: 'hsla(30, 65%, 50%, 0.12)',
+        fillOpacity: 1,
+        interactive: true,
+      });
+
+      circle.bindTooltip(tribe.name, {
+        direction: 'top',
+        offset: [0, -8],
+        className: 'leaflet-tooltip',
+      });
+
+      circle.on('click', (event: L.LeafletEvent) => {
+        L.DomEvent.stopPropagation(event as any);
+        armInteractionGuard('marker');
+        onEntityClick?.({ type: 'tribalNation', tribe });
+      });
+
+      tribalNationsRef.current!.addLayer(circle);
+    });
+  }, [layers.tribalNations, onEntityClick]);
+
   // ── Broadband Access choropleth ──
   useEffect(() => {
     if (!broadbandRef.current) return;
