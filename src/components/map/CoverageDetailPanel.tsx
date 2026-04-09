@@ -4,6 +4,7 @@ import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCoun
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
 import { RuralService, ruralServices } from '@/data/rural-services';
+import { type TribalNation } from '@/data/tribal-nations';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
@@ -1647,6 +1648,119 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
           ) : null; })()}
         </DetailSection>
       )}
+    </>
+  );
+};
+
+// ── Tribal Nation ──
+const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
+  const normalizedWeb = normalizeWebsite(tribe.website);
+  const hasContact = !!(tribe.phone || normalizedWeb);
+  const services = tribe.triballyOperatedServices;
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-tribal-nation flex items-center gap-1">
+        <Landmark className="w-3 h-3" /> Tribal Nation
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-0.5">{tribe.name}</p>
+      <p className="text-[11px] text-muted-foreground mb-2">{tribe.tribalGroup}</p>
+
+      {tribe.summary && <p className="text-xs text-muted-foreground mb-2">{tribe.summary}</p>}
+
+      <ActionButtonRow phone={tribe.phone} website={tribe.website} />
+
+      {/* Location */}
+      <DetailSection title="Location" isOpen={true} onToggle={() => {}}>
+        <p className="text-xs text-muted-foreground">{tribe.locationDescription}</p>
+        {tribe.counties.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1.5">
+            {tribe.counties.map(c => (
+              <span key={c} className="rounded-full border border-border bg-secondary/70 px-2 py-0.5 text-[10px] text-muted-foreground">{c} County</span>
+            ))}
+          </div>
+        )}
+        {tribe.landBaseAcres && (
+          <div className="mt-1.5 text-[11px] text-muted-foreground">
+            <span className="font-medium text-foreground">{tribe.landBaseAcres.toLocaleString()}</span> acres
+          </div>
+        )}
+      </DetailSection>
+
+      {/* Population */}
+      {(tribe.tribalMembers || tribe.residentPopulation) && (
+        <DetailSection title="Population" isOpen={false} onToggle={() => {}}>
+          <div className="space-y-1 text-xs text-muted-foreground">
+            {tribe.tribalMembers && <div>Tribal members: <span className="font-medium text-foreground">{tribe.tribalMembers.toLocaleString()}</span></div>}
+            {tribe.residentPopulation && <div>Resident population: <span className="font-medium text-foreground">{tribe.residentPopulation.toLocaleString()}</span></div>}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Contact */}
+      {hasContact && (
+        <DetailSection title="Contact Information" isOpen={false} onToggle={() => {}}>
+          {tribe.phone && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+              <Phone className="w-3 h-3 flex-shrink-0" />
+              <a href={`tel:${tribe.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{tribe.phone}</a>
+            </div>
+          )}
+          {normalizedWeb && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              <a href={normalizedWeb} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(normalizedWeb)}</a>
+            </div>
+          )}
+        </DetailSection>
+      )}
+
+      {/* Governance */}
+      {(tribe.governingBody || tribe.established) && (
+        <DetailSection title="Governance" isOpen={false} onToggle={() => {}}>
+          <div className="space-y-1 text-xs text-muted-foreground">
+            {tribe.governingBody && <div>{tribe.governingBody}</div>}
+            {tribe.established && <div className="text-[11px]">Est. {tribe.established}</div>}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Tribal Programs */}
+      {tribe.tribalPrograms && tribe.tribalPrograms.length > 0 && (
+        <DetailSection title="Tribal Programs" isOpen={false} onToggle={() => {}}>
+          <div className="flex flex-wrap gap-1">
+            {tribe.tribalPrograms.map((p, i) => (
+              <span key={i} className="rounded-full border border-border bg-secondary/70 px-1.5 py-0.5 text-[10px] text-muted-foreground">{p}</span>
+            ))}
+          </div>
+        </DetailSection>
+      )}
+
+      {/* Tribally Operated Services */}
+      <DetailSection title="Tribally Operated Services" isOpen={true} onToggle={() => {}}>
+        {services.length > 0 ? (
+          <div className="space-y-1.5">
+            {services.map(svc => (
+              <div key={svc.id} className="rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+                <div className="text-xs font-medium text-foreground">{svc.serviceName}</div>
+                <div className="text-[10px] text-muted-foreground">{svc.serviceType}</div>
+                {svc.phone && (
+                  <a href={`tel:${svc.phone.replace(/[^\d+]/g, '')}`} className="text-[10px] text-primary hover:underline" onClick={e => e.stopPropagation()}>{svc.phone}</a>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground italic">No tribally operated services currently listed in this dataset.</p>
+        )}
+      </DetailSection>
+
+      {/* Source */}
+      <div className="mt-2 pt-2 border-t border-border">
+        <a href={tribe.directoryUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-primary hover:underline" onClick={e => e.stopPropagation()}>
+          <ExternalLink className="w-2.5 h-2.5" /> NV Dept. of Native American Affairs Directory
+        </a>
+      </div>
     </>
   );
 };
