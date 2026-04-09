@@ -1324,16 +1324,66 @@ const useAccordion = (defaultSection: string) => {
   return { isOpen, toggle };
 };
 
+// ── Routing Tier Resolution (truth-gated) ──
+type RoutingTierDisplay = 'recommended' | 'available_unverified' | 'fallback';
+
+const ROUTING_TIER_DISPLAY_LABELS: Record<RoutingTierDisplay, string> = {
+  recommended: 'Recommended (Medicaid Participating)',
+  available_unverified: 'Available (Unverified)',
+  fallback: 'Fallback Option',
+};
+
+const ROUTING_TIER_DISPLAY_COLORS: Record<RoutingTierDisplay, string> = {
+  recommended: 'text-primary',
+  available_unverified: 'text-muted-foreground',
+  fallback: 'text-destructive/70',
+};
+
+const resolveRoutingTierDisplay = (
+  entityId?: string,
+  meta?: Partial<ServiceOperationalMeta> | null,
+): RoutingTierDisplay => {
+  const resolved = resolveOperationalMeta(meta);
+
+  // Only "Recommended" if participating AND direct confidence
+  if (resolved.isNevadaMedicaidParticipating === true && entityId) {
+    const tag = getOperationalTagIndex().get(entityId);
+    if (tag?.verificationConfidence === 'direct') {
+      return 'recommended';
+    }
+    // inferred or missing confidence → not recommended
+    return 'available_unverified';
+  }
+
+  if (resolved.medicaidParticipationStatus === 'unknown') {
+    return 'available_unverified';
+  }
+
+  // non_participating or other
+  return 'fallback';
+};
+
 // ── Operational Indicators ──
-const OperationalBadges = ({ meta, alwaysShowMedicaid = false }: { meta?: Partial<ServiceOperationalMeta> | null; alwaysShowMedicaid?: boolean }) => {
+const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { meta?: Partial<ServiceOperationalMeta> | null; alwaysShowMedicaid?: boolean; entityId?: string }) => {
   const resolved = resolveOperationalMeta(meta);
 
   const showMedicaid = alwaysShowMedicaid || resolved.medicaidParticipationStatus !== 'unknown';
   const hasExtra = resolved.isTribalProvider || resolved.isTriballyOperated || resolved.isCrossBorderService;
+  const showRoutingTier = showMedicaid || hasExtra;
   if (!showMedicaid && !hasExtra) return null;
+
+  const routingTier = showRoutingTier ? resolveRoutingTierDisplay(entityId, meta) : undefined;
 
   return (
     <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-0.5">
+      {routingTier && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Routing Tier</span>
+          <span className={`font-medium ${ROUTING_TIER_DISPLAY_COLORS[routingTier]}`}>
+            {ROUTING_TIER_DISPLAY_LABELS[routingTier]}
+          </span>
+        </div>
+      )}
       {showMedicaid && (
         <div className="flex justify-between text-[10px]">
           <span className="text-muted-foreground">NV Medicaid Participating</span>
