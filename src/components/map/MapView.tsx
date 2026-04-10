@@ -17,7 +17,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/types/entities';
 import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
-import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics, getCompositeEngagementPriority } from '@/utils/utilizationAggregation';
 import { BROADBAND_BY_COUNTY, type BroadbandStatus, type OperationalBroadbandReadiness } from '@/data/broadband-coverage';
 import { CELLULAR_BY_COUNTY, getReliabilityCategory, type CellularReliability, type OperationalCellularReadiness } from '@/data/cellular-coverage';
 import buffer from '@turf/buffer';
