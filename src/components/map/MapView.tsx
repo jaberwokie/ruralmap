@@ -2100,33 +2100,20 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         zIndexOffset: category === 'active' ? 820 : category === 'scheduled' ? 780 : 740,
       });
 
-      marker.on('mouseover', (event: L.LeafletMouseEvent) => {
+      marker.on('mouseover', () => {
         marker.setIcon(buildIcon(true));
-        updateCountyHoverPreview(county.name, event);
+        updateCountyHoverPreview(county.name);
+        markerHoverPreviewRef.current({
+          name: county.name,
+          subtitle: RESPONSE_CAPABILITY_META[category].label,
+          detail: RESPONSE_CAPABILITY_META[category].description,
+        });
       });
-      marker.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(county.name, event));
       marker.on('mouseout', () => {
         marker.setIcon(buildIcon(selectedCounty === county.name));
         clearCountyHoverPreview();
+        markerHoverPreviewRef.current(null);
       });
-      marker.on('click', (event: L.LeafletEvent) => {
-        selectCountyEntity(county.name, 'response-capability-marker', event);
-      });
-
-      marker.bindTooltip(
-        `
-          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-            <div style="font-weight: 600; margin-bottom: 2px;">${county.name}</div>
-            <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${RESPONSE_CAPABILITY_META[category].label}</div>
-            <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${RESPONSE_CAPABILITY_META[category].description}</div>
-          </div>
-        `,
-        {
-          direction: 'top',
-          offset: [0, -8],
-          className: 'facility-tooltip',
-        },
-      );
 
       operationalResponseMarkerRef.current!.addLayer(marker);
     });
