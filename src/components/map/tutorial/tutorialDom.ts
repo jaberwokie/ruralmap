@@ -76,7 +76,7 @@ export const scrollTutorialElementIntoView = (element: HTMLElement | null) => {
   const needsViewportScroll = !isFullyVisibleInViewport(element);
 
   if (needsContainerScroll || needsViewportScroll) {
-    element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+    element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
     return true;
   }
 
