@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { LayerState, CoverageState } from '@/types/layers';
+import type { LayerState, CoverageState, EngagementGapView } from '@/types/layers';
 import { getToggleDiagnosticConfig } from '@/data/layer-registry';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
