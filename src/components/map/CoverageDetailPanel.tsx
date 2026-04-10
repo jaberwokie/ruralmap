@@ -1376,15 +1376,19 @@ const resolveRoutingTierDisplay = (
 };
 
 // ── Verification Signal Labels ──
-const resolveVerificationSignalLabel = (entityId?: string): string | null => {
+type VerificationSignalResult = { label: string; colorClass: string; dotClass: string } | null;
+
+const resolveVerificationSignal = (entityId?: string): VerificationSignalResult => {
   if (!entityId) return null;
   const tag = getOperationalTagIndex().get(entityId);
   if (!tag) return null;
 
-  if (tag.verificationStatus === 'verified_participating') return 'Medicaid Verified (DPBH)';
-  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'inferred_strong') return 'Provider Identified (NPI Confirmed)';
-  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'unknown') return 'Unverified Provider';
-  // Deferred or other statuses: no signal line
+  if (tag.verificationStatus === 'verified_participating')
+    return { label: 'Medicaid Verified (DPBH)', colorClass: 'text-primary', dotClass: 'bg-primary' };
+  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'inferred_strong')
+    return { label: 'Provider Identified (NPI Confirmed)', colorClass: 'text-amber-600 dark:text-amber-400', dotClass: 'bg-amber-500' };
+  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'unknown')
+    return { label: 'Unverified Provider', colorClass: 'text-muted-foreground', dotClass: 'bg-muted-foreground' };
   return null;
 };
 
