@@ -2251,84 +2251,103 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, coverageGaps, layers.utilizationIntensity, selectOverlayEntity, updateCountyHoverPreview]);
 
-  // ── Engagement Gap priority intensity fills (county polygons) ──
+  // ── Engagement Gap priority heat-style intensity layer ──
   useEffect(() => {
-    if (!mapRef.current) return;
-    // Remove legacy heatmap layer if present
+    const map = mapRef.current;
+    if (!map) return;
+
+    // Remove previous heat layer
     if (engagementHeatRef.current) {
-      mapRef.current.removeLayer(engagementHeatRef.current);
+      map.removeLayer(engagementHeatRef.current);
       engagementHeatRef.current = null;
     }
-    if (!engagementPriorityRef.current) return;
-    // Clear priority layer only (boundaries has its own ref)
-    engagementPriorityRef.current.clearLayers();
+    // Remove dim overlay
+    const existingDim = document.getElementById('priority-dim-overlay');
+    if (existingDim) existingDim.remove();
+
     if (!layers.engagementGap || engagementGapView !== 'priority') return;
 
     // Filter eligible counties
     const eligible = engagementPriorityCounties.filter(
       (m) => !(m.totalMembers > 0 && m.engagementRate > 0.80)
     );
-    const total = eligible.length;
-    if (total === 0) return;
+    if (eligible.length === 0) return;
 
-    // Discrete tier thresholds based on percentile rank
-    const tier4Cutoff = Math.max(1, Math.round(total * 0.12));  // top ~12%
-    const tier3Cutoff = tier4Cutoff + Math.max(1, Math.round(total * 0.22));  // next ~22%
-    const tier2Cutoff = tier3Cutoff + Math.max(1, Math.round(total * 0.33));  // next ~33%
+    // Find max unengaged members for normalization
+    const maxVal = Math.max(...eligible.map(m => m.unengagedMembers));
+    if (maxVal === 0) return;
 
-    const TIER_STYLES = {
-      4: { fillColor: '#C62828', fillOpacity: 0.82, strokeColor: 'rgba(140, 15, 10, 0.45)', weight: 1.5 },
-      3: { fillColor: '#E64A19', fillOpacity: 0.60, strokeColor: 'rgba(180, 50, 15, 0.35)', weight: 1 },
-      2: { fillColor: '#EF6C00', fillOpacity: 0.40, strokeColor: 'rgba(200, 100, 20, 0.30)', weight: 0.75 },
-      1: { fillColor: '#FFF3E0', fillOpacity: 0.04, strokeColor: 'rgba(200, 170, 130, 0.15)', weight: 0.5 },
-    } as const;
+    // Build heat points from county centroids with non-linear weighting
+    const heatPoints: [number, number, number][] = [];
 
-    eligible.forEach((metrics, index) => {
-      const county = nevadaCounties.find(c => c.name === metrics.county);
-      if (!county) return;
+    eligible.forEach((metrics) => {
       const geoJson = getCountyFeature(metrics.county);
       if (!geoJson) return;
 
-      // Assign tier based on rank position
-      let tier: 1 | 2 | 3 | 4;
-      if (index < tier4Cutoff) tier = 4;
-      else if (index < tier3Cutoff) tier = 3;
-      else if (index < tier2Cutoff) tier = 2;
-      else tier = 1;
+      // Get centroid
+      const center = centroid(geoJson as Feature<Polygon | MultiPolygon>);
+      const [lng, lat] = center.geometry.coordinates;
 
-      const style = TIER_STYLES[tier];
+      // Non-linear scaling: pow(ratio, 0.6) so top counties dominate
+      const ratio = metrics.unengagedMembers / maxVal;
+      // Bottom 30% get zero weight (invisible)
+      if (ratio < 0.30) return;
+      const weight = Math.pow(ratio, 0.6);
 
-      // Extra boost for top 3 counties
-      const isTop3 = index < 3;
-      const fillOpacity = isTop3 ? Math.min(style.fillOpacity + 0.06, 0.88) : style.fillOpacity;
-      const weight = style.weight;
+      // Primary centroid point
+      heatPoints.push([lat, lng, weight]);
 
-      const geoLayer = L.geoJSON(geoJson, {
-        pane: MAP_PANES.gapOverlays,
-        style: {
-          color: style.strokeColor,
-          weight,
-          fillColor: style.fillColor,
-          fillOpacity,
-        },
-        interactive: true,
-      });
-
-      geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => {
-        updateCountyHoverPreview(metrics.county, event);
-        geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.10, 0.85), weight: weight + 0.5 });
-      });
-      geoLayer.on('mouseout', () => {
-        clearCountyHoverPreview();
-        geoLayer.setStyle({ fillOpacity, weight });
-      });
-      geoLayer.on('click', (event: L.LeafletEvent) => {
-        selectCountyEntity(metrics.county, 'engagement-gap-priority-county', event);
-      });
-
-      engagementPriorityRef.current!.addLayer(geoLayer);
+      // Spread 4 secondary points around centroid for coverage (smaller weight)
+      const spread = 0.08; // ~8km offset
+      const secondaryWeight = weight * 0.4;
+      heatPoints.push([lat + spread, lng, secondaryWeight]);
+      heatPoints.push([lat - spread, lng, secondaryWeight]);
+      heatPoints.push([lat, lng + spread, secondaryWeight]);
+      heatPoints.push([lat, lng - spread, secondaryWeight]);
     });
-  }, [clearCountyHoverPreview, engagementGapView, engagementPriorityCounties, layers.engagementGap, selectCountyEntity, updateCountyHoverPreview]);
+
+    if (heatPoints.length === 0) return;
+
+    // Create heat layer
+    const heat = (L as any).heatLayer(heatPoints, {
+      radius: 30,
+      blur: 20,
+      maxZoom: 10,
+      max: 1.0,
+      minOpacity: 0.15,
+      gradient: {
+        0.0: 'transparent',
+        0.3: '#FFF3E0',
+        0.45: '#FFB74D',
+        0.6: '#F57C00',
+        0.75: '#E64A19',
+        0.9: '#D32F2F',
+        1.0: '#B71C1C',
+      },
+    });
+
+    heat.addTo(map);
+    engagementHeatRef.current = heat;
+
+    // Ensure heat layer renders below markers by moving its canvas
+    const heatPane = map.getPane('overlayPane');
+    if (heatPane) {
+      heatPane.style.zIndex = '250';
+    }
+
+    // Add subtle dim overlay to basemap
+    const mapContainer = map.getContainer();
+    const dimOverlay = document.createElement('div');
+    dimOverlay.id = 'priority-dim-overlay';
+    dimOverlay.style.cssText = `
+      position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.07);
+      z-index: 199;
+      pointer-events: none;
+    `;
+    mapContainer.appendChild(dimOverlay);
+
+  }, [engagementGapView, engagementPriorityCounties, layers.engagementGap]);
 
   // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) — boundaries view ──
   useEffect(() => {
