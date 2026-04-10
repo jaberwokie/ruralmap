@@ -2290,16 +2290,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       // Non-linear scaling: pow(ratio, 0.6) so top counties dominate
       const ratio = metrics.unengagedMembers / maxVal;
-      // Bottom 30% get zero weight (invisible)
-      if (ratio < 0.30) return;
-      const weight = Math.pow(ratio, 0.6);
+      // Bottom 15% get zero weight (invisible)
+      if (ratio < 0.15) return;
+      const weight = Math.pow(ratio, 0.45);
 
       // Primary centroid point
       heatPoints.push([lat, lng, weight]);
 
-      // Spread 4 secondary points around centroid for coverage (smaller weight)
-      const spread = 0.08; // ~8km offset
-      const secondaryWeight = weight * 0.4;
+      // Spread 4 secondary points around centroid for coverage
+      const spread = 0.12; // ~12km offset
+      const secondaryWeight = weight * 0.6;
       heatPoints.push([lat + spread, lng, secondaryWeight]);
       heatPoints.push([lat - spread, lng, secondaryWeight]);
       heatPoints.push([lat, lng + spread, secondaryWeight]);
