@@ -2247,12 +2247,53 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, coverageGaps, layers.utilizationIntensity, selectOverlayEntity, updateCountyHoverPreview]);
 
-  // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) ──
+  // ── Engagement Gap heatmap (leaflet.heat) ──
+  useEffect(() => {
+    if (!mapRef.current) return;
+    // Remove existing heatmap layer
+    if (engagementHeatRef.current) {
+      mapRef.current.removeLayer(engagementHeatRef.current);
+      engagementHeatRef.current = null;
+    }
+    if (!layers.engagementGap || engagementGapView !== 'heat') return;
+
+    // Build heat points from county centroids weighted by unengaged members
+    const heatPoints: [number, number, number][] = [];
+    engagementPriorityCounties.forEach((metrics) => {
+      const county = nevadaCounties.find(c => c.name === metrics.county);
+      if (!county || metrics.unengagedMembers <= 0) return;
+      heatPoints.push([county.center[0], county.center[1], metrics.unengagedMembers]);
+    });
+
+    if (heatPoints.length === 0) return;
+
+    const maxVal = Math.max(...heatPoints.map(p => p[2]));
+    const heat = L.heatLayer(heatPoints, {
+      radius: 45,
+      blur: 35,
+      maxZoom: 10,
+      max: maxVal,
+      minOpacity: 0.15,
+      gradient: {
+        0.0: 'rgba(255, 200, 100, 0)',
+        0.2: 'rgba(255, 180, 80, 0.3)',
+        0.4: 'rgba(255, 140, 50, 0.5)',
+        0.6: 'rgba(240, 100, 30, 0.65)',
+        0.8: 'rgba(220, 60, 20, 0.8)',
+        1.0: 'rgba(180, 20, 10, 0.9)',
+      },
+    });
+
+    heat.addTo(mapRef.current);
+    engagementHeatRef.current = heat;
+  }, [layers.engagementGap, engagementGapView, engagementPriorityCounties]);
+
+  // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) — boundaries view ──
   useEffect(() => {
     if (!engagementGapRef.current) return;
     engagementGapRef.current.clearLayers();
     engagementGapLabelRef.current?.clearLayers();
-    if (!layers.engagementGap) return;
+    if (!layers.engagementGap || engagementGapView !== 'boundaries') return;
 
     const results = getEngagementGapResults();
     const priorityColor = 'hsl(var(--destructive))';
@@ -2364,7 +2405,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       L.marker(iconCenter, { icon: warnIcon, interactive: false, pane: MAP_PANES.labels }).addTo(engagementGapLabelRef.current!);
     });
-  }, [clearCountyHoverPreview, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
+  }, [clearCountyHoverPreview, engagementGapView, engagementPriorityCounties, layers.engagementGap, maxPriorityUnengagedMembers, selectCountyEntity, updateCountyHoverPreview]);
 
   // ── Tribal Nations polygons (real GeoJSON boundaries) ──
   useEffect(() => {
