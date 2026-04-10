@@ -879,6 +879,10 @@ const Sidebar = ({
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         const count = coreMapCounts[key];
                         const dividerBefore = key === 'serviceLocations' || key === 'services';
+                        const exportHandler = key === 'serviceLocations' ? exportProviderLocations
+                          : key === 'behavioralHealth' ? exportBehavioralHealth
+                          : key === 'services' ? exportServices
+                          : undefined;
                         return (
                           <div key={key}>
                             {dividerBefore && <div className="my-1 border-t border-border/40" />}
@@ -899,6 +903,17 @@ const Sidebar = ({
                                       ? 'toggle-provider-locations'
                                       : undefined,
                               belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
+                              inlineLegend: exportHandler ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); exportHandler(); }}
+                                  className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                  title="Export CSV"
+                                  aria-label={`Export ${label} as CSV`}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </button>
+                              ) : undefined,
                             })}
                           </div>
                         );
