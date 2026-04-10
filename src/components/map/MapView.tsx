@@ -2238,9 +2238,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         updateCountyHoverPreview(metrics.county, event);
         geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.06, 0.5), weight: weight + 0.5 });
       });
-      geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => {
-        updateCountyHoverPreview(metrics.county, event);
-      });
       geoLayer.on('mouseout', () => {
         clearCountyHoverPreview();
         geoLayer.setStyle({ fillOpacity, weight });
