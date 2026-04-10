@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, Upload, ChevronDown, ChevronRight, X, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Brain, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 import { MapTutorialStepKey } from '@/data/map-tutorial';
@@ -77,7 +77,7 @@ const LAYER_CONFIG = [
   { key: 'counties' as const, label: 'County Boundaries', colorClassName: 'text-muted-foreground', icon: MapIcon },
   { key: 'tribalNations' as const, label: 'Tribal Nations', colorClassName: 'text-tribal-nation', icon: Landmark },
   { key: 'services' as const, label: 'Services', colorClassName: 'text-service-presence', icon: Layers3 },
-  { key: 'behavioralHealth' as const, label: 'Behavioral Health', colorClassName: 'text-behavioral-health', icon: Headphones },
+  { key: 'behavioralHealth' as const, label: 'Behavioral Health', colorClassName: 'text-behavioral-health', icon: Brain },
   { key: 'serviceLocations' as const, label: 'Provider Locations', colorClassName: 'text-foreground', icon: MapPin },
   { key: 'operationalCoverage' as const, label: 'Response Capability', colorClassName: 'text-response-active', icon: Radio },
   { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', colorClassName: 'text-staffing-medium', icon: Users },
