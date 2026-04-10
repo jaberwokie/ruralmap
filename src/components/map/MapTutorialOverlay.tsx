@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { MAP_TUTORIAL_STEPS } from '@/data/map-tutorial';
+import { MAP_TUTORIAL_STEPS, type MapTutorialStep } from '@/data/map-tutorial';
 import MapTutorialCard from '@/components/map/tutorial/MapTutorialCard';
 import { getTutorialAnchorContext, getTutorialFallbackElement, resolveTutorialElements, scrollTutorialElementIntoView } from '@/components/map/tutorial/tutorialDom';
 import { FALLBACK_CARD_HEIGHT, getCardLayout, getHighlightRect, getViewportSize, type HighlightRect, type TutorialAnchorContext, type ViewportSize } from '@/components/map/tutorial/tutorialLayout';
@@ -15,173 +15,212 @@ interface MapTutorialOverlayProps {
   onBack: () => void;
 }
 
-const SETTLE_DELAY = 80;
-const REVEAL_DELAY = 60;
+/**
+ * Committed snapshot — everything the overlay currently renders.
+ * Updated atomically when a new step is fully resolved.
+ */
+interface CommittedState {
+  stepIndex: number;
+  step: MapTutorialStep;
+  highlightRect: HighlightRect | null;
+  fallbackRect: HighlightRect | null;
+  anchorContext: TutorialAnchorContext;
+}
+
+const MAX_RESOLVE_ATTEMPTS = 14;
 
 const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, onSkip, onNext, onBack }: MapTutorialOverlayProps) => {
   const step = MAP_TUTORIAL_STEPS[stepIndex];
   const cardRef = useRef<HTMLDivElement | null>(null);
+
   const [mounted, setMounted] = useState(false);
-  // Phase: 'resolving' → highlight moves but card hidden; 'revealed' → card visible
-  const [phase, setPhase] = useState<'resolving' | 'revealed'>('resolving');
-  const [highlightRect, setHighlightRect] = useState<HighlightRect | null>(null);
-  const [fallbackRect, setFallbackRect] = useState<HighlightRect | null>(null);
-  const [anchorContext, setAnchorContext] = useState<TutorialAnchorContext>('generic');
   const [viewport, setViewport] = useState<ViewportSize>({ width: 0, height: 0 });
   const [cardHeight, setCardHeight] = useState(FALLBACK_CARD_HEIGHT);
 
-  useEffect(() => {
-    setMounted(true);
-    setViewport(getViewportSize());
-  }, []);
+  // The committed state is what the overlay actually renders.
+  // It only updates when a new step is fully resolved.
+  const [committed, setCommitted] = useState<CommittedState | null>(null);
+  // Controls card + label visibility; false while transitioning
+  const [contentVisible, setContentVisible] = useState(false);
+  // Locks Next/Prev during transition
+  const [transitioning, setTransitioning] = useState(false);
+
+  const transitionCancelRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => { setMounted(true); setViewport(getViewportSize()); }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    const updateViewport = () => setViewport(getViewportSize());
-    updateViewport();
-    window.addEventListener('resize', updateViewport);
-    return () => window.removeEventListener('resize', updateViewport);
+    const update = () => setViewport(getViewportSize());
+    update();
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
   }, [mounted]);
 
-  // ── Step resolution pipeline ──
+  // ── Resolution pipeline ──
+  // Runs when stepIndex changes. Does NOT touch committed state until resolved.
+  const resolveStep = useCallback((targetStep: MapTutorialStep, targetIndex: number) => {
+    // Cancel any in-flight resolution
+    transitionCancelRef.current?.();
+
+    let cancelled = false;
+    let timer = 0;
+    let raf = 0;
+    let attempts = 0;
+
+    transitionCancelRef.current = () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+    };
+
+    const schedule = (cb: () => void, delay = 0) => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(raf);
+      if (delay > 0) {
+        timer = window.setTimeout(() => { raf = requestAnimationFrame(cb); }, delay);
+      } else {
+        raf = requestAnimationFrame(cb);
+      }
+    };
+
+    const measureGeometry = (allowFallback: boolean) => {
+      const elements = resolveTutorialElements(targetStep.selectors);
+      const primary = elements[0] ?? (allowFallback ? getTutorialFallbackElement(targetStep.selectors) : null);
+      const ctx = getTutorialAnchorContext(primary, targetStep.selectors);
+      if (!primary) return { ok: false as const, ctx };
+      const hr = elements.length > 0 ? getHighlightRect(elements) : null;
+      const fr = elements.length === 0 ? getHighlightRect([primary]) : null;
+      if (!hr && !fr) return { ok: false as const, ctx };
+      return { ok: true as const, ctx, hr, fr, primary };
+    };
+
+    const commit = (hr: HighlightRect | null, fr: HighlightRect | null, ctx: TutorialAnchorContext) => {
+      if (cancelled) return;
+      // 1. Hide card content
+      setContentVisible(false);
+      // 2. Update highlight rect (CSS will animate it from old → new position)
+      setCommitted({ stepIndex: targetIndex, step: targetStep, highlightRect: hr, fallbackRect: fr, anchorContext: ctx });
+      // 3. After highlight transition finishes (~260ms), reveal card content
+      schedule(() => {
+        if (cancelled) return;
+        // Re-measure once more after highlight settled for pixel-perfect card placement
+        const final = measureGeometry(true);
+        if (final.ok) {
+          setCommitted(prev => prev ? { ...prev, highlightRect: final.hr ?? null, fallbackRect: final.fr ?? null, anchorContext: final.ctx } : prev);
+        }
+        schedule(() => {
+          if (cancelled) return;
+          setContentVisible(true);
+          setTransitioning(false);
+        }, 40);
+      }, 220);
+    };
+
+    const tryResolve = () => {
+      if (cancelled) return;
+      const result = measureGeometry(false);
+
+      if (!result.ok) {
+        if (attempts < MAX_RESOLVE_ATTEMPTS) {
+          attempts++;
+          schedule(tryResolve, attempts < 4 ? 40 : 80);
+          return;
+        }
+        // Use fallback
+        const fb = measureGeometry(true);
+        commit(fb.ok ? fb.hr ?? null : null, fb.ok ? fb.fr ?? null : null, fb.ctx);
+        return;
+      }
+
+      // Scroll into view if needed
+      const didScroll = scrollTutorialElementIntoView(result.primary!);
+
+      if (didScroll) {
+        // Wait for smooth scroll to finish, then re-measure and commit
+        schedule(() => {
+          if (cancelled) return;
+          const post = measureGeometry(true);
+          commit(post.ok ? post.hr ?? null : null, post.ok ? post.fr ?? null : null, post.ctx);
+        }, 350); // smooth scroll typically takes 300-400ms
+      } else {
+        // No scroll needed — commit immediately
+        commit(result.hr ?? null, result.fr ?? null, result.ctx);
+      }
+    };
+
+    setTransitioning(true);
+    tryResolve();
+  }, []);
+
+  // Trigger resolution when stepIndex changes
   useEffect(() => {
     if (!mounted || !walkthroughOpen || !step) return;
 
-    let frame = 0;
-    let timeout = 0;
-    let cancelled = false;
-    let attempts = 0;
-    const MAX_RESOLUTION_ATTEMPTS = 12;
+    // First step or step change
+    if (!committed || committed.stepIndex !== stepIndex) {
+      resolveStep(step, stepIndex);
+    }
 
-    const schedule = (callback: () => void, delay = 0) => {
-      window.clearTimeout(timeout);
-      cancelAnimationFrame(frame);
-      if (delay > 0) {
-        timeout = window.setTimeout(() => { frame = window.requestAnimationFrame(callback); }, delay);
-        return;
-      }
-      frame = window.requestAnimationFrame(callback);
+    return () => { transitionCancelRef.current?.(); };
+  }, [mounted, walkthroughOpen, step, stepIndex, committed, resolveStep]);
+
+  // Live position refresh (resize/scroll) — only updates committed geometry
+  useEffect(() => {
+    if (!mounted || !walkthroughOpen || !committed) return;
+
+    const refresh = () => {
+      if (transitioning) return; // Don't thrash during transition
+      const elements = resolveTutorialElements(committed.step.selectors);
+      const primary = elements[0] ?? getTutorialFallbackElement(committed.step.selectors);
+      if (!primary) return;
+      const hr = elements.length > 0 ? getHighlightRect(elements) : null;
+      const fr = elements.length === 0 ? getHighlightRect([primary]) : null;
+      setCommitted(prev => prev ? { ...prev, highlightRect: hr, fallbackRect: fr } : prev);
     };
 
-    const updateStepGeometry = (allowFallback: boolean) => {
-      const elements = resolveTutorialElements(step.selectors);
-      const primaryElement = elements[0] ?? (allowFallback ? getTutorialFallbackElement(step.selectors) : null);
-      setAnchorContext(getTutorialAnchorContext(primaryElement, step.selectors));
-      if (!primaryElement) {
-        setHighlightRect(null);
-        setFallbackRect(null);
-        return false;
-      }
-      const nextHighlightRect = elements.length > 0 ? getHighlightRect(elements) : null;
-      const nextFallbackRect = elements.length === 0 ? getHighlightRect([primaryElement]) : null;
-      setHighlightRect(nextHighlightRect);
-      setFallbackRect(nextFallbackRect);
-      return Boolean(nextHighlightRect || nextFallbackRect);
-    };
-
-    const refreshPosition = () => {
-      if (cancelled) return;
-      updateStepGeometry(true);
-    };
-
-    const revealCard = () => {
-      if (cancelled) return;
-      schedule(() => { if (!cancelled) setPhase('revealed'); }, REVEAL_DELAY);
-    };
-
-    const settleAndReveal = (didScroll: boolean) => {
-      // After scroll completes + layout settles, update geometry then reveal
-      schedule(() => {
-        if (cancelled) return;
-        const hasAnchor = updateStepGeometry(false);
-        if (!hasAnchor && attempts < MAX_RESOLUTION_ATTEMPTS) {
-          attempts += 1;
-          schedule(() => settleAndReveal(false), 60);
-          return;
-        }
-        if (!hasAnchor) {
-          updateStepGeometry(true);
-        }
-        // Wait for CSS transitions on highlight to settle, then reveal card
-        schedule(revealCard, SETTLE_DELAY);
-      }, didScroll ? 180 : SETTLE_DELAY);
-    };
-
-    const resolveAnchor = () => {
-      if (cancelled) return;
-      const elements = resolveTutorialElements(step.selectors);
-      const primaryElement = elements[0] ?? null;
-
-      if (!primaryElement) {
-        if (attempts < MAX_RESOLUTION_ATTEMPTS) {
-          attempts += 1;
-          schedule(resolveAnchor, attempts < 4 ? 40 : 80);
-          return;
-        }
-        updateStepGeometry(true);
-        revealCard();
-        return;
-      }
-
-      // 1. Scroll target into view (smooth)
-      const didScroll = scrollTutorialElementIntoView(primaryElement);
-      // 2. Update highlight position immediately so it starts transitioning
-      updateStepGeometry(false);
-      // 3. Wait for scroll + layout settle, then reveal card
-      settleAndReveal(didScroll);
-    };
-
-    // Begin new step: hide card, keep highlight overlay visible
-    setPhase('resolving');
-    resolveAnchor();
-
-    window.addEventListener('resize', refreshPosition);
-    window.addEventListener('scroll', refreshPosition, true);
-
+    window.addEventListener('resize', refresh);
+    window.addEventListener('scroll', refresh, true);
     return () => {
-      cancelled = true;
-      window.clearTimeout(timeout);
-      cancelAnimationFrame(frame);
-      window.removeEventListener('resize', refreshPosition);
-      window.removeEventListener('scroll', refreshPosition, true);
+      window.removeEventListener('resize', refresh);
+      window.removeEventListener('scroll', refresh, true);
     };
-  }, [mounted, step, walkthroughOpen]);
+  }, [mounted, walkthroughOpen, committed, transitioning]);
 
+  // Keyboard
   useEffect(() => {
     if (!introOpen && !walkthroughOpen) return;
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onSkip();
-      if (!walkthroughOpen) return;
+      if (event.key === 'Escape') { onSkip(); return; }
+      if (!walkthroughOpen || transitioning) return;
       if (event.key === 'ArrowRight' || event.key === 'Enter') onNext();
       if (event.key === 'ArrowLeft') onBack();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [introOpen, onBack, onNext, onSkip, walkthroughOpen]);
+  }, [introOpen, walkthroughOpen, transitioning, onBack, onNext, onSkip]);
 
+  // Card height measurement
   useLayoutEffect(() => {
     if (!mounted || !cardRef.current || (!introOpen && !walkthroughOpen)) return;
-    const element = cardRef.current;
-    const updateHeight = () => setCardHeight(element.getBoundingClientRect().height || FALLBACK_CARD_HEIGHT);
-    updateHeight();
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(element);
-    window.addEventListener('resize', updateHeight);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', updateHeight);
-    };
-  }, [introOpen, mounted, stepIndex, walkthroughOpen]);
+    const el = cardRef.current;
+    const update = () => setCardHeight(el.getBoundingClientRect().height || FALLBACK_CARD_HEIGHT);
+    update();
+    const obs = new ResizeObserver(update);
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [introOpen, mounted, committed?.stepIndex, walkthroughOpen]);
+
+  const focusRect = committed ? (committed.highlightRect ?? committed.fallbackRect) : null;
 
   const cardLayout = useMemo(() => {
-    if (!mounted || viewport.width === 0 || viewport.height === 0) return null;
-    return getCardLayout(viewport, highlightRect, cardHeight, anchorContext, fallbackRect);
-  }, [anchorContext, cardHeight, fallbackRect, highlightRect, mounted, viewport]);
-
-  const focusRect = highlightRect ?? fallbackRect;
+    if (!mounted || viewport.width === 0 || viewport.height === 0 || !committed) return null;
+    return getCardLayout(viewport, committed.highlightRect, cardHeight, committed.anchorContext, committed.fallbackRect);
+  }, [committed, cardHeight, mounted, viewport]);
 
   if (!mounted || (!introOpen && (!walkthroughOpen || !step))) return null;
 
+  // Intro screen
   if (introOpen) {
     return createPortal(
       <div className="fixed inset-0 z-[2200] flex items-center justify-center bg-foreground/45 px-4 backdrop-blur-[1px]">
@@ -199,18 +238,10 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
           </div>
           <div className="shrink-0 border-t border-border px-6 py-4">
             <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={onStart}
-                className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]"
-              >
+              <button type="button" onClick={onStart} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 active:scale-[0.98]">
                 Start Walkthrough
               </button>
-              <button
-                type="button"
-                onClick={onSkip}
-                className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary active:scale-[0.98]"
-              >
+              <button type="button" onClick={onSkip} className="rounded-md border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-secondary active:scale-[0.98]">
                 Skip
               </button>
             </div>
@@ -221,61 +252,39 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
     );
   }
 
-  if (!cardLayout || !step) return null;
+  // Walkthrough — always render the overlay structure, never unmount between steps
+  const displayStep = committed?.step ?? step;
+  const displayStepIndex = committed?.stepIndex ?? stepIndex;
 
-  const isRevealed = phase === 'revealed';
+  if (!cardLayout || !displayStep) return null;
+
+  // Interaction lock: disable Next/Prev buttons during transition
+  const handleNext = transitioning ? undefined : onNext;
+  const handleBack = transitioning ? undefined : onBack;
 
   return createPortal(
     <div className="fixed inset-0 z-[2200] pointer-events-none">
-      {/* Dimming overlay — always visible during walkthrough, transitions smoothly */}
+      {/* Dimming + highlight — persists across steps, CSS transitions handle movement */}
       {focusRect ? (
         <>
+          <div className="absolute inset-x-0 top-0 bg-foreground/16 transition-all duration-[260ms] ease-out" style={{ height: focusRect.top }} />
+          <div className="absolute bottom-0 left-0 bg-foreground/16 transition-all duration-[260ms] ease-out" style={{ top: focusRect.top, width: focusRect.left, height: focusRect.height }} />
+          <div className="absolute bg-foreground/16 transition-all duration-[260ms] ease-out" style={{ top: focusRect.top, left: focusRect.left + focusRect.width, right: 0, height: focusRect.height }} />
+          <div className="absolute inset-x-0 bottom-0 bg-foreground/16 transition-all duration-[260ms] ease-out" style={{ top: focusRect.top + focusRect.height }} />
           <div
-            className="absolute inset-x-0 top-0 bg-foreground/16 transition-all duration-250 ease-out"
-            style={{ height: focusRect.top }}
-          />
-          <div
-            className="absolute bottom-0 left-0 bg-foreground/16 transition-all duration-250 ease-out"
+            className="absolute rounded-lg border-2 border-primary/70 bg-transparent transition-all duration-[260ms] ease-out"
             style={{
-              top: focusRect.top,
-              width: focusRect.left,
-              height: focusRect.height,
-            }}
-          />
-          <div
-            className="absolute bg-foreground/16 transition-all duration-250 ease-out"
-            style={{
-              top: focusRect.top,
-              left: focusRect.left + focusRect.width,
-              right: 0,
-              height: focusRect.height,
-            }}
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 bg-foreground/16 transition-all duration-250 ease-out"
-            style={{ top: focusRect.top + focusRect.height }}
-          />
-          <div
-            className="absolute rounded-lg border-2 border-primary/70 bg-transparent transition-all duration-250 ease-out"
-            style={{
-              top: focusRect.top,
-              left: focusRect.left,
-              width: focusRect.width,
-              height: focusRect.height,
+              top: focusRect.top, left: focusRect.left, width: focusRect.width, height: focusRect.height,
               boxShadow: '0 0 0 1px hsl(var(--background) / 0.28), inset 0 0 0 1px hsl(var(--primary) / 0.10)',
             }}
           />
-          {/* Target label — fades with card */}
+          {/* Target label */}
           <div
-            className="absolute pointer-events-none transition-all duration-250 ease-out"
-            style={{
-              top: focusRect.top - 10,
-              left: focusRect.left + 8,
-              opacity: isRevealed ? 1 : 0,
-            }}
+            className="absolute pointer-events-none transition-all duration-[260ms] ease-out"
+            style={{ top: focusRect.top - 10, left: focusRect.left + 8, opacity: contentVisible ? 1 : 0 }}
           >
             <span className="inline-flex items-center rounded-md bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground shadow-sm">
-              {step.targetLabel}
+              {displayStep.targetLabel}
             </span>
           </div>
         </>
@@ -283,19 +292,19 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
         <div className="absolute inset-0 bg-foreground/16" />
       )}
 
-      {/* Card — rendered always but opacity-controlled for smooth fade */}
+      {/* Card — always mounted, position transitions via CSS, content fades */}
       <div
-        className="transition-opacity duration-200 ease-out"
-        style={{ opacity: isRevealed ? 1 : 0, pointerEvents: isRevealed ? 'auto' : 'none' }}
+        className="transition-opacity duration-150 ease-out"
+        style={{ opacity: contentVisible ? 1 : 0, pointerEvents: contentVisible ? 'auto' : 'none' }}
       >
         <MapTutorialCard
           ref={cardRef}
           layout={cardLayout}
-          highlightRect={highlightRect}
-          step={step}
-          stepIndex={stepIndex}
-          onBack={onBack}
-          onNext={onNext}
+          highlightRect={committed?.highlightRect ?? null}
+          step={displayStep}
+          stepIndex={displayStepIndex}
+          onBack={handleBack ?? onBack}
+          onNext={handleNext ?? onNext}
           onClose={onSkip}
         />
       </div>
