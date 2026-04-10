@@ -2290,16 +2290,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       // Non-linear scaling: pow(ratio, 0.6) so top counties dominate
       const ratio = metrics.unengagedMembers / maxVal;
-      // Bottom 30% get zero weight (invisible)
-      if (ratio < 0.30) return;
-      const weight = Math.pow(ratio, 0.6);
+      // Bottom 15% get zero weight (invisible)
+      if (ratio < 0.15) return;
+      const weight = Math.pow(ratio, 0.45);
 
       // Primary centroid point
       heatPoints.push([lat, lng, weight]);
 
-      // Spread 4 secondary points around centroid for coverage (smaller weight)
-      const spread = 0.08; // ~8km offset
-      const secondaryWeight = weight * 0.4;
+      // Spread 4 secondary points around centroid for coverage
+      const spread = 0.12; // ~12km offset
+      const secondaryWeight = weight * 0.6;
       heatPoints.push([lat + spread, lng, secondaryWeight]);
       heatPoints.push([lat - spread, lng, secondaryWeight]);
       heatPoints.push([lat, lng + spread, secondaryWeight]);
@@ -2310,19 +2310,20 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     // Create heat layer
     const heat = (L as any).heatLayer(heatPoints, {
-      radius: 30,
-      blur: 20,
-      maxZoom: 10,
-      max: 1.0,
-      minOpacity: 0.15,
+      radius: 50,
+      blur: 25,
+      maxZoom: 12,
+      max: 0.6,
+      minOpacity: 0.35,
       gradient: {
         0.0: 'transparent',
-        0.3: '#FFF3E0',
-        0.45: '#FFB74D',
-        0.6: '#F57C00',
-        0.75: '#E64A19',
-        0.9: '#D32F2F',
-        1.0: '#B71C1C',
+        0.15: '#FFF3E0',
+        0.3: '#FFB74D',
+        0.45: '#F57C00',
+        0.6: '#E64A19',
+        0.75: '#D32F2F',
+        0.9: '#B71C1C',
+        1.0: '#880E4F',
       },
     });
 
