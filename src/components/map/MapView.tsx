@@ -17,7 +17,7 @@ import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/types/entities';
 import { getActiveCoverageZone, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { fteCapacityData, FTE_ROLE_COLORS } from '@/data/fte-capacity';
-import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
+import { getCountyUtilization, getUtilizationTier, UTILIZATION_COLORS, getFacilityUtilization, getScaledPinSize, getProviderUtilizationScore, getEngagementGapCounties, getEngagementGapResults, EngagementGapResult, WASHOE_URBAN_RURAL_LAT, getFilteredEngagementPriorityCounties, getCountyEngagementMetrics, getCompositeEngagementPriority } from '@/utils/utilizationAggregation';
 import { BROADBAND_BY_COUNTY, type BroadbandStatus, type OperationalBroadbandReadiness } from '@/data/broadband-coverage';
 import { CELLULAR_BY_COUNTY, getReliabilityCategory, type CellularReliability, type OperationalCellularReadiness } from '@/data/cellular-coverage';
 import buffer from '@turf/buffer';
@@ -2273,11 +2273,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     );
     if (eligible.length === 0) return;
 
-    // Find max unengaged members for normalization
-    const maxVal = Math.max(...eligible.map(m => m.unengagedMembers));
-    if (maxVal === 0) return;
-
-    // Build heat points from county centroids with non-linear weighting
+    // Build heat points from county centroids using composite priority score
     const heatPoints: [number, number, number][] = [];
 
     eligible.forEach((metrics) => {
@@ -2288,11 +2284,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       const center = centroid(geoJson as Feature<Polygon | MultiPolygon>);
       const [lng, lat] = center.geometry.coordinates;
 
-      // Non-linear scaling: pow(ratio, 0.6) so top counties dominate
-      const ratio = metrics.unengagedMembers / maxVal;
+      // Composite score: blends unengaged count, engagement rate, and staff coverage
+      const compositeScore = getCompositeEngagementPriority(metrics.county);
       // Bottom 15% get zero weight (invisible)
-      if (ratio < 0.15) return;
-      const weight = Math.pow(ratio, 0.45);
+      if (compositeScore < 0.15) return;
+      const weight = Math.pow(compositeScore, 0.45);
 
       // Primary centroid point
       heatPoints.push([lat, lng, weight]);
