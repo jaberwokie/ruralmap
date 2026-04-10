@@ -2432,7 +2432,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       <TooltipProvider delayDuration={120}>
         {(countyHoverPreview || markerHoverPreview) && (
           <div
-            className="pointer-events-none absolute top-[120px] left-2 z-[810] w-52 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
+            className="pointer-events-none absolute top-[180px] left-2 z-[810] w-52 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
           >
             {markerHoverPreview && (
               <div>
