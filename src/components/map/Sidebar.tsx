@@ -658,44 +658,40 @@ const Sidebar = ({
   return (
     <div data-tutorial="sidebar" className="flex h-full w-full flex-col overflow-y-auto bg-card shadow-[var(--shadow-panel)] md:w-80">
       {/* Header */}
-      <div className="p-4 pb-3">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
+      <div className="px-4 pt-4 pb-3 space-y-2.5">
+        <div>
+          <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
+          <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setExplainerOpen(true)}
+            className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            Map Explainer
+          </button>
+          {onReplayTutorial && (
             <button
               type="button"
-              onClick={() => setExplainerOpen(true)}
+              onClick={onReplayTutorial}
               className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              Map Explainer
+              Replay Tutorial
             </button>
-            {onReplayTutorial && (
-              <button
-                type="button"
-                onClick={onReplayTutorial}
-                className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-              >
-                Replay Tutorial
-              </button>
-            )}
-          </div>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+          <span className="text-muted-foreground flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
+            <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
+          </span>
+          <span className="text-muted-foreground flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-clinic inline-block" />
+            <span className="font-mono font-medium text-foreground">{clinicCount}</span> Clinics
+          </span>
         </div>
         <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
-      </div>
-
-      {/* Stats Bar */}
-      <div className="px-4 pb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-        <span className="text-muted-foreground flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
-          <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
-        </span>
-        <span className="text-muted-foreground flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-clinic inline-block" />
-          <span className="font-mono font-medium text-foreground">{clinicCount}</span> Clinics
-        </span>
       </div>
 
       {/* Search */}
