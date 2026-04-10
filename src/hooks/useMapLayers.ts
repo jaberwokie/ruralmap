@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import type { LayerState, CoverageState } from '@/types/layers';
+import type { LayerState, CoverageState, EngagementGapView } from '@/types/layers';
 import { getToggleDiagnosticConfig } from '@/data/layer-registry';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
@@ -42,6 +42,7 @@ export interface MapLayerActions {
   setCoverageGaps: (checked: boolean) => void;
   setCoverageRadiusKm: (km: number) => void;
   setRadiusKm: (km: number) => void;
+  setEngagementGapView: (view: EngagementGapView) => void;
   /** Direct setter for tutorial overrides */
   setLayers: React.Dispatch<React.SetStateAction<LayerState>>;
 }
@@ -52,6 +53,7 @@ export interface MapLayerState {
   coverageGaps: boolean;
   coverageRadiusKm: number;
   radiusKm: number;
+  engagementGapView: EngagementGapView;
 }
 
 export interface UseMapLayersReturn extends MapLayerState {
@@ -68,6 +70,7 @@ export const useMapLayers = (): UseMapLayersReturn => {
   const [coverageGaps, setCoverageGapsRaw] = useState(DEFAULT_COVERAGE.coverageGaps);
   const [coverageRadiusKm, setCoverageRadiusKm] = useState(DEFAULT_COVERAGE.coverageRadiusKm);
   const [radiusKm, setRadiusKm] = useState(DEFAULT_COVERAGE.radiusKm);
+  const [engagementGapView, setEngagementGapView] = useState<EngagementGapView>('heat');
 
   const toggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
@@ -105,6 +108,7 @@ export const useMapLayers = (): UseMapLayersReturn => {
     setCoverageGaps,
     setCoverageRadiusKm,
     setRadiusKm,
+    setEngagementGapView,
     setLayers,
   }), [toggleLayer, setCoverageRadius, setCoverageGaps]);
 
@@ -114,6 +118,7 @@ export const useMapLayers = (): UseMapLayersReturn => {
     coverageGaps,
     coverageRadiusKm,
     radiusKm,
+    engagementGapView,
     actions,
     snapshot,
     restore,

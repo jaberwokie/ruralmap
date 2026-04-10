@@ -1,12 +1,12 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
 
 import { toast } from 'sonner';
 import type { Filters } from '@/types/filters';
-import type { LayerState } from '@/types/layers';
+import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
@@ -38,6 +38,8 @@ export interface SidebarLayerProps {
   onRadiusChange: (km: number) => void;
   coverageRadiusKm: number;
   onCoverageRadiusKmChange?: (km: number) => void;
+  engagementGapView: EngagementGapView;
+  onEngagementGapViewChange: (view: EngagementGapView) => void;
 }
 
 export interface SidebarFilterProps {
@@ -290,6 +292,8 @@ const Sidebar = ({
     onRadiusChange,
     coverageRadiusKm = 120,
     onCoverageRadiusKmChange,
+    engagementGapView,
+    onEngagementGapViewChange,
   },
   filter: {
     searchQuery,
@@ -976,6 +980,33 @@ const Sidebar = ({
 
                               return (
                                 <div className="space-y-1.5 px-2 pb-2 pt-1">
+                                  <div className="flex items-center gap-1.5 text-[10px]">
+                                    <span className="text-muted-foreground">View:</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => onEngagementGapViewChange('heat')}
+                                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 ${
+                                        engagementGapView === 'heat'
+                                          ? 'bg-destructive/15 text-destructive'
+                                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                                      }`}
+                                    >
+                                      <Flame className="h-2.5 w-2.5" />
+                                      Heat
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => onEngagementGapViewChange('boundaries')}
+                                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 ${
+                                        engagementGapView === 'boundaries'
+                                          ? 'bg-destructive/15 text-destructive'
+                                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                                      }`}
+                                    >
+                                      <Grid3X3 className="h-2.5 w-2.5" />
+                                      Boundaries
+                                    </button>
+                                  </div>
                                   <div className="space-y-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1.5">
                                     <div className="flex items-center justify-between gap-2">
                                       <div>
