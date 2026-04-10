@@ -22,7 +22,7 @@ export interface CardLayout {
   placement: TutorialPlacement;
 }
 
-export const HIGHLIGHT_PADDING = 12;
+export const HIGHLIGHT_PADDING = 6;
 export const VIEWPORT_PADDING = 20;
 export const CARD_MAX_WIDTH = 420;
 export const CARD_MIN_WIDTH = 280;
