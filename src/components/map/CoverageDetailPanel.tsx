@@ -1401,45 +1401,45 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
   const verificationSignal = resolveVerificationSignalLabel(entityId);
 
   return (
-    <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-0.5">
+    <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-1">
       {routingTier && (
-        <div className="flex justify-between text-[10px]">
-          <span className="text-muted-foreground">Routing Tier</span>
-          <span className={`font-medium ${ROUTING_TIER_DISPLAY_COLORS[routingTier]}`}>
+        <div className="text-[10px]">
+          <span className="text-muted-foreground block leading-tight">Routing Tier</span>
+          <span className={`font-medium leading-tight ${ROUTING_TIER_DISPLAY_COLORS[routingTier]}`}>
             {ROUTING_TIER_DISPLAY_LABELS[routingTier]}
           </span>
         </div>
       )}
       {verificationSignal && (
-        <div className="flex justify-between text-[10px]">
-          <span className="text-muted-foreground">Verification Signal</span>
-          <span className="font-medium text-foreground">{verificationSignal}</span>
+        <div className="text-[10px]">
+          <span className="text-muted-foreground block leading-tight">Verification Signal</span>
+          <span className="font-medium text-foreground leading-tight">{verificationSignal}</span>
         </div>
       )}
       {showMedicaid && (
-        <div className="flex justify-between text-[10px]">
-          <span className="text-muted-foreground">NV Medicaid Participating</span>
-          <span className={`font-medium ${PARTICIPATION_STATUS_COLORS[resolved.medicaidParticipationStatus]}`}>
+        <div className="text-[10px]">
+          <span className="text-muted-foreground block leading-tight">NV Medicaid Participating</span>
+          <span className={`font-medium leading-tight ${PARTICIPATION_STATUS_COLORS[resolved.medicaidParticipationStatus]}`}>
             {PARTICIPATION_STATUS_LABELS[resolved.medicaidParticipationStatus]}
           </span>
         </div>
       )}
       {resolved.isTribalProvider && (
-        <div className="flex justify-between text-[10px]">
-          <span className="text-muted-foreground">Tribal Provider</span>
-          <span className="font-medium text-foreground">Yes</span>
+        <div className="text-[10px]">
+          <span className="text-muted-foreground block leading-tight">Tribal Provider</span>
+          <span className="font-medium text-foreground leading-tight">Yes</span>
         </div>
       )}
       {resolved.isTriballyOperated && (
-        <div className="flex justify-between text-[10px]">
-          <span className="text-muted-foreground">Tribally Operated</span>
-          <span className="font-medium text-foreground">Yes</span>
+        <div className="text-[10px]">
+          <span className="text-muted-foreground block leading-tight">Tribally Operated</span>
+          <span className="font-medium text-foreground leading-tight">Yes</span>
         </div>
       )}
       {resolved.isCrossBorderService && (
-        <div className="flex justify-between text-[10px]">
-          <span className="text-muted-foreground">Cross-border</span>
-          <span className="font-medium text-muted-foreground">Yes — reimbursement verification may be needed</span>
+        <div className="text-[10px]">
+          <span className="text-muted-foreground block leading-tight">Cross-border</span>
+          <span className="font-medium text-muted-foreground leading-tight">Yes — reimbursement verification may be needed</span>
         </div>
       )}
       {resolved.reimbursementNotes && (
