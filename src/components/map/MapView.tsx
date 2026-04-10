@@ -1414,9 +1414,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         updateCountyHoverPreview(county.name, event);
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.06)' });
       });
-      hitArea.on('mousemove', (event: L.LeafletMouseEvent) => {
-        updateCountyHoverPreview(county.name, event);
-      });
       hitArea.on('mouseout', () => {
         clearCountyHoverPreview();
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
@@ -1681,21 +1678,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         });
 
-        marker.bindTooltip(
-          `
-            <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-              <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
-              <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
-              ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
-              <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
-            </div>
-          `,
-          {
-            direction: 'top',
-            offset: [0, -8],
-            className: 'facility-tooltip',
-          }
-        );
+        marker.on('mouseover', () => {
+          markerHoverPreviewRef.current({
+            name: service.name,
+            subtitle: `${service.city}, ${service.county} County`,
+            address: service.address,
+            detail: service.category,
+          });
+        });
+        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
 
         // Add to MarkerClusterGroup — same click interception path as providers.
         // The cluster group's on('click') handler (line ~1311) catches all
@@ -1755,21 +1746,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         });
 
-        marker.bindTooltip(
-          `
-            <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-              <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
-              <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
-              ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
-              <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">Behavioral Health · ${service.category}</div>
-            </div>
-          `,
-          {
-            direction: 'top',
-            offset: [0, -8],
-            className: 'facility-tooltip',
-          }
-        );
+        marker.on('mouseover', () => {
+          markerHoverPreviewRef.current({
+            name: service.name,
+            subtitle: `${service.city}, ${service.county} County`,
+            address: service.address,
+            detail: `Behavioral Health · ${service.category}`,
+          });
+        });
+        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
 
         // Add to MarkerClusterGroup — same click interception path as providers.
         pointClusterRef.current!.addLayer(marker);
