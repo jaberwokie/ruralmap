@@ -1223,35 +1223,49 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       attributionControl: false,
     });
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
-
-    // Recenter control
-    const RecenterControl = L.Control.extend({
+    // Unified control stack: Recenter + Zoom In + Zoom Out
+    const MapControlStack = L.Control.extend({
       options: { position: 'bottomright' as L.ControlPosition },
       onAdd() {
         const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-        const btn = L.DomUtil.create('a', '', container) as HTMLAnchorElement;
-        btn.href = '#';
-        btn.title = 'Recenter Map';
-        btn.setAttribute('role', 'button');
-        btn.setAttribute('aria-label', 'Recenter Map');
-        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>';
-        btn.style.display = 'flex';
-        btn.style.alignItems = 'center';
-        btn.style.justifyContent = 'center';
-        btn.style.width = '30px';
-        btn.style.height = '30px';
-        btn.style.lineHeight = '30px';
-        btn.style.fontSize = '16px';
+        container.style.display = 'flex';
+        container.style.flexDirection = 'column';
+        container.style.overflow = 'hidden';
+
+        const makeBtn = (title: string, ariaLabel: string, innerHTML: string, onClick: () => void) => {
+          const btn = L.DomUtil.create('a', '', container) as HTMLAnchorElement;
+          btn.href = '#';
+          btn.title = title;
+          btn.setAttribute('role', 'button');
+          btn.setAttribute('aria-label', ariaLabel);
+          btn.innerHTML = innerHTML;
+          btn.style.display = 'flex';
+          btn.style.alignItems = 'center';
+          btn.style.justifyContent = 'center';
+          btn.style.width = '30px';
+          btn.style.height = '30px';
+          btn.style.lineHeight = '30px';
+          btn.style.fontSize = '18px';
+          btn.style.textDecoration = 'none';
+          btn.style.borderBottom = '1px solid rgba(0,0,0,0.1)';
+          L.DomEvent.on(btn, 'click', (e) => { L.DomEvent.preventDefault(e); onClick(); });
+          return btn;
+        };
+
+        makeBtn(
+          'Recenter Map', 'Recenter Map',
+          '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>',
+          () => map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true, duration: 0.4 }),
+        );
+        makeBtn('Zoom in', 'Zoom in', '<span aria-hidden="true">+</span>', () => map.zoomIn());
+        const lastBtn = makeBtn('Zoom out', 'Zoom out', '<span aria-hidden="true">−</span>', () => map.zoomOut());
+        lastBtn.style.borderBottom = 'none';
+
         L.DomEvent.disableClickPropagation(container);
-        L.DomEvent.on(btn, 'click', (e) => {
-          L.DomEvent.preventDefault(e);
-          map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true, duration: 0.4 });
-        });
         return container;
       },
     });
-    new RecenterControl().addTo(map);
+    new MapControlStack().addTo(map);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
