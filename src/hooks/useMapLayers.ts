@@ -42,6 +42,7 @@ export interface MapLayerActions {
   setCoverageGaps: (checked: boolean) => void;
   setCoverageRadiusKm: (km: number) => void;
   setRadiusKm: (km: number) => void;
+  setEngagementGapView: (view: EngagementGapView) => void;
   /** Direct setter for tutorial overrides */
   setLayers: React.Dispatch<React.SetStateAction<LayerState>>;
 }
@@ -52,6 +53,7 @@ export interface MapLayerState {
   coverageGaps: boolean;
   coverageRadiusKm: number;
   radiusKm: number;
+  engagementGapView: EngagementGapView;
 }
 
 export interface UseMapLayersReturn extends MapLayerState {
