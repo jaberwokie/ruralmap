@@ -922,7 +922,9 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
       list.push(s);
       map.set(s.category, list);
     });
-    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
+    return Array.from(map.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([cat, items]) => [cat, [...items].sort(compareEntitiesByOperationalPriority)] as [string, RuralService[]]);
   }, [services]);
 
   if (services.length === 0) {
@@ -2020,7 +2022,8 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
       map.set(s.category, list);
     });
     return Array.from(map.entries())
-      .sort((a, b) => b[1].length - a[1].length);
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([cat, items]) => [cat, [...items].sort(compareEntitiesByOperationalPriority)] as [string, RuralService[]]);
   }, [services]);
 
   const util = getCountyUtilization(county);
