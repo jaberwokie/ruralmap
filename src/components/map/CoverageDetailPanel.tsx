@@ -1372,6 +1372,19 @@ const resolveRoutingTierDisplay = (
   return 'available_unverified';
 };
 
+// ── Verification Signal Labels ──
+const resolveVerificationSignalLabel = (entityId?: string): string | null => {
+  if (!entityId) return null;
+  const tag = getOperationalTagIndex().get(entityId);
+  if (!tag) return null;
+
+  if (tag.verificationStatus === 'verified_participating') return 'Medicaid Verified (DPBH)';
+  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'inferred_strong') return 'Provider Identified (NPI Confirmed)';
+  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'unknown') return 'Unverified Provider';
+  // Deferred or other statuses: no signal line
+  return null;
+};
+
 // ── Operational Indicators ──
 const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { meta?: Partial<ServiceOperationalMeta> | null; alwaysShowMedicaid?: boolean; entityId?: string }) => {
   const resolved = resolveOperationalMeta(meta);
@@ -1382,6 +1395,7 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
   if (!showMedicaid && !hasExtra) return null;
 
   const routingTier = showRoutingTier ? resolveRoutingTierDisplay(entityId, meta) : undefined;
+  const verificationSignal = resolveVerificationSignalLabel(entityId);
 
   return (
     <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-0.5">
@@ -1391,6 +1405,12 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
           <span className={`font-medium ${ROUTING_TIER_DISPLAY_COLORS[routingTier]}`}>
             {ROUTING_TIER_DISPLAY_LABELS[routingTier]}
           </span>
+        </div>
+      )}
+      {verificationSignal && (
+        <div className="flex justify-between text-[10px]">
+          <span className="text-muted-foreground">Verification Signal</span>
+          <span className="font-medium text-foreground">{verificationSignal}</span>
         </div>
       )}
       {showMedicaid && (
