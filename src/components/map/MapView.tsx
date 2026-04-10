@@ -4,7 +4,6 @@ import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
-import 'leaflet.heat';
 import { Info } from 'lucide-react';
 import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
@@ -70,7 +69,7 @@ interface MapViewProps {
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
-  engagementGapView?: 'heat' | 'boundaries';
+  engagementGapView?: 'priority' | 'boundaries';
   
 }
 
@@ -637,7 +636,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'heat' }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority' }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -2247,56 +2246,78 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [clearCountyHoverPreview, coverageGaps, layers.utilizationIntensity, selectOverlayEntity, updateCountyHoverPreview]);
 
-  // ── Engagement Gap heatmap (leaflet.heat) ──
+  // ── Engagement Gap priority intensity fills (county polygons) ──
   useEffect(() => {
     if (!mapRef.current) return;
+    // Remove legacy heatmap layer if present
     if (engagementHeatRef.current) {
       mapRef.current.removeLayer(engagementHeatRef.current);
       engagementHeatRef.current = null;
     }
-    if (!layers.engagementGap || engagementGapView !== 'heat') return;
+    if (!engagementGapRef.current) return;
+    // Clear existing layers before redraw (shared ref with boundaries view)
+    engagementGapRef.current.clearLayers();
+    engagementGapLabelRef.current?.clearLayers();
+    if (!layers.engagementGap || engagementGapView !== 'priority') return;
 
-    // Build heat points with non-linear intensity scaling
-    const rawPoints: { lat: number; lng: number; val: number }[] = [];
-    engagementPriorityCounties.forEach((metrics) => {
+    const maxUnengaged = engagementPriorityCounties[0]?.unengagedMembers ?? 0;
+    if (maxUnengaged <= 0) return;
+
+    engagementPriorityCounties.forEach((metrics, index) => {
       const county = nevadaCounties.find(c => c.name === metrics.county);
-      if (!county || metrics.unengagedMembers <= 0) return;
-      // Suppress counties below 20% engagement gap (engagementRate > 0.8)
+      if (!county) return;
+      const geoJson = getCountyFeature(metrics.county);
+      if (!geoJson) return;
+
+      // Suppress very low gap counties (engagement rate > 80%)
       if (metrics.totalMembers > 0 && metrics.engagementRate > 0.80) return;
-      rawPoints.push({ lat: county.center[0], lng: county.center[1], val: metrics.unengagedMembers });
+
+      // Normalize and apply non-linear scaling for visual separation
+      const normalized = metrics.unengagedMembers / maxUnengaged;
+      const intensity = Math.pow(normalized, 1.8);
+
+      // Color ramp: transparent → light peach → orange → red-orange → strong red
+      const r = Math.round(255 - intensity * 115);   // 255 → 140
+      const g = Math.round(220 - intensity * 200);    // 220 → 20
+      const b = Math.round(180 - intensity * 170);    // 180 → 10
+
+      // Top 5 counties get extra emphasis
+      const isTopCounty = index < 5;
+      const fillOpacity = isTopCounty
+        ? 0.15 + intensity * 0.55
+        : 0.08 + intensity * 0.42;
+      const strokeOpacity = isTopCounty ? 0.8 : 0.4 + intensity * 0.3;
+      const weight = isTopCounty ? 2 : 1;
+
+      const fillColor = `rgb(${r}, ${g}, ${b})`;
+      const strokeColor = `rgba(${Math.max(r - 30, 0)}, ${Math.max(g - 10, 0)}, ${Math.max(b - 5, 0)}, ${strokeOpacity})`;
+
+      const geoLayer = L.geoJSON(geoJson, {
+        pane: MAP_PANES.gapOverlays,
+        style: {
+          color: strokeColor,
+          weight,
+          fillColor,
+          fillOpacity,
+        },
+        interactive: true,
+      });
+
+      geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => {
+        updateCountyHoverPreview(metrics.county, event);
+        geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.08, 0.7), weight: weight + 0.5 });
+      });
+      geoLayer.on('mouseout', () => {
+        clearCountyHoverPreview();
+        geoLayer.setStyle({ fillOpacity, weight });
+      });
+      geoLayer.on('click', (event: L.LeafletEvent) => {
+        selectCountyEntity(metrics.county, 'engagement-gap-priority-county', event);
+      });
+
+      engagementGapRef.current!.addLayer(geoLayer);
     });
-
-    if (rawPoints.length === 0) return;
-
-    const maxVal = Math.max(...rawPoints.map(p => p.val));
-    // Non-linear scaling: pow(2.2) makes low values fade and high values pop
-    const heatPoints: [number, number, number][] = rawPoints.map(p => {
-      const normalized = maxVal > 0 ? p.val / maxVal : 0;
-      const scaled = Math.pow(normalized, 2.2);
-      return [p.lat, p.lng, scaled];
-    });
-
-    const heat = L.heatLayer(heatPoints, {
-      radius: 30,
-      blur: 22,
-      maxZoom: 10,
-      max: 1,
-      minOpacity: 0.05,
-      gradient: {
-        0.0:  'rgba(255, 220, 140, 0)',
-        0.15: 'rgba(255, 200, 100, 0.05)',
-        0.30: 'rgba(255, 160, 60, 0.25)',
-        0.45: 'rgba(245, 120, 40, 0.45)',
-        0.60: 'rgba(230, 80, 25, 0.65)',
-        0.75: 'rgba(210, 45, 15, 0.80)',
-        0.90: 'rgba(180, 20, 10, 0.90)',
-        1.0:  'rgba(140, 10, 5, 0.95)',
-      },
-    });
-
-    heat.addTo(mapRef.current);
-    engagementHeatRef.current = heat;
-  }, [layers.engagementGap, engagementGapView, engagementPriorityCounties]);
+  }, [clearCountyHoverPreview, engagementGapView, engagementPriorityCounties, layers.engagementGap, selectCountyEntity, updateCountyHoverPreview]);
 
   // ── Engagement Gap county outlines (orange = gap, yellow = watchlist) — boundaries view ──
   useEffect(() => {

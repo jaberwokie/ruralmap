@@ -1,4 +1,4 @@
-export type EngagementGapView = 'heat' | 'boundaries';
+export type EngagementGapView = 'priority' | 'boundaries';
 
 export interface LayerState {
   counties: boolean;

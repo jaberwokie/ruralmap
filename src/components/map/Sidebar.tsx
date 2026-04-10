@@ -984,15 +984,15 @@ const Sidebar = ({
                                     <span className="text-muted-foreground">View:</span>
                                     <button
                                       type="button"
-                                      onClick={() => onEngagementGapViewChange('heat')}
+                                      onClick={() => onEngagementGapViewChange('priority')}
                                       className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 ${
-                                        engagementGapView === 'heat'
+                                        engagementGapView === 'priority'
                                           ? 'bg-destructive/15 text-destructive'
                                           : 'bg-secondary text-muted-foreground hover:text-foreground'
                                       }`}
                                     >
                                       <Flame className="h-2.5 w-2.5" />
-                                      Heat
+                                      Priority
                                     </button>
                                     <button
                                       type="button"
