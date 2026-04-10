@@ -1,39 +1,47 @@
 
 
 ## Problem
-The heat layer parameters are too conservative — small radius, high blur, low minimum opacity, and a gradient that starts transparent too late. Result: faint, barely visible hotspots.
 
-## Fix — Boost heat layer intensity
+The heat layer currently weights by raw unengaged member count alone. This makes high-volume counties (Nye, Lyon, Carson City) dominate regardless of engagement severity or staff coverage. The visual doesn't answer "where should I deploy staff?" — it just shows "where are the most people."
 
-In `src/components/map/MapView.tsx`, update the `heatLayer` configuration (around line 2312):
+## Composite Priority Score
 
-### Parameter changes
-| Parameter | Current | New | Why |
-|-----------|---------|-----|-----|
-| `radius` | 30 | 50 | Larger hotspot footprint |
-| `blur` | 20 | 25 | Slightly softer edges but still defined |
-| `maxZoom` | 10 | 12 | Maintain intensity at higher zooms |
-| `max` | 1.0 | 0.6 | Lower ceiling = more points hit full intensity |
-| `minOpacity` | 0.15 | 0.35 | Base visibility much higher |
+Replace the single-metric weighting with a blended score per county:
 
-### Gradient shift — start color earlier
-```
-0.0:  'transparent'
-0.15: '#FFF3E0'    (was 0.3)
-0.3:  '#FFB74D'    (was 0.45)
-0.45: '#F57C00'    (was 0.6)
-0.6:  '#E64A19'    (was 0.75)
-0.75: '#D32F2F'    (was 0.9)
-0.9:  '#B71C1C'    (was 1.0)
-1.0:  '#880E4F'    (new — deep crimson cap)
+```text
+score = (0.40 × unengaged_norm) + (0.35 × severity_norm) + (0.25 × coverage_gap)
 ```
 
-### Weight scaling — more aggressive
-- Change power from `0.6` to `0.45` (top counties get even more relative weight)
-- Increase secondary point weight multiplier from `0.4` to `0.6`
-- Increase spread from `0.08` to `0.12` for broader county coverage
-- Lower cutoff from `0.30` to `0.15` so more mid-tier counties show faintly
+| Component | Source | Logic |
+|-----------|--------|-------|
+| **Unengaged scale** (40%) | `unengagedMembers / max(unengagedMembers)` | Raw count, normalized 0–1 |
+| **Engagement severity** (35%) | `1 - engagementRate` | Low rate = high severity. A county at 8% scores 0.92 |
+| **Staff coverage gap** (25%) | Field FTE presence check | No field hub = 1.0; field hub present = 0.0; remote-only = 0.7 |
 
-### Files
-- `src/components/map/MapView.tsx` — single file, ~15 lines changed
+Field vs remote distinction uses `fteCapacityData`: entries with `hubLocation !== null` are field; `hubLocation === null` is remote-only. Remote coverage is partial credit, not full.
+
+### What changes visually
+
+Using the actual data, this shifts priority away from counties like Carson City (field staff present, moderate engagement rate) and toward counties like Elko and White Pine (remote-only coverage, low engagement rates, meaningful unengaged counts).
+
+## Implementation
+
+### File: `src/utils/utilizationAggregation.ts`
+
+Add a new function `getCompositeEngagementPriority(county)` that returns a 0–1 score using the formula above. Uses existing `memberVolumeData`, `engagedMemberVolumeData`, and `fteCapacityData`.
+
+Add a helper `hasFieldCoverage(county): 'field' | 'remote' | 'none'` to distinguish coverage types.
+
+### File: `src/components/map/MapView.tsx`
+
+In the Priority heat layer effect (~line 2280–2307):
+- Replace `metrics.unengagedMembers / maxVal` with the composite score from the new utility function.
+- Keep the same `Math.pow(score, 0.45)` non-linear scaling, cutoff, spread, and heat layer config — only the input weight changes.
+
+### No changes to
+- Sidebar structure, layout, Boundaries view, detail panel, markers, filters, selection behavior, or any other layer.
+
+### Files touched
+- `src/utils/utilizationAggregation.ts` — add ~25 lines (composite score + field coverage helper)
+- `src/components/map/MapView.tsx` — modify ~5 lines in the Priority effect to use the new score
 
