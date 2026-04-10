@@ -2297,7 +2297,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         interactive: true,
       });
       geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
-      geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
+      
       geoLayer.on('mouseout', () => clearCountyHoverPreview());
       geoLayer.on('click', (event: L.LeafletEvent) => {
         selectCountyEntity(result.county, 'engagement-gap-county', event);
