@@ -629,7 +629,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, tutorialStepKey }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -665,7 +665,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
   const [markerHoverPreview, setMarkerHoverPreview] = useState<MarkerHoverPreview | null>(null);
-  const markerHoverPreviewRef = useRef(setMarkerHoverPreview);
+  const tutorialActiveRef = useRef(false);
+  tutorialActiveRef.current = tutorialStepKey != null;
+  const markerHoverPreviewRef = useRef((preview: MarkerHoverPreview | null) => {
+    if (preview && tutorialActiveRef.current) return;
+    setMarkerHoverPreview(preview);
+  });
+  // Clear hover state when tutorial becomes active
+  useEffect(() => {
+    if (tutorialStepKey != null) {
+      setCountyHoverPreview(null);
+      setMarkerHoverPreview(null);
+    }
+  }, [tutorialStepKey]);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
@@ -962,6 +974,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, [filteredRuralServices, providerFacilities, radiusKm, broadbandReady]);
 
   const updateCountyHoverPreview = useCallback((county: string, _event?: L.LeafletMouseEvent) => {
+    if (tutorialActiveRef.current) return;
     const metrics = countyHoverMetrics.get(county) ?? { county };
     setCountyHoverPreview({ ...metrics, county });
   }, [countyHoverMetrics]);
