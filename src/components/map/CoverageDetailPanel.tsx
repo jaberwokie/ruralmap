@@ -1376,15 +1376,19 @@ const resolveRoutingTierDisplay = (
 };
 
 // ── Verification Signal Labels ──
-const resolveVerificationSignalLabel = (entityId?: string): string | null => {
+type VerificationSignalResult = { label: string; colorClass: string; dotClass: string } | null;
+
+const resolveVerificationSignal = (entityId?: string): VerificationSignalResult => {
   if (!entityId) return null;
   const tag = getOperationalTagIndex().get(entityId);
   if (!tag) return null;
 
-  if (tag.verificationStatus === 'verified_participating') return 'Medicaid Verified (DPBH)';
-  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'inferred_strong') return 'Provider Identified (NPI Confirmed)';
-  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'unknown') return 'Unverified Provider';
-  // Deferred or other statuses: no signal line
+  if (tag.verificationStatus === 'verified_participating')
+    return { label: 'Medicaid Verified (DPBH)', colorClass: 'text-primary', dotClass: 'bg-primary' };
+  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'inferred_strong')
+    return { label: 'Provider Identified (NPI Confirmed)', colorClass: 'text-amber-600 dark:text-amber-400', dotClass: 'bg-amber-500' };
+  if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'unknown')
+    return { label: 'Unverified Provider', colorClass: 'text-muted-foreground', dotClass: 'bg-muted-foreground' };
   return null;
 };
 
@@ -1398,7 +1402,7 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
   if (!showMedicaid && !hasExtra) return null;
 
   const routingTier = showRoutingTier ? resolveRoutingTierDisplay(entityId, meta) : undefined;
-  const verificationSignal = resolveVerificationSignalLabel(entityId);
+  const verificationSignal = resolveVerificationSignal(entityId);
 
   return (
     <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-1">
@@ -1413,7 +1417,10 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
       {verificationSignal && (
         <div className="text-[10px]">
           <span className="text-muted-foreground block leading-tight">Verification Signal</span>
-          <span className="font-medium text-foreground leading-tight">{verificationSignal}</span>
+          <span className={`font-medium leading-tight flex items-center gap-1 ${verificationSignal.colorClass}`}>
+            <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${verificationSignal.dotClass}`} />
+            {verificationSignal.label}
+          </span>
         </div>
       )}
       {showMedicaid && (
