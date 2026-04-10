@@ -14,6 +14,7 @@ export interface MapTutorialStep {
   title: string;
   text: string;
   selectors: string[];
+  targetLabel: string;
   footer?: string;
 }
 
@@ -29,42 +30,49 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
     title: 'Search for a location',
     text: 'Search for a facility, city, or county without scanning the full map.',
     selectors: ['[data-tutorial="search-bar"]'],
+    targetLabel: 'Search',
   },
   {
     key: 'facilityFilters',
     title: 'Filter locations by type',
     text: 'Use these chips to show Hospital, Clinic, Service, or Behavioral Health locations.',
-    selectors: ['[data-tutorial="facility-filter-chips"]', '[data-tutorial="facility-filters"]'],
+    selectors: ['[data-tutorial="facility-filter-chips"]'],
+    targetLabel: 'Facility Filters',
   },
   {
     key: 'coreMap',
     title: 'Toggle map layers',
     text: 'Turn major map layers on or off. Only Core Map is open by default — expand other sections (Operations, Utilization, Access, Connectivity) as needed.',
     selectors: ['[data-tutorial="section-core-map"]'],
+    targetLabel: 'Core Map',
   },
   {
     key: 'providerLocations',
     title: 'Show or hide providers',
     text: 'Provider Locations shows hospital and clinic pins. Red is hospital; blue is clinic.',
     selectors: ['[data-tutorial="toggle-provider-locations"]'],
+    targetLabel: 'Provider Locations',
   },
   {
     key: 'map',
     title: 'Inspect the map',
     text: 'Zoom and pan to explore. Hover over a county or marker to see a summary — it appears in a fixed area at the top-left of the map, not under the cursor.',
     selectors: ['[data-tutorial="map-region"]'],
+    targetLabel: 'Map Viewport',
   },
   {
     key: 'detailsPanel',
     title: 'Review selected details',
     text: 'Click any marker or county to lock its details here. Look for Routing Tier and Verification Signal to guide decisions.',
     selectors: ['[data-tutorial="details-panel"]'],
+    targetLabel: 'Details Panel',
   },
   {
     key: 'routingTiers',
     title: 'Understand routing tiers',
     text: 'Each provider or service shows a Routing Tier: "Recommended" means verified Medicaid access. "Available (Unverified)" means the provider exists but access is not confirmed. "Fallback Option" means limited confidence — use only when no better option exists. A Verification Signal tells you why: "Medicaid Verified" is confirmed via the state directory, "Provider Identified" means identity is confirmed but access is not, and "Unverified" means neither is confirmed.',
     selectors: ['[data-tutorial="details-panel"]'],
+    targetLabel: 'Routing Tier',
     footer: 'Recommended > Available > Fallback.',
   },
   {
@@ -72,13 +80,15 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
     title: 'Check connectivity layers',
     text: 'Under Connectivity, toggle Broadband Access and Cellular Coverage. These are county-level aggregate grades — not address-level guarantees. When both are on, a single combined legend appears at the bottom-left showing Broadband first, then Cellular.',
     selectors: ['[data-tutorial="section-connectivity"]'],
+    targetLabel: 'Connectivity',
     footer: 'Broad patterns, not exact service availability.',
   },
   {
     key: 'tooltipBehavior',
     title: 'Where to find hover info',
     text: 'When you hover over a county or marker, the summary appears in a fixed card at the top-left of the map — it does not follow your cursor. This keeps the view stable while you scan.',
-    selectors: ['[data-tutorial="hover-tooltip"]', '[data-tutorial="map-region"]'],
+    selectors: ['[data-tutorial="hover-tooltip"]'],
+    targetLabel: 'Hover Info',
     footer: 'Decision tool, not a directory.',
   },
 ];

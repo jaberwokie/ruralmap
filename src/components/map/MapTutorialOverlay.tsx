@@ -269,15 +269,27 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
             style={{ top: focusRect.top + focusRect.height }}
           />
           <div
-            className="absolute rounded-2xl border border-border/90 bg-background/5 shadow-sm transition-[top,left,width,height] duration-200 ease-out"
+            className="absolute rounded-lg border-2 border-primary/70 bg-transparent transition-[top,left,width,height] duration-200 ease-out"
             style={{
               top: focusRect.top,
               left: focusRect.left,
               width: focusRect.width,
               height: focusRect.height,
-              boxShadow: '0 0 0 1px hsl(var(--background) / 0.28)',
+              boxShadow: '0 0 0 1px hsl(var(--background) / 0.28), inset 0 0 0 1px hsl(var(--primary) / 0.10)',
             }}
           />
+          {/* Target label */}
+          <div
+            className="absolute pointer-events-none transition-[top,left] duration-200 ease-out"
+            style={{
+              top: focusRect.top - 10,
+              left: focusRect.left + 8,
+            }}
+          >
+            <span className="inline-flex items-center rounded-md bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary-foreground shadow-sm">
+              {step.targetLabel}
+            </span>
+          </div>
         </>
       ) : (
         <div className="absolute inset-0 bg-foreground/16" />
