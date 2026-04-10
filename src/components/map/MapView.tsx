@@ -1362,8 +1362,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       style: {
         color: 'transparent',
         weight: 0,
-        fillColor: '#ffffff',
-        fillOpacity: 0.85,
+        fillColor: '#f0f0f0',
+        fillOpacity: 0.45,
       },
       interactive: false,
       smoothFactor: 0,
