@@ -2118,6 +2118,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       marker.on('click', (event: L.LeafletEvent) => {
         selectCountyEntity(county.name, 'response-capability-marker', event);
       });
+
+      operationalResponseMarkerRef.current!.addLayer(marker);
     });
   }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
 
