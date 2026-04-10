@@ -1197,7 +1197,7 @@ const Sidebar = ({
                   )}
                 </div>
 
-                <div>
+                <div data-tutorial="section-connectivity">
                   {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
                   {connectivityOpen && (
                     <div className="mt-0.5 space-y-0.5">
