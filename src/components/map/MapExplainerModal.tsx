@@ -103,11 +103,11 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
 
           <Section title="Deterministic Ordering">
             <p>Lists and service groups are always sorted by operational priority:</p>
-            <ol className="list-decimal pl-4 space-y-0.5">
-              <li>Recommended</li>
-              <li>Provider Identified</li>
-              <li>Unverified</li>
-              <li>Fallback</li>
+            <ol className="list-none pl-0 space-y-1">
+              <li className="flex items-center gap-1.5 text-[13px]"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.medicaid_verified.dot}`} /><span className={`${ROUTING_TIER_COLORS.recommended}`}>Recommended</span></li>
+              <li className="flex items-center gap-1.5 text-[13px]"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.npi_confirmed.dot}`} /><span className={`${ROUTING_TIER_COLORS.available_unverified}`}>Provider Identified</span></li>
+              <li className="flex items-center gap-1.5 text-[13px]"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.unverified.dot}`} /><span className={`${ROUTING_TIER_COLORS.fallback}`}>Unverified</span></li>
+              <li className="flex items-center gap-1.5 text-[13px]"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.unverified.dot}`} /><span className={`${ROUTING_TIER_COLORS.fallback}`}>Fallback</span></li>
             </ol>
             <p>This means the most reliable options appear first, reducing guesswork when scanning a county or service list.</p>
           </Section>
