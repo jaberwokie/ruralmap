@@ -1578,7 +1578,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             lat: service.lat,
             lng: service.lng,
             sortKey: `service:${service.id}`,
-            lockToSource: service.id === 'rs-81',
           }))
         : []),
       ...(layers.behavioralHealth && !topProvidersOnly
