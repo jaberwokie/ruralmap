@@ -41,7 +41,7 @@ export const getTutorialAnchorContext = (element: HTMLElement | null, selectors:
 
   const selectorText = selectors.join(' ');
 
-  if (/(search-bar|facility-filter|county-filter|section-core-map|toggle-provider-locations|sidebar)/.test(selectorText)) {
+  if (/(search-bar|facility-filter|county-filter|section-core-map|section-connectivity|toggle-provider-locations|sidebar)/.test(selectorText)) {
     return 'sidebar';
   }
 

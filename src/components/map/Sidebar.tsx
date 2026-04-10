@@ -340,13 +340,14 @@ const Sidebar = ({
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
-  const [connectivityOpen, toggleConnectivity] = usePersistToggle('sidebar_layer_connectivity');
+  const [connectivityOpen, toggleConnectivity, setConnectivityOpen] = usePersistToggle('sidebar_layer_connectivity');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (tutorialStepKey === 'facilityFilters') setFiltersOpen(true);
     if (tutorialStepKey === 'coreMap' || tutorialStepKey === 'providerLocations') setCoreMapOpen(true);
-  }, [setCoreMapOpen, setFiltersOpen, tutorialStepKey]);
+    if (tutorialStepKey === 'connectivity') setConnectivityOpen(true);
+  }, [setCoreMapOpen, setConnectivityOpen, setFiltersOpen, tutorialStepKey]);
 
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
@@ -1197,7 +1198,7 @@ const Sidebar = ({
                   )}
                 </div>
 
-                <div>
+                <div data-tutorial="section-connectivity">
                   {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
                   {connectivityOpen && (
                     <div className="mt-0.5 space-y-0.5">
