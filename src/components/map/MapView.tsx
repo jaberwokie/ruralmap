@@ -671,6 +671,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (preview && tutorialActiveRef.current) return;
     setMarkerHoverPreview(preview);
   });
+  // Clear hover state when tutorial becomes active
+  useEffect(() => {
+    if (tutorialStepKey != null) {
+      setCountyHoverPreview(null);
+      setMarkerHoverPreview(null);
+    }
+  }, [tutorialStepKey]);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
