@@ -2327,7 +2327,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         selectCountyEntity(metrics.county, 'engagement-gap-priority-county', event);
       });
 
-      engagementGapRef.current!.addLayer(geoLayer);
+      engagementPriorityRef.current!.addLayer(geoLayer);
     });
   }, [clearCountyHoverPreview, engagementGapView, engagementPriorityCounties, layers.engagementGap, selectCountyEntity, updateCountyHoverPreview]);
 
