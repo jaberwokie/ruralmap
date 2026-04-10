@@ -21,8 +21,12 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -30,13 +34,14 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
   return (
     <div
       ref={backdropRef}
-      className="fixed inset-0 z-[1500] flex items-start justify-center bg-black/40 backdrop-blur-sm overflow-y-auto py-8 px-4"
+      className="fixed inset-0 z-[1500] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
       onClick={(e) => {
         if (e.target === backdropRef.current) onClose();
       }}
     >
       <div
-        className="relative w-full max-w-2xl rounded-lg border border-border bg-card shadow-xl"
+        className="relative w-full max-w-2xl rounded-lg border border-border bg-card shadow-xl flex flex-col"
+        style={{ maxHeight: '85vh' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -55,7 +60,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         </div>
 
         {/* Content */}
-        <div className="px-5 py-5 space-y-5">
+        <div className="px-5 py-5 space-y-5 overflow-y-auto flex-1 min-h-0">
           <Section title="What this is">
             <p>
               A decision tool that helps staff see where members can realistically receive care across rural Nevada. It surfaces verified access, flags uncertainty, and shows connectivity conditions — so routing decisions are based on evidence, not assumptions.
