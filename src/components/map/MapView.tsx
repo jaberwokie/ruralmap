@@ -1856,33 +1856,24 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           ? 'hsl(38, 92%, 50%)' : 'hsl(240, 4%, 46%)';
         const avgEncColor = claimsMetrics && claimsMetrics.avgEncountersPerSeenMember > 10
           ? 'hsl(0, 72%, 51%)' : 'hsl(240, 4%, 46%)';
-        const claimsHtml = claimsMetrics
-          ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px;">
-              <div style="color: hsl(240, 4%, 46%);">Total Members Attributed: ${claimsMetrics.totalMembersAttributed.toLocaleString()}</div>
-              <div style="color: hsl(240, 4%, 46%);">Members with ≥1 Visit: ${claimsMetrics.membersSeen.toLocaleString()}</div>
-              <div style="color: ${penetrationColor};">Visit Penetration Rate: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%</div>
-              <div style="color: hsl(240, 4%, 46%);">Total Encounters: ${claimsMetrics.totalEncounters.toLocaleString()}</div>
-              <div style="color: ${avgEncColor};">Avg Encounters per Seen Member: ${claimsMetrics.avgEncountersPerSeenMember.toFixed(1)}</div>
-              <div style="color: hsl(240, 4%, 60%); font-size: 9px; margin-top: 3px; font-style: italic;">Based on aggregate claims data (not time-bound)</div>
-            </div>`
-          : '';
+         const claimsDetail = claimsMetrics
+           ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
+           : undefined;
 
-        const tooltipContent = `
-          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-            <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
-            <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
-            ${facility.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${facility.address}</div>` : ''}
-            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
-            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 4px;">Data Confidence: ${dataConfidence}</div>
-            ${utilHtml}
-            ${claimsHtml}
-          </div>
-        `;
-        marker.bindTooltip(tooltipContent, {
-          direction: 'top',
-          offset: [0, -8],
-          className: 'facility-tooltip',
+        marker.on('mouseover', () => {
+          markerHoverPreviewRef.current({
+            name: facility.name,
+            subtitle: `${facility.city}, ${facility.county} County`,
+            address: facility.address,
+            detail: typeLabel,
+            extraHtml: [
+              `Data Confidence: ${dataConfidence}`,
+              showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
+              claimsDetail,
+            ].filter(Boolean).join('\n'),
+          });
         });
+        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
 
         nextFacilityMarkers.push(marker);
       });
