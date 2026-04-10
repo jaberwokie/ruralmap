@@ -2260,9 +2260,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!engagementPriorityRef.current) return;
     // Clear priority layer only (boundaries has its own ref)
     engagementPriorityRef.current.clearLayers();
-    // Also clear boundaries view when switching to priority
-    engagementGapRef.current?.clearLayers();
-    engagementGapLabelRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'priority') return;
 
     // Filter eligible counties
@@ -2336,8 +2333,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!engagementGapRef.current) return;
     engagementGapRef.current.clearLayers();
     engagementGapLabelRef.current?.clearLayers();
-    // Clear priority layer when switching to boundaries
-    engagementPriorityRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'boundaries') return;
 
     const results = getEngagementGapResults();
