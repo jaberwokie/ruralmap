@@ -571,13 +571,16 @@ const Sidebar = ({
     if (file) processCSVFile(file);
   }, [processCSVFile]);
 
-  const displayFacilities = searchQuery
-    ? facilities.filter(f =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.county.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : facilities;
+  const displayFacilities = useMemo(() => {
+    const filtered = searchQuery
+      ? facilities.filter(f =>
+          f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          f.county.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : facilities;
+    return sortEntitiesByOperationalPriority(filtered);
+  }, [searchQuery, facilities]);
 
   const renderHelpIcon = (key: string) => (
     <HelpIconTooltip helpKey={key} />
