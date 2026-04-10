@@ -2512,44 +2512,51 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           </div>
         )}
       </TooltipProvider>
-      {layers.broadbandAccess && (
-        <div className="absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm">
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Broadband Access</p>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 50%, 45%, 0.35)' }} />
-              <span className="text-foreground/80">Served</span>
+      {(layers.broadbandAccess || layers.cellularCoverage) && (
+        <div className="absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2">
+          {layers.cellularCoverage && (
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Cellular Readiness</p>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 55%, 40%, 0.35)' }} />
+                  <span className="text-foreground/80">High</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(44, 90%, 50%, 0.35)' }} />
+                  <span className="text-foreground/80">Mixed</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(20, 85%, 55%, 0.35)' }} />
+                  <span className="text-foreground/80">Low</span>
+                </div>
+              </div>
+              <p className="text-[8px] text-muted-foreground/50 mt-1">FCC BDC J25 · Confidence: Medium</p>
+              <p className="text-[8px] text-muted-foreground/40 mt-0.5 leading-snug">Geographic availability, not signal quality. Rural counties may appear lower despite coverage in towns.</p>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(38, 85%, 52%, 0.35)' }} />
-              <span className="text-foreground/80">Underserved</span>
+          )}
+          {layers.broadbandAccess && layers.cellularCoverage && (
+            <div className="border-t border-border/50" />
+          )}
+          {layers.broadbandAccess && (
+            <div>
+              <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Broadband Access</p>
+              <div className="space-y-0.5">
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 50%, 45%, 0.35)' }} />
+                  <span className="text-foreground/80">Served</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(38, 85%, 52%, 0.35)' }} />
+                  <span className="text-foreground/80">Underserved</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(0, 65%, 55%, 0.35)' }} />
+                  <span className="text-foreground/80">Unserved</span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(0, 65%, 55%, 0.35)' }} />
-              <span className="text-foreground/80">Unserved</span>
-            </div>
-          </div>
-        </div>
-      )}
-      {layers.cellularCoverage && (
-        <div className={`absolute ${layers.broadbandAccess ? 'bottom-[5.5rem]' : 'bottom-4'} left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm`}>
-          <p className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">Cellular Readiness</p>
-          <div className="space-y-0.5">
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(160, 55%, 40%, 0.35)' }} />
-              <span className="text-foreground/80">High</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(44, 90%, 50%, 0.35)' }} />
-              <span className="text-foreground/80">Mixed</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[10px]">
-              <div className="h-2.5 w-4 rounded-sm" style={{ background: 'hsla(20, 85%, 55%, 0.35)' }} />
-              <span className="text-foreground/80">Low</span>
-            </div>
-          </div>
-          <p className="text-[8px] text-muted-foreground/50 mt-1">FCC BDC J25 · Confidence: Medium</p>
-          <p className="text-[8px] text-muted-foreground/40 mt-0.5 leading-snug">Geographic availability, not signal quality. Rural counties may appear lower despite coverage in towns.</p>
+          )}
         </div>
       )}
       {DEBUG_ENABLED && (
