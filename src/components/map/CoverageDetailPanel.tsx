@@ -19,6 +19,7 @@ import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COL
 import { resolveOperationalMeta, PARTICIPATION_STATUS_LABELS, PARTICIPATION_STATUS_COLORS } from '@/types/medicaid';
 import { getOperationalTagIndex } from '@/data/operational-metadata';
 import type { ServiceOperationalMeta } from '@/types/medicaid';
+import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
