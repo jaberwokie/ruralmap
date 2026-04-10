@@ -383,6 +383,89 @@ const Sidebar = ({
     return Array.from(set).sort();
   }, [allFacilities]);
 
+  const hasActiveFilters = filters.types.size > 0 || filters.counties.size > 0 || filters.serviceCategories.size > 0;
+  const filterSuffix = hasActiveFilters ? '-filtered' : '';
+
+  const exportProviderLocations = useCallback(() => {
+    exportCsv(
+      facilities.map(f => ({
+        Name: f.name,
+        Type: f.type,
+        Classification: getFacilityClassification(f),
+        County: f.county,
+        City: f.city,
+        Address: f.address ?? '',
+        Latitude: f.lat,
+        Longitude: f.lng,
+        DataConfidence: getFacilityDataConfidence(f),
+      })),
+      [
+        { key: 'Name', header: 'Name' },
+        { key: 'Type', header: 'Type' },
+        { key: 'Classification', header: 'Classification' },
+        { key: 'County', header: 'County' },
+        { key: 'City', header: 'City' },
+        { key: 'Address', header: 'Address' },
+        { key: 'Latitude', header: 'Latitude' },
+        { key: 'Longitude', header: 'Longitude' },
+        { key: 'DataConfidence', header: 'Data Confidence' },
+      ],
+      `provider-locations-export${filterSuffix}.csv`,
+    );
+  }, [facilities, filterSuffix]);
+
+  const exportBehavioralHealth = useCallback(() => {
+    exportCsv(
+      filteredBhServices.map(s => ({
+        Name: s.name,
+        County: s.county,
+        City: s.city,
+        Address: s.address ?? '',
+        Category: s.category,
+        Phone: s.phone ?? '',
+        Latitude: s.lat,
+        Longitude: s.lng,
+      })),
+      [
+        { key: 'Name', header: 'Name' },
+        { key: 'County', header: 'County' },
+        { key: 'City', header: 'City' },
+        { key: 'Address', header: 'Address' },
+        { key: 'Category', header: 'Category' },
+        { key: 'Phone', header: 'Phone' },
+        { key: 'Latitude', header: 'Latitude' },
+        { key: 'Longitude', header: 'Longitude' },
+      ],
+      `behavioral-health-export${filterSuffix}.csv`,
+    );
+  }, [filteredBhServices, filterSuffix]);
+
+  const exportServices = useCallback(() => {
+    exportCsv(
+      filteredServices.map(s => ({
+        Name: s.name,
+        County: s.county,
+        City: s.city,
+        Address: s.address ?? '',
+        Category: s.category,
+        Phone: s.phone ?? '',
+        Latitude: s.lat,
+        Longitude: s.lng,
+      })),
+      [
+        { key: 'Name', header: 'Name' },
+        { key: 'County', header: 'County' },
+        { key: 'City', header: 'City' },
+        { key: 'Address', header: 'Address' },
+        { key: 'Category', header: 'Category' },
+        { key: 'Phone', header: 'Phone' },
+        { key: 'Latitude', header: 'Latitude' },
+        { key: 'Longitude', header: 'Longitude' },
+      ],
+      `services-export${filterSuffix}.csv`,
+    );
+  }, [filteredServices, filterSuffix]);
+
   const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size;
 
   const toggleTypeFilter = (type: string) => {
