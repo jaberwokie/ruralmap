@@ -662,6 +662,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
+  const engagementPriorityRef = useRef<L.LayerGroup | null>(null);
   const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const engagementHeatRef = useRef<L.Layer | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
