@@ -1213,14 +1213,45 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
+    const DEFAULT_CENTER: L.LatLngTuple = [39.5, -117.0];
+    const DEFAULT_ZOOM = 7;
+
     const map = L.map(containerRef.current, {
-      center: [39.5, -117.0],
-      zoom: 7,
+      center: DEFAULT_CENTER,
+      zoom: DEFAULT_ZOOM,
       zoomControl: false,
       attributionControl: false,
     });
 
     L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+    // Recenter control
+    const RecenterControl = L.Control.extend({
+      options: { position: 'bottomright' as L.ControlPosition },
+      onAdd() {
+        const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+        const btn = L.DomUtil.create('a', '', container) as HTMLAnchorElement;
+        btn.href = '#';
+        btn.title = 'Recenter Map';
+        btn.setAttribute('role', 'button');
+        btn.setAttribute('aria-label', 'Recenter Map');
+        btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>';
+        btn.style.display = 'flex';
+        btn.style.alignItems = 'center';
+        btn.style.justifyContent = 'center';
+        btn.style.width = '30px';
+        btn.style.height = '30px';
+        btn.style.lineHeight = '30px';
+        btn.style.fontSize = '16px';
+        L.DomEvent.disableClickPropagation(container);
+        L.DomEvent.on(btn, 'click', (e) => {
+          L.DomEvent.preventDefault(e);
+          map.setView(DEFAULT_CENTER, DEFAULT_ZOOM, { animate: true, duration: 0.4 });
+        });
+        return container;
+      },
+    });
+    new RecenterControl().addTo(map);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
