@@ -70,7 +70,7 @@ export const useMapLayers = (): UseMapLayersReturn => {
   const [coverageGaps, setCoverageGapsRaw] = useState(DEFAULT_COVERAGE.coverageGaps);
   const [coverageRadiusKm, setCoverageRadiusKm] = useState(DEFAULT_COVERAGE.coverageRadiusKm);
   const [radiusKm, setRadiusKm] = useState(DEFAULT_COVERAGE.radiusKm);
-  const [engagementGapView, setEngagementGapView] = useState<EngagementGapView>('heat');
+  const [engagementGapView, setEngagementGapView] = useState<EngagementGapView>('priority');
 
   const toggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
