@@ -2260,44 +2260,51 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     engagementGapLabelRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'priority') return;
 
-    const maxUnengaged = engagementPriorityCounties[0]?.unengagedMembers ?? 0;
-    if (maxUnengaged <= 0) return;
+    // Filter eligible counties
+    const eligible = engagementPriorityCounties.filter(
+      (m) => !(m.totalMembers > 0 && m.engagementRate > 0.80)
+    );
+    const total = eligible.length;
+    if (total === 0) return;
 
-    engagementPriorityCounties.forEach((metrics, index) => {
+    // Discrete tier thresholds based on percentile rank
+    const tier4Cutoff = Math.max(1, Math.round(total * 0.12));  // top ~12%
+    const tier3Cutoff = tier4Cutoff + Math.max(1, Math.round(total * 0.22));  // next ~22%
+    const tier2Cutoff = tier3Cutoff + Math.max(1, Math.round(total * 0.33));  // next ~33%
+
+    const TIER_STYLES = {
+      4: { fillColor: '#D32F2F', fillOpacity: 0.70, strokeColor: 'rgba(180, 20, 15, 0.85)', weight: 2.5 },
+      3: { fillColor: '#E65100', fillOpacity: 0.50, strokeColor: 'rgba(200, 60, 10, 0.65)', weight: 1.5 },
+      2: { fillColor: '#F57C00', fillOpacity: 0.30, strokeColor: 'rgba(220, 120, 30, 0.45)', weight: 1 },
+      1: { fillColor: '#FFE0B2', fillOpacity: 0.08, strokeColor: 'rgba(200, 170, 130, 0.25)', weight: 0.5 },
+    } as const;
+
+    eligible.forEach((metrics, index) => {
       const county = nevadaCounties.find(c => c.name === metrics.county);
       if (!county) return;
       const geoJson = getCountyFeature(metrics.county);
       if (!geoJson) return;
 
-      // Suppress very low gap counties (engagement rate > 80%)
-      if (metrics.totalMembers > 0 && metrics.engagementRate > 0.80) return;
+      // Assign tier based on rank position
+      let tier: 1 | 2 | 3 | 4;
+      if (index < tier4Cutoff) tier = 4;
+      else if (index < tier3Cutoff) tier = 3;
+      else if (index < tier2Cutoff) tier = 2;
+      else tier = 1;
 
-      // Normalize and apply non-linear scaling for visual separation
-      const normalized = metrics.unengagedMembers / maxUnengaged;
-      const intensity = Math.pow(normalized, 1.8);
+      const style = TIER_STYLES[tier];
 
-      // Color ramp: transparent → light peach → orange → red-orange → strong red
-      const r = Math.round(255 - intensity * 115);   // 255 → 140
-      const g = Math.round(220 - intensity * 200);    // 220 → 20
-      const b = Math.round(180 - intensity * 170);    // 180 → 10
-
-      // Top 5 counties get extra emphasis
-      const isTopCounty = index < 5;
-      const fillOpacity = isTopCounty
-        ? 0.15 + intensity * 0.55
-        : 0.08 + intensity * 0.42;
-      const strokeOpacity = isTopCounty ? 0.8 : 0.4 + intensity * 0.3;
-      const weight = isTopCounty ? 2 : 1;
-
-      const fillColor = `rgb(${r}, ${g}, ${b})`;
-      const strokeColor = `rgba(${Math.max(r - 30, 0)}, ${Math.max(g - 10, 0)}, ${Math.max(b - 5, 0)}, ${strokeOpacity})`;
+      // Extra boost for top 3 counties
+      const isTop3 = index < 3;
+      const fillOpacity = isTop3 ? Math.min(style.fillOpacity + 0.08, 0.80) : style.fillOpacity;
+      const weight = isTop3 ? style.weight + 0.5 : style.weight;
 
       const geoLayer = L.geoJSON(geoJson, {
         pane: MAP_PANES.gapOverlays,
         style: {
-          color: strokeColor,
+          color: style.strokeColor,
           weight,
-          fillColor,
+          fillColor: style.fillColor,
           fillOpacity,
         },
         interactive: true,
@@ -2305,7 +2312,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => {
         updateCountyHoverPreview(metrics.county, event);
-        geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.08, 0.7), weight: weight + 0.5 });
+        geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.10, 0.85), weight: weight + 0.5 });
       });
       geoLayer.on('mouseout', () => {
         clearCountyHoverPreview();
