@@ -1201,7 +1201,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       attributionControl: false,
     });
 
-    L.control.zoom({ position: 'topleft' }).addTo(map);
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
 
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
