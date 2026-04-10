@@ -281,7 +281,51 @@ const HelpIconTooltip = ({
   );
 };
 
-const Sidebar = ({
+const InlineHelpTooltip = ({ label, explanation }: { label: string; explanation: string }) => {
+  const [open, setOpen] = useState(false);
+
+  const stop = (event: MouseEvent<HTMLButtonElement> | KeyboardEvent<HTMLButtonElement> | TouchEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-3.5 w-3.5 items-center justify-center rounded-full border border-muted-foreground/30 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onTouchStart={(event) => { stop(event); setOpen(true); }}
+          onClick={(event) => { stop(event); setOpen((c) => !c); }}
+          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { stop(event); setOpen((c) => !c); } }}
+          aria-label={`More information about ${label}`}
+          aria-expanded={open}
+          aria-haspopup="dialog"
+        >
+          <span className="text-[8px] font-semibold leading-none">?</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="start"
+        sideOffset={6}
+        avoidCollisions
+        collisionPadding={{ top: 12, right: 12, bottom: 12, left: 12 }}
+        className="z-[1700] max-w-[260px] rounded-md border border-border bg-popover p-2.5 text-popover-foreground shadow-md animate-in fade-in-0 duration-150"
+        onOpenAutoFocus={(event) => event.preventDefault()}
+      >
+        <div className="space-y-0.5">
+          <p className="text-[11px] font-semibold text-foreground">{label}</p>
+          <p className="text-[10px] leading-relaxed text-muted-foreground">{explanation}</p>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+
   layer: {
     layers,
     onToggleLayer,
