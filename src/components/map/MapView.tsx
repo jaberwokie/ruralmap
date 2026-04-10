@@ -665,6 +665,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
   const [markerHoverPreview, setMarkerHoverPreview] = useState<MarkerHoverPreview | null>(null);
+  const tutorialActiveRef = useRef(false);
+  tutorialActiveRef.current = tutorialStepKey != null;
   const markerHoverPreviewRef = useRef(setMarkerHoverPreview);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
