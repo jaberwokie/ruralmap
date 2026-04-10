@@ -1197,7 +1197,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     const map = L.map(containerRef.current, {
       center: [39.5, -117.0],
       zoom: 7,
-      zoomControl: true,
+      zoomControl: false,
       attributionControl: false,
     });
 
