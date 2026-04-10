@@ -1402,7 +1402,7 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
   if (!showMedicaid && !hasExtra) return null;
 
   const routingTier = showRoutingTier ? resolveRoutingTierDisplay(entityId, meta) : undefined;
-  const verificationSignal = resolveVerificationSignalLabel(entityId);
+  const verificationSignal = resolveVerificationSignal(entityId);
 
   return (
     <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-1">
@@ -1417,7 +1417,10 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
       {verificationSignal && (
         <div className="text-[10px]">
           <span className="text-muted-foreground block leading-tight">Verification Signal</span>
-          <span className="font-medium text-foreground leading-tight">{verificationSignal}</span>
+          <span className={`font-medium leading-tight flex items-center gap-1 ${verificationSignal.colorClass}`}>
+            <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${verificationSignal.dotClass}`} />
+            {verificationSignal.label}
+          </span>
         </div>
       )}
       {showMedicaid && (
