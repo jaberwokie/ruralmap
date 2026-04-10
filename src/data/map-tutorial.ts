@@ -71,14 +71,14 @@ export const MAP_TUTORIAL_STEPS: MapTutorialStep[] = [
     key: 'connectivity',
     title: 'Check connectivity layers',
     text: 'Under Connectivity, toggle Broadband Access and Cellular Coverage. These are county-level aggregate grades — not address-level guarantees. When both are on, a single combined legend appears at the bottom-left showing Broadband first, then Cellular.',
-    selectors: ['[data-tutorial="section-core-map"]'],
+    selectors: ['[data-tutorial="section-connectivity"]'],
     footer: 'Broad patterns, not exact service availability.',
   },
   {
     key: 'tooltipBehavior',
     title: 'Where to find hover info',
     text: 'When you hover over a county or marker, the summary appears in a fixed card at the top-left of the map — it does not follow your cursor. This keeps the view stable while you scan.',
-    selectors: ['[data-tutorial="map-region"]'],
+    selectors: ['[data-tutorial="hover-tooltip"]', '[data-tutorial="map-region"]'],
     footer: 'Decision tool, not a directory.',
   },
 ];
