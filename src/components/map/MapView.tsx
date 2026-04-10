@@ -601,6 +601,12 @@ const getCoverageGapSeverity = (coverageGapPercent: number): CoverageGapSeverity
   return 'Low';
 };
 
+const COVERAGE_GAP_SEVERITY_DOT: Record<CoverageGapSeverity, string> = {
+  High: 'bg-destructive',
+  Moderate: 'bg-amber-500',
+  Low: 'bg-primary',
+};
+
 const CoverageGapInfoButton = () => {
   const [open, setOpen] = useState(false);
 
@@ -2496,8 +2502,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                         </span>
                         <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
                       </div>
-                      <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground">
-                        Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
+                      <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground flex items-center gap-1">
+                        Status: <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${COVERAGE_GAP_SEVERITY_DOT[getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)]}`} />{getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
                       </div>
                     </div>
                   )}
