@@ -3,7 +3,7 @@ import MapExplainerModal from './MapExplainerModal';
 import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType } from '@/data/facilities';
-import { MapTutorialStepKey } from '@/data/map-tutorial';
+
 import { toast } from 'sonner';
 import type { Filters } from '@/types/filters';
 import type { LayerState } from '@/types/layers';
@@ -69,8 +69,6 @@ interface SidebarProps {
   filter: SidebarFilterProps;
   facility: SidebarFacilityProps;
   selection: SidebarSelectionProps;
-  onReplayTutorial?: () => void;
-  tutorialStepKey?: MapTutorialStepKey | null;
 }
 
 const LAYER_CONFIG = [
@@ -314,8 +312,6 @@ const Sidebar = ({
     onFteCardClick,
     onCountySelect,
   },
-  onReplayTutorial,
-  tutorialStepKey,
 }: SidebarProps) => {
   const usePersistToggle = (key: string, defaultOpen = false) => {
     const [open, setOpen] = useState(() => {
@@ -343,11 +339,6 @@ const Sidebar = ({
   const [connectivityOpen, toggleConnectivity, setConnectivityOpen] = usePersistToggle('sidebar_layer_connectivity');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    if (tutorialStepKey === 'facilityFilters') setFiltersOpen(true);
-    if (tutorialStepKey === 'coreMap' || tutorialStepKey === 'providerLocations') setCoreMapOpen(true);
-    if (tutorialStepKey === 'connectivity') setConnectivityOpen(true);
-  }, [setCoreMapOpen, setConnectivityOpen, setFiltersOpen, tutorialStepKey]);
 
   // Counts from filtered set
   const hospitalCount = facilities.filter(f => f.type === 'hospital').length;
@@ -672,15 +663,6 @@ const Sidebar = ({
           >
             Map Explainer
           </button>
-          {onReplayTutorial && (
-            <button
-              type="button"
-              onClick={onReplayTutorial}
-              className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            >
-              Replay Tutorial
-            </button>
-          )}
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
           <span className="text-muted-foreground flex items-center gap-1">
