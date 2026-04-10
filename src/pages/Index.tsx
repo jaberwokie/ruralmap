@@ -64,7 +64,6 @@ const Index = () => {
           engagementRateBelow20Only={filters.engagementRateBelow20Only}
           engagementGapView={layers.engagementGapView}
         />
-        />
         <CoverageDetailPanel
           entity={selection.lockedEntity}
           onClear={selection.actions.clearSelection}
