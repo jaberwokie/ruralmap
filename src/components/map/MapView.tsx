@@ -1844,18 +1844,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
           ? 'Clinic / Community Provider'
           : getFacilityTypeLabel(facility);
-        const utilHtml = showUtilization && util
-          ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
-              <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
-              <div>Visits/Member: ${util.visitsPerMember} · Rank #${util.rank}</div>
-            </div>`
-          : '';
 
         const claimsMetrics = getProviderClaimsMetrics(facility);
-        const penetrationColor = claimsMetrics && claimsMetrics.visitPenetrationRate < 0.5
-          ? 'hsl(38, 92%, 50%)' : 'hsl(240, 4%, 46%)';
-        const avgEncColor = claimsMetrics && claimsMetrics.avgEncountersPerSeenMember > 10
-          ? 'hsl(0, 72%, 51%)' : 'hsl(240, 4%, 46%)';
          const claimsDetail = claimsMetrics
            ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
            : undefined;
