@@ -129,6 +129,23 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
             </p>
           </Section>
 
+          <Section title="Tribal Access">
+            <p>Tribal Nations and tribally operated services are shown separately from standard provider networks.</p>
+            <p>These services may operate under different eligibility, funding, and care coordination structures than Medicaid-participating providers.</p>
+            <p className="font-medium text-foreground">What this means in practice:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Tribal services may be available regardless of traditional network participation.</li>
+              <li>Access may depend on tribal membership, referral relationships, or local agreements.</li>
+              <li>These locations can be critical access points in rural areas where standard provider networks are limited.</li>
+            </ul>
+            <p className="font-medium text-foreground">Use this layer to:</p>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>Identify additional care options that may not appear in traditional provider networks.</li>
+              <li>Understand where culturally specific and community-based services exist.</li>
+              <li>Support coordination with tribal partners when appropriate.</li>
+            </ul>
+          </Section>
+
           <div className="border-t border-border/50" />
 
           <Section title="Why this matters for NBH">
