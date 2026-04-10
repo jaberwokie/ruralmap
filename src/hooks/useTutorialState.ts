@@ -128,7 +128,7 @@ export const useTutorialState = (deps: TutorialDeps): UseTutorialStateReturn => 
     if (!tutorialOpen || window.innerWidth >= 768) return;
     const stepKey = MAP_TUTORIAL_STEPS[tutorialStepIndex]?.key as MapTutorialStepKey | undefined;
     if (!stepKey) return;
-    const sidebarSteps = new Set<MapTutorialStepKey>(['search', 'facilityFilters', 'coreMap', 'providerLocations']);
+    const sidebarSteps = new Set<MapTutorialStepKey>(['search', 'facilityFilters', 'coreMap', 'providerLocations', 'connectivity']);
     deps.setMobileSidebarOpen(sidebarSteps.has(stepKey));
   }, [tutorialOpen, tutorialStepIndex, deps]);
 
