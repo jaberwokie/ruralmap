@@ -1093,6 +1093,10 @@ const Sidebar = ({
                                       <Flame className="h-2.5 w-2.5" />
                                       Priority
                                     </button>
+                                    <InlineHelpTooltip
+                                      label="Priority"
+                                      explanation="Ranks where to act first. Combines unengaged volume, low engagement rate, and lack of staff coverage to show urgency across counties."
+                                    />
                                     <button
                                       type="button"
                                       onClick={() => onEngagementGapViewChange('boundaries')}
@@ -1105,6 +1109,10 @@ const Sidebar = ({
                                       <Grid3X3 className="h-2.5 w-2.5" />
                                       Boundaries
                                     </button>
+                                    <InlineHelpTooltip
+                                      label="Boundaries"
+                                      explanation="Shows where a gap exists. A county is flagged when demand is high and there's no field staff coverage. This is a yes/no view with tiers (Gap, Watchlist, Early Signal)."
+                                    />
                                   </div>
                                   <div className="space-y-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1.5">
                                     <div className="flex items-center justify-between gap-2">
