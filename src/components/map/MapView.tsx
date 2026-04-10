@@ -2440,65 +2440,83 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     <div className="relative h-full w-full" data-tutorial="map-region">
       <div ref={containerRef} className="h-full w-full" />
       <TooltipProvider delayDuration={120}>
-        {countyHoverPreview && countyHoverPreviewStyle && (
+        {(countyHoverPreview || markerHoverPreview) && (
           <div
-            className="pointer-events-none absolute z-[810] rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
-            style={countyHoverPreviewStyle}
+            className="pointer-events-none absolute bottom-4 left-1/2 z-[810] w-52 -translate-x-1/2 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
           >
-            <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
-            <div className="mt-1.5 space-y-1">
-              {typeof countyHoverPreview.unengagedMembers === 'number' && (
-                <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
-              )}
-              {typeof countyHoverPreview.providerCount === 'number' && (
-                <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
-              )}
-              {typeof countyHoverPreview.serviceCount === 'number' && (
-                <CountyHoverMetricRow label="Services" value={numberFormatter.format(countyHoverPreview.serviceCount)} />
-              )}
-              {typeof countyHoverPreview.coverageGapPercent === 'number' && (
-                <div className="space-y-1">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      Coverage gap
-                      <CoverageGapInfoButton />
-                    </span>
-                    <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
+            {markerHoverPreview && (
+              <div>
+                <p className="text-[13px] font-semibold leading-4 text-foreground">{markerHoverPreview.name}</p>
+                {markerHoverPreview.subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{markerHoverPreview.subtitle}</p>}
+                {markerHoverPreview.address && <p className="text-[10px] text-muted-foreground/80 mt-0.5">{markerHoverPreview.address}</p>}
+                {markerHoverPreview.detail && <p className="text-[10px] text-muted-foreground mt-0.5">{markerHoverPreview.detail}</p>}
+                {markerHoverPreview.extraHtml && (
+                  <div className="border-t border-border/70 mt-1.5 pt-1 space-y-0.5">
+                    {markerHoverPreview.extraHtml.split('\n').map((line, i) => (
+                      <p key={i} className="text-[10px] text-muted-foreground/80">{line}</p>
+                    ))}
                   </div>
-                  <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground">
-                    Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
-                  </div>
+                )}
+              </div>
+            )}
+            {countyHoverPreview && !markerHoverPreview && (
+              <>
+                <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
+                <div className="mt-1.5 space-y-1">
+                  {typeof countyHoverPreview.unengagedMembers === 'number' && (
+                    <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
+                  )}
+                  {typeof countyHoverPreview.providerCount === 'number' && (
+                    <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
+                  )}
+                  {typeof countyHoverPreview.serviceCount === 'number' && (
+                    <CountyHoverMetricRow label="Services" value={numberFormatter.format(countyHoverPreview.serviceCount)} />
+                  )}
+                  {typeof countyHoverPreview.coverageGapPercent === 'number' && (
+                    <div className="space-y-1">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          Coverage gap
+                          <CoverageGapInfoButton />
+                        </span>
+                        <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
+                      </div>
+                      <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground">
+                        Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
+                      </div>
+                    </div>
+                  )}
+                  {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
+                    <div className="border-t border-border/70 pt-1 space-y-0.5">
+                      <CountyHoverMetricRow label="Readiness" value={countyHoverPreview.broadbandReadiness ?? countyHoverPreview.broadbandStatus} />
+                      {typeof countyHoverPreview.pct_100_20_plus === 'number' && (
+                        <CountyHoverMetricRow label="≥100/20" value={`${countyHoverPreview.pct_100_20_plus}%`} />
+                      )}
+                      {typeof countyHoverPreview.pct_below_25_3 === 'number' && countyHoverPreview.pct_below_25_3 > 0 && (
+                        <CountyHoverMetricRow label="<25/3" value={`${countyHoverPreview.pct_below_25_3}%`} />
+                      )}
+                      {typeof countyHoverPreview.broadbandSatelliteShare === 'number' && countyHoverPreview.broadbandSatelliteShare >= 30 && (
+                        <CountyHoverMetricRow label="Satellite" value={`${countyHoverPreview.broadbandSatelliteShare}%`} />
+                      )}
+                      {countyHoverPreview.broadbandUneven && (
+                        <div className="text-[9px] text-engagement-watch mt-0.5">⚠ Uneven coverage</div>
+                      )}
+                    </div>
+                  )}
+                  {layers.cellularCoverage && countyHoverPreview.cellularReadiness && (
+                    <div className="border-t border-border/70 pt-1 space-y-0.5">
+                      <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReadiness} />
+                      {typeof countyHoverPreview.cellularLtePct === 'number' && (
+                        <CountyHoverMetricRow label="LTE" value={`${countyHoverPreview.cellularLtePct}%`} />
+                      )}
+                      {typeof countyHoverPreview.cellularFiveGPct === 'number' && (
+                        <CountyHoverMetricRow label="5G" value={`${countyHoverPreview.cellularFiveGPct}%`} />
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-               {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
-                <div className="border-t border-border/70 pt-1 space-y-0.5">
-                  <CountyHoverMetricRow label="Readiness" value={countyHoverPreview.broadbandReadiness ?? countyHoverPreview.broadbandStatus} />
-                  {typeof countyHoverPreview.pct_100_20_plus === 'number' && (
-                    <CountyHoverMetricRow label="≥100/20" value={`${countyHoverPreview.pct_100_20_plus}%`} />
-                  )}
-                  {typeof countyHoverPreview.pct_below_25_3 === 'number' && countyHoverPreview.pct_below_25_3 > 0 && (
-                    <CountyHoverMetricRow label="<25/3" value={`${countyHoverPreview.pct_below_25_3}%`} />
-                  )}
-                  {typeof countyHoverPreview.broadbandSatelliteShare === 'number' && countyHoverPreview.broadbandSatelliteShare >= 30 && (
-                    <CountyHoverMetricRow label="Satellite" value={`${countyHoverPreview.broadbandSatelliteShare}%`} />
-                  )}
-                  {countyHoverPreview.broadbandUneven && (
-                    <div className="text-[9px] text-engagement-watch mt-0.5">⚠ Uneven coverage</div>
-                  )}
-                </div>
-              )}
-              {layers.cellularCoverage && countyHoverPreview.cellularReadiness && (
-                <div className="border-t border-border/70 pt-1 space-y-0.5">
-                  <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReadiness} />
-                  {typeof countyHoverPreview.cellularLtePct === 'number' && (
-                    <CountyHoverMetricRow label="LTE" value={`${countyHoverPreview.cellularLtePct}%`} />
-                  )}
-                  {typeof countyHoverPreview.cellularFiveGPct === 'number' && (
-                    <CountyHoverMetricRow label="5G" value={`${countyHoverPreview.cellularFiveGPct}%`} />
-                  )}
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         )}
       </TooltipProvider>
