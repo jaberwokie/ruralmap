@@ -129,13 +129,18 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
       const result = measureGeometry(targetStep, false);
 
       if (!result.ok) {
+        // If a fallback element exists, use it immediately instead of retrying
+        const fb = measureGeometry(targetStep, true);
+        if (fb.ok) {
+          commit(fb.ok ? fb.hr ?? null : null, fb.ok ? fb.fr ?? null : null, fb.ctx);
+          return;
+        }
         if (attempts < MAX_RESOLVE_ATTEMPTS) {
           attempts++;
           schedule(tryResolve, attempts < 4 ? 40 : 80);
           return;
         }
-        const fb = measureGeometry(targetStep, true);
-        commit(fb.ok ? fb.hr ?? null : null, fb.ok ? fb.fr ?? null : null, fb.ctx);
+        commit(null, null, fb.ctx);
         return;
       }
 
