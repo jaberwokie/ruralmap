@@ -121,12 +121,6 @@ export const useTutorialState = (deps: TutorialDeps): UseTutorialStateReturn => 
     if (stepKey === 'coreMap' || stepKey === 'providerLocations') {
       deps.setLayers((current) => ({ ...current, services: true, behavioralHealth: true }));
     }
-    if (stepKey === 'connectivity') {
-      // Expand the Connectivity section by simulating the persisted toggle state
-      try { localStorage.setItem('sidebar_layer_connectivity', 'true'); } catch {}
-      // Force a re-render by toggling a layer briefly — the section reads from localStorage
-      deps.setLayers((current) => ({ ...current }));
-    }
   }, [tutorialOpen, tutorialStepIndex, deps]);
 
   // Tutorial-driven mobile sidebar
