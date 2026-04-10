@@ -1035,6 +1035,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       'drive-radius-overlay': radiusRef.current,
       'coverage-gap-overlay': gapsRef.current,
       'engagement-gap-overlay': engagementGapRef.current,
+      'engagement-priority-overlay': engagementPriorityRef.current,
       'service-presence-halos': servicePresenceHaloRef.current,
       'service-presence-markers': servicePresenceMarkerRef.current,
       'behavioral-health-halos': behavioralHealthHaloRef.current,
@@ -1298,6 +1299,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
+    engagementPriorityRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.featureGroup().addTo(map);
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
