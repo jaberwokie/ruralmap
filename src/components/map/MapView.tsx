@@ -488,13 +488,20 @@ type PointRenderCandidate = {
   lat: number;
   lng: number;
   sortKey: string;
+  lockToSource?: boolean;
 };
 
 const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => {
   const coordinates = new Map<string, [number, number]>();
+  const lockedPoints = points.filter((point) => point.lockToSource);
+  const movablePoints = points.filter((point) => !point.lockToSource);
+
+  lockedPoints.forEach((point) => {
+    coordinates.set(point.id, [point.lat, point.lng]);
+  });
 
   if (zoom < OVERLAP_DECLUTTER_ZOOM) {
-    points.forEach((point) => {
+    movablePoints.forEach((point) => {
       coordinates.set(point.id, [point.lat, point.lng]);
     });
     return coordinates;
@@ -502,7 +509,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
   const groups: PointRenderCandidate[][] = [];
 
-  [...points]
+  [...movablePoints]
     .sort((left, right) => left.lat - right.lat || left.lng - right.lng || left.sortKey.localeCompare(right.sortKey))
     .forEach((point) => {
       const existingGroup = groups.find((group) => {
@@ -1571,6 +1578,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             lat: service.lat,
             lng: service.lng,
             sortKey: `service:${service.id}`,
+            lockToSource: service.id === 'rs-81',
           }))
         : []),
       ...(layers.behavioralHealth && !topProvidersOnly
