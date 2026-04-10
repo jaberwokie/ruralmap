@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { MAP_TUTORIAL_STEPS, type MapTutorialStep } from '@/data/map-tutorial';
 import MapTutorialCard from '@/components/map/tutorial/MapTutorialCard';
 import { getTutorialAnchorContext, getTutorialFallbackElement, resolveTutorialElements, scrollTutorialElementIntoView } from '@/components/map/tutorial/tutorialDom';
-import { FALLBACK_CARD_HEIGHT, getCardLayout, getHighlightRect, getViewportSize, type HighlightRect, type TutorialAnchorContext, type ViewportSize } from '@/components/map/tutorial/tutorialLayout';
+import { FALLBACK_CARD_HEIGHT, getCardLayout, getHighlightRect, getViewportSize, clampHighlightToContainer, type HighlightRect, type TutorialAnchorContext, type ViewportSize } from '@/components/map/tutorial/tutorialLayout';
 
 interface MapTutorialOverlayProps {
   introOpen: boolean;
@@ -15,10 +15,6 @@ interface MapTutorialOverlayProps {
   onBack: () => void;
 }
 
-/**
- * Committed snapshot — everything the overlay currently renders.
- * Updated atomically when a new step is fully resolved.
- */
 interface CommittedState {
   stepIndex: number;
   step: MapTutorialStep;
@@ -37,15 +33,14 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
   const [viewport, setViewport] = useState<ViewportSize>({ width: 0, height: 0 });
   const [cardHeight, setCardHeight] = useState(FALLBACK_CARD_HEIGHT);
 
-  // The committed state is what the overlay actually renders.
-  // It only updates when a new step is fully resolved.
   const [committed, setCommitted] = useState<CommittedState | null>(null);
-  // Controls card + label visibility; false while transitioning
   const [contentVisible, setContentVisible] = useState(false);
-  // Locks Next/Prev during transition
   const [transitioning, setTransitioning] = useState(false);
 
-  const transitionCancelRef = useRef<(() => void) | null>(null);
+  // Track which stepIndex has been dispatched so we don't re-dispatch
+  const dispatchedStepRef = useRef<number>(-1);
+  // Separate cancel ref that is NOT cleared by the effect cleanup
+  const pipelineCancelRef = useRef<(() => void) | null>(null);
 
   useEffect(() => { setMounted(true); setViewport(getViewportSize()); }, []);
 
@@ -57,18 +52,41 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
     return () => window.removeEventListener('resize', update);
   }, [mounted]);
 
-  // ── Resolution pipeline ──
-  // Runs when stepIndex changes. Does NOT touch committed state until resolved.
+  // ── Measure geometry for a step, optionally clamping to sidebar ──
+  const measureGeometry = useCallback((targetStep: MapTutorialStep, allowFallback: boolean) => {
+    const elements = resolveTutorialElements(targetStep.selectors);
+    const primary = elements[0] ?? (allowFallback ? getTutorialFallbackElement(targetStep.selectors) : null);
+    const ctx = getTutorialAnchorContext(primary, targetStep.selectors);
+    if (!primary) return { ok: false as const, ctx };
+
+    let hr = elements.length > 0 ? getHighlightRect(elements) : null;
+    let fr = elements.length === 0 ? getHighlightRect([primary]) : null;
+
+    // Clamp sidebar highlights to the sidebar container
+    if (ctx === 'sidebar') {
+      const sidebar = document.querySelector('[data-tutorial="sidebar"]') as HTMLElement | null;
+      if (sidebar) {
+        const sidebarRect = sidebar.getBoundingClientRect();
+        if (hr) hr = clampHighlightToContainer(hr, sidebarRect);
+        if (fr) fr = clampHighlightToContainer(fr, sidebarRect);
+      }
+    }
+
+    if (!hr && !fr) return { ok: false as const, ctx };
+    return { ok: true as const, ctx, hr, fr, primary };
+  }, []);
+
+  // ── Resolution pipeline — runs once per step change ──
   const resolveStep = useCallback((targetStep: MapTutorialStep, targetIndex: number) => {
-    // Cancel any in-flight resolution
-    transitionCancelRef.current?.();
+    // Cancel previous pipeline
+    pipelineCancelRef.current?.();
 
     let cancelled = false;
     let timer = 0;
     let raf = 0;
     let attempts = 0;
 
-    transitionCancelRef.current = () => {
+    pipelineCancelRef.current = () => {
       cancelled = true;
       window.clearTimeout(timer);
       cancelAnimationFrame(raf);
@@ -84,42 +102,31 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
       }
     };
 
-    const measureGeometry = (allowFallback: boolean) => {
-      const elements = resolveTutorialElements(targetStep.selectors);
-      const primary = elements[0] ?? (allowFallback ? getTutorialFallbackElement(targetStep.selectors) : null);
-      const ctx = getTutorialAnchorContext(primary, targetStep.selectors);
-      if (!primary) return { ok: false as const, ctx };
-      const hr = elements.length > 0 ? getHighlightRect(elements) : null;
-      const fr = elements.length === 0 ? getHighlightRect([primary]) : null;
-      if (!hr && !fr) return { ok: false as const, ctx };
-      return { ok: true as const, ctx, hr, fr, primary };
-    };
-
     const commit = (hr: HighlightRect | null, fr: HighlightRect | null, ctx: TutorialAnchorContext) => {
       if (cancelled) return;
-      // 1. Hide card content
+      // 1. Hide card content (it was already hidden or showing old step)
       setContentVisible(false);
-      // 2. Update highlight rect (CSS will animate it from old → new position)
+      // 2. Commit new geometry — highlight transitions via CSS
       setCommitted({ stepIndex: targetIndex, step: targetStep, highlightRect: hr, fallbackRect: fr, anchorContext: ctx });
-      // 3. After highlight transition finishes (~260ms), reveal card content
+      // 3. After highlight CSS transition settles, re-measure and reveal
       schedule(() => {
         if (cancelled) return;
-        // Re-measure once more after highlight settled for pixel-perfect card placement
-        const final = measureGeometry(true);
+        const final = measureGeometry(targetStep, true);
         if (final.ok) {
           setCommitted(prev => prev ? { ...prev, highlightRect: final.hr ?? null, fallbackRect: final.fr ?? null, anchorContext: final.ctx } : prev);
         }
+        // Reveal card content
         schedule(() => {
           if (cancelled) return;
           setContentVisible(true);
           setTransitioning(false);
-        }, 40);
-      }, 220);
+        }, 50);
+      }, 240);
     };
 
     const tryResolve = () => {
       if (cancelled) return;
-      const result = measureGeometry(false);
+      const result = measureGeometry(targetStep, false);
 
       if (!result.ok) {
         if (attempts < MAX_RESOLVE_ATTEMPTS) {
@@ -127,56 +134,61 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
           schedule(tryResolve, attempts < 4 ? 40 : 80);
           return;
         }
-        // Use fallback
-        const fb = measureGeometry(true);
+        const fb = measureGeometry(targetStep, true);
         commit(fb.ok ? fb.hr ?? null : null, fb.ok ? fb.fr ?? null : null, fb.ctx);
         return;
       }
 
-      // Scroll into view if needed
       const didScroll = scrollTutorialElementIntoView(result.primary!);
 
       if (didScroll) {
-        // Wait for smooth scroll to finish, then re-measure and commit
         schedule(() => {
           if (cancelled) return;
-          const post = measureGeometry(true);
+          const post = measureGeometry(targetStep, true);
           commit(post.ok ? post.hr ?? null : null, post.ok ? post.fr ?? null : null, post.ctx);
-        }, 350); // smooth scroll typically takes 300-400ms
+        }, 380);
       } else {
-        // No scroll needed — commit immediately
         commit(result.hr ?? null, result.fr ?? null, result.ctx);
       }
     };
 
     setTransitioning(true);
+    setContentVisible(false);
     tryResolve();
-  }, []);
+  }, [measureGeometry]);
 
-  // Trigger resolution when stepIndex changes
+  // ── Trigger resolution on step change ──
+  // Key fix: do NOT include `committed` in deps. Use a ref to track dispatched step.
   useEffect(() => {
     if (!mounted || !walkthroughOpen || !step) return;
 
-    // First step or step change
-    if (!committed || committed.stepIndex !== stepIndex) {
+    if (dispatchedStepRef.current !== stepIndex) {
+      dispatchedStepRef.current = stepIndex;
       resolveStep(step, stepIndex);
     }
+  }, [mounted, walkthroughOpen, step, stepIndex, resolveStep]);
 
-    return () => { transitionCancelRef.current?.(); };
-  }, [mounted, walkthroughOpen, step, stepIndex, committed, resolveStep]);
+  // Reset dispatch tracking when tutorial closes
+  useEffect(() => {
+    if (!walkthroughOpen) {
+      dispatchedStepRef.current = -1;
+      pipelineCancelRef.current?.();
+      setCommitted(null);
+      setContentVisible(false);
+      setTransitioning(false);
+    }
+  }, [walkthroughOpen]);
 
-  // Live position refresh (resize/scroll) — only updates committed geometry
+  // Live position refresh (resize/scroll)
   useEffect(() => {
     if (!mounted || !walkthroughOpen || !committed) return;
 
     const refresh = () => {
-      if (transitioning) return; // Don't thrash during transition
-      const elements = resolveTutorialElements(committed.step.selectors);
-      const primary = elements[0] ?? getTutorialFallbackElement(committed.step.selectors);
-      if (!primary) return;
-      const hr = elements.length > 0 ? getHighlightRect(elements) : null;
-      const fr = elements.length === 0 ? getHighlightRect([primary]) : null;
-      setCommitted(prev => prev ? { ...prev, highlightRect: hr, fallbackRect: fr } : prev);
+      if (transitioning) return;
+      const result = measureGeometry(committed.step, true);
+      if (result.ok) {
+        setCommitted(prev => prev ? { ...prev, highlightRect: result.hr ?? null, fallbackRect: result.fr ?? null } : prev);
+      }
     };
 
     window.addEventListener('resize', refresh);
@@ -185,7 +197,7 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
       window.removeEventListener('resize', refresh);
       window.removeEventListener('scroll', refresh, true);
     };
-  }, [mounted, walkthroughOpen, committed, transitioning]);
+  }, [mounted, walkthroughOpen, committed, transitioning, measureGeometry]);
 
   // Keyboard
   useEffect(() => {
@@ -252,19 +264,14 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
     );
   }
 
-  // Walkthrough — always render the overlay structure, never unmount between steps
+  // Walkthrough
   const displayStep = committed?.step ?? step;
   const displayStepIndex = committed?.stepIndex ?? stepIndex;
 
   if (!cardLayout || !displayStep) return null;
 
-  // Interaction lock: disable Next/Prev buttons during transition
-  const handleNext = transitioning ? undefined : onNext;
-  const handleBack = transitioning ? undefined : onBack;
-
   return createPortal(
     <div className="fixed inset-0 z-[2200] pointer-events-none">
-      {/* Dimming + highlight — persists across steps, CSS transitions handle movement */}
       {focusRect ? (
         <>
           <div className="absolute inset-x-0 top-0 bg-foreground/16 transition-all duration-[260ms] ease-out" style={{ height: focusRect.top }} />
@@ -278,7 +285,6 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
               boxShadow: '0 0 0 1px hsl(var(--background) / 0.28), inset 0 0 0 1px hsl(var(--primary) / 0.10)',
             }}
           />
-          {/* Target label */}
           <div
             className="absolute pointer-events-none transition-all duration-[260ms] ease-out"
             style={{ top: focusRect.top - 10, left: focusRect.left + 8, opacity: contentVisible ? 1 : 0 }}
@@ -292,7 +298,6 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
         <div className="absolute inset-0 bg-foreground/16" />
       )}
 
-      {/* Card — always mounted, position transitions via CSS, content fades */}
       <div
         className="transition-opacity duration-150 ease-out"
         style={{ opacity: contentVisible ? 1 : 0, pointerEvents: contentVisible ? 'auto' : 'none' }}
@@ -303,8 +308,8 @@ const MapTutorialOverlay = ({ introOpen, walkthroughOpen, stepIndex, onStart, on
           highlightRect={committed?.highlightRect ?? null}
           step={displayStep}
           stepIndex={displayStepIndex}
-          onBack={handleBack ?? onBack}
-          onNext={handleNext ?? onNext}
+          onBack={transitioning ? () => {} : onBack}
+          onNext={transitioning ? () => {} : onNext}
           onClose={onSkip}
         />
       </div>
