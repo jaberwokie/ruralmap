@@ -20,6 +20,7 @@ import { resolveOperationalMeta, PARTICIPATION_STATUS_LABELS, PARTICIPATION_STAT
 import { getOperationalTagIndex } from '@/data/operational-metadata';
 import type { ServiceOperationalMeta } from '@/types/medicaid';
 import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
+import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1336,11 +1337,7 @@ const ROUTING_TIER_DISPLAY_LABELS: Record<RoutingTierDisplay, string> = {
   fallback: 'Fallback Option',
 };
 
-const ROUTING_TIER_DISPLAY_COLORS: Record<RoutingTierDisplay, string> = {
-  recommended: 'text-primary',
-  available_unverified: 'text-muted-foreground',
-  fallback: 'text-destructive/70',
-};
+const ROUTING_TIER_DISPLAY_COLORS: Record<RoutingTierDisplay, string> = ROUTING_TIER_COLORS;
 
 const resolveRoutingTierDisplay = (
   entityId?: string,
@@ -1384,11 +1381,11 @@ const resolveVerificationSignal = (entityId?: string): VerificationSignalResult 
   if (!tag) return null;
 
   if (tag.verificationStatus === 'verified_participating')
-    return { label: 'Medicaid Verified (DPBH)', colorClass: 'text-primary', dotClass: 'bg-primary' };
+    return { label: 'Medicaid Verified (DPBH)', colorClass: VERIFICATION_SIGNAL_COLORS.medicaid_verified.text, dotClass: VERIFICATION_SIGNAL_COLORS.medicaid_verified.dot };
   if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'inferred_strong')
-    return { label: 'Provider Identified (NPI Confirmed)', colorClass: 'text-amber-600 dark:text-amber-400', dotClass: 'bg-amber-500' };
+    return { label: 'Provider Identified (NPI Confirmed)', colorClass: VERIFICATION_SIGNAL_COLORS.npi_confirmed.text, dotClass: VERIFICATION_SIGNAL_COLORS.npi_confirmed.dot };
   if (tag.verificationStatus === 'needs_verification' && tag.verificationConfidence === 'unknown')
-    return { label: 'Unverified Provider', colorClass: 'text-muted-foreground', dotClass: 'bg-muted-foreground' };
+    return { label: 'Unverified Provider', colorClass: VERIFICATION_SIGNAL_COLORS.unverified.text, dotClass: VERIFICATION_SIGNAL_COLORS.unverified.dot };
   return null;
 };
 
