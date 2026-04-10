@@ -2336,6 +2336,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!engagementGapRef.current) return;
     engagementGapRef.current.clearLayers();
     engagementGapLabelRef.current?.clearLayers();
+    // Clear priority layer when switching to boundaries
+    engagementPriorityRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'boundaries') return;
 
     const results = getEngagementGapResults();
