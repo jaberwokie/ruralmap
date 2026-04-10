@@ -19,6 +19,7 @@ import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COL
 import { resolveOperationalMeta, PARTICIPATION_STATUS_LABELS, PARTICIPATION_STATUS_COLORS } from '@/types/medicaid';
 import { getOperationalTagIndex } from '@/data/operational-metadata';
 import type { ServiceOperationalMeta } from '@/types/medicaid';
+import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -922,7 +923,9 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
       list.push(s);
       map.set(s.category, list);
     });
-    return Array.from(map.entries()).sort((a, b) => b[1].length - a[1].length);
+    return Array.from(map.entries())
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([cat, items]) => [cat, [...items].sort(compareEntitiesByOperationalPriority)] as [string, RuralService[]]);
   }, [services]);
 
   if (services.length === 0) {
@@ -2020,7 +2023,8 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
       map.set(s.category, list);
     });
     return Array.from(map.entries())
-      .sort((a, b) => b[1].length - a[1].length);
+      .sort((a, b) => b[1].length - a[1].length)
+      .map(([cat, items]) => [cat, [...items].sort(compareEntitiesByOperationalPriority)] as [string, RuralService[]]);
   }, [services]);
 
   const util = getCountyUtilization(county);

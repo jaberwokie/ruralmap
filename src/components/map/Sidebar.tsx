@@ -13,6 +13,7 @@ import { tribalNations } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCESS_TIER_LABELS } from '@/utils/providerAccessTiers';
+import { sortEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { getCountyEngagementRankings, getEngagementGapResults, getFilteredEngagementPriorityCounties, getTopUnengagedCounties } from '@/utils/utilizationAggregation';
 import { COUNTY_BROADBAND_DATA } from '@/data/broadband-coverage';
@@ -571,13 +572,16 @@ const Sidebar = ({
     if (file) processCSVFile(file);
   }, [processCSVFile]);
 
-  const displayFacilities = searchQuery
-    ? facilities.filter(f =>
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.county.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : facilities;
+  const displayFacilities = useMemo(() => {
+    const filtered = searchQuery
+      ? facilities.filter(f =>
+          f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          f.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          f.county.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : facilities;
+    return sortEntitiesByOperationalPriority(filtered);
+  }, [searchQuery, facilities]);
 
   const renderHelpIcon = (key: string) => (
     <HelpIconTooltip helpKey={key} />
