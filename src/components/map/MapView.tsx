@@ -662,6 +662,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const fteCapacityRef = useRef<L.LayerGroup | null>(null);
   const utilizationRef = useRef<L.LayerGroup | null>(null);
   const engagementGapRef = useRef<L.LayerGroup | null>(null);
+  const engagementPriorityRef = useRef<L.LayerGroup | null>(null);
   const engagementGapLabelRef = useRef<L.LayerGroup | null>(null);
   const engagementHeatRef = useRef<L.Layer | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
@@ -1034,6 +1035,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       'drive-radius-overlay': radiusRef.current,
       'coverage-gap-overlay': gapsRef.current,
       'engagement-gap-overlay': engagementGapRef.current,
+      'engagement-priority-overlay': engagementPriorityRef.current,
       'service-presence-halos': servicePresenceHaloRef.current,
       'service-presence-markers': servicePresenceMarkerRef.current,
       'behavioral-health-halos': behavioralHealthHaloRef.current,
@@ -1297,6 +1299,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     radiusRef.current = L.layerGroup().addTo(map);
     gapsRef.current = L.layerGroup().addTo(map);
     engagementGapRef.current = L.layerGroup().addTo(map);
+    engagementPriorityRef.current = L.layerGroup().addTo(map);
     servicePresenceHaloRef.current = L.featureGroup().addTo(map);
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
@@ -2254,9 +2257,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       mapRef.current.removeLayer(engagementHeatRef.current);
       engagementHeatRef.current = null;
     }
-    if (!engagementGapRef.current) return;
-    // Clear existing layers before redraw (shared ref with boundaries view)
-    engagementGapRef.current.clearLayers();
+    if (!engagementPriorityRef.current) return;
+    // Clear priority layer only (boundaries has its own ref)
+    engagementPriorityRef.current.clearLayers();
+    // Also clear boundaries view when switching to priority
+    engagementGapRef.current?.clearLayers();
     engagementGapLabelRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'priority') return;
 
@@ -2322,7 +2327,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         selectCountyEntity(metrics.county, 'engagement-gap-priority-county', event);
       });
 
-      engagementGapRef.current!.addLayer(geoLayer);
+      engagementPriorityRef.current!.addLayer(geoLayer);
     });
   }, [clearCountyHoverPreview, engagementGapView, engagementPriorityCounties, layers.engagementGap, selectCountyEntity, updateCountyHoverPreview]);
 
@@ -2331,6 +2336,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!engagementGapRef.current) return;
     engagementGapRef.current.clearLayers();
     engagementGapLabelRef.current?.clearLayers();
+    // Clear priority layer when switching to boundaries
+    engagementPriorityRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'boundaries') return;
 
     const results = getEngagementGapResults();
