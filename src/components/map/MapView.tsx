@@ -92,8 +92,14 @@ interface CountyHoverMetrics {
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
-  x: number;
-  y: number;
+}
+
+interface MarkerHoverPreview {
+  name: string;
+  subtitle?: string;
+  address?: string;
+  detail?: string;
+  extraHtml?: string;
 }
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
