@@ -2355,10 +2355,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             }
           });
 
-          lyr.bindTooltip(tribe.name, {
-            direction: 'top',
-            className: 'leaflet-tooltip',
+          lyr.on('mouseover', () => {
+            markerHoverPreviewRef.current({ name: tribe.name });
           });
+          lyr.on('mouseout', () => markerHoverPreviewRef.current(null));
 
           lyr.on('click', (event: L.LeafletEvent) => {
             L.DomEvent.stopPropagation(event as any);
