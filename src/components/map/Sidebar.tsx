@@ -980,6 +980,33 @@ const Sidebar = ({
 
                               return (
                                 <div className="space-y-1.5 px-2 pb-2 pt-1">
+                                  <div className="flex items-center gap-1.5 text-[10px]">
+                                    <span className="text-muted-foreground">View:</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => onEngagementGapViewChange('heat')}
+                                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 ${
+                                        engagementGapView === 'heat'
+                                          ? 'bg-destructive/15 text-destructive'
+                                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                                      }`}
+                                    >
+                                      <Flame className="h-2.5 w-2.5" />
+                                      Heat
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => onEngagementGapViewChange('boundaries')}
+                                      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium transition-colors duration-150 ${
+                                        engagementGapView === 'boundaries'
+                                          ? 'bg-destructive/15 text-destructive'
+                                          : 'bg-secondary text-muted-foreground hover:text-foreground'
+                                      }`}
+                                    >
+                                      <Grid3X3 className="h-2.5 w-2.5" />
+                                      Boundaries
+                                    </button>
+                                  </div>
                                   <div className="space-y-1.5 rounded-md border border-destructive/20 bg-destructive/10 px-2 py-1.5">
                                     <div className="flex items-center justify-between gap-2">
                                       <div>
