@@ -964,6 +964,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, [filteredRuralServices, providerFacilities, radiusKm, broadbandReady]);
 
   const updateCountyHoverPreview = useCallback((county: string, _event?: L.LeafletMouseEvent) => {
+    if (tutorialActiveRef.current) return;
     const metrics = countyHoverMetrics.get(county) ?? { county };
     setCountyHoverPreview({ ...metrics, county });
   }, [countyHoverMetrics]);
