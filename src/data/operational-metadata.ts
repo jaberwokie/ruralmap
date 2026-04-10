@@ -162,7 +162,7 @@ export const operationalTags: OperationalTag[] = [
   { entityId: 'rs-78',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Elko Community Health Center — FQHC site' },
   { entityId: 'rs-79',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Wendover Community Health Center — FQHC site' },
   { entityId: 'rs-80',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Carlin Community Health Center — FQHC site' },
-  { entityId: 'rs-81',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'FQHC federal mandate / HRSA', verificationDate: '2026-04', notes: 'Jackpot Community Health Center — FQHC site' },
+  
 
   // ── Tribal health (IHS-funded) ──
   { entityId: 'rs-63',  entityType: 'ruralService', isNevadaMedicaidParticipating: true,  verificationStatus: 'verified_participating', verificationConfidence: 'direct', verificationSource: 'IHS/tribal health center enrollment', verificationDate: '2026-04', notes: 'Washoe Tribal Health Center — Gardnerville' },
