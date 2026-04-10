@@ -961,44 +961,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     return metricsByCounty;
   }, [filteredRuralServices, providerFacilities, radiusKm, broadbandReady]);
 
-  const updateCountyHoverPreview = useCallback((county: string, event: L.LeafletMouseEvent) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    const originalEvent = event.originalEvent as MouseEvent | undefined;
-    const x = rect && originalEvent ? originalEvent.clientX - rect.left : 16;
-    const y = rect && originalEvent ? originalEvent.clientY - rect.top : 16;
+  const updateCountyHoverPreview = useCallback((county: string, _event?: L.LeafletMouseEvent) => {
     const metrics = countyHoverMetrics.get(county) ?? { county };
-
-    setCountyHoverPreview({ ...metrics, county, x, y });
+    setCountyHoverPreview({ ...metrics, county });
   }, [countyHoverMetrics]);
 
   const clearCountyHoverPreview = useCallback(() => {
     setCountyHoverPreview(null);
   }, []);
-
-  const countyHoverPreviewStyle = useMemo(() => {
-    if (!countyHoverPreview || !containerRef.current) return null;
-
-    const width = 208;
-    const height = 112;
-    const containerWidth = containerRef.current.clientWidth;
-    const containerHeight = containerRef.current.clientHeight;
-    const horizontalOffset = 18;
-    const verticalOffset = 14;
-    const preferLeft = countyHoverPreview.x > containerWidth * 0.58;
-    const preferAbove = countyHoverPreview.y > containerHeight * 0.62;
-    const proposedLeft = preferLeft
-      ? countyHoverPreview.x - width - horizontalOffset
-      : countyHoverPreview.x + horizontalOffset;
-    const proposedTop = preferAbove
-      ? countyHoverPreview.y - height - verticalOffset
-      : countyHoverPreview.y + verticalOffset;
-
-    return {
-      width,
-      left: Math.min(Math.max(proposedLeft, 12), Math.max(containerWidth - width - 12, 12)),
-      top: Math.min(Math.max(proposedTop, 12), Math.max(containerHeight - height - 12, 12)),
-    };
-  }, [countyHoverPreview]);
 
   const ruralServicesByCounty = useMemo(() => {
     const grouped = new Map<string, typeof ruralServices>();
