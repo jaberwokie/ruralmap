@@ -502,7 +502,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
   const groups: PointRenderCandidate[][] = [];
 
-  [...movablePoints]
+  [...points]
     .sort((left, right) => left.lat - right.lat || left.lng - right.lng || left.sortKey.localeCompare(right.sortKey))
     .forEach((point) => {
       const existingGroup = groups.find((group) => {
