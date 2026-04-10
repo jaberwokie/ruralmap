@@ -2273,10 +2273,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     const tier2Cutoff = tier3Cutoff + Math.max(1, Math.round(total * 0.33));  // next ~33%
 
     const TIER_STYLES = {
-      4: { fillColor: '#D32F2F', fillOpacity: 0.70, strokeColor: 'rgba(180, 20, 15, 0.85)', weight: 2.5 },
-      3: { fillColor: '#E65100', fillOpacity: 0.50, strokeColor: 'rgba(200, 60, 10, 0.65)', weight: 1.5 },
-      2: { fillColor: '#F57C00', fillOpacity: 0.30, strokeColor: 'rgba(220, 120, 30, 0.45)', weight: 1 },
-      1: { fillColor: '#FFE0B2', fillOpacity: 0.08, strokeColor: 'rgba(200, 170, 130, 0.25)', weight: 0.5 },
+      4: { fillColor: '#C62828', fillOpacity: 0.82, strokeColor: 'rgba(140, 15, 10, 0.45)', weight: 1.5 },
+      3: { fillColor: '#E64A19', fillOpacity: 0.60, strokeColor: 'rgba(180, 50, 15, 0.35)', weight: 1 },
+      2: { fillColor: '#EF6C00', fillOpacity: 0.40, strokeColor: 'rgba(200, 100, 20, 0.30)', weight: 0.75 },
+      1: { fillColor: '#FFF3E0', fillOpacity: 0.04, strokeColor: 'rgba(200, 170, 130, 0.15)', weight: 0.5 },
     } as const;
 
     eligible.forEach((metrics, index) => {
@@ -2296,8 +2296,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       // Extra boost for top 3 counties
       const isTop3 = index < 3;
-      const fillOpacity = isTop3 ? Math.min(style.fillOpacity + 0.08, 0.80) : style.fillOpacity;
-      const weight = isTop3 ? style.weight + 0.5 : style.weight;
+      const fillOpacity = isTop3 ? Math.min(style.fillOpacity + 0.06, 0.88) : style.fillOpacity;
+      const weight = style.weight;
 
       const geoLayer = L.geoJSON(geoJson, {
         pane: MAP_PANES.gapOverlays,
