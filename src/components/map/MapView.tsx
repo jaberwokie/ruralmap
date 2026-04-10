@@ -2250,37 +2250,47 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // ── Engagement Gap heatmap (leaflet.heat) ──
   useEffect(() => {
     if (!mapRef.current) return;
-    // Remove existing heatmap layer
     if (engagementHeatRef.current) {
       mapRef.current.removeLayer(engagementHeatRef.current);
       engagementHeatRef.current = null;
     }
     if (!layers.engagementGap || engagementGapView !== 'heat') return;
 
-    // Build heat points from county centroids weighted by unengaged members
-    const heatPoints: [number, number, number][] = [];
+    // Build heat points with non-linear intensity scaling
+    const rawPoints: { lat: number; lng: number; val: number }[] = [];
     engagementPriorityCounties.forEach((metrics) => {
       const county = nevadaCounties.find(c => c.name === metrics.county);
       if (!county || metrics.unengagedMembers <= 0) return;
-      heatPoints.push([county.center[0], county.center[1], metrics.unengagedMembers]);
+      // Suppress counties below 20% engagement gap (engagementRate > 0.8)
+      if (metrics.totalMembers > 0 && metrics.engagementRate > 0.80) return;
+      rawPoints.push({ lat: county.center[0], lng: county.center[1], val: metrics.unengagedMembers });
     });
 
-    if (heatPoints.length === 0) return;
+    if (rawPoints.length === 0) return;
 
-    const maxVal = Math.max(...heatPoints.map(p => p[2]));
+    const maxVal = Math.max(...rawPoints.map(p => p.val));
+    // Non-linear scaling: pow(2.2) makes low values fade and high values pop
+    const heatPoints: [number, number, number][] = rawPoints.map(p => {
+      const normalized = maxVal > 0 ? p.val / maxVal : 0;
+      const scaled = Math.pow(normalized, 2.2);
+      return [p.lat, p.lng, scaled];
+    });
+
     const heat = L.heatLayer(heatPoints, {
-      radius: 45,
-      blur: 35,
+      radius: 30,
+      blur: 22,
       maxZoom: 10,
-      max: maxVal,
-      minOpacity: 0.15,
+      max: 1,
+      minOpacity: 0.05,
       gradient: {
-        0.0: 'rgba(255, 200, 100, 0)',
-        0.2: 'rgba(255, 180, 80, 0.3)',
-        0.4: 'rgba(255, 140, 50, 0.5)',
-        0.6: 'rgba(240, 100, 30, 0.65)',
-        0.8: 'rgba(220, 60, 20, 0.8)',
-        1.0: 'rgba(180, 20, 10, 0.9)',
+        0.0:  'rgba(255, 220, 140, 0)',
+        0.15: 'rgba(255, 200, 100, 0.05)',
+        0.30: 'rgba(255, 160, 60, 0.25)',
+        0.45: 'rgba(245, 120, 40, 0.45)',
+        0.60: 'rgba(230, 80, 25, 0.65)',
+        0.75: 'rgba(210, 45, 15, 0.80)',
+        0.90: 'rgba(180, 20, 10, 0.90)',
+        1.0:  'rgba(140, 10, 5, 0.95)',
       },
     });
 
