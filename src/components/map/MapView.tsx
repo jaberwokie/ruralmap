@@ -123,12 +123,12 @@ const PANE_CONFIG = {
   countyInteractive: { id: 'county-interactive-pane', zIndex: 350, interactive: true },
   // Tribal Nation polygons — interactive, ABOVE county layer
   tribalNations:   { id: 'tribal-nations-pane',    zIndex: 450, interactive: true },
+  // State boundary mask — covers outside Nevada, below markers so border-adjacent pins stay visible
+  stateMask:       { id: 'state-mask-pane',        zIndex: 640, interactive: false },
   // All clickable non-provider markers
   markers:         { id: 'markers-pane',           zIndex: 650, interactive: true },
   // Provider markers — highest marker layer
   providerMarkers: { id: 'provider-markers-pane',  zIndex: 660, interactive: true },
-  // State boundary mask — covers outside Nevada, above markers
-  stateMask:       { id: 'state-mask-pane',        zIndex: 680, interactive: false },
   // Popup pane for tooltips
   uiPopups:        { id: 'ui-popups-pane',         zIndex: 700, interactive: true },
 } as const;
