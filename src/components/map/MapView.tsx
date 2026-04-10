@@ -1201,6 +1201,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       attributionControl: false,
     });
 
+    L.control.zoom({ position: 'topleft' }).addTo(map);
+
     L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
       maxZoom: 19,
     }).addTo(map);
@@ -2432,7 +2434,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       <TooltipProvider delayDuration={120}>
         {(countyHoverPreview || markerHoverPreview) && (
           <div
-            className="pointer-events-none absolute top-[180px] left-2 z-[810] w-52 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
+            className="pointer-events-none absolute top-2 left-2 z-[810] w-52 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
           >
             {markerHoverPreview && (
               <div>
