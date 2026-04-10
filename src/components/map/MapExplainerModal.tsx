@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 
 interface MapExplainerModalProps {
   open: boolean;
@@ -80,18 +81,18 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           <Section title="Routing Tier">
             <p>Every provider and service shows a Routing Tier that tells you how confident you can be when sending a member there:</p>
             <ul className="list-none pl-0 space-y-1.5">
-              <li><span className="font-semibold text-emerald-600">Recommended</span> — Verified participating provider. Send the member.</li>
-              <li><span className="font-semibold text-amber-600">Available (Unverified)</span> — Provider exists but participation is not confirmed. Call first.</li>
-              <li><span className="font-semibold text-muted-foreground">Fallback Option</span> — Known limitations or non-participating. Use only if no better option exists.</li>
+              <li><span className={`font-semibold ${ROUTING_TIER_COLORS.recommended}`}>Recommended</span> — Verified participating provider. Send the member.</li>
+              <li><span className={`font-semibold ${ROUTING_TIER_COLORS.available_unverified}`}>Available (Unverified)</span> — Provider exists but participation is not confirmed. Call first.</li>
+              <li><span className={`font-semibold ${ROUTING_TIER_COLORS.fallback}`}>Fallback Option</span> — Known limitations or non-participating. Use only if no better option exists.</li>
             </ul>
           </Section>
 
           <Section title="Verification Signal">
             <p>Below the Routing Tier, a Verification Signal explains <em>why</em> the tier was assigned:</p>
             <ul className="list-none pl-0 space-y-1.5">
-              <li><span className="font-medium">Medicaid Verified (State Directory)</span> — Confirmed participating via the state Medicaid directory.</li>
-              <li><span className="font-medium">Provider Identified (NPI Confirmed)</span> — Identity is confirmed, but Medicaid participation is not verified.</li>
-              <li><span className="font-medium">Unverified Provider</span> — Neither identity nor participation is confirmed.</li>
+              <li className="flex items-center gap-1.5"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.medicaid_verified.dot}`} /><span className={`font-medium ${VERIFICATION_SIGNAL_COLORS.medicaid_verified.text}`}>Medicaid Verified (State Directory)</span><span className="text-foreground/80">— Confirmed participating via the state Medicaid directory.</span></li>
+              <li className="flex items-center gap-1.5"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.npi_confirmed.dot}`} /><span className={`font-medium ${VERIFICATION_SIGNAL_COLORS.npi_confirmed.text}`}>Provider Identified (NPI Confirmed)</span><span className="text-foreground/80">— Identity is confirmed, but Medicaid participation is not verified.</span></li>
+              <li className="flex items-center gap-1.5"><span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${VERIFICATION_SIGNAL_COLORS.unverified.dot}`} /><span className={`font-medium ${VERIFICATION_SIGNAL_COLORS.unverified.text}`}>Unverified Provider</span><span className="text-foreground/80">— Neither identity nor participation is confirmed.</span></li>
             </ul>
             <p className="text-[12px] text-muted-foreground italic">
               Knowing <em>who</em> a provider is and knowing they <em>accept Medicaid</em> are two different things.
