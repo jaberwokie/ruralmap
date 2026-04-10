@@ -664,16 +664,26 @@ const Sidebar = ({
             <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
             <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
           </div>
-          {onReplayTutorial && (
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               type="button"
-              onClick={onReplayTutorial}
+              onClick={() => setExplainerOpen(true)}
               className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
-              Replay Tutorial
+              Map Explainer
             </button>
-          )}
+            {onReplayTutorial && (
+              <button
+                type="button"
+                onClick={onReplayTutorial}
+                className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              >
+                Replay Tutorial
+              </button>
+            )}
+          </div>
         </div>
+        <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
       </div>
 
       {/* Stats Bar */}
