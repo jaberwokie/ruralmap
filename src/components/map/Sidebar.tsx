@@ -333,6 +333,7 @@ const Sidebar = ({
   const [csvDragActive, setCsvDragActive] = useState(false);
   const [csvImportState, setCsvImportState] = useState<'idle' | 'processing' | 'preview' | 'success' | 'error'>('idle');
   const [csvParsed, setCsvParsed] = useState<{ valid: Facility[]; invalidCount: number; errors: string[]; totalRows: number } | null>(null);
+  const [explainerOpen, setExplainerOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
