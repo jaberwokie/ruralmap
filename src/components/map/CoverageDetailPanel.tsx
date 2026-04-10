@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, Phone, AlertTriangle, Users, Radio, Route, ArrowRight, PhoneCall, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark } from 'lucide-react';
+import { ContactPhoneAction, formatPhone } from '@/components/ContactPhoneAction';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
@@ -990,16 +991,7 @@ const LocalResourcesSection = ({ county }: { county: string }) => {
                     <div className="text-[10px] font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
                     {service.city && <div className="text-[9px] text-muted-foreground">{service.city}</div>}
                   </div>
-                  {service.phone && (
-                    <a
-                      href={`tel:${service.phone.replace(/[^\d+]/g, '')}`}
-                      className="flex-shrink-0 p-0.5 rounded hover:bg-secondary text-primary"
-                      title={service.phone}
-                      onClick={e => e.stopPropagation()}
-                    >
-                      <Phone className="w-2.5 h-2.5" />
-                    </a>
-                  )}
+                  <ContactPhoneAction phone={service.phone} variant="inline" />
                 </div>
               ))}
             </div>
@@ -1477,24 +1469,12 @@ const OperationalInlineBadges = ({ meta }: { meta?: Partial<ServiceOperationalMe
 
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
-  const isMobile = useIsMobile();
   const normalizedWebsite = normalizeWebsite(website);
-  const showCall = !!phone && isMobile;
-  if (!showCall && !normalizedWebsite) return null;
+  if (!phone && !normalizedWebsite) return null;
 
   return (
     <div className="flex flex-wrap gap-1.5 mb-2">
-      {showCall && (
-        <a
-          href={`tel:${phone!.replace(/[^\d+]/g, '')}`}
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground hover:bg-secondary transition-colors"
-          title={phone}
-          onClick={e => e.stopPropagation()}
-        >
-          <PhoneCall className="w-3 h-3" />
-          Call
-        </a>
-      )}
+      <ContactPhoneAction phone={phone} variant="button" />
       {normalizedWebsite && (
         <a
           href={normalizedWebsite}
@@ -1646,12 +1626,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
 
       {hasContact && (
         <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
-          {facility.phone && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Phone className="w-3 h-3 flex-shrink-0" />
-              <a href={`tel:${facility.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{facility.phone}</a>
-            </div>
-          )}
+          <ContactPhoneAction phone={facility.phone} variant="detail" />
           {(() => { const href = normalizeWebsite(facility.website); return href ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -1783,12 +1758,7 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 
       {hasContact && (
         <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
-          {service.phone && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Phone className="w-3 h-3 flex-shrink-0" />
-              <a href={`tel:${service.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{service.phone}</a>
-            </div>
-          )}
+          <ContactPhoneAction phone={service.phone} variant="detail" />
           {(() => { const href = normalizeWebsite(service.website); return href ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -1869,12 +1839,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
       {/* Contact */}
       {hasContact && (
         <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
-          {tribe.phone && (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-              <Phone className="w-3 h-3 flex-shrink-0" />
-              <a href={`tel:${tribe.phone.replace(/[^\d+]/g, '')}`} className="text-primary hover:underline" onClick={e => e.stopPropagation()}>{tribe.phone}</a>
-            </div>
-          )}
+          <ContactPhoneAction phone={tribe.phone} variant="detail" />
           {normalizedWeb && (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <ExternalLink className="w-3 h-3 flex-shrink-0" />
@@ -1936,7 +1901,7 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
                   {svc.description && <div className="text-[10px] text-muted-foreground mt-0.5">{svc.description}</div>}
                   {svc.phone && (
                     <div className="mt-0.5">
-                      <a href={`tel:${svc.phone.replace(/[^\d+]/g, '')}`} className="text-[10px] text-primary hover:underline" onClick={e => e.stopPropagation()}>{svc.phone}</a>
+                      <ContactPhoneAction phone={svc.phone} variant="inline" />
                     </div>
                   )}
                   {svcWeb && (
