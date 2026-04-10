@@ -1,8 +1,9 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
-import { Facility, FacilityType } from '@/data/facilities';
+import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
+import { exportCsv } from '@/utils/csvExport';
 
 import { toast } from 'sonner';
 import type { Filters } from '@/types/filters';
@@ -381,6 +382,89 @@ const Sidebar = ({
     const set = new Set(allFacilities.map(f => f.county).filter(Boolean));
     return Array.from(set).sort();
   }, [allFacilities]);
+
+  const hasActiveFilters = filters.types.size > 0 || filters.counties.size > 0 || filters.serviceCategories.size > 0;
+  const filterSuffix = hasActiveFilters ? '-filtered' : '';
+
+  const exportProviderLocations = useCallback(() => {
+    exportCsv(
+      facilities.map(f => ({
+        Name: f.name,
+        Type: f.type,
+        Classification: getFacilityClassification(f),
+        County: f.county,
+        City: f.city,
+        Address: f.address ?? '',
+        Latitude: f.lat,
+        Longitude: f.lng,
+        DataConfidence: getFacilityDataConfidence(f),
+      })),
+      [
+        { key: 'Name', header: 'Name' },
+        { key: 'Type', header: 'Type' },
+        { key: 'Classification', header: 'Classification' },
+        { key: 'County', header: 'County' },
+        { key: 'City', header: 'City' },
+        { key: 'Address', header: 'Address' },
+        { key: 'Latitude', header: 'Latitude' },
+        { key: 'Longitude', header: 'Longitude' },
+        { key: 'DataConfidence', header: 'Data Confidence' },
+      ],
+      `provider-locations-export${filterSuffix}.csv`,
+    );
+  }, [facilities, filterSuffix]);
+
+  const exportBehavioralHealth = useCallback(() => {
+    exportCsv(
+      filteredBhServices.map(s => ({
+        Name: s.name,
+        County: s.county,
+        City: s.city,
+        Address: s.address ?? '',
+        Category: s.category,
+        Phone: s.phone ?? '',
+        Latitude: s.lat,
+        Longitude: s.lng,
+      })),
+      [
+        { key: 'Name', header: 'Name' },
+        { key: 'County', header: 'County' },
+        { key: 'City', header: 'City' },
+        { key: 'Address', header: 'Address' },
+        { key: 'Category', header: 'Category' },
+        { key: 'Phone', header: 'Phone' },
+        { key: 'Latitude', header: 'Latitude' },
+        { key: 'Longitude', header: 'Longitude' },
+      ],
+      `behavioral-health-export${filterSuffix}.csv`,
+    );
+  }, [filteredBhServices, filterSuffix]);
+
+  const exportServices = useCallback(() => {
+    exportCsv(
+      filteredServices.map(s => ({
+        Name: s.name,
+        County: s.county,
+        City: s.city,
+        Address: s.address ?? '',
+        Category: s.category,
+        Phone: s.phone ?? '',
+        Latitude: s.lat,
+        Longitude: s.lng,
+      })),
+      [
+        { key: 'Name', header: 'Name' },
+        { key: 'County', header: 'County' },
+        { key: 'City', header: 'City' },
+        { key: 'Address', header: 'Address' },
+        { key: 'Category', header: 'Category' },
+        { key: 'Phone', header: 'Phone' },
+        { key: 'Latitude', header: 'Latitude' },
+        { key: 'Longitude', header: 'Longitude' },
+      ],
+      `services-export${filterSuffix}.csv`,
+    );
+  }, [filteredServices, filterSuffix]);
 
   const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size;
 
@@ -795,6 +879,10 @@ const Sidebar = ({
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         const count = coreMapCounts[key];
                         const dividerBefore = key === 'serviceLocations' || key === 'services';
+                        const exportHandler = key === 'serviceLocations' ? exportProviderLocations
+                          : key === 'behavioralHealth' ? exportBehavioralHealth
+                          : key === 'services' ? exportServices
+                          : undefined;
                         return (
                           <div key={key}>
                             {dividerBefore && <div className="my-1 border-t border-border/40" />}
@@ -815,6 +903,17 @@ const Sidebar = ({
                                       ? 'toggle-provider-locations'
                                       : undefined,
                               belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
+                              inlineLegend: exportHandler ? (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); exportHandler(); }}
+                                  className="inline-flex h-5 w-5 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                  title="Export CSV"
+                                  aria-label={`Export ${label} as CSV`}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </button>
+                              ) : undefined,
                             })}
                           </div>
                         );
