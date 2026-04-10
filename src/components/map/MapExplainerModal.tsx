@@ -117,8 +117,8 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           <Section title="Connectivity Layers">
             <p>Under the Connectivity section in the sidebar:</p>
             <ul className="list-disc pl-4 space-y-1.5">
-              <li><span className="font-medium">Broadband Access</span> — An aggregate county-level grade based on broadband service distribution. Not an address-level guarantee. Shows whether a county is broadly served, underserved, or unserved.</li>
-              <li><span className="font-medium">Cellular Readiness</span> — Whether mobile-based engagement is realistically viable in a county. Graded as High, Mixed, or Low based on LTE and 5G availability.</li>
+              <li><span className="font-medium">Broadband Access</span> — An aggregate county-level grade based on broadband service distribution. Not an address-level guarantee. Shows whether a county is broadly <span className="font-medium text-staffing-high">served</span>, <span className="font-medium text-engagement-watch">underserved</span>, or <span className="font-medium text-destructive">unserved</span>.</li>
+              <li><span className="font-medium">Cellular Readiness</span> — Whether mobile-based engagement is realistically viable in a county. Graded as <span className="font-medium text-staffing-high">High</span>, <span className="font-medium text-engagement-watch">Mixed</span>, or <span className="font-medium text-destructive">Low</span> based on LTE and 5G availability.</li>
             </ul>
             <p>These layers matter because rural operations depend on whether staff and members can reliably connect — for telehealth, mobile outreach, and care coordination.</p>
           </Section>
