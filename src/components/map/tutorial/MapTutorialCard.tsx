@@ -19,7 +19,7 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
   return (
     <div
       ref={ref}
-      className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-xl border border-border/80 bg-card/95 text-card-foreground shadow-lg transition-[top,left,width,max-height] duration-200 ease-out"
+      className="pointer-events-auto absolute flex flex-col overflow-hidden rounded-xl border-2 border-primary bg-card/95 text-card-foreground shadow-lg transition-[top,left,width,max-height] duration-200 ease-out"
       style={{
         top: layout.top,
         left: layout.left,
@@ -34,7 +34,7 @@ const MapTutorialCard = forwardRef<HTMLDivElement, MapTutorialCardProps>(({ layo
       {arrowStyle ? (
         <span
           aria-hidden="true"
-          className="absolute h-3 w-3 rotate-45 border border-border/80 bg-card/95"
+          className="absolute h-3 w-3 rotate-45 border-2 border-primary bg-card/95"
           style={arrowStyle}
         />
       ) : null}
