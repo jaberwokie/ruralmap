@@ -2273,11 +2273,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     );
     if (eligible.length === 0) return;
 
-    // Find max unengaged members for normalization
-    const maxVal = Math.max(...eligible.map(m => m.unengagedMembers));
-    if (maxVal === 0) return;
-
-    // Build heat points from county centroids with non-linear weighting
+    // Build heat points from county centroids using composite priority score
     const heatPoints: [number, number, number][] = [];
 
     eligible.forEach((metrics) => {
@@ -2288,11 +2284,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       const center = centroid(geoJson as Feature<Polygon | MultiPolygon>);
       const [lng, lat] = center.geometry.coordinates;
 
-      // Non-linear scaling: pow(ratio, 0.6) so top counties dominate
-      const ratio = metrics.unengagedMembers / maxVal;
+      // Composite score: blends unengaged count, engagement rate, and staff coverage
+      const compositeScore = getCompositeEngagementPriority(metrics.county);
       // Bottom 15% get zero weight (invisible)
-      if (ratio < 0.15) return;
-      const weight = Math.pow(ratio, 0.45);
+      if (compositeScore < 0.15) return;
+      const weight = Math.pow(compositeScore, 0.45);
 
       // Primary centroid point
       heatPoints.push([lat, lng, weight]);

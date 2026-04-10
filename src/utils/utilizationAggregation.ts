@@ -369,6 +369,50 @@ export function getEngagementGapResults(): EngagementGapResult[] {
   return results;
 }
 
+// ── Staff coverage type ──
+export function getStaffCoverageType(county: string): 'field' | 'remote' | 'none' {
+  for (const fte of fteCapacityData) {
+    if (fte.counties.includes(county) && fte.hubLocation !== null) return 'field';
+  }
+  for (const fte of fteCapacityData) {
+    if (fte.counties.includes(county) && fte.hubLocation === null) return 'remote';
+  }
+  return 'none';
+}
+
+// ── Composite engagement priority score ──
+// score = 0.40 × unengaged_norm + 0.35 × severity_norm + 0.25 × coverage_gap
+const COVERAGE_GAP_SCORE: Record<ReturnType<typeof getStaffCoverageType>, number> = {
+  field: 0.0,
+  remote: 0.7,
+  none: 1.0,
+};
+
+let _compositeCache: Map<string, number> | null = null;
+
+function buildCompositeScores(): Map<string, number> {
+  if (_compositeCache) return _compositeCache;
+
+  const rankings = buildCountyEngagementRankings();
+  const maxUnengaged = Math.max(...rankings.map(r => r.unengagedMembers), 1);
+
+  const scores = new Map<string, number>();
+  for (const r of rankings) {
+    if (r.totalMembers <= 0) { scores.set(r.county, 0); continue; }
+    const unengagedNorm = r.unengagedMembers / maxUnengaged;
+    const severityNorm = 1 - r.engagementRate;
+    const coverageGap = COVERAGE_GAP_SCORE[getStaffCoverageType(r.county)];
+    scores.set(r.county, 0.40 * unengagedNorm + 0.35 * severityNorm + 0.25 * coverageGap);
+  }
+  _compositeCache = scores;
+  return scores;
+}
+
+/** Returns a 0–1 composite priority score for a county */
+export function getCompositeEngagementPriority(county: string): number {
+  return buildCompositeScores().get(county) ?? 0;
+}
+
 // ── Pin size scaling ──
 export function getScaledPinSize(baseSize: number, totalVisits: number): number {
   // Scale from base to max 2x base, capped
