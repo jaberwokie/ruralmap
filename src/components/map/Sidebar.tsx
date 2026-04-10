@@ -292,6 +292,8 @@ const Sidebar = ({
     onRadiusChange,
     coverageRadiusKm = 120,
     onCoverageRadiusKmChange,
+    engagementGapView,
+    onEngagementGapViewChange,
   },
   filter: {
     searchQuery,

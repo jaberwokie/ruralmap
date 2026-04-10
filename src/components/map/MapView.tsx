@@ -69,6 +69,7 @@ interface MapViewProps {
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
+  engagementGapView?: 'heat' | 'boundaries';
   
 }
 
