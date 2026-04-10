@@ -2115,7 +2115,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         markerHoverPreviewRef.current(null);
       });
 
-      operationalResponseMarkerRef.current!.addLayer(marker);
+      marker.on('click', (event: L.LeafletEvent) => {
+        selectCountyEntity(county.name, 'response-capability-marker', event);
+      });
     });
   }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
 
