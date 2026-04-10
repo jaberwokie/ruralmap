@@ -2,12 +2,10 @@ import { useState, useCallback } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
-import MapTutorialOverlay from '@/components/map/MapTutorialOverlay';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
-import { useTutorialState } from '@/hooks/useTutorialState';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
 
@@ -17,13 +15,6 @@ const Index = () => {
   const selection = useMapSelection();
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
-  const tutorial = useTutorialState({
-    getSnapshot: layers.snapshot,
-    restoreSnapshot: layers.restore,
-    setLayers: layers.actions.setLayers,
-    setMobileSidebarOpen,
-    clearSelection: selection.actions.clearSelection,
-  });
 
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
@@ -47,8 +38,6 @@ const Index = () => {
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
           facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
           selection={{ selectedFteId: selection.activeFteId, onFteCardClick: selection.actions.handleFteCardClick, onCountySelect: onCounty }}
-          onReplayTutorial={tutorial.replayTutorial}
-          tutorialStepKey={tutorial.tutorialStepKey}
         />
       </div>
 
@@ -67,28 +56,17 @@ const Index = () => {
           coverageRadius={layers.coverageRadius}
           coverageGaps={layers.coverageGaps}
           onEntityClick={onEntity}
-          
           selectedCounty={selection.selectedCounty}
           onFteHubClick={selection.actions.handleFteHubClick}
           selectedFteId={selection.activeFteId}
           coverageRadiusKm={layers.coverageRadiusKm}
           topProvidersOnly={filters.topProvidersOnly}
           engagementRateBelow20Only={filters.engagementRateBelow20Only}
-          tutorialStepKey={tutorial.tutorialStepKey}
         />
         <CoverageDetailPanel
           entity={selection.lockedEntity}
           onClear={selection.actions.clearSelection}
           coverageRadiusKm={layers.coverageRadiusKm}
-        />
-        <MapTutorialOverlay
-          introOpen={tutorial.tutorialIntroOpen}
-          walkthroughOpen={tutorial.tutorialOpen}
-          stepIndex={tutorial.tutorialStepIndex}
-          onStart={tutorial.startTutorial}
-          onSkip={() => tutorial.closeTutorial(false)}
-          onNext={tutorial.goToNextTutorialStep}
-          onBack={tutorial.goToPreviousTutorialStep}
         />
       </div>
     </div>
