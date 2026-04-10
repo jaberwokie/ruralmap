@@ -67,6 +67,20 @@ export const getHighlightRect = (elements: HTMLElement[]): HighlightRect | null 
   };
 };
 
+/** Clamp a highlight rect so it doesn't extend beyond a container's bounds */
+export const clampHighlightToContainer = (rect: HighlightRect, containerBounds: DOMRect): HighlightRect => {
+  const left = Math.max(rect.left, containerBounds.left);
+  const top = Math.max(rect.top, containerBounds.top);
+  const right = Math.min(rect.left + rect.width, containerBounds.right);
+  const bottom = Math.min(rect.top + rect.height, containerBounds.bottom);
+  return {
+    top,
+    left,
+    width: Math.max(right - left, 48),
+    height: Math.max(bottom - top, 24),
+  };
+};
+
 export const getCardLayout = (
   viewport: ViewportSize,
   highlightRect: HighlightRect | null,
