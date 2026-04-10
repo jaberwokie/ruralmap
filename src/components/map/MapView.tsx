@@ -2257,9 +2257,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       mapRef.current.removeLayer(engagementHeatRef.current);
       engagementHeatRef.current = null;
     }
-    if (!engagementGapRef.current) return;
-    // Clear existing layers before redraw (shared ref with boundaries view)
-    engagementGapRef.current.clearLayers();
+    if (!engagementPriorityRef.current) return;
+    // Clear priority layer only (boundaries has its own ref)
+    engagementPriorityRef.current.clearLayers();
+    // Also clear boundaries view when switching to priority
+    engagementGapRef.current?.clearLayers();
     engagementGapLabelRef.current?.clearLayers();
     if (!layers.engagementGap || engagementGapView !== 'priority') return;
 
