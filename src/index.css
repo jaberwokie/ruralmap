@@ -173,6 +173,7 @@
 .leaflet-control-zoom {
   border: none !important;
   box-shadow: var(--shadow-panel) !important;
+  margin-top: 100px !important;
 }
 
 .leaflet-control-zoom a {
