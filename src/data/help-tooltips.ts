@@ -121,6 +121,11 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'Displays LTE and 5G coverage by county using FCC availability data. High: LTE >80% and 5G present with a major population center. Mixed: LTE 50–80% or uneven geographic distribution. Low: LTE <50% or mostly rural coverage gaps. Coverage reflects geographic availability, not signal quality. Large rural counties may appear lower despite strong coverage in populated areas.',
   },
+  broadbandAccess: {
+    label: 'Broadband Access',
+    explanation:
+      'Broadband Access is an aggregate county-level grading based on available broadband service distribution. It is not a direct address-level guarantee of connectivity. It is intended to show broad access patterns across the county, not exact household service availability.',
+  },
   tier1Legend: {
     label: 'Tier 1',
     explanation:
