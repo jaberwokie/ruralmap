@@ -2310,19 +2310,20 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     // Create heat layer
     const heat = (L as any).heatLayer(heatPoints, {
-      radius: 30,
-      blur: 20,
-      maxZoom: 10,
-      max: 1.0,
-      minOpacity: 0.15,
+      radius: 50,
+      blur: 25,
+      maxZoom: 12,
+      max: 0.6,
+      minOpacity: 0.35,
       gradient: {
         0.0: 'transparent',
-        0.3: '#FFF3E0',
-        0.45: '#FFB74D',
-        0.6: '#F57C00',
-        0.75: '#E64A19',
-        0.9: '#D32F2F',
-        1.0: '#B71C1C',
+        0.15: '#FFF3E0',
+        0.3: '#FFB74D',
+        0.45: '#F57C00',
+        0.6: '#E64A19',
+        0.75: '#D32F2F',
+        0.9: '#B71C1C',
+        1.0: '#880E4F',
       },
     });
 
