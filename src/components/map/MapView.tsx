@@ -92,8 +92,14 @@ interface CountyHoverMetrics {
 }
 
 interface CountyHoverPreview extends CountyHoverMetrics {
-  x: number;
-  y: number;
+}
+
+interface MarkerHoverPreview {
+  name: string;
+  subtitle?: string;
+  address?: string;
+  detail?: string;
+  extraHtml?: string;
 }
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
@@ -658,6 +664,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const [debugOpen, setDebugOpen] = useState(false);
   const [facilityValidationMode, setFacilityValidationMode] = useState(false);
   const [countyHoverPreview, setCountyHoverPreview] = useState<CountyHoverPreview | null>(null);
+  const [markerHoverPreview, setMarkerHoverPreview] = useState<MarkerHoverPreview | null>(null);
+  const markerHoverPreviewRef = useRef(setMarkerHoverPreview);
   const [layerVisibilityOverrides, setLayerVisibilityOverrides] = useState<Record<string, boolean>>({});
   const [isolatedLayerId, setIsolatedLayerId] = useState<string | null>(null);
   const [isolatedGroup, setIsolatedGroup] = useState<DebugIsolationGroup | null>(null);
@@ -953,44 +961,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     return metricsByCounty;
   }, [filteredRuralServices, providerFacilities, radiusKm, broadbandReady]);
 
-  const updateCountyHoverPreview = useCallback((county: string, event: L.LeafletMouseEvent) => {
-    const rect = containerRef.current?.getBoundingClientRect();
-    const originalEvent = event.originalEvent as MouseEvent | undefined;
-    const x = rect && originalEvent ? originalEvent.clientX - rect.left : 16;
-    const y = rect && originalEvent ? originalEvent.clientY - rect.top : 16;
+  const updateCountyHoverPreview = useCallback((county: string, _event?: L.LeafletMouseEvent) => {
     const metrics = countyHoverMetrics.get(county) ?? { county };
-
-    setCountyHoverPreview({ ...metrics, county, x, y });
+    setCountyHoverPreview({ ...metrics, county });
   }, [countyHoverMetrics]);
 
   const clearCountyHoverPreview = useCallback(() => {
     setCountyHoverPreview(null);
   }, []);
-
-  const countyHoverPreviewStyle = useMemo(() => {
-    if (!countyHoverPreview || !containerRef.current) return null;
-
-    const width = 208;
-    const height = 112;
-    const containerWidth = containerRef.current.clientWidth;
-    const containerHeight = containerRef.current.clientHeight;
-    const horizontalOffset = 18;
-    const verticalOffset = 14;
-    const preferLeft = countyHoverPreview.x > containerWidth * 0.58;
-    const preferAbove = countyHoverPreview.y > containerHeight * 0.62;
-    const proposedLeft = preferLeft
-      ? countyHoverPreview.x - width - horizontalOffset
-      : countyHoverPreview.x + horizontalOffset;
-    const proposedTop = preferAbove
-      ? countyHoverPreview.y - height - verticalOffset
-      : countyHoverPreview.y + verticalOffset;
-
-    return {
-      width,
-      left: Math.min(Math.max(proposedLeft, 12), Math.max(containerWidth - width - 12, 12)),
-      top: Math.min(Math.max(proposedTop, 12), Math.max(containerHeight - height - 12, 12)),
-    };
-  }, [countyHoverPreview]);
 
   const ruralServicesByCounty = useMemo(() => {
     const grouped = new Map<string, typeof ruralServices>();
@@ -1436,9 +1414,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         updateCountyHoverPreview(county.name, event);
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.06)' });
       });
-      hitArea.on('mousemove', (event: L.LeafletMouseEvent) => {
-        updateCountyHoverPreview(county.name, event);
-      });
       hitArea.on('mouseout', () => {
         clearCountyHoverPreview();
         hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
@@ -1703,21 +1678,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         });
 
-        marker.bindTooltip(
-          `
-            <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-              <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
-              <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
-              ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
-              <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${service.category}</div>
-            </div>
-          `,
-          {
-            direction: 'top',
-            offset: [0, -8],
-            className: 'facility-tooltip',
-          }
-        );
+        marker.on('mouseover', () => {
+          markerHoverPreviewRef.current({
+            name: service.name,
+            subtitle: `${service.city}, ${service.county} County`,
+            address: service.address,
+            detail: service.category,
+          });
+        });
+        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
 
         // Add to MarkerClusterGroup — same click interception path as providers.
         // The cluster group's on('click') handler (line ~1311) catches all
@@ -1777,21 +1746,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           }
         });
 
-        marker.bindTooltip(
-          `
-            <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-              <div style="font-weight: 600; margin-bottom: 2px;">${service.name}</div>
-              <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${service.city}, ${service.county} County</div>
-              ${service.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${service.address}</div>` : ''}
-              <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">Behavioral Health · ${service.category}</div>
-            </div>
-          `,
-          {
-            direction: 'top',
-            offset: [0, -8],
-            className: 'facility-tooltip',
-          }
-        );
+        marker.on('mouseover', () => {
+          markerHoverPreviewRef.current({
+            name: service.name,
+            subtitle: `${service.city}, ${service.county} County`,
+            address: service.address,
+            detail: `Behavioral Health · ${service.category}`,
+          });
+        });
+        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
 
         // Add to MarkerClusterGroup — same click interception path as providers.
         pointClusterRef.current!.addLayer(marker);
@@ -1881,45 +1844,26 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
           ? 'Clinic / Community Provider'
           : getFacilityTypeLabel(facility);
-        const utilHtml = showUtilization && util
-          ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px; color: hsl(270, 40%, 45%);">
-              <div>Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()}</div>
-              <div>Visits/Member: ${util.visitsPerMember} · Rank #${util.rank}</div>
-            </div>`
-          : '';
 
         const claimsMetrics = getProviderClaimsMetrics(facility);
-        const penetrationColor = claimsMetrics && claimsMetrics.visitPenetrationRate < 0.5
-          ? 'hsl(38, 92%, 50%)' : 'hsl(240, 4%, 46%)';
-        const avgEncColor = claimsMetrics && claimsMetrics.avgEncountersPerSeenMember > 10
-          ? 'hsl(0, 72%, 51%)' : 'hsl(240, 4%, 46%)';
-        const claimsHtml = claimsMetrics
-          ? `<div style="border-top: 1px solid hsl(240, 5%, 88%); margin-top: 4px; padding-top: 4px; font-size: 10px;">
-              <div style="color: hsl(240, 4%, 46%);">Total Members Attributed: ${claimsMetrics.totalMembersAttributed.toLocaleString()}</div>
-              <div style="color: hsl(240, 4%, 46%);">Members with ≥1 Visit: ${claimsMetrics.membersSeen.toLocaleString()}</div>
-              <div style="color: ${penetrationColor};">Visit Penetration Rate: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%</div>
-              <div style="color: hsl(240, 4%, 46%);">Total Encounters: ${claimsMetrics.totalEncounters.toLocaleString()}</div>
-              <div style="color: ${avgEncColor};">Avg Encounters per Seen Member: ${claimsMetrics.avgEncountersPerSeenMember.toFixed(1)}</div>
-              <div style="color: hsl(240, 4%, 60%); font-size: 9px; margin-top: 3px; font-style: italic;">Based on aggregate claims data (not time-bound)</div>
-            </div>`
-          : '';
+         const claimsDetail = claimsMetrics
+           ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
+           : undefined;
 
-        const tooltipContent = `
-          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-            <div style="font-weight: 600; margin-bottom: 2px;">${facility.name}</div>
-            <div style="color: hsl(240, 4%, 46%); font-size: 11px;">${facility.city}, ${facility.county} County</div>
-            ${facility.address ? `<div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 1px;">${facility.address}</div>` : ''}
-            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 2px;">${typeLabel}</div>
-            <div style="color: hsl(240, 4%, 46%); font-size: 10px; margin-top: 4px;">Data Confidence: ${dataConfidence}</div>
-            ${utilHtml}
-            ${claimsHtml}
-          </div>
-        `;
-        marker.bindTooltip(tooltipContent, {
-          direction: 'top',
-          offset: [0, -8],
-          className: 'facility-tooltip',
+        marker.on('mouseover', () => {
+          markerHoverPreviewRef.current({
+            name: facility.name,
+            subtitle: `${facility.city}, ${facility.county} County`,
+            address: facility.address,
+            detail: typeLabel,
+            extraHtml: [
+              `Data Confidence: ${dataConfidence}`,
+              showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
+              claimsDetail,
+            ].filter(Boolean).join('\n'),
+          });
         });
+        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
 
         nextFacilityMarkers.push(marker);
       });
@@ -2146,33 +2090,24 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         zIndexOffset: category === 'active' ? 820 : category === 'scheduled' ? 780 : 740,
       });
 
-      marker.on('mouseover', (event: L.LeafletMouseEvent) => {
+      marker.on('mouseover', () => {
         marker.setIcon(buildIcon(true));
-        updateCountyHoverPreview(county.name, event);
+        updateCountyHoverPreview(county.name);
+        markerHoverPreviewRef.current({
+          name: county.name,
+          subtitle: RESPONSE_CAPABILITY_META[category].label,
+          detail: RESPONSE_CAPABILITY_META[category].description,
+        });
       });
-      marker.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(county.name, event));
       marker.on('mouseout', () => {
         marker.setIcon(buildIcon(selectedCounty === county.name));
         clearCountyHoverPreview();
+        markerHoverPreviewRef.current(null);
       });
+
       marker.on('click', (event: L.LeafletEvent) => {
         selectCountyEntity(county.name, 'response-capability-marker', event);
       });
-
-      marker.bindTooltip(
-        `
-          <div style="padding: 8px 12px; font-size: 13px; width: 240px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-            <div style="font-weight: 600; margin-bottom: 2px;">${county.name}</div>
-            <div style="color: hsl(var(--muted-foreground)); font-size: 11px;">${RESPONSE_CAPABILITY_META[category].label}</div>
-            <div style="color: hsl(var(--muted-foreground)); font-size: 10px; margin-top: 2px;">${RESPONSE_CAPABILITY_META[category].description}</div>
-          </div>
-        `,
-        {
-          direction: 'top',
-          offset: [0, -8],
-          className: 'facility-tooltip',
-        },
-      );
 
       operationalResponseMarkerRef.current!.addLayer(marker);
     });
@@ -2293,9 +2228,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         updateCountyHoverPreview(metrics.county, event);
         geoLayer.setStyle({ fillOpacity: Math.min(fillOpacity + 0.06, 0.5), weight: weight + 0.5 });
       });
-      geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => {
-        updateCountyHoverPreview(metrics.county, event);
-      });
       geoLayer.on('mouseout', () => {
         clearCountyHoverPreview();
         geoLayer.setStyle({ fillOpacity, weight });
@@ -2355,7 +2287,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         interactive: true,
       });
       geoLayer.on('mouseover', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
-      geoLayer.on('mousemove', (event: L.LeafletMouseEvent) => updateCountyHoverPreview(result.county, event));
+      
       geoLayer.on('mouseout', () => clearCountyHoverPreview());
       geoLayer.on('click', (event: L.LeafletEvent) => {
         selectCountyEntity(result.county, 'engagement-gap-county', event);
@@ -2413,10 +2345,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             }
           });
 
-          lyr.bindTooltip(tribe.name, {
-            direction: 'top',
-            className: 'leaflet-tooltip',
+          lyr.on('mouseover', () => {
+            markerHoverPreviewRef.current({ name: tribe.name });
           });
+          lyr.on('mouseout', () => markerHoverPreviewRef.current(null));
 
           lyr.on('click', (event: L.LeafletEvent) => {
             L.DomEvent.stopPropagation(event as any);
@@ -2498,65 +2430,83 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     <div className="relative h-full w-full" data-tutorial="map-region">
       <div ref={containerRef} className="h-full w-full" />
       <TooltipProvider delayDuration={120}>
-        {countyHoverPreview && countyHoverPreviewStyle && (
+        {(countyHoverPreview || markerHoverPreview) && (
           <div
-            className="pointer-events-none absolute z-[810] rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
-            style={countyHoverPreviewStyle}
+            className="pointer-events-none absolute bottom-4 left-1/2 z-[810] w-52 -translate-x-1/2 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
           >
-            <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
-            <div className="mt-1.5 space-y-1">
-              {typeof countyHoverPreview.unengagedMembers === 'number' && (
-                <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
-              )}
-              {typeof countyHoverPreview.providerCount === 'number' && (
-                <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
-              )}
-              {typeof countyHoverPreview.serviceCount === 'number' && (
-                <CountyHoverMetricRow label="Services" value={numberFormatter.format(countyHoverPreview.serviceCount)} />
-              )}
-              {typeof countyHoverPreview.coverageGapPercent === 'number' && (
-                <div className="space-y-1">
-                  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
-                    <span className="flex items-center gap-1 text-muted-foreground">
-                      Coverage gap
-                      <CoverageGapInfoButton />
-                    </span>
-                    <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
+            {markerHoverPreview && (
+              <div>
+                <p className="text-[13px] font-semibold leading-4 text-foreground">{markerHoverPreview.name}</p>
+                {markerHoverPreview.subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{markerHoverPreview.subtitle}</p>}
+                {markerHoverPreview.address && <p className="text-[10px] text-muted-foreground/80 mt-0.5">{markerHoverPreview.address}</p>}
+                {markerHoverPreview.detail && <p className="text-[10px] text-muted-foreground mt-0.5">{markerHoverPreview.detail}</p>}
+                {markerHoverPreview.extraHtml && (
+                  <div className="border-t border-border/70 mt-1.5 pt-1 space-y-0.5">
+                    {markerHoverPreview.extraHtml.split('\n').map((line, i) => (
+                      <p key={i} className="text-[10px] text-muted-foreground/80">{line}</p>
+                    ))}
                   </div>
-                  <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground">
-                    Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
-                  </div>
+                )}
+              </div>
+            )}
+            {countyHoverPreview && !markerHoverPreview && (
+              <>
+                <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
+                <div className="mt-1.5 space-y-1">
+                  {typeof countyHoverPreview.unengagedMembers === 'number' && (
+                    <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
+                  )}
+                  {typeof countyHoverPreview.providerCount === 'number' && (
+                    <CountyHoverMetricRow label="Providers" value={numberFormatter.format(countyHoverPreview.providerCount)} />
+                  )}
+                  {typeof countyHoverPreview.serviceCount === 'number' && (
+                    <CountyHoverMetricRow label="Services" value={numberFormatter.format(countyHoverPreview.serviceCount)} />
+                  )}
+                  {typeof countyHoverPreview.coverageGapPercent === 'number' && (
+                    <div className="space-y-1">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
+                        <span className="flex items-center gap-1 text-muted-foreground">
+                          Coverage gap
+                          <CoverageGapInfoButton />
+                        </span>
+                        <span className="text-right font-medium tabular-nums text-foreground/85">{countyHoverPreview.coverageGapPercent}%</span>
+                      </div>
+                      <div className="border-t border-border/70 pt-1 text-[10px] leading-4 text-muted-foreground">
+                        Status: {getCoverageGapSeverity(countyHoverPreview.coverageGapPercent)} coverage gap
+                      </div>
+                    </div>
+                  )}
+                  {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
+                    <div className="border-t border-border/70 pt-1 space-y-0.5">
+                      <CountyHoverMetricRow label="Readiness" value={countyHoverPreview.broadbandReadiness ?? countyHoverPreview.broadbandStatus} />
+                      {typeof countyHoverPreview.pct_100_20_plus === 'number' && (
+                        <CountyHoverMetricRow label="≥100/20" value={`${countyHoverPreview.pct_100_20_plus}%`} />
+                      )}
+                      {typeof countyHoverPreview.pct_below_25_3 === 'number' && countyHoverPreview.pct_below_25_3 > 0 && (
+                        <CountyHoverMetricRow label="<25/3" value={`${countyHoverPreview.pct_below_25_3}%`} />
+                      )}
+                      {typeof countyHoverPreview.broadbandSatelliteShare === 'number' && countyHoverPreview.broadbandSatelliteShare >= 30 && (
+                        <CountyHoverMetricRow label="Satellite" value={`${countyHoverPreview.broadbandSatelliteShare}%`} />
+                      )}
+                      {countyHoverPreview.broadbandUneven && (
+                        <div className="text-[9px] text-engagement-watch mt-0.5">⚠ Uneven coverage</div>
+                      )}
+                    </div>
+                  )}
+                  {layers.cellularCoverage && countyHoverPreview.cellularReadiness && (
+                    <div className="border-t border-border/70 pt-1 space-y-0.5">
+                      <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReadiness} />
+                      {typeof countyHoverPreview.cellularLtePct === 'number' && (
+                        <CountyHoverMetricRow label="LTE" value={`${countyHoverPreview.cellularLtePct}%`} />
+                      )}
+                      {typeof countyHoverPreview.cellularFiveGPct === 'number' && (
+                        <CountyHoverMetricRow label="5G" value={`${countyHoverPreview.cellularFiveGPct}%`} />
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-               {layers.broadbandAccess && countyHoverPreview.broadbandStatus && (
-                <div className="border-t border-border/70 pt-1 space-y-0.5">
-                  <CountyHoverMetricRow label="Readiness" value={countyHoverPreview.broadbandReadiness ?? countyHoverPreview.broadbandStatus} />
-                  {typeof countyHoverPreview.pct_100_20_plus === 'number' && (
-                    <CountyHoverMetricRow label="≥100/20" value={`${countyHoverPreview.pct_100_20_plus}%`} />
-                  )}
-                  {typeof countyHoverPreview.pct_below_25_3 === 'number' && countyHoverPreview.pct_below_25_3 > 0 && (
-                    <CountyHoverMetricRow label="<25/3" value={`${countyHoverPreview.pct_below_25_3}%`} />
-                  )}
-                  {typeof countyHoverPreview.broadbandSatelliteShare === 'number' && countyHoverPreview.broadbandSatelliteShare >= 30 && (
-                    <CountyHoverMetricRow label="Satellite" value={`${countyHoverPreview.broadbandSatelliteShare}%`} />
-                  )}
-                  {countyHoverPreview.broadbandUneven && (
-                    <div className="text-[9px] text-engagement-watch mt-0.5">⚠ Uneven coverage</div>
-                  )}
-                </div>
-              )}
-              {layers.cellularCoverage && countyHoverPreview.cellularReadiness && (
-                <div className="border-t border-border/70 pt-1 space-y-0.5">
-                  <CountyHoverMetricRow label="Cellular" value={countyHoverPreview.cellularReadiness} />
-                  {typeof countyHoverPreview.cellularLtePct === 'number' && (
-                    <CountyHoverMetricRow label="LTE" value={`${countyHoverPreview.cellularLtePct}%`} />
-                  )}
-                  {typeof countyHoverPreview.cellularFiveGPct === 'number' && (
-                    <CountyHoverMetricRow label="5G" value={`${countyHoverPreview.cellularFiveGPct}%`} />
-                  )}
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         )}
       </TooltipProvider>
