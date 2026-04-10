@@ -2444,6 +2444,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   return (
     <div className="relative h-full w-full" data-tutorial="map-region">
       <div ref={containerRef} className="h-full w-full" />
+      {/* Pointer-blocking overlay: absorbs all map interaction during tutorial */}
+      {tutorialStepKey != null && (
+        <div
+          className="absolute inset-0 z-[800]"
+          style={{ pointerEvents: 'auto' }}
+          onMouseMove={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        />
+      )}
       <TooltipProvider delayDuration={120}>
         {(countyHoverPreview || markerHoverPreview) && (
           <div
