@@ -1380,6 +1380,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     labelsRef.current = L.layerGroup().addTo(map);
     engagementGapLabelRef.current = L.layerGroup().addTo(map);
     highlightsRef.current = L.layerGroup().addTo(map);
+    memberRingsRef.current = L.layerGroup().addTo(map);
+    memberPinRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
