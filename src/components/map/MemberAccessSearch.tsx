@@ -28,7 +28,7 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
   }, [handleSearch]);
 
   return (
-    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[900] flex flex-col items-center gap-1 pointer-events-auto">
+    <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-1 pointer-events-auto max-w-[calc(100%-1rem)]">
       <div className="flex items-center gap-1 rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm px-2 py-1.5">
         <input
           type="text"
