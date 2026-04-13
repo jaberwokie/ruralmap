@@ -10,17 +10,29 @@ const TIER_COLORS: Record<AccessTierKey, string> = {
   nonViable: 'hsl(0, 0%, 55%)',
 };
 
-const TIER_NOTES: Record<AccessTierKey, string | null> = {
-  local: null,
-  managed: 'Transport/planning dependent',
+const TIER_DESCRIPTIONS: Record<AccessTierKey, string> = {
+  local: 'Realistic for local in-person coordination',
+  managed: 'Possible, but transport or planning is required',
   highFriction: 'Not reliable for routine engagement',
-  nonViable: null,
+  nonViable: 'Too far for standard in-person access',
 };
 
-const RECOMMENDATION_STYLE: Record<string, { icon: typeof CheckCircle2; color: string }> = {
-  'Local in-person engagement viable': { icon: CheckCircle2, color: 'hsl(142, 60%, 40%)' },
-  'Coordinated access required (transport needed)': { icon: Navigation, color: 'hsl(38, 85%, 50%)' },
-  'Remote engagement recommended': { icon: AlertTriangle, color: 'hsl(0, 65%, 55%)' },
+const RECOMMENDATION_STYLE: Record<string, { icon: typeof CheckCircle2; color: string; support: string }> = {
+  'Local in-person engagement viable': {
+    icon: CheckCircle2,
+    color: 'hsl(142, 60%, 40%)',
+    support: 'Use local in-person coordination as the primary approach.',
+  },
+  'Coordinated access required (transport needed)': {
+    icon: Navigation,
+    color: 'hsl(38, 85%, 50%)',
+    support: 'Use scheduled coordination and plan for transportation barriers.',
+  },
+  'Remote engagement recommended': {
+    icon: AlertTriangle,
+    color: 'hsl(0, 65%, 55%)',
+    support: 'Use remote engagement as the default unless the need is urgent or life-threatening.',
+  },
 };
 
 const ResourceName = ({ name, distanceMi }: { name: string; distanceMi: number }) => (
@@ -41,31 +53,67 @@ interface TierSectionProps {
 const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierSectionProps) => {
   const total = facilities.length + services.length;
   const color = TIER_COLORS[tierKey];
-  const note = TIER_NOTES[tierKey];
+  const description = TIER_DESCRIPTIONS[tierKey];
 
-  // Non-viable: count only
+  // Non-viable: count only, visually muted
   if (tierKey === 'nonViable') {
     return (
       <div className="py-1.5">
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
-          <span className="text-[11px] font-medium text-foreground">{label}</span>
-          <span className="text-[10px] text-muted-foreground">({rangeLabel})</span>
+          <div className="w-2 h-2 rounded-full flex-shrink-0 opacity-60" style={{ background: color }} />
+          <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+          <span className="text-[10px] text-muted-foreground/70">({rangeLabel})</span>
         </div>
-        <p className="text-[10px] text-muted-foreground ml-3.5 mt-0.5">
+        <p className="text-[9px] text-muted-foreground/60 italic ml-3.5 mt-0.5">{description}</p>
+        <p className="text-[10px] text-muted-foreground/70 ml-3.5 mt-0.5">
           {total} resource{total !== 1 ? 's' : ''} beyond viable range
         </p>
       </div>
     );
   }
 
-  // Top 3 combined, sorted by distance
+  // High Friction: muted presentation, top 2 only
+  if (tierKey === 'highFriction') {
+    const combined = [
+      ...facilities.map(f => ({ name: f.name, distanceMi: f.distanceMi })),
+      ...services.map(s => ({ name: s.name, distanceMi: s.distanceMi })),
+    ].sort((a, b) => a.distanceMi - b.distanceMi);
+
+    const showItems = total <= 3 ? combined : combined.slice(0, 2);
+
+    return (
+      <div className="py-1.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full flex-shrink-0 opacity-75" style={{ background: color }} />
+          <span className="text-[11px] font-medium text-muted-foreground">{label}</span>
+          <span className="text-[10px] text-muted-foreground/70">({rangeLabel})</span>
+          <span className="text-[10px] text-muted-foreground/70 ml-auto">{total}</span>
+        </div>
+        <p className="text-[9px] text-muted-foreground/60 italic ml-3.5 mt-0.5">{description}</p>
+        {showItems.length > 0 && (
+          <div className="ml-3.5 mt-1 space-y-0.5 opacity-80">
+            {showItems.map((item, i) => (
+              <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} />
+            ))}
+            {combined.length > showItems.length && (
+              <p className="text-[9px] text-muted-foreground/50">+{combined.length - showItems.length} more</p>
+            )}
+          </div>
+        )}
+        {total === 0 && (
+          <p className="text-[10px] text-muted-foreground/50 italic ml-3.5 mt-0.5">None in range</p>
+        )}
+      </div>
+    );
+  }
+
+  // Local / Managed: full presentation
   const combined = [
     ...facilities.map(f => ({ name: f.name, distanceMi: f.distanceMi })),
     ...services.map(s => ({ name: s.name, distanceMi: s.distanceMi })),
   ].sort((a, b) => a.distanceMi - b.distanceMi);
 
-  const showItems = tierKey === 'highFriction' ? combined.slice(0, 2) : combined.slice(0, 3);
+  const showItems = combined.slice(0, 3);
 
   return (
     <div className="py-1.5">
@@ -75,7 +123,9 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
         <span className="text-[10px] text-muted-foreground">({rangeLabel})</span>
         <span className="text-[10px] text-muted-foreground ml-auto">{total}</span>
       </div>
-      {note && <p className="text-[9px] text-muted-foreground/70 italic ml-3.5 mt-0.5">{note}</p>}
+      {tierKey === 'managed' && (
+        <p className="text-[9px] text-muted-foreground/70 italic ml-3.5 mt-0.5">{description}</p>
+      )}
       {showItems.length > 0 && (
         <div className="ml-3.5 mt-1 space-y-0.5">
           {showItems.map((item, i) => (
@@ -94,8 +144,16 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
 };
 
 const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => {
-  const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? { icon: AlertTriangle, color: 'hsl(0, 0%, 55%)' };
+  const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
+    icon: AlertTriangle,
+    color: 'hsl(0, 0%, 55%)',
+    support: 'No realistic in-person options were found within the defined access ranges.',
+  };
   const RecIcon = recStyle.icon;
+
+  const totalResources = analysis.tiers.reduce(
+    (sum, t) => sum + t.facilities.length + t.services.length, 0
+  );
 
   return (
     <>
@@ -123,11 +181,19 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
       </div>
 
       {/* Recommendation */}
-      <div className="mt-2 pt-2 border-t border-border rounded-md px-2 py-1.5" style={{ background: `${recStyle.color}10` }}>
+      <div className="mt-3 pt-2 border-t border-border rounded-md px-2 py-2" style={{ background: `${recStyle.color}10` }}>
         <div className="flex items-start gap-1.5">
           <RecIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: recStyle.color }} />
-          <p className="text-[11px] font-medium" style={{ color: recStyle.color }}>{analysis.recommendation}</p>
+          <div>
+            <p className="text-[11px] font-semibold" style={{ color: recStyle.color }}>{analysis.recommendation}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{recStyle.support}</p>
+          </div>
         </div>
+        {totalResources === 0 && (
+          <p className="text-[9px] text-muted-foreground/70 italic mt-1.5 ml-5">
+            No realistic in-person options were found within the defined access ranges.
+          </p>
+        )}
       </div>
     </>
   );
