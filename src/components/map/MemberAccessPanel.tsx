@@ -1,9 +1,10 @@
-import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain } from 'lucide-react';
+import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route } from 'lucide-react';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
+import { checkHighwayAccess } from '@/utils/highwayProximity';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -41,37 +42,63 @@ interface TaggedResource {
   name: string;
   distanceMi: number;
   isBH: boolean;
+  highwayCorridor?: string;
 }
 
-const classifyFacility = (f: Facility & { distanceMi: number }): TaggedResource => ({
-  name: f.name,
-  distanceMi: f.distanceMi,
-  isBH: facilityOffersBehavioralHealth(f),
-});
+const classifyFacility = (f: Facility & { distanceMi: number }): TaggedResource => {
+  const hw = checkHighwayAccess(f.lat, f.lng);
+  return {
+    name: f.name,
+    distanceMi: f.distanceMi,
+    isBH: facilityOffersBehavioralHealth(f),
+    highwayCorridor: hw.hasAccess ? hw.corridor?.label : undefined,
+  };
+};
 
-const classifyService = (s: RuralService & { distanceMi: number }): TaggedResource => ({
-  name: s.name,
-  distanceMi: s.distanceMi,
-  isBH: isBehavioralHealthService(s),
-});
+const classifyService = (s: RuralService & { distanceMi: number }): TaggedResource => {
+  const hw = checkHighwayAccess(s.lat, s.lng);
+  return {
+    name: s.name,
+    distanceMi: s.distanceMi,
+    isBH: isBehavioralHealthService(s),
+    highwayCorridor: hw.hasAccess ? hw.corridor?.label : undefined,
+  };
+};
 
-const ResourceName = ({ name, distanceMi, isBH }: { name: string; distanceMi: number; isBH?: boolean }) => (
+const ResourceName = ({ name, distanceMi, isBH, highwayCorridor }: { name: string; distanceMi: number; isBH?: boolean; highwayCorridor?: string }) => (
   <div className="flex items-center justify-between gap-1 text-[10px]">
     <span className="text-foreground truncate flex items-center gap-1">
       {isBH && <Brain className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'hsl(270, 50%, 55%)' }} />}
       {name}
     </span>
-    <span className="text-muted-foreground flex-shrink-0">{distanceMi.toFixed(1)} mi</span>
+    <span className="text-muted-foreground flex-shrink-0 flex items-center gap-1">
+      {highwayCorridor && (
+        <span className="inline-flex items-center gap-0.5 text-[8px] text-muted-foreground/70" title={`Near ${highwayCorridor}`}>
+          <Route className="w-2 h-2" />
+          {highwayCorridor}
+        </span>
+      )}
+      {distanceMi.toFixed(1)} mi
+    </span>
   </div>
 );
 
-const BHCounts = ({ bhCount, total }: { bhCount: number; total: number }) => (
+const BHCounts = ({ bhCount, total, hwCount }: { bhCount: number; total: number; hwCount?: number }) => (
   <div className="ml-3.5 mt-0.5 flex items-center gap-2 text-[9px]">
     <span className="text-muted-foreground">{total} resource{total !== 1 ? 's' : ''}</span>
     <span className="text-muted-foreground">·</span>
     <span style={{ color: bhCount > 0 ? 'hsl(270, 50%, 55%)' : undefined }} className={bhCount === 0 ? 'text-muted-foreground/60' : ''}>
       BH: {bhCount}
     </span>
+    {hwCount != null && hwCount > 0 && (
+      <>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-muted-foreground/70 flex items-center gap-0.5">
+          <Route className="w-2 h-2" />
+          Hwy: {hwCount}
+        </span>
+      </>
+    )}
   </div>
 );
 
@@ -100,6 +127,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
   const color = TIER_COLORS[tierKey];
   const description = TIER_DESCRIPTIONS[tierKey];
   const showBHGap = total > 0 && bhCount === 0 && (tierKey === 'local' || tierKey === 'managed');
+  const hwCount = combined.filter(r => r.highwayCorridor).length;
 
   // Non-viable: count only, visually muted
   if (tierKey === 'nonViable') {
@@ -111,7 +139,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
           <span className="text-[10px] text-muted-foreground/70">({rangeLabel})</span>
         </div>
         <p className="text-[9px] text-muted-foreground/60 italic ml-3.5 mt-0.5">{description}</p>
-        <BHCounts bhCount={bhCount} total={total} />
+        <BHCounts bhCount={bhCount} total={total} hwCount={hwCount} />
       </div>
     );
   }
@@ -128,11 +156,11 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
           <span className="text-[10px] text-muted-foreground/70 ml-auto">{total}</span>
         </div>
         <p className="text-[9px] text-muted-foreground/60 italic ml-3.5 mt-0.5">{description}</p>
-        <BHCounts bhCount={bhCount} total={total} />
+        <BHCounts bhCount={bhCount} total={total} hwCount={hwCount} />
         {showItems.length > 0 && (
           <div className="ml-3.5 mt-1 space-y-0.5 opacity-80">
             {showItems.map((item, i) => (
-              <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} />
+              <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} highwayCorridor={item.highwayCorridor} />
             ))}
             {combined.length > showItems.length && (
               <p className="text-[9px] text-muted-foreground/50">+{combined.length - showItems.length} more</p>
@@ -163,12 +191,12 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
       {tierKey === 'managed' && (
         <p className="text-[9px] text-muted-foreground/70 italic ml-3.5 mt-0.5">{description}</p>
       )}
-      <BHCounts bhCount={bhCount} total={total} />
+      <BHCounts bhCount={bhCount} total={total} hwCount={hwCount} />
       {showBHGap && <BHGapWarning />}
       {showItems.length > 0 && (
         <div className="ml-3.5 mt-1 space-y-0.5">
           {showItems.map((item, i) => (
-            <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} />
+            <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} highwayCorridor={item.highwayCorridor} />
           ))}
           {prioritized.length > showItems.length && (
             <p className="text-[9px] text-muted-foreground/60">+{prioritized.length - showItems.length} more</p>

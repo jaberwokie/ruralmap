@@ -23,6 +23,7 @@ import type { ServiceOperationalMeta } from '@/types/medicaid';
 import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
+import { checkHighwayAccess } from '@/utils/highwayProximity';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -186,16 +187,35 @@ const TIER_LABEL_COLOR: Record<string, string> = {
   'Non-Viable': 'text-muted-foreground',
 };
 
+
 const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberLocation: { lat: number; lng: number }; targetLat: number; targetLng: number }) => {
   const km = haversineKmLocal(memberLocation.lat, memberLocation.lng, targetLat, targetLng);
   const mi = Math.round(km * 0.621371 * 10) / 10;
   const tier = getMemberTierLabel(mi);
+  const memberHw = checkHighwayAccess(memberLocation.lat, memberLocation.lng);
+  const targetHw = checkHighwayAccess(targetLat, targetLng);
+  const sharedCorridor = memberHw.hasAccess && targetHw.hasAccess && memberHw.corridor?.id === targetHw.corridor?.id;
+  const targetOnHighway = targetHw.hasAccess;
   return (
-    <div className="flex items-center gap-1.5 rounded bg-muted/50 px-2 py-1 mb-2 text-[10px]">
-      <Navigation className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-      <span className="font-medium text-foreground">{mi.toFixed(1)} mi from member</span>
-      <span className="text-muted-foreground">·</span>
-      <span className={`font-medium ${TIER_LABEL_COLOR[tier]}`}>{tier}</span>
+    <div className="mb-2">
+      <div className="flex items-center gap-1.5 rounded bg-muted/50 px-2 py-1 text-[10px]">
+        <Navigation className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+        <span className="font-medium text-foreground">{mi.toFixed(1)} mi from member</span>
+        <span className="text-muted-foreground">·</span>
+        <span className={`font-medium ${TIER_LABEL_COLOR[tier]}`}>{tier}</span>
+      </div>
+      {sharedCorridor && (
+        <div className="flex items-center gap-1 mt-1 px-2 text-[9px] text-muted-foreground/70">
+          <Route className="w-2.5 h-2.5 flex-shrink-0" />
+          <span>Direct {targetHw.corridor?.label} highway access improves travel reliability</span>
+        </div>
+      )}
+      {!sharedCorridor && targetOnHighway && (
+        <div className="flex items-center gap-1 mt-1 px-2 text-[9px] text-muted-foreground/70">
+          <Route className="w-2.5 h-2.5 flex-shrink-0" />
+          <span>Accessible via {targetHw.corridor?.label}</span>
+        </div>
+      )}
     </div>
   );
 };
