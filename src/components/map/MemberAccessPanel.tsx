@@ -83,13 +83,22 @@ const ResourceName = ({ name, distanceMi, isBH, highwayCorridor }: { name: strin
   </div>
 );
 
-const BHCounts = ({ bhCount, total }: { bhCount: number; total: number }) => (
+const BHCounts = ({ bhCount, total, hwCount }: { bhCount: number; total: number; hwCount?: number }) => (
   <div className="ml-3.5 mt-0.5 flex items-center gap-2 text-[9px]">
     <span className="text-muted-foreground">{total} resource{total !== 1 ? 's' : ''}</span>
     <span className="text-muted-foreground">·</span>
     <span style={{ color: bhCount > 0 ? 'hsl(270, 50%, 55%)' : undefined }} className={bhCount === 0 ? 'text-muted-foreground/60' : ''}>
       BH: {bhCount}
     </span>
+    {hwCount != null && hwCount > 0 && (
+      <>
+        <span className="text-muted-foreground">·</span>
+        <span className="text-muted-foreground/70 flex items-center gap-0.5">
+          <Route className="w-2 h-2" />
+          Hwy: {hwCount}
+        </span>
+      </>
+    )}
   </div>
 );
 
