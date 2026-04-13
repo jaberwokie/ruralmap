@@ -2617,14 +2617,26 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!memberLocation) return;
 
     const { lat, lng } = memberLocation;
+    const map = mapRef.current;
 
-    // Member pin — highest z, draggable
+    // Member pin — highest z, draggable, distinct white/black design with pulse
     const memberIcon = L.divIcon({
       className: '',
-      iconSize: [28, 28],
-      iconAnchor: [14, 28],
-      html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3" fill="hsl(var(--primary-foreground))"/></svg>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 36],
+      html: `<div style="position:relative;width:36px;height:36px;">
+        <div style="position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.08);animation:member-pulse 3s ease-in-out infinite;"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px rgba(0,0,0,0.35)) drop-shadow(0 2px 4px rgba(0,0,0,0.25));position:relative;z-index:1;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5" fill="#1a1a1a"/></svg>
+      </div>`,
     });
+
+    // Inject pulse keyframes once
+    if (!document.getElementById('member-pulse-style')) {
+      const style = document.createElement('style');
+      style.id = 'member-pulse-style';
+      style.textContent = `@keyframes member-pulse { 0%,100% { transform:scale(1);opacity:0.5; } 50% { transform:scale(2.2);opacity:0; } }`;
+      document.head.appendChild(style);
+    }
 
     const marker = L.marker([lat, lng], {
       icon: memberIcon,
@@ -2640,27 +2652,34 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     memberPinRef.current.addLayer(marker);
 
-    // Radius rings: 10mi, 25mi, 40mi
+    // Radius rings: 10mi, 25mi, 40mi — refined weights and styles
     const milesToMeters = (mi: number) => mi * 1609.344;
     const ringDefs = [
-      { mi: 10, color: 'hsla(142, 60%, 40%, 0.25)', dash: '' },
-      { mi: 25, color: 'hsla(38, 85%, 50%, 0.20)', dash: '6 4' },
-      { mi: 40, color: 'hsla(0, 65%, 55%, 0.15)', dash: '4 4' },
+      { mi: 10, color: 'hsla(0, 0%, 30%, 0.35)', weight: 2,   dash: '',    fillOpacity: 0.02 },
+      { mi: 25, color: 'hsla(0, 0%, 30%, 0.22)', weight: 1.5, dash: '8 5', fillOpacity: 0.015 },
+      { mi: 40, color: 'hsla(0, 0%, 30%, 0.10)', weight: 1,   dash: '4 4', fillOpacity: 0.008 },
     ];
 
-    ringDefs.forEach(({ mi, color, dash }) => {
+    ringDefs.forEach(({ mi, color, weight, dash, fillOpacity }) => {
       const circle = L.circle([lat, lng], {
         radius: milesToMeters(mi),
         color,
-        weight: 1.5,
+        weight,
         fillColor: color,
-        fillOpacity: 0.03,
+        fillOpacity,
         dashArray: dash || undefined,
         interactive: false,
         pane: PANE_CONFIG.memberRings.id,
       });
       memberRingsRef.current!.addLayer(circle);
     });
+
+    // Auto-focus map to show 25mi ring on initial placement
+    if (map) {
+      const metersFor25mi = milesToMeters(25);
+      const bounds = L.latLng(lat, lng).toBounds(metersFor25mi * 2);
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
+    }
 
   }, [mapReady, memberLocation]);
 
