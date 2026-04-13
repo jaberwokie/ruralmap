@@ -73,7 +73,7 @@ const Index = () => {
           memberLocation={member.memberLocation}
           memberAnalysis={member.analysis}
           onMemberPlace={member.placeMember}
-          onMemberClear={member.clearMember}
+          onMemberClear={() => { member.clearMember(); selection.actions.clearSelection(); }}
           onMemberGeocode={member.geocodeAddress}
           memberIsGeocoding={member.isGeocoding}
           memberGeocodeError={member.geocodeError}

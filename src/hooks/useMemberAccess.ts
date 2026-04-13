@@ -127,6 +127,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
   const geocodeAddress = useCallback(async (address: string) => {
     setIsGeocoding(true);
     setGeocodeError(null);
+    setMemberLocation(null); // Clear previous pin immediately on new search
     try {
       const q = encodeURIComponent(address + ', Nevada');
       const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`);

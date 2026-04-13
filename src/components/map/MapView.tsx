@@ -2662,11 +2662,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       memberRingsRef.current!.addLayer(circle);
     });
 
-    // Show analysis in detail panel
-    if (memberAnalysis && onEntityClickRef.current) {
-      onEntityClickRef.current({ type: 'memberAccess', analysis: memberAnalysis });
-    }
-  }, [mapReady, memberLocation, memberAnalysis]);
+  }, [mapReady, memberLocation]);
 
   return (
     <div className="relative h-full w-full">
