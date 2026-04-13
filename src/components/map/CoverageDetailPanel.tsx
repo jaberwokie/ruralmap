@@ -187,7 +187,6 @@ const TIER_LABEL_COLOR: Record<string, string> = {
   'Non-Viable': 'text-muted-foreground',
 };
 
-import { checkHighwayAccess } from '@/utils/highwayProximity';
 
 const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberLocation: { lat: number; lng: number }; targetLat: number; targetLng: number }) => {
   const km = haversineKmLocal(memberLocation.lat, memberLocation.lng, targetLat, targetLng);
