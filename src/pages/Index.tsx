@@ -88,6 +88,7 @@ const Index = () => {
             selection.actions.clearSelection();
           }}
           coverageRadiusKm={layers.coverageRadiusKm}
+          memberLocation={member.memberLocation}
         />
       </div>
     </div>

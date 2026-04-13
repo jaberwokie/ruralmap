@@ -253,7 +253,15 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
             Select a map element to view details.
           </p>
         ) : (
-          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+          <>
+            {memberLocation && display.type === 'facility' && (
+              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
+            )}
+            {memberLocation && display.type === 'ruralService' && (
+              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
+            )}
+            <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+          </>
         )}
       </div>
     </div>
