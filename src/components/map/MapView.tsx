@@ -1780,11 +1780,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('mouseover', () => {
+          const distInfo = getMemberDistanceInfo(service.lat, service.lng);
           markerHoverPreviewRef.current({
             name: service.name,
             subtitle: `${service.city}, ${service.county} County`,
             address: service.address,
             detail: service.category,
+            ...distInfo,
           });
         });
         marker.on('mouseout', () => markerHoverPreviewRef.current(null));
