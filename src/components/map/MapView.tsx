@@ -1850,11 +1850,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('mouseover', () => {
+          const distInfo = getMemberDistanceInfo(service.lat, service.lng);
           markerHoverPreviewRef.current({
             name: service.name,
             subtitle: `${service.city}, ${service.county} County`,
             address: service.address,
             detail: `Behavioral Health · ${service.category}`,
+            ...distInfo,
           });
         });
         marker.on('mouseout', () => markerHoverPreviewRef.current(null));
@@ -1954,6 +1956,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
            : undefined;
 
         marker.on('mouseover', () => {
+          const distInfo = getMemberDistanceInfo(facility.lat, facility.lng);
           markerHoverPreviewRef.current({
             name: facility.name,
             subtitle: `${facility.city}, ${facility.county} County`,
@@ -1964,6 +1967,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
               showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
               claimsDetail,
             ].filter(Boolean).join('\n'),
+            ...distInfo,
           });
         });
         marker.on('mouseout', () => markerHoverPreviewRef.current(null));
