@@ -112,6 +112,8 @@ interface MarkerHoverPreview {
   address?: string;
   detail?: string;
   extraHtml?: string;
+  memberDistanceMi?: number;
+  memberTierLabel?: string;
 }
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
@@ -707,6 +709,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onMemberPlaceRef.current = onMemberPlace;
   const memberManualModeRef = useRef(memberManualMode);
   memberManualModeRef.current = memberManualMode;
+  const memberLocationRef = useRef(memberLocation);
+  memberLocationRef.current = memberLocation;
+
+  const getMemberDistanceInfo = useCallback((targetLat: number, targetLng: number): { memberDistanceMi: number; memberTierLabel: string } | null => {
+    const ml = memberLocationRef.current;
+    if (!ml) return null;
+    const km = haversineKm(ml.lat, ml.lng, targetLat, targetLng);
+    const mi = km * 0.621371;
+    const tierLabel = mi <= 10 ? 'Local Access' : mi <= 25 ? 'Managed Access' : mi <= 40 ? 'High Friction' : 'Non-Viable';
+    return { memberDistanceMi: Math.round(mi * 10) / 10, memberTierLabel: tierLabel };
+  }, []);
   const interactionGuardUntilRef = useRef(0);
   const markerGuardUntilRef = useRef(0);
   const selectPointMarkerRef = useRef<(marker: MapPointMarker | null) => void>(() => {});
@@ -1767,11 +1780,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('mouseover', () => {
+          const distInfo = getMemberDistanceInfo(service.lat, service.lng);
           markerHoverPreviewRef.current({
             name: service.name,
             subtitle: `${service.city}, ${service.county} County`,
             address: service.address,
             detail: service.category,
+            ...distInfo,
           });
         });
         marker.on('mouseout', () => markerHoverPreviewRef.current(null));
@@ -1835,11 +1850,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
 
         marker.on('mouseover', () => {
+          const distInfo = getMemberDistanceInfo(service.lat, service.lng);
           markerHoverPreviewRef.current({
             name: service.name,
             subtitle: `${service.city}, ${service.county} County`,
             address: service.address,
             detail: `Behavioral Health · ${service.category}`,
+            ...distInfo,
           });
         });
         marker.on('mouseout', () => markerHoverPreviewRef.current(null));
@@ -1939,6 +1956,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
            : undefined;
 
         marker.on('mouseover', () => {
+          const distInfo = getMemberDistanceInfo(facility.lat, facility.lng);
           markerHoverPreviewRef.current({
             name: facility.name,
             subtitle: `${facility.city}, ${facility.county} County`,
@@ -1949,6 +1967,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
               showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
               claimsDetail,
             ].filter(Boolean).join('\n'),
+            ...distInfo,
           });
         });
         marker.on('mouseout', () => markerHoverPreviewRef.current(null));
@@ -2655,7 +2674,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // Radius rings: 10mi, 25mi, 40mi — refined weights and styles
     const milesToMeters = (mi: number) => mi * 1609.344;
     const ringDefs = [
-      { mi: 10, color: 'hsla(0, 0%, 30%, 0.35)', weight: 2,   dash: '',    fillOpacity: 0.02 },
+      { mi: 10, color: 'hsla(0, 0%, 30%, 0.42)', weight: 2.5, dash: '',    fillOpacity: 0.025 },
       { mi: 25, color: 'hsla(0, 0%, 30%, 0.22)', weight: 1.5, dash: '8 5', fillOpacity: 0.015 },
       { mi: 40, color: 'hsla(0, 0%, 30%, 0.10)', weight: 1,   dash: '4 4', fillOpacity: 0.008 },
     ];
@@ -2705,6 +2724,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                 {markerHoverPreview.subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{markerHoverPreview.subtitle}</p>}
                 {markerHoverPreview.address && <p className="text-[10px] text-muted-foreground/80 mt-0.5">{markerHoverPreview.address}</p>}
                 {markerHoverPreview.detail && <p className="text-[10px] text-muted-foreground mt-0.5">{markerHoverPreview.detail}</p>}
+                {typeof markerHoverPreview.memberDistanceMi === 'number' && markerHoverPreview.memberTierLabel && (
+                  <div className="border-t border-border/70 mt-1 pt-1 flex items-center gap-1.5 text-[10px]">
+                    <span className="font-medium text-foreground">{markerHoverPreview.memberDistanceMi.toFixed(1)} mi</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className={`font-medium ${markerHoverPreview.memberTierLabel === 'Local Access' ? 'text-green-600' : markerHoverPreview.memberTierLabel === 'Managed Access' ? 'text-amber-600' : markerHoverPreview.memberTierLabel === 'High Friction' ? 'text-red-500' : 'text-muted-foreground'}`}>{markerHoverPreview.memberTierLabel}</span>
+                  </div>
+                )}
                 {markerHoverPreview.extraHtml && (
                   <div className="border-t border-border/70 mt-1.5 pt-1 space-y-0.5">
                     {markerHoverPreview.extraHtml.split('\n').map((line, i) => (

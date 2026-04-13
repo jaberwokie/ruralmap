@@ -54,6 +54,7 @@ interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
+  memberLocation?: { lat: number; lng: number } | null;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -167,7 +168,39 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120 }: CoverageDetailPanelProps) => {
+const haversineKmLocal = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+};
+
+const getMemberTierLabel = (mi: number) =>
+  mi <= 10 ? 'Local Access' : mi <= 25 ? 'Managed Access' : mi <= 40 ? 'High Friction' : 'Non-Viable';
+
+const TIER_LABEL_COLOR: Record<string, string> = {
+  'Local Access': 'text-green-600',
+  'Managed Access': 'text-amber-600',
+  'High Friction': 'text-red-500',
+  'Non-Viable': 'text-muted-foreground',
+};
+
+const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberLocation: { lat: number; lng: number }; targetLat: number; targetLng: number }) => {
+  const km = haversineKmLocal(memberLocation.lat, memberLocation.lng, targetLat, targetLng);
+  const mi = Math.round(km * 0.621371 * 10) / 10;
+  const tier = getMemberTierLabel(mi);
+  return (
+    <div className="flex items-center gap-1.5 rounded bg-muted/50 px-2 py-1 mb-2 text-[10px]">
+      <Navigation className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+      <span className="font-medium text-foreground">{mi.toFixed(1)} mi from member</span>
+      <span className="text-muted-foreground">·</span>
+      <span className={`font-medium ${TIER_LABEL_COLOR[tier]}`}>{tier}</span>
+    </div>
+  );
+};
+
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -220,7 +253,15 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120 }: Covera
             Select a map element to view details.
           </p>
         ) : (
-          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+          <>
+            {memberLocation && display.type === 'facility' && (
+              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
+            )}
+            {memberLocation && display.type === 'ruralService' && (
+              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
+            )}
+            <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+          </>
         )}
       </div>
     </div>
