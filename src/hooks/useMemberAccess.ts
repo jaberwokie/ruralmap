@@ -40,7 +40,6 @@ const assignTier = (distanceMi: number): AccessTierKey => {
   if (distanceMi <= 40) return 'highFriction';
   return 'nonViable';
 };
-];
 
 const haversineMi = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 3958.8; // Earth radius in miles
