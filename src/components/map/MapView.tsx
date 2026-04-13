@@ -699,6 +699,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onEntityClickRef.current = onEntityClick;
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
+  const onMemberPlaceRef = useRef(onMemberPlace);
+  onMemberPlaceRef.current = onMemberPlace;
+  const memberManualModeRef = useRef(memberManualMode);
+  memberManualModeRef.current = memberManualMode;
   const interactionGuardUntilRef = useRef(0);
   const markerGuardUntilRef = useRef(0);
   const selectPointMarkerRef = useRef<(marker: MapPointMarker | null) => void>(() => {});
