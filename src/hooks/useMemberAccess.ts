@@ -33,6 +33,15 @@ const TIER_DEFS: { key: AccessTierKey; label: string; rangeLabel: string; minMi:
   { key: 'nonViable', label: 'Non-Viable', rangeLabel: '40+ mi', minMi: 40, maxMi: Infinity },
 ];
 
+// Inclusive upper-bound assignment: 10.0 → local, 10.01 → managed, etc.
+const assignTier = (distanceMi: number): AccessTierKey => {
+  if (distanceMi <= 10) return 'local';
+  if (distanceMi <= 25) return 'managed';
+  if (distanceMi <= 40) return 'highFriction';
+  return 'nonViable';
+};
+];
+
 const haversineMi = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 3958.8; // Earth radius in miles
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -93,8 +102,8 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       key: def.key,
       label: def.label,
       rangeLabel: def.rangeLabel,
-      facilities: facWithDist.filter(f => f.distanceMi >= def.minMi && f.distanceMi < def.maxMi),
-      services: svcWithDist.filter(s => s.distanceMi >= def.minMi && s.distanceMi < def.maxMi),
+      facilities: facWithDist.filter(f => assignTier(f.distanceMi) === def.key),
+      services: svcWithDist.filter(s => assignTier(s.distanceMi) === def.key),
     }));
 
     return {
