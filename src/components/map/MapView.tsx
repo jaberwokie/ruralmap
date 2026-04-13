@@ -149,6 +149,10 @@ const PANE_CONFIG = {
   providerMarkers: { id: 'provider-markers-pane',  zIndex: 660, interactive: true },
   // Popup pane for tooltips
   uiPopups:        { id: 'ui-popups-pane',         zIndex: 700, interactive: true },
+  // Member access radius rings — above all content layers, non-interactive
+  memberRings:     { id: 'member-rings-pane',      zIndex: 710, interactive: false },
+  // Member pin — absolute top interactive layer
+  memberPin:       { id: 'member-pin-pane',        zIndex: 720, interactive: true },
 } as const;
 
 // Backward-compat mapping — maps OLD semantic names to NEW pane IDs
@@ -2626,6 +2630,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       icon: memberIcon,
       draggable: true,
       zIndexOffset: 10000,
+      pane: PANE_CONFIG.memberPin.id,
     });
 
     marker.on('dragend', () => {
@@ -2652,6 +2657,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         fillOpacity: 0.03,
         dashArray: dash || undefined,
         interactive: false,
+        pane: PANE_CONFIG.memberRings.id,
       });
       memberRingsRef.current!.addLayer(circle);
     });
