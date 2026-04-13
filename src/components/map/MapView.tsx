@@ -112,6 +112,8 @@ interface MarkerHoverPreview {
   address?: string;
   detail?: string;
   extraHtml?: string;
+  memberDistanceMi?: number;
+  memberTierLabel?: string;
 }
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
@@ -707,6 +709,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onMemberPlaceRef.current = onMemberPlace;
   const memberManualModeRef = useRef(memberManualMode);
   memberManualModeRef.current = memberManualMode;
+  const memberLocationRef = useRef(memberLocation);
+  memberLocationRef.current = memberLocation;
+
+  const getMemberDistanceInfo = useCallback((targetLat: number, targetLng: number): { memberDistanceMi: number; memberTierLabel: string } | null => {
+    const ml = memberLocationRef.current;
+    if (!ml) return null;
+    const km = haversineKm(ml.lat, ml.lng, targetLat, targetLng);
+    const mi = km * 0.621371;
+    const tierLabel = mi <= 10 ? 'Local Access' : mi <= 25 ? 'Managed Access' : mi <= 40 ? 'High Friction' : 'Non-Viable';
+    return { memberDistanceMi: Math.round(mi * 10) / 10, memberTierLabel: tierLabel };
+  }, []);
   const interactionGuardUntilRef = useRef(0);
   const markerGuardUntilRef = useRef(0);
   const selectPointMarkerRef = useRef<(marker: MapPointMarker | null) => void>(() => {});
