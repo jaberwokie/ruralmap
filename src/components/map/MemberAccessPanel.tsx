@@ -139,7 +139,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
           <span className="text-[10px] text-muted-foreground/70">({rangeLabel})</span>
         </div>
         <p className="text-[9px] text-muted-foreground/60 italic ml-3.5 mt-0.5">{description}</p>
-        <BHCounts bhCount={bhCount} total={total} />
+        <BHCounts bhCount={bhCount} total={total} hwCount={hwCount} />
       </div>
     );
   }
@@ -156,7 +156,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
           <span className="text-[10px] text-muted-foreground/70 ml-auto">{total}</span>
         </div>
         <p className="text-[9px] text-muted-foreground/60 italic ml-3.5 mt-0.5">{description}</p>
-        <BHCounts bhCount={bhCount} total={total} />
+        <BHCounts bhCount={bhCount} total={total} hwCount={hwCount} />
         {showItems.length > 0 && (
           <div className="ml-3.5 mt-1 space-y-0.5 opacity-80">
             {showItems.map((item, i) => (
@@ -191,7 +191,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
       {tierKey === 'managed' && (
         <p className="text-[9px] text-muted-foreground/70 italic ml-3.5 mt-0.5">{description}</p>
       )}
-      <BHCounts bhCount={bhCount} total={total} />
+      <BHCounts bhCount={bhCount} total={total} hwCount={hwCount} />
       {showBHGap && <BHGapWarning />}
       {showItems.length > 0 && (
         <div className="ml-3.5 mt-1 space-y-0.5">
