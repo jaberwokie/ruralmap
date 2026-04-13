@@ -6,6 +6,7 @@ import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
+import { useMemberAccess } from '@/hooks/useMemberAccess';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
 
@@ -15,10 +16,16 @@ const Index = () => {
   const selection = useMapSelection();
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
+  const member = useMemberAccess(facility.facilities);
 
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
+
+  // When member pin is active, show member analysis in detail panel
+  const activeEntity = member.analysis
+    ? { type: 'memberAccess' as const, analysis: member.analysis }
+    : selection.lockedEntity;
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
@@ -63,10 +70,23 @@ const Index = () => {
           topProvidersOnly={filters.topProvidersOnly}
           engagementRateBelow20Only={filters.engagementRateBelow20Only}
           engagementGapView={layers.engagementGapView}
+          memberLocation={member.memberLocation}
+          memberAnalysis={member.analysis}
+          onMemberPlace={member.placeMember}
+          onMemberClear={member.clearMember}
+          onMemberGeocode={member.geocodeAddress}
+          memberIsGeocoding={member.isGeocoding}
+          memberGeocodeError={member.geocodeError}
+          memberManualMode={member.manualPlacementMode}
         />
         <CoverageDetailPanel
-          entity={selection.lockedEntity}
-          onClear={selection.actions.clearSelection}
+          entity={activeEntity}
+          onClear={() => {
+            if (member.memberLocation) {
+              member.clearMember();
+            }
+            selection.actions.clearSelection();
+          }}
           coverageRadiusKm={layers.coverageRadiusKm}
         />
       </div>

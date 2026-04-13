@@ -35,6 +35,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
+import MemberAccessSearch from '@/components/map/MemberAccessSearch';
+import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 
@@ -72,7 +74,14 @@ interface MapViewProps {
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
   engagementGapView?: 'priority' | 'boundaries';
-  
+  memberLocation?: MemberLocation | null;
+  memberAnalysis?: MemberAccessAnalysis | null;
+  onMemberPlace?: (loc: MemberLocation) => void;
+  onMemberClear?: () => void;
+  onMemberGeocode?: (address: string) => Promise<void>;
+  memberIsGeocoding?: boolean;
+  memberGeocodeError?: string | null;
+  memberManualMode?: boolean;
 }
 
 interface CountyHoverMetrics {
@@ -638,7 +647,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority' }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -669,6 +678,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const engagementHeatRef = useRef<L.Layer | null>(null);
   const highlightsRef = useRef<L.LayerGroup | null>(null);
   const tribalNationsRef = useRef<L.LayerGroup | null>(null);
+  const memberPinRef = useRef<L.LayerGroup | null>(null);
+  const memberRingsRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
@@ -688,6 +699,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   onEntityClickRef.current = onEntityClick;
   const onFteHubClickRef = useRef(onFteHubClick);
   onFteHubClickRef.current = onFteHubClick;
+  const onMemberPlaceRef = useRef(onMemberPlace);
+  onMemberPlaceRef.current = onMemberPlace;
+  const memberManualModeRef = useRef(memberManualMode);
+  memberManualModeRef.current = memberManualMode;
   const interactionGuardUntilRef = useRef(0);
   const markerGuardUntilRef = useRef(0);
   const selectPointMarkerRef = useRef<(marker: MapPointMarker | null) => void>(() => {});
@@ -1365,14 +1380,21 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     labelsRef.current = L.layerGroup().addTo(map);
     engagementGapLabelRef.current = L.layerGroup().addTo(map);
     highlightsRef.current = L.layerGroup().addTo(map);
+    memberRingsRef.current = L.layerGroup().addTo(map);
+    memberPinRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
     setMapReady(true);
 
-    map.on('click', () => {
+    map.on('click', (e: L.LeafletMouseEvent) => {
       if (hasActiveInteractionGuard()) {
         logMapSelectionDebug('background-click-ignored-due-to-guard');
+        return;
+      }
+      // Manual member placement mode
+      if (memberManualModeRef.current && onMemberPlaceRef.current) {
+        onMemberPlaceRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
         return;
       }
       clearSelectedPointMarkerRef.current();
@@ -2583,9 +2605,73 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, [layers.cellularCoverage]);
 
+  // ── Member pin + radius rings ──
+  useEffect(() => {
+    if (!mapReady || !memberPinRef.current || !memberRingsRef.current) return;
+    memberPinRef.current.clearLayers();
+    memberRingsRef.current.clearLayers();
+    if (!memberLocation) return;
+
+    const { lat, lng } = memberLocation;
+
+    // Member pin — highest z, draggable
+    const memberIcon = L.divIcon({
+      className: '',
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+      html: `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="hsl(var(--primary))" stroke="hsl(var(--primary-foreground))" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3" fill="hsl(var(--primary-foreground))"/></svg>`,
+    });
+
+    const marker = L.marker([lat, lng], {
+      icon: memberIcon,
+      draggable: true,
+      zIndexOffset: 10000,
+    });
+
+    marker.on('dragend', () => {
+      const pos = marker.getLatLng();
+      onMemberPlaceRef.current?.({ lat: pos.lat, lng: pos.lng });
+    });
+
+    memberPinRef.current.addLayer(marker);
+
+    // Radius rings: 10mi, 25mi, 40mi
+    const milesToMeters = (mi: number) => mi * 1609.344;
+    const ringDefs = [
+      { mi: 10, color: 'hsla(142, 60%, 40%, 0.25)', dash: '' },
+      { mi: 25, color: 'hsla(38, 85%, 50%, 0.20)', dash: '6 4' },
+      { mi: 40, color: 'hsla(0, 65%, 55%, 0.15)', dash: '4 4' },
+    ];
+
+    ringDefs.forEach(({ mi, color, dash }) => {
+      const circle = L.circle([lat, lng], {
+        radius: milesToMeters(mi),
+        color,
+        weight: 1.5,
+        fillColor: color,
+        fillOpacity: 0.03,
+        dashArray: dash || undefined,
+        interactive: false,
+      });
+      memberRingsRef.current!.addLayer(circle);
+    });
+
+    // Show analysis in detail panel
+    if (memberAnalysis && onEntityClickRef.current) {
+      onEntityClickRef.current({ type: 'memberAccess', analysis: memberAnalysis });
+    }
+  }, [mapReady, memberLocation, memberAnalysis]);
+
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
+      <MemberAccessSearch
+        onSearch={(addr) => onMemberGeocode?.(addr)}
+        onClear={() => onMemberClear?.()}
+        isGeocoding={memberIsGeocoding}
+        error={memberGeocodeError}
+        hasPin={!!memberLocation}
+      />
       <TooltipProvider delayDuration={120}>
         {(countyHoverPreview || markerHoverPreview) && (
           <div
