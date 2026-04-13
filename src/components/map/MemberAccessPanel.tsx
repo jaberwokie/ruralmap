@@ -150,7 +150,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
         {showItems.length > 0 && (
           <div className="ml-3.5 mt-1 space-y-0.5 opacity-80">
             {showItems.map((item, i) => (
-              <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} />
+              <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} highwayCorridor={item.highwayCorridor} />
             ))}
             {combined.length > showItems.length && (
               <p className="text-[9px] text-muted-foreground/50">+{combined.length - showItems.length} more</p>
@@ -186,7 +186,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
       {showItems.length > 0 && (
         <div className="ml-3.5 mt-1 space-y-0.5">
           {showItems.map((item, i) => (
-            <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} />
+            <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} highwayCorridor={item.highwayCorridor} />
           ))}
           {prioritized.length > showItems.length && (
             <p className="text-[9px] text-muted-foreground/60">+{prioritized.length - showItems.length} more</p>
