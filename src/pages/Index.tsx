@@ -22,10 +22,13 @@ const Index = () => {
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
 
-  // When member pin is active, show member analysis in detail panel
-  const activeEntity = member.analysis
+  // Priority: 1) clicked entity (provider/service/county) 2) member analysis 3) null
+  const memberAnalysisEntity = member.analysis
     ? { type: 'memberAccess' as const, analysis: member.analysis }
-    : selection.lockedEntity;
+    : null;
+  const activeEntity = (selection.lockedEntity && selection.lockedEntity.type !== 'memberAccess' as string)
+    ? selection.lockedEntity
+    : memberAnalysisEntity ?? selection.lockedEntity;
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
@@ -82,6 +85,13 @@ const Index = () => {
         <CoverageDetailPanel
           entity={activeEntity}
           onClear={() => {
+            // If a specific entity is selected (not member analysis), just clear that selection
+            // so the panel falls back to member analysis
+            if (selection.lockedEntity && member.memberLocation) {
+              selection.actions.clearSelection();
+              return;
+            }
+            // Otherwise clear everything
             if (member.memberLocation) {
               member.clearMember();
             }
