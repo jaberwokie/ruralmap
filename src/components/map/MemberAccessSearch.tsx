@@ -57,6 +57,9 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
           </button>
         )}
       </div>
+      {hasPin && !error && (
+        <p className="text-[9px] text-muted-foreground/60 select-none">Clear search to exit member mode</p>
+      )}
       {error && (
         <div className="rounded-md bg-destructive/10 border border-destructive/20 px-3 py-1.5 text-[11px] text-destructive max-w-72 text-center">
           {error}
