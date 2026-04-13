@@ -42,27 +42,44 @@ interface TaggedResource {
   name: string;
   distanceMi: number;
   isBH: boolean;
+  highwayCorridor?: string;
 }
 
-const classifyFacility = (f: Facility & { distanceMi: number }): TaggedResource => ({
-  name: f.name,
-  distanceMi: f.distanceMi,
-  isBH: facilityOffersBehavioralHealth(f),
-});
+const classifyFacility = (f: Facility & { distanceMi: number }): TaggedResource => {
+  const hw = checkHighwayAccess(f.lat, f.lng);
+  return {
+    name: f.name,
+    distanceMi: f.distanceMi,
+    isBH: facilityOffersBehavioralHealth(f),
+    highwayCorridor: hw.hasAccess ? hw.corridor?.label : undefined,
+  };
+};
 
-const classifyService = (s: RuralService & { distanceMi: number }): TaggedResource => ({
-  name: s.name,
-  distanceMi: s.distanceMi,
-  isBH: isBehavioralHealthService(s),
-});
+const classifyService = (s: RuralService & { distanceMi: number }): TaggedResource => {
+  const hw = checkHighwayAccess(s.lat, s.lng);
+  return {
+    name: s.name,
+    distanceMi: s.distanceMi,
+    isBH: isBehavioralHealthService(s),
+    highwayCorridor: hw.hasAccess ? hw.corridor?.label : undefined,
+  };
+};
 
-const ResourceName = ({ name, distanceMi, isBH }: { name: string; distanceMi: number; isBH?: boolean }) => (
+const ResourceName = ({ name, distanceMi, isBH, highwayCorridor }: { name: string; distanceMi: number; isBH?: boolean; highwayCorridor?: string }) => (
   <div className="flex items-center justify-between gap-1 text-[10px]">
     <span className="text-foreground truncate flex items-center gap-1">
       {isBH && <Brain className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'hsl(270, 50%, 55%)' }} />}
       {name}
     </span>
-    <span className="text-muted-foreground flex-shrink-0">{distanceMi.toFixed(1)} mi</span>
+    <span className="text-muted-foreground flex-shrink-0 flex items-center gap-1">
+      {highwayCorridor && (
+        <span className="inline-flex items-center gap-0.5 text-[8px] text-muted-foreground/70" title={`Near ${highwayCorridor}`}>
+          <Route className="w-2 h-2" />
+          {highwayCorridor}
+        </span>
+      )}
+      {distanceMi.toFixed(1)} mi
+    </span>
   </div>
 );
 
