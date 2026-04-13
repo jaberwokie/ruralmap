@@ -1387,9 +1387,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     setMapZoom(map.getZoom());
     setMapReady(true);
 
-    map.on('click', () => {
+    map.on('click', (e: L.LeafletMouseEvent) => {
       if (hasActiveInteractionGuard()) {
         logMapSelectionDebug('background-click-ignored-due-to-guard');
+        return;
+      }
+      // Manual member placement mode
+      if (memberManualModeRef.current && onMemberPlaceRef.current) {
+        onMemberPlaceRef.current({ lat: e.latlng.lat, lng: e.latlng.lng });
         return;
       }
       clearSelectedPointMarkerRef.current();
