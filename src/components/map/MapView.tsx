@@ -2724,6 +2724,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                 {markerHoverPreview.subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{markerHoverPreview.subtitle}</p>}
                 {markerHoverPreview.address && <p className="text-[10px] text-muted-foreground/80 mt-0.5">{markerHoverPreview.address}</p>}
                 {markerHoverPreview.detail && <p className="text-[10px] text-muted-foreground mt-0.5">{markerHoverPreview.detail}</p>}
+                {typeof markerHoverPreview.memberDistanceMi === 'number' && markerHoverPreview.memberTierLabel && (
+                  <div className="border-t border-border/70 mt-1 pt-1 flex items-center gap-1.5 text-[10px]">
+                    <span className="font-medium text-foreground">{markerHoverPreview.memberDistanceMi.toFixed(1)} mi</span>
+                    <span className="text-muted-foreground">·</span>
+                    <span className={`font-medium ${markerHoverPreview.memberTierLabel === 'Local Access' ? 'text-green-600' : markerHoverPreview.memberTierLabel === 'Managed Access' ? 'text-amber-600' : markerHoverPreview.memberTierLabel === 'High Friction' ? 'text-red-500' : 'text-muted-foreground'}`}>{markerHoverPreview.memberTierLabel}</span>
+                  </div>
+                )}
                 {markerHoverPreview.extraHtml && (
                   <div className="border-t border-border/70 mt-1.5 pt-1 space-y-0.5">
                     {markerHoverPreview.extraHtml.split('\n').map((line, i) => (
