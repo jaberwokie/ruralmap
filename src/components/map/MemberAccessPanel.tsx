@@ -118,6 +118,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
   const color = TIER_COLORS[tierKey];
   const description = TIER_DESCRIPTIONS[tierKey];
   const showBHGap = total > 0 && bhCount === 0 && (tierKey === 'local' || tierKey === 'managed');
+  const hwCount = combined.filter(r => r.highwayCorridor).length;
 
   // Non-viable: count only, visually muted
   if (tierKey === 'nonViable') {
