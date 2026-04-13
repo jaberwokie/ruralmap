@@ -35,6 +35,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
+import MemberAccessSearch from '@/components/map/MemberAccessSearch';
+import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 
@@ -72,7 +74,14 @@ interface MapViewProps {
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
   engagementGapView?: 'priority' | 'boundaries';
-  
+  memberLocation?: MemberLocation | null;
+  memberAnalysis?: MemberAccessAnalysis | null;
+  onMemberPlace?: (loc: MemberLocation) => void;
+  onMemberClear?: () => void;
+  onMemberGeocode?: (address: string) => Promise<void>;
+  memberIsGeocoding?: boolean;
+  memberGeocodeError?: string | null;
+  memberManualMode?: boolean;
 }
 
 interface CountyHoverMetrics {
