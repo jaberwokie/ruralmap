@@ -24,6 +24,12 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
+import {
+  resolvePsychiatryBadge, resolveInpatientBadge,
+  hasPsychiatricData, hasInpatientData,
+  PSYCHIATRY_BADGE_COLORS, INPATIENT_BADGE_COLORS,
+  REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS,
+} from '@/types/service-lines';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
