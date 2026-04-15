@@ -1794,7 +1794,20 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         </DetailSection>
       )}
 
-      {hasContact && (
+      {/* Psychiatric service-line section (providers only) */}
+      {hasPsychiatricData(facility.psychiatric) && (
+        <DetailSection title="Psychiatry" isOpen={isOpen('psychiatry')} onToggle={() => toggle('psychiatry')}>
+          <PsychiatricSection fields={facility.psychiatric!} />
+        </DetailSection>
+      )}
+
+      {/* Inpatient service-line section (hospitals only) */}
+      {hasInpatientData(facility.inpatient) && (
+        <DetailSection title="Inpatient Services" isOpen={isOpen('inpatient')} onToggle={() => toggle('inpatient')}>
+          <InpatientSection fields={facility.inpatient!} />
+        </DetailSection>
+      )}
+
         <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
           <ContactPhoneAction phone={facility.phone} variant="detail" />
           {(() => { const href = normalizeWebsite(facility.website); return href ? (
