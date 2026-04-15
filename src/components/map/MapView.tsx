@@ -59,6 +59,7 @@ interface MapViewProps {
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
   serviceCategoryFilters?: Set<string>;
+  filters?: import('@/types/filters').Filters;
   onFacilityClick: (facility: Facility) => void;
   onMapClick?: () => void;
   searchQuery: string;
