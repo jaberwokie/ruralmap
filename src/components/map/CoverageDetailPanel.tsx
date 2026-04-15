@@ -29,6 +29,7 @@ import {
   hasPsychiatricData, hasInpatientData,
   PSYCHIATRY_BADGE_COLORS, INPATIENT_BADGE_COLORS,
   REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS, TRANSFER_DEPENDENCY_LABELS,
+  derivePsychiatricAccess, deriveInpatientAccess, OPERATIONAL_ACCESS_LABELS,
 } from '@/types/service-lines';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
@@ -1680,6 +1681,7 @@ const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/servic
       {fields.psychiatric_access_notes && (
         <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.psychiatric_access_notes}</p>
       )}
+      <MetaRow label="Psychiatric Access" value={OPERATIONAL_ACCESS_LABELS[derivePsychiatricAccess(fields)]} />
     </div>
   );
 };
@@ -1709,6 +1711,7 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
       {fields.inpatient_access_notes && (
         <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.inpatient_access_notes}</p>
       )}
+      <MetaRow label="Inpatient Access" value={OPERATIONAL_ACCESS_LABELS[deriveInpatientAccess(fields)]} />
     </div>
   );
 };
