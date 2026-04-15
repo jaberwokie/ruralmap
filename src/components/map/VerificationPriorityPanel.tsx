@@ -87,10 +87,12 @@ function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<
     'Operational Access', 'Verification Status', 'Verification Freshness',
     'Fallback Destination', 'Dependent Counties', 'Priority Reasons',
     'Outreach Status', 'Outreach Date', 'Outreach By', 'Outreach Notes',
+    'Last Directly Verified', 'Verified By',
   ];
   const esc = (v: string) => (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v.replace(/"/g, '""')}"` : v;
   const rows = records.map(r => {
     const o = outreachMap.get(outreachKey(r.entity_id, r.service_line));
+    const lv = deriveLastDirectlyVerified(r.entity_id, r.service_line, r.verification_status);
     return [
       PRIORITY_TIER_LABELS[r.priority_tier], String(r.priority_score), r.entity_name, r.county, r.service_line,
       r.operational_access ? (OPERATIONAL_ACCESS_LABELS[r.operational_access] ?? r.operational_access) : '',
@@ -98,6 +100,7 @@ function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<
       r.is_fallback_destination ? 'Yes' : 'No', r.dependent_counties.join('; '), r.priority_reason.join('; '),
       o ? OUTREACH_STATUS_LABELS[o.verification_outreach_status] : 'Not Started',
       o?.verification_outreach_date ?? '', o?.verification_outreach_by ?? '', o?.verification_outreach_notes ?? '',
+      lv.date ?? '', lv.by ?? '',
     ].map(esc).join(',');
   });
   const csv = [headers.join(','), ...rows].join('\n');
