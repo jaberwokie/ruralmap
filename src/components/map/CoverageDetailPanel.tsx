@@ -35,6 +35,7 @@ import {
 import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
 import { deriveVerificationQueue as deriveVerificationQueueFn } from '@/utils/verificationPriorityQueue';
 import { deriveLastDirectlyVerified as deriveLastDirectlyVerifiedFn } from '@/utils/verificationAuditLog';
+import { formatDisplayValue, formatTagLabel } from '@/utils/displayFormat';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1735,7 +1736,7 @@ const MetaRow = ({ label, value }: { label: string; value: string | number | nul
   return (
     <div className="flex justify-between text-[11px]">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-foreground">{typeof value === 'number' ? value : value}</span>
+      <span className="font-medium text-foreground">{formatDisplayValue(value)}</span>
     </div>
   );
 };
@@ -1747,7 +1748,7 @@ const PsychiatricSection = ({ fields, entityId }: { fields: Partial<import('@/ty
       {types.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {types.map(t => (
-            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{t}</span>
+            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{formatTagLabel(t)}</span>
           ))}
         </div>
       )}
@@ -1785,7 +1786,7 @@ const InpatientSection = ({ fields, entityId }: { fields: Partial<import('@/type
       {types.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {types.map(t => (
-            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{t}</span>
+            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{formatTagLabel(t)}</span>
           ))}
         </div>
       )}
