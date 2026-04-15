@@ -414,6 +414,32 @@ const VerificationPriorityPanel = () => {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [applyingKey, setApplyingKey] = useState<string | null>(null);
   const [auditKey, setAuditKey] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<VerificationImportResult | null>(null);
+
+  const handleCsvImport = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        if (!text) return;
+        const result = importVerificationCsv(text);
+        setImportResult(result);
+        if (result.updated > 0) {
+          setRefreshKey(k => k + 1);
+          toast.success(`${result.updated} verification(s) imported`);
+        } else {
+          toast.info('No verifications were updated');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, []);
 
   const filtered = useMemo(() => {
     let records = queue;
