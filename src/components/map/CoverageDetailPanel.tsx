@@ -1402,6 +1402,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsable}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragile}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Verification Needed</span><span className="font-bold text-foreground tabular-nums">{verifNeeded}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'fresh').length}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'stale').length}</span></div>
                     </div>
                   </div>
                 </div>
