@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark, Brain } from 'lucide-react';
 import { ContactPhoneAction, formatPhone } from '@/components/ContactPhoneAction';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
@@ -24,6 +24,12 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
+import {
+  resolvePsychiatryBadge, resolveInpatientBadge,
+  hasPsychiatricData, hasInpatientData,
+  PSYCHIATRY_BADGE_COLORS, INPATIENT_BADGE_COLORS,
+  REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS,
+} from '@/types/service-lines';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1340,6 +1346,76 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
           </DetailSection>
         );
       })()}
+
+      {/* Psychiatric & Inpatient County Summary */}
+      {(() => {
+        const countyFacs = defaultFacilities.filter(fac => fac.county === county);
+        const psychProviders = countyFacs.filter(fac => {
+          const p = fac.psychiatric;
+          return p?.psychiatric_services_offered === true ||
+            (p?.psychiatric_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(p.psychiatric_verification_status));
+        });
+        const inpatientHospitals = countyFacs.filter(fac => {
+          const ip = fac.inpatient;
+          return ip?.inpatient_services_offered === true ||
+            (ip?.inpatient_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(ip.inpatient_verification_status));
+        });
+        if (psychProviders.length === 0 && inpatientHospitals.length === 0) return null;
+
+        const verifiedPsych = psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status === 'directly_verified' || f.psychiatric?.psychiatric_verification_status === 'verified_via_directory');
+        const verifiedMedicaidPsych = verifiedPsych.filter(f => f.psychiatric?.psychiatric_medicaid_status === 'participating');
+        const needsVerifPsych = psychProviders.filter(f =>
+          f.psychiatric?.psychiatric_services_offered === true && (!f.psychiatric?.psychiatric_verification_status || f.psychiatric.psychiatric_verification_status === 'reported_unverified' || f.psychiatric.psychiatric_verification_status === 'unable_to_confirm')
+        );
+
+        const verifiedInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status === 'directly_verified' || f.inpatient?.inpatient_verification_status === 'verified_via_directory');
+        const verifiedPsychInp = verifiedInp.filter(f => f.inpatient?.inpatient_service_types?.some(t => t.toLowerCase().includes('psychiatric inpatient')));
+        const medicaidInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_medicaid_status === 'participating');
+        const needsVerifInp = inpatientHospitals.filter(f =>
+          f.inpatient?.inpatient_services_offered === true && (!f.inpatient?.inpatient_verification_status || f.inpatient.inpatient_verification_status === 'reported_unverified' || f.inpatient.inpatient_verification_status === 'unable_to_confirm')
+        );
+        const directAdmit = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'direct_admit_allowed').length;
+        const edRequired = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'ED_required').length;
+        const transferOnly = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'transfer_only').length;
+
+        return (
+          <DetailSection title="Service-Line Summary" isOpen={isOpen('serviceLineSummary')} onToggle={() => toggle('serviceLineSummary')}>
+            <div className="space-y-2">
+              {psychProviders.length > 0 && (
+                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Psychiatric Providers</div>
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Offering</span><span className="font-bold text-foreground tabular-nums">{psychProviders.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedPsych.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified + Medicaid</span><span className="font-bold text-foreground tabular-nums">{verifiedMedicaidPsych.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifPsych.length}</span></div>
+                  </div>
+                </div>
+              )}
+              {inpatientHospitals.length > 0 && (
+                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Inpatient Hospitals</div>
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Inpatient</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedInp.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified Psych Inpatient</span><span className="font-bold text-foreground tabular-nums">{verifiedPsychInp.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Medicaid Participating</span><span className="font-bold text-foreground tabular-nums">{medicaidInp.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifInp.length}</span></div>
+                    {(directAdmit > 0 || edRequired > 0 || transferOnly > 0) && (
+                      <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                        <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Referral Pathway</div>
+                        {directAdmit > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Direct Admit</span><span className="font-bold text-foreground tabular-nums">{directAdmit}</span></div>}
+                        {edRequired > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">ED Required</span><span className="font-bold text-foreground tabular-nums">{edRequired}</span></div>}
+                        {transferOnly > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Only</span><span className="font-bold text-foreground tabular-nums">{transferOnly}</span></div>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </DetailSection>
+        );
+      })()}
     </>
   );
 };
@@ -1530,6 +1606,99 @@ const OperationalInlineBadges = ({ meta }: { meta?: Partial<ServiceOperationalMe
   );
 };
 
+// ── Service-Line Badges ──
+
+const PsychiatryBadge = ({ fields }: { fields?: Partial<import('@/types/service-lines').PsychiatricServiceFields> | null }) => {
+  if (!hasPsychiatricData(fields)) return null;
+  const badge = resolvePsychiatryBadge(fields);
+  const colors = PSYCHIATRY_BADGE_COLORS[badge];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-medium ${colors.bg} ${colors.text}`}>
+      <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${colors.dot}`} />
+      {badge}
+    </span>
+  );
+};
+
+const InpatientBadge = ({ fields }: { fields?: Partial<import('@/types/service-lines').InpatientServiceFields> | null }) => {
+  if (!hasInpatientData(fields)) return null;
+  const badge = resolveInpatientBadge(fields);
+  const colors = INPATIENT_BADGE_COLORS[badge];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-medium ${colors.bg} ${colors.text}`}>
+      <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${colors.dot}`} />
+      {badge}
+    </span>
+  );
+};
+
+const YNU_LABELS: Record<string, string> = { yes: 'Yes', no: 'No', unknown: 'Unknown' };
+const MEDICAID_LABELS: Record<string, string> = { participating: 'Yes', non_participating: 'No', unknown: 'Unknown' };
+
+const MetaRow = ({ label, value }: { label: string; value: string | number | null | undefined }) => {
+  if (value == null || value === '' || value === 'unknown') return null;
+  return (
+    <div className="flex justify-between text-[11px]">
+      <span className="text-muted-foreground">{label}</span>
+      <span className="font-medium text-foreground">{typeof value === 'number' ? value : value}</span>
+    </div>
+  );
+};
+
+const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/service-lines').PsychiatricServiceFields> }) => {
+  const types = fields.psychiatric_service_types ?? [];
+  return (
+    <div className="space-y-1">
+      {types.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {types.map(t => (
+            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{t}</span>
+          ))}
+        </div>
+      )}
+      <MetaRow label="Accepting New Patients" value={fields.psychiatric_accepting_new_patients ? YNU_LABELS[fields.psychiatric_accepting_new_patients] : null} />
+      <MetaRow label="Medicaid Participating" value={fields.psychiatric_medicaid_status ? MEDICAID_LABELS[fields.psychiatric_medicaid_status] : null} />
+      <MetaRow label="Referral Required" value={fields.psychiatric_referral_required ? YNU_LABELS[fields.psychiatric_referral_required] : null} />
+      <MetaRow label="Telepsychiatry" value={fields.psychiatric_telepsychiatry_available ? YNU_LABELS[fields.psychiatric_telepsychiatry_available] : null} />
+      <MetaRow label="Wait Time (days)" value={fields.psychiatric_wait_time_days} />
+      <MetaRow label="Population Focus" value={fields.psychiatric_population_focus !== 'unknown' ? fields.psychiatric_population_focus : null} />
+      <MetaRow label="Verification Source" value={fields.psychiatric_verification_source} />
+      <MetaRow label="Verification Date" value={fields.psychiatric_verification_date} />
+      {fields.psychiatric_access_notes && (
+        <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.psychiatric_access_notes}</p>
+      )}
+    </div>
+  );
+};
+
+const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-lines').InpatientServiceFields> }) => {
+  const types = fields.inpatient_service_types ?? [];
+  return (
+    <div className="space-y-1">
+      {types.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {types.map(t => (
+            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{t}</span>
+          ))}
+        </div>
+      )}
+      <MetaRow label="Accepting Admissions" value={fields.inpatient_accepting_admissions !== 'unknown' ? fields.inpatient_accepting_admissions : null} />
+      <MetaRow label="Medicaid Participating" value={fields.inpatient_medicaid_status ? MEDICAID_LABELS[fields.inpatient_medicaid_status] : null} />
+      <MetaRow label="Referral Pathway" value={fields.inpatient_referral_pathway ? REFERRAL_PATHWAY_LABELS[fields.inpatient_referral_pathway] : null} />
+      <MetaRow label="Bed Availability" value={fields.inpatient_bed_availability_model ? BED_AVAILABILITY_LABELS[fields.inpatient_bed_availability_model] : null} />
+      <MetaRow label="Population Focus" value={fields.inpatient_population_focus !== 'unknown' ? fields.inpatient_population_focus : null} />
+      <MetaRow label="Verification Source" value={fields.inpatient_verification_source} />
+      <MetaRow label="Verification Date" value={fields.inpatient_verification_date} />
+      {fields.inpatient_capacity_notes && (
+        <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.inpatient_capacity_notes}</p>
+      )}
+      {fields.inpatient_access_notes && (
+        <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.inpatient_access_notes}</p>
+      )}
+    </div>
+  );
+};
+
 // ── Action Buttons Row ──
 const ActionButtonRow = ({ phone, website }: { phone?: string; address?: string; lat?: number; lng?: number; city?: string; website?: string }) => {
   const normalizedWebsite = normalizeWebsite(website);
@@ -1640,6 +1809,14 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
 
       <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
 
+      {/* Service-line badges */}
+      {(hasPsychiatricData(facility.psychiatric) || hasInpatientData(facility.inpatient)) && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          <PsychiatryBadge fields={facility.psychiatric} />
+          <InpatientBadge fields={facility.inpatient} />
+        </div>
+      )}
+
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -1684,6 +1861,20 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
               {facility.volume ? ` · ${facility.volume.toLocaleString()} visits` : ''}
             </span>
           </div>
+        </DetailSection>
+      )}
+
+      {/* Psychiatric service-line section (providers only) */}
+      {hasPsychiatricData(facility.psychiatric) && (
+        <DetailSection title="Psychiatry" isOpen={isOpen('psychiatry')} onToggle={() => toggle('psychiatry')}>
+          <PsychiatricSection fields={facility.psychiatric!} />
+        </DetailSection>
+      )}
+
+      {/* Inpatient service-line section (hospitals only) */}
+      {hasInpatientData(facility.inpatient) && (
+        <DetailSection title="Inpatient Services" isOpen={isOpen('inpatient')} onToggle={() => toggle('inpatient')}>
+          <InpatientSection fields={facility.inpatient!} />
         </DetailSection>
       )}
 

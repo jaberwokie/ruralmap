@@ -6,6 +6,11 @@ import { enrichFacilities, auditOperationalCoverage, logVerifiedAccessSummary } 
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { auditServiceClassification, getTaggingQueue, getQueueSummary, getDeferredSummary, getConfidenceSummary } from '@/utils/operationalServiceClass';
 import type { Filters } from '@/types/filters';
+import {
+  matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
+  matchesInpatientFilter, matchesVerifiedInpatient, matchesPsychiatricInpatient,
+  matchesDetoxInpatient, matchesAcceptingAdmissions, matchesMedicaidInpatient,
+} from '@/types/service-lines';
 
 export interface UseFacilityDataReturn {
   facilities: Facility[];
@@ -30,6 +35,19 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
         if (!matchesPrimaryType && !matchesBehavioralHealth) return false;
       }
       if (filters.counties.size > 0 && !filters.counties.has(f.county)) return false;
+
+      // ── Service-line filters ──
+      if (filters.psychiatry && !matchesPsychiatryFilter(f.psychiatric)) return false;
+      if (filters.verifiedPsychiatryOnly && !matchesVerifiedPsychiatry(f.psychiatric)) return false;
+      if (filters.acceptingPsychPatients && !matchesAcceptingPsych(f.psychiatric)) return false;
+      if (filters.telepsychiatry && !matchesTelepsychiatry(f.psychiatric)) return false;
+      if (filters.inpatientServices && !matchesInpatientFilter(f.inpatient)) return false;
+      if (filters.verifiedInpatientOnly && !matchesVerifiedInpatient(f.inpatient)) return false;
+      if (filters.psychiatricInpatient && !matchesPsychiatricInpatient(f.inpatient)) return false;
+      if (filters.detoxInpatient && !matchesDetoxInpatient(f.inpatient)) return false;
+      if (filters.acceptingAdmissions && !matchesAcceptingAdmissions(f.inpatient)) return false;
+      if (filters.medicaidInpatient && !matchesMedicaidInpatient(f.inpatient)) return false;
+
       return true;
     });
   }, [facilities, filters]);

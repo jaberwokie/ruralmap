@@ -510,7 +510,14 @@ const Sidebar = ({
     );
   }, [filteredServices, filterSuffix]);
 
-  const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size;
+  const serviceLineFilterCount =
+    (filters.psychiatry ? 1 : 0) + (filters.verifiedPsychiatryOnly ? 1 : 0) +
+    (filters.acceptingPsychPatients ? 1 : 0) + (filters.telepsychiatry ? 1 : 0) +
+    (filters.inpatientServices ? 1 : 0) + (filters.verifiedInpatientOnly ? 1 : 0) +
+    (filters.psychiatricInpatient ? 1 : 0) + (filters.detoxInpatient ? 1 : 0) +
+    (filters.acceptingAdmissions ? 1 : 0) + (filters.medicaidInpatient ? 1 : 0);
+
+  const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size + serviceLineFilterCount;
 
   const toggleTypeFilter = (type: string) => {
     const next = new Set(filters.types);
@@ -530,8 +537,17 @@ const Sidebar = ({
     onFiltersChange({ ...filters, serviceCategories: next });
   };
 
+  const toggleServiceLineFilter = (key: keyof typeof filters) => {
+    onFiltersChange({ ...filters, [key]: !filters[key as keyof typeof filters] });
+  };
+
   const clearFilters = () => {
-    onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
+    onFiltersChange({
+      types: new Set(), counties: new Set(), serviceCategories: new Set(),
+      psychiatry: false, verifiedPsychiatryOnly: false, acceptingPsychPatients: false, telepsychiatry: false,
+      inpatientServices: false, verifiedInpatientOnly: false, psychiatricInpatient: false, detoxInpatient: false,
+      acceptingAdmissions: false, medicaidInpatient: false,
+    });
   };
 
   const normalizeHeader = (h: string) =>
@@ -906,6 +922,65 @@ const Sidebar = ({
                 </div>
               </div>
             </div>
+
+              {/* Service-Line Filters */}
+              <div>
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Provider Psychiatric</div>
+                <div className="flex flex-wrap gap-1">
+                  {([
+                    { key: 'psychiatry' as const, label: 'Psychiatry' },
+                    { key: 'verifiedPsychiatryOnly' as const, label: 'Verified Only' },
+                    { key: 'acceptingPsychPatients' as const, label: 'Accepting Patients' },
+                    { key: 'telepsychiatry' as const, label: 'Telepsychiatry' },
+                  ] as const).map(({ key, label }) => {
+                    const active = !!filters[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toggleServiceLineFilter(key)}
+                        className={`rounded px-2 py-0.5 text-[11px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground font-medium text-background'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Hospital Inpatient</div>
+                <div className="flex flex-wrap gap-1">
+                  {([
+                    { key: 'inpatientServices' as const, label: 'Inpatient' },
+                    { key: 'verifiedInpatientOnly' as const, label: 'Verified Only' },
+                    { key: 'psychiatricInpatient' as const, label: 'Psych Inpatient' },
+                    { key: 'detoxInpatient' as const, label: 'Detox / WM' },
+                    { key: 'acceptingAdmissions' as const, label: 'Accepting' },
+                    { key: 'medicaidInpatient' as const, label: 'Medicaid' },
+                  ] as const).map(({ key, label }) => {
+                    const active = !!filters[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toggleServiceLineFilter(key)}
+                        className={`rounded px-2 py-0.5 text-[11px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground font-medium text-background'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
           </div>
         )}
 

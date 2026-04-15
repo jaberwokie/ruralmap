@@ -12,4 +12,18 @@ export interface Filters {
   triballyOperated?: boolean | null;
   /** Filter to cross-border services */
   crossBorder?: boolean | null;
+
+  // ── Service-line filters ──
+  /** Provider psychiatric service-line filters */
+  psychiatry?: boolean;
+  verifiedPsychiatryOnly?: boolean;
+  acceptingPsychPatients?: boolean;
+  telepsychiatry?: boolean;
+  /** Hospital inpatient service-line filters */
+  inpatientServices?: boolean;
+  verifiedInpatientOnly?: boolean;
+  psychiatricInpatient?: boolean;
+  detoxInpatient?: boolean;
+  acceptingAdmissions?: boolean;
+  medicaidInpatient?: boolean;
 }
