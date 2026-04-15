@@ -1535,6 +1535,24 @@ const Sidebar = ({
 
       <div className="mx-4 border-t border-border" />
 
+      {/* Verification Priority Queue */}
+      <div className="px-4 pt-3">
+        <button
+          onClick={() => setVerifQueueOpen(!verifQueueOpen)}
+          className={SECTION_HEADER_CLASSNAME}
+        >
+          {verifQueueOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          Verification Priority Queue
+        </button>
+        {verifQueueOpen && (
+          <div className="mb-3">
+            <VerificationPriorityPanel />
+          </div>
+        )}
+      </div>
+
+      <div className="mx-4 border-t border-border" />
+
       {/* CSV Import */}
       <div className="px-4 pt-3">
         <button
