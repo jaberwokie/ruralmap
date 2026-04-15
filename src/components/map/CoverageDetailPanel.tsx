@@ -1763,6 +1763,16 @@ const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/servic
       )}
       <MetaRow label="Psychiatric Access" value={OPERATIONAL_ACCESS_LABELS[derivePsychiatricAccess(fields)]} />
       <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[derivePsychiatricFreshness(fields)]} />
+      {(() => {
+        const lv = deriveLastDirectlyVerifiedFn(fields.__entity_id ?? '', 'psychiatry', fields.psychiatric_verification_status ?? null);
+        if (!lv.date) return null;
+        return (
+          <>
+            <MetaRow label="Last Directly Verified" value={lv.date} />
+            {lv.by && <MetaRow label="Verified By" value={lv.by} />}
+          </>
+        );
+      })()}
     </div>
   );
 };
@@ -1794,6 +1804,16 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
       )}
       <MetaRow label="Inpatient Access" value={OPERATIONAL_ACCESS_LABELS[deriveInpatientAccess(fields)]} />
       <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[deriveInpatientFreshness(fields)]} />
+      {(() => {
+        const lv = deriveLastDirectlyVerifiedFn(fields.__entity_id ?? '', 'inpatient', fields.inpatient_verification_status ?? null);
+        if (!lv.date) return null;
+        return (
+          <>
+            <MetaRow label="Last Directly Verified" value={lv.date} />
+            {lv.by && <MetaRow label="Verified By" value={lv.by} />}
+          </>
+        );
+      })()}
     </div>
   );
 };
