@@ -1,4 +1,5 @@
 import type { ServiceOperationalMeta } from '@/types/medicaid';
+import type { PsychiatricServiceFields, InpatientServiceFields } from '@/types/service-lines';
 
 export type FacilityType = 'hospital' | 'clinic' | 'tier1';
 export type FacilityTier = 'tier1' | 'tier2' | 'tier3' | 'none';
@@ -26,6 +27,10 @@ export interface Facility {
   accessType?: AccessType;
   /** Medicaid participation and operational metadata */
   operational?: Partial<ServiceOperationalMeta>;
+  /** Psychiatric service-line verification (provider entities) */
+  psychiatric?: Partial<PsychiatricServiceFields>;
+  /** Inpatient service-line verification (hospital entities) */
+  inpatient?: Partial<InpatientServiceFields>;
 }
 
 export const defaultFacilities: Facility[] = [
