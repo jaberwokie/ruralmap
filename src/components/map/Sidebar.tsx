@@ -922,6 +922,65 @@ const Sidebar = ({
                 </div>
               </div>
             </div>
+
+              {/* Service-Line Filters */}
+              <div>
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Provider Psychiatric</div>
+                <div className="flex flex-wrap gap-1">
+                  {([
+                    { key: 'psychiatry' as const, label: 'Psychiatry' },
+                    { key: 'verifiedPsychiatryOnly' as const, label: 'Verified Only' },
+                    { key: 'acceptingPsychPatients' as const, label: 'Accepting Patients' },
+                    { key: 'telepsychiatry' as const, label: 'Telepsychiatry' },
+                  ] as const).map(({ key, label }) => {
+                    const active = !!filters[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toggleServiceLineFilter(key)}
+                        className={`rounded px-2 py-0.5 text-[11px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground font-medium text-background'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <div className="mb-1.5 px-1 text-[10px] font-medium text-muted-foreground">Hospital Inpatient</div>
+                <div className="flex flex-wrap gap-1">
+                  {([
+                    { key: 'inpatientServices' as const, label: 'Inpatient' },
+                    { key: 'verifiedInpatientOnly' as const, label: 'Verified Only' },
+                    { key: 'psychiatricInpatient' as const, label: 'Psych Inpatient' },
+                    { key: 'detoxInpatient' as const, label: 'Detox / WM' },
+                    { key: 'acceptingAdmissions' as const, label: 'Accepting' },
+                    { key: 'medicaidInpatient' as const, label: 'Medicaid' },
+                  ] as const).map(({ key, label }) => {
+                    const active = !!filters[key];
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toggleServiceLineFilter(key)}
+                        className={`rounded px-2 py-0.5 text-[11px] transition-all duration-150 ${
+                          active
+                            ? 'bg-foreground font-medium text-background'
+                            : 'bg-secondary text-muted-foreground hover:text-foreground'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
           </div>
         )}
 
