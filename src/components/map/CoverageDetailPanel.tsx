@@ -1734,6 +1734,7 @@ const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/servic
         <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.psychiatric_access_notes}</p>
       )}
       <MetaRow label="Psychiatric Access" value={OPERATIONAL_ACCESS_LABELS[derivePsychiatricAccess(fields)]} />
+      <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[derivePsychiatricFreshness(fields)]} />
     </div>
   );
 };
