@@ -1808,6 +1808,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         </DetailSection>
       )}
 
+      {hasContact && (
         <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
           <ContactPhoneAction phone={facility.phone} variant="detail" />
           {(() => { const href = normalizeWebsite(facility.website); return href ? (
