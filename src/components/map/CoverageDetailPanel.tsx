@@ -1383,7 +1383,11 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
         return (
           <DetailSection title="Service-Line Summary" isOpen={isOpen('serviceLineSummary')} onToggle={() => toggle('serviceLineSummary')}>
             <div className="space-y-2">
-              {psychProviders.length > 0 && (
+              {psychProviders.length > 0 && (() => {
+                const opUsable = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'operationally_usable').length;
+                const fragile = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'fragile_access').length;
+                const verifNeeded = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'verification_needed').length;
+                return (
                 <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Psychiatric Providers</div>
                   <div className="space-y-0.5">
@@ -1391,10 +1395,21 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                     <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedPsych.length}</span></div>
                     <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified + Medicaid</span><span className="font-bold text-foreground tabular-nums">{verifiedMedicaidPsych.length}</span></div>
                     <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifPsych.length}</span></div>
+                    <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                      <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Operational Access</div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsable}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragile}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Verification Needed</span><span className="font-bold text-foreground tabular-nums">{verifNeeded}</span></div>
+                    </div>
                   </div>
                 </div>
-              )}
-              {inpatientHospitals.length > 0 && (
+                );
+              })()}
+              {inpatientHospitals.length > 0 && (() => {
+                const opUsableInp = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'operationally_usable').length;
+                const fragileInp = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'fragile_access').length;
+                const transferDep = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'transfer_dependent').length;
+                return (
                 <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Inpatient Hospitals</div>
                   <div className="space-y-0.5">
