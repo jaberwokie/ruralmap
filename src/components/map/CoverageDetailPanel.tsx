@@ -4,7 +4,7 @@ import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangl
 import { ContactPhoneAction, formatPhone } from '@/components/ContactPhoneAction';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember } from '@/data/facilities';
+import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember, countyHasHospital } from '@/data/facilities';
 import { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
@@ -28,7 +28,7 @@ import {
   resolvePsychiatryBadge, resolveInpatientBadge,
   hasPsychiatricData, hasInpatientData,
   PSYCHIATRY_BADGE_COLORS, INPATIENT_BADGE_COLORS,
-  REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS,
+  REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS, TRANSFER_DEPENDENCY_LABELS,
 } from '@/types/service-lines';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
@@ -1350,6 +1350,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
       {/* Psychiatric & Inpatient County Summary */}
       {(() => {
         const countyFacs = defaultFacilities.filter(fac => fac.county === county);
+        const hasHospital = countyHasHospital(county);
         const psychProviders = countyFacs.filter(fac => {
           const p = fac.psychiatric;
           return p?.psychiatric_services_offered === true ||
@@ -1360,7 +1361,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
           return ip?.inpatient_services_offered === true ||
             (ip?.inpatient_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(ip.inpatient_verification_status));
         });
-        if (psychProviders.length === 0 && inpatientHospitals.length === 0) return null;
+        if (psychProviders.length === 0 && inpatientHospitals.length === 0 && hasHospital) return null;
 
         const verifiedPsych = psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status === 'directly_verified' || f.psychiatric?.psychiatric_verification_status === 'verified_via_directory');
         const verifiedMedicaidPsych = verifiedPsych.filter(f => f.psychiatric?.psychiatric_medicaid_status === 'participating');
@@ -1410,6 +1411,18 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+              {!hasHospital && (
+                <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold text-amber-700">⚠ No Hospital in County</div>
+                  <p className="text-[9px] text-amber-600 mt-0.5">No hospital entities exist in {county} County</p>
+                </div>
+              )}
+              {verifiedPsych.length === 0 && psychProviders.length > 0 && (
+                <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold text-amber-700">⚠ Zero Verified Psychiatric Providers</div>
+                  <p className="text-[9px] text-amber-600 mt-0.5">All {psychProviders.length} psychiatric provider(s) need verification</p>
                 </div>
               )}
             </div>
@@ -1686,6 +1699,7 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
       <MetaRow label="Medicaid Participating" value={fields.inpatient_medicaid_status ? MEDICAID_LABELS[fields.inpatient_medicaid_status] : null} />
       <MetaRow label="Referral Pathway" value={fields.inpatient_referral_pathway ? REFERRAL_PATHWAY_LABELS[fields.inpatient_referral_pathway] : null} />
       <MetaRow label="Bed Availability" value={fields.inpatient_bed_availability_model ? BED_AVAILABILITY_LABELS[fields.inpatient_bed_availability_model] : null} />
+      <MetaRow label="Transfer Dependency" value={fields.inpatient_transfer_dependency ? TRANSFER_DEPENDENCY_LABELS[fields.inpatient_transfer_dependency] : null} />
       <MetaRow label="Population Focus" value={fields.inpatient_population_focus !== 'unknown' ? fields.inpatient_population_focus : null} />
       <MetaRow label="Verification Source" value={fields.inpatient_verification_source} />
       <MetaRow label="Verification Date" value={fields.inpatient_verification_date} />

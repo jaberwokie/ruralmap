@@ -40,6 +40,8 @@ export type InpatientReferralPathway = 'direct_admit_allowed' | 'ED_required' | 
 export type InpatientBedAvailabilityModel = 'real_time_known' | 'daily_call_required' | 'unknown';
 export type InpatientPopulationFocus = 'adult' | 'youth' | 'both' | 'specialized' | 'unknown';
 
+export type InpatientTransferDependency = 'high' | 'moderate' | 'low';
+
 export interface InpatientServiceFields {
   inpatient_services_offered: boolean | null;
   inpatient_service_types: string[];
@@ -53,6 +55,7 @@ export interface InpatientServiceFields {
   inpatient_capacity_notes: string | null;
   inpatient_population_focus: InpatientPopulationFocus | null;
   inpatient_access_notes: string | null;
+  inpatient_transfer_dependency: InpatientTransferDependency | null;
 }
 
 // ── Badge interpretation ──
@@ -121,6 +124,12 @@ export const BED_AVAILABILITY_LABELS: Record<InpatientBedAvailabilityModel, stri
   real_time_known: 'Real-Time Known',
   daily_call_required: 'Daily Call Required',
   unknown: 'Unknown',
+};
+
+export const TRANSFER_DEPENDENCY_LABELS: Record<InpatientTransferDependency, string> = {
+  high: 'High',
+  moderate: 'Moderate',
+  low: 'Low',
 };
 
 // ── Helpers for checking if any service-line data exists ──
