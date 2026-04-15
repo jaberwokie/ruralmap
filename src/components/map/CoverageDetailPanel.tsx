@@ -1426,9 +1426,16 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                         {transferOnly > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Only</span><span className="font-bold text-foreground tabular-nums">{transferOnly}</span></div>}
                       </div>
                     )}
+                    <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                      <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Operational Access</div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsableInp}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragileInp}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Dependent</span><span className="font-bold text-foreground tabular-nums">{transferDep}</span></div>
+                    </div>
                   </div>
                 </div>
-              )}
+                );
+              })()}
               {!hasHospital && (
                 <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
                   <div className="text-[10px] font-semibold text-amber-700">⚠ No Hospital in County</div>
