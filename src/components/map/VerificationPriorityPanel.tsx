@@ -408,6 +408,7 @@ const VerificationPriorityPanel = () => {
   const [tierFilter, setTierFilter] = useState<'all' | PriorityTier>('all');
   const [outreachMap, setOutreachMap] = useState(() => loadOutreachMap());
   const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [applyingKey, setApplyingKey] = useState<string | null>(null);
   const [auditKey, setAuditKey] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
