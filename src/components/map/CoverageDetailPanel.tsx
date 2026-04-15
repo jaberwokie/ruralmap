@@ -31,6 +31,7 @@ import {
   REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS, TRANSFER_DEPENDENCY_LABELS,
   derivePsychiatricAccess, deriveInpatientAccess, OPERATIONAL_ACCESS_LABELS,
 } from '@/types/service-lines';
+import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
