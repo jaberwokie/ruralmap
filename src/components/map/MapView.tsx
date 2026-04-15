@@ -813,9 +813,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, [facilities, searchQuery]);
 
   const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
+  const providerMarkerFacilities = useMemo(() => facilities, [facilities]);
 
   const providerFilteredFacilities = useMemo(() => {
-    let result = providerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
+    let result = providerMarkerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
@@ -844,7 +845,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     return result;
-  }, [providerFacilities, searchQuery, countyFilters, typeFilters]);
+  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters]);
 
   const topProvidersVisible = useMemo(() => {
     const scored = providerFilteredFacilities.map((facility) => ({
