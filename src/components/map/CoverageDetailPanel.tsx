@@ -1449,6 +1449,34 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                   <p className="text-[9px] text-amber-600 mt-0.5">All {psychProviders.length} psychiatric provider(s) need verification</p>
                 </div>
               )}
+              {(() => {
+                const fb = deriveCountyFallback(county);
+                if (!fb.psychiatric_fallback_needed && !fb.inpatient_fallback_needed) return null;
+                return (
+                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Fallback Access</div>
+                    <div className="space-y-0.5">
+                      {fb.psychiatric_fallback_needed && (
+                        <>
+                          <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Psychiatry Fallback</span><span className="font-bold text-foreground">Needed</span></div>
+                          {fb.psychiatric_fallback_county && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback County</span><span className="font-medium text-foreground">{fb.psychiatric_fallback_county}</span></div>}
+                          {fb.psychiatric_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Provider</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.psychiatric_fallback_entity_name}</span></div>}
+                          {fb.psychiatric_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{PSYCH_FALLBACK_REASON_LABELS[fb.psychiatric_fallback_reason]}</span></div>}
+                        </>
+                      )}
+                      {fb.inpatient_fallback_needed && (
+                        <>
+                          {fb.psychiatric_fallback_needed && <div className="border-t border-border/50 my-1" />}
+                          <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Inpatient Fallback</span><span className="font-bold text-foreground">Needed</span></div>
+                          {fb.inpatient_fallback_county && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback County</span><span className="font-medium text-foreground">{fb.inpatient_fallback_county}</span></div>}
+                          {fb.inpatient_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Hospital</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.inpatient_fallback_entity_name}</span></div>}
+                          {fb.inpatient_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{INPATIENT_FALLBACK_REASON_LABELS[fb.inpatient_fallback_reason]}</span></div>}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </DetailSection>
         );
