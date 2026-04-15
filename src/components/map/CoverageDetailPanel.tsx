@@ -34,6 +34,7 @@ import {
 } from '@/types/service-lines';
 import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
 import { deriveVerificationQueue as deriveVerificationQueueFn } from '@/utils/verificationPriorityQueue';
+import { deriveLastDirectlyVerified as deriveLastDirectlyVerifiedFn } from '@/utils/verificationAuditLog';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1739,7 +1740,7 @@ const MetaRow = ({ label, value }: { label: string; value: string | number | nul
   );
 };
 
-const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/service-lines').PsychiatricServiceFields> }) => {
+const PsychiatricSection = ({ fields, entityId }: { fields: Partial<import('@/types/service-lines').PsychiatricServiceFields>; entityId?: string }) => {
   const types = fields.psychiatric_service_types ?? [];
   return (
     <div className="space-y-1">
@@ -1763,11 +1764,21 @@ const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/servic
       )}
       <MetaRow label="Psychiatric Access" value={OPERATIONAL_ACCESS_LABELS[derivePsychiatricAccess(fields)]} />
       <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[derivePsychiatricFreshness(fields)]} />
+      {(() => {
+        const lv = deriveLastDirectlyVerifiedFn(entityId ?? '', 'psychiatry', fields.psychiatric_verification_status ?? null);
+        if (!lv.date) return null;
+        return (
+          <>
+            <MetaRow label="Last Directly Verified" value={lv.date} />
+            {lv.by && <MetaRow label="Verified By" value={lv.by} />}
+          </>
+        );
+      })()}
     </div>
   );
 };
 
-const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-lines').InpatientServiceFields> }) => {
+const InpatientSection = ({ fields, entityId }: { fields: Partial<import('@/types/service-lines').InpatientServiceFields>; entityId?: string }) => {
   const types = fields.inpatient_service_types ?? [];
   return (
     <div className="space-y-1">
@@ -1794,6 +1805,16 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
       )}
       <MetaRow label="Inpatient Access" value={OPERATIONAL_ACCESS_LABELS[deriveInpatientAccess(fields)]} />
       <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[deriveInpatientFreshness(fields)]} />
+      {(() => {
+        const lv = deriveLastDirectlyVerifiedFn(entityId ?? '', 'inpatient', fields.inpatient_verification_status ?? null);
+        if (!lv.date) return null;
+        return (
+          <>
+            <MetaRow label="Last Directly Verified" value={lv.date} />
+            {lv.by && <MetaRow label="Verified By" value={lv.by} />}
+          </>
+        );
+      })()}
     </div>
   );
 };
@@ -1966,14 +1987,14 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       {/* Psychiatric service-line section (providers only) */}
       {hasPsychiatricData(facility.psychiatric) && (
         <DetailSection title="Psychiatry" isOpen={isOpen('psychiatry')} onToggle={() => toggle('psychiatry')}>
-          <PsychiatricSection fields={facility.psychiatric!} />
+          <PsychiatricSection fields={facility.psychiatric!} entityId={facility.id} />
         </DetailSection>
       )}
 
       {/* Inpatient service-line section (hospitals only) */}
       {hasInpatientData(facility.inpatient) && (
         <DetailSection title="Inpatient Services" isOpen={isOpen('inpatient')} onToggle={() => toggle('inpatient')}>
-          <InpatientSection fields={facility.inpatient!} />
+          <InpatientSection fields={facility.inpatient!} entityId={facility.id} />
         </DetailSection>
       )}
 

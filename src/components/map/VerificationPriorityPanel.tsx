@@ -1,10 +1,10 @@
 /**
- * Verification Priority Queue panel with workflow tracking, Apply Verification, and CSV export.
+ * Verification Priority Queue panel with workflow tracking, Apply Verification, audit trail, and CSV export.
  * Outreach state persisted in localStorage — no source data mutations.
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Download, Pencil, X, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Download, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   deriveVerificationQueue,
@@ -18,6 +18,7 @@ import type { PsychiatricServiceFields, InpatientServiceFields, ServiceLineVerif
 import { applyVerificationOverride } from '@/utils/serviceLineOverrides';
 import { defaultFacilities } from '@/data/facilities';
 import { toast } from 'sonner';
+import { createAuditRecord, getAuditLog, getEntityAuditLog, deriveLastDirectlyVerified, type VerificationAuditRecord } from '@/utils/verificationAuditLog';
 
 // ── Outreach workflow types ──
 
@@ -86,10 +87,12 @@ function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<
     'Operational Access', 'Verification Status', 'Verification Freshness',
     'Fallback Destination', 'Dependent Counties', 'Priority Reasons',
     'Outreach Status', 'Outreach Date', 'Outreach By', 'Outreach Notes',
+    'Last Directly Verified', 'Verified By',
   ];
   const esc = (v: string) => (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v.replace(/"/g, '""')}"` : v;
   const rows = records.map(r => {
     const o = outreachMap.get(outreachKey(r.entity_id, r.service_line));
+    const lv = deriveLastDirectlyVerified(r.entity_id, r.service_line, r.verification_status);
     return [
       PRIORITY_TIER_LABELS[r.priority_tier], String(r.priority_score), r.entity_name, r.county, r.service_line,
       r.operational_access ? (OPERATIONAL_ACCESS_LABELS[r.operational_access] ?? r.operational_access) : '',
@@ -97,6 +100,7 @@ function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<
       r.is_fallback_destination ? 'Yes' : 'No', r.dependent_counties.join('; '), r.priority_reason.join('; '),
       o ? OUTREACH_STATUS_LABELS[o.verification_outreach_status] : 'Not Started',
       o?.verification_outreach_date ?? '', o?.verification_outreach_by ?? '', o?.verification_outreach_notes ?? '',
+      lv.date ?? '', lv.by ?? '',
     ].map(esc).join(',');
   });
   const csv = [headers.join(','), ...rows].join('\n');
@@ -408,6 +412,7 @@ const VerificationPriorityPanel = () => {
   const [outreachMap, setOutreachMap] = useState(() => loadOutreachMap());
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [applyingKey, setApplyingKey] = useState<string | null>(null);
+  const [auditKey, setAuditKey] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     let records = queue;
@@ -431,6 +436,19 @@ const VerificationPriorityPanel = () => {
 
   const handleApplyVerification = useCallback((rec: VerificationPriorityRecord, fields: Partial<PsychiatricServiceFields> | Partial<InpatientServiceFields>) => {
     const outreach = outreachMap.get(outreachKey(rec.entity_id, rec.service_line));
+    const fac = defaultFacilities.find(f => f.id === rec.entity_id);
+
+    // Capture old fields for audit diff
+    const oldFields: Record<string, unknown> = {};
+    if (fac) {
+      const src = rec.service_line === 'psychiatry' ? fac.psychiatric : fac.inpatient;
+      if (src) {
+        for (const key of Object.keys(fields)) {
+          oldFields[key] = (src as Record<string, unknown>)[key] ?? null;
+        }
+      }
+    }
+
     applyVerificationOverride({
       entity_id: rec.entity_id,
       service_line: rec.service_line,
@@ -438,6 +456,28 @@ const VerificationPriorityPanel = () => {
       applied_at: new Date().toISOString(),
       applied_by: outreach?.verification_outreach_by ?? null,
     });
+
+    // Create audit record (skips if no fields actually changed)
+    const verSource = rec.service_line === 'psychiatry'
+      ? (fields as Partial<PsychiatricServiceFields>).psychiatric_verification_source
+      : (fields as Partial<InpatientServiceFields>).inpatient_verification_source;
+    const notesField = rec.service_line === 'psychiatry'
+      ? (fields as Partial<PsychiatricServiceFields>).psychiatric_access_notes
+      : (fields as Partial<InpatientServiceFields>).inpatient_access_notes;
+
+    createAuditRecord({
+      entity_id: rec.entity_id,
+      entity_name: rec.entity_name,
+      entity_type: rec.entity_type,
+      service_line: rec.service_line,
+      applied_by: outreach?.verification_outreach_by ?? null,
+      outreach_status: outreach?.verification_outreach_status as 'confirmed' | 'not_offered' | 'wrong_listing',
+      verification_source_applied: verSource ?? null,
+      notes_snapshot: notesField ?? null,
+      old_fields: oldFields,
+      new_fields: fields as Record<string, unknown>,
+    });
+
     setApplyingKey(null);
     setRefreshKey(k => k + 1);
     toast.success(`Verification applied to ${rec.entity_name}`);
@@ -496,6 +536,7 @@ const VerificationPriorityPanel = () => {
                 <TableHead className="text-[9px] px-1.5 h-8">Dep.</TableHead>
                 <TableHead className="text-[9px] px-1.5 h-8">Outreach</TableHead>
                 <TableHead className="text-[9px] px-1.5 h-8">Last Date</TableHead>
+                <TableHead className="text-[9px] px-1.5 h-8">Verified</TableHead>
                 <TableHead className="text-[9px] px-1.5 h-8 w-8"></TableHead>
               </TableRow>
             </TableHeader>
@@ -505,9 +546,11 @@ const VerificationPriorityPanel = () => {
                 const outreach = outreachMap.get(key);
                 const isEditing = editingKey === key;
                 const isApplying = applyingKey === key;
+                const isAuditOpen = auditKey === key;
                 const statusLabel = outreach ? OUTREACH_STATUS_LABELS[outreach.verification_outreach_status] : 'Not Started';
                 const statusColor = outreach ? OUTREACH_STATUS_COLORS[outreach.verification_outreach_status] : 'text-muted-foreground';
                 const canApply = outreach && APPLY_ELIGIBLE.includes(outreach.verification_outreach_status);
+                const lastVerified = deriveLastDirectlyVerified(rec.entity_id, rec.service_line, rec.verification_status);
 
                 return (
                   <TableRow key={key}>
@@ -528,7 +571,10 @@ const VerificationPriorityPanel = () => {
                         <ApplyInpatientForm record={rec} outreach={outreach}
                           onApply={(f) => handleApplyVerification(rec, f)} onCancel={() => setApplyingKey(null)} />
                       )}
-                      {!isEditing && !isApplying && rec.priority_reason.length > 0 && (
+                      {isAuditOpen && (
+                        <InlineAuditHistory entityId={rec.entity_id} serviceLine={rec.service_line} />
+                      )}
+                      {!isEditing && !isApplying && !isAuditOpen && rec.priority_reason.length > 0 && (
                         <ul className="list-none mt-0.5">
                           {rec.priority_reason.slice(0, 2).map((r, i) => (
                             <li key={i} className="text-[9px] text-muted-foreground/70 leading-tight">• {r}</li>
@@ -556,10 +602,18 @@ const VerificationPriorityPanel = () => {
                     <TableCell className="text-[10px] px-1.5 py-1 text-muted-foreground tabular-nums">
                       {outreach?.verification_outreach_date ?? '—'}
                     </TableCell>
+                    <TableCell className="text-[10px] px-1.5 py-1 text-muted-foreground">
+                      {lastVerified.date ? (
+                        <div>
+                          <div className="tabular-nums">{lastVerified.date}</div>
+                          {lastVerified.by && <div className="text-[9px] text-muted-foreground/60 truncate max-w-[60px]" title={lastVerified.by}>{lastVerified.by}</div>}
+                        </div>
+                      ) : '—'}
+                    </TableCell>
                     <TableCell className="text-[10px] px-1.5 py-1">
                       <div className="flex items-center gap-0.5">
                         <button
-                          onClick={() => { setEditingKey(isEditing ? null : key); setApplyingKey(null); }}
+                          onClick={() => { setEditingKey(isEditing ? null : key); setApplyingKey(null); setAuditKey(null); }}
                           className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
                           title={isEditing ? 'Close' : 'Edit outreach'}
                         >
@@ -567,7 +621,7 @@ const VerificationPriorityPanel = () => {
                         </button>
                         {canApply && !isApplying && (
                           <button
-                            onClick={() => { setApplyingKey(key); setEditingKey(null); }}
+                            onClick={() => { setApplyingKey(key); setEditingKey(null); setAuditKey(null); }}
                             className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-emerald-100 transition-colors text-emerald-600 hover:text-emerald-700"
                             title="Apply verification to entity"
                           >
@@ -583,6 +637,13 @@ const VerificationPriorityPanel = () => {
                             <X className="w-3 h-3" />
                           </button>
                         )}
+                        <button
+                          onClick={() => { setAuditKey(isAuditOpen ? null : key); setEditingKey(null); setApplyingKey(null); }}
+                          className={`inline-flex items-center justify-center w-5 h-5 rounded hover:bg-secondary transition-colors ${isAuditOpen ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                          title={isAuditOpen ? 'Close audit history' : 'View audit history'}
+                        >
+                          <History className="w-3 h-3" />
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -592,6 +653,64 @@ const VerificationPriorityPanel = () => {
           </Table>
         </div>
       )}
+    </div>
+  );
+};
+
+// ── Inline Audit History (per entity) ──
+
+const InlineAuditHistory = ({ entityId, serviceLine }: { entityId: string; serviceLine: 'psychiatry' | 'inpatient' }) => {
+  const records = useMemo(() => getEntityAuditLog(entityId, serviceLine), [entityId, serviceLine]);
+  if (records.length === 0) return <p className="text-[9px] text-muted-foreground italic mt-1">No audit history</p>;
+  return (
+    <div className="mt-1 space-y-1" onClick={e => e.stopPropagation()}>
+      {records.map(r => (
+        <div key={r.audit_id} className="rounded border border-border bg-secondary/50 px-1.5 py-1">
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="font-medium text-foreground">{r.applied_date.slice(0, 10)}</span>
+            <span className="text-muted-foreground capitalize">{r.outreach_status.replace(/_/g, ' ')}</span>
+          </div>
+          {r.applied_by && <div className="text-[9px] text-muted-foreground">By: {r.applied_by}</div>}
+          {r.changed_fields.length > 0 && (
+            <div className="mt-0.5 space-y-0.5">
+              {r.changed_fields.map((cf, i) => (
+                <div key={i} className="text-[9px] text-muted-foreground/70">
+                  <span className="font-medium">{cf.field.replace(/^(psychiatric_|inpatient_)/, '')}</span>:{' '}
+                  <span className="line-through">{String(cf.old_value ?? '—')}</span> → <span className="text-foreground">{String(cf.new_value ?? '—')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {r.notes_snapshot && <p className="text-[9px] text-muted-foreground/60 italic mt-0.5 leading-tight">{r.notes_snapshot.slice(0, 120)}{r.notes_snapshot.length > 120 ? '…' : ''}</p>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── Global Audit History Panel (exported for sidebar) ──
+
+export const VerificationAuditHistoryPanel = () => {
+  const log = useMemo(() => getAuditLog().slice(0, 50), []);
+  if (log.length === 0) return <p className="text-[11px] text-muted-foreground italic py-2">No verification audit records yet.</p>;
+  return (
+    <div className="space-y-1.5 max-h-[300px] overflow-auto">
+      {log.map(r => (
+        <div key={r.audit_id} className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-foreground truncate max-w-[140px]" title={r.entity_name}>{r.entity_name}</span>
+            <span className="text-[9px] text-muted-foreground tabular-nums">{r.applied_date.slice(0, 10)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+            <span className="capitalize">{r.service_line}</span>
+            <span>·</span>
+            <span className="capitalize">{r.outreach_status.replace(/_/g, ' ')}</span>
+            <span>·</span>
+            <span>{r.changed_fields.length} field{r.changed_fields.length !== 1 ? 's' : ''}</span>
+          </div>
+          {r.applied_by && <div className="text-[9px] text-muted-foreground/60">By: {r.applied_by}</div>}
+        </div>
+      ))}
     </div>
   );
 };
