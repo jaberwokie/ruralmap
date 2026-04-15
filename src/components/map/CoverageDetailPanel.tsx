@@ -1765,6 +1765,7 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
         <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.inpatient_access_notes}</p>
       )}
       <MetaRow label="Inpatient Access" value={OPERATIONAL_ACCESS_LABELS[deriveInpatientAccess(fields)]} />
+      <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[deriveInpatientFreshness(fields)]} />
     </div>
   );
 };
