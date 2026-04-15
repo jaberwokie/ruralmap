@@ -30,6 +30,7 @@ import {
   PSYCHIATRY_BADGE_COLORS, INPATIENT_BADGE_COLORS,
   REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS, TRANSFER_DEPENDENCY_LABELS,
   derivePsychiatricAccess, deriveInpatientAccess, OPERATIONAL_ACCESS_LABELS,
+  derivePsychiatricFreshness, deriveInpatientFreshness, FRESHNESS_LABELS,
 } from '@/types/service-lines';
 import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
 
@@ -1401,6 +1402,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsable}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragile}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Verification Needed</span><span className="font-bold text-foreground tabular-nums">{verifNeeded}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'fresh').length}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'stale').length}</span></div>
                     </div>
                   </div>
                 </div>
@@ -1432,6 +1435,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsableInp}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragileInp}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Dependent</span><span className="font-bold text-foreground tabular-nums">{transferDep}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'fresh').length}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'stale').length}</span></div>
                     </div>
                   </div>
                 </div>
@@ -1733,6 +1738,7 @@ const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/servic
         <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.psychiatric_access_notes}</p>
       )}
       <MetaRow label="Psychiatric Access" value={OPERATIONAL_ACCESS_LABELS[derivePsychiatricAccess(fields)]} />
+      <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[derivePsychiatricFreshness(fields)]} />
     </div>
   );
 };
@@ -1763,6 +1769,7 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
         <p className="text-[10px] text-muted-foreground italic leading-relaxed">{fields.inpatient_access_notes}</p>
       )}
       <MetaRow label="Inpatient Access" value={OPERATIONAL_ACCESS_LABELS[deriveInpatientAccess(fields)]} />
+      <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[deriveInpatientFreshness(fields)]} />
     </div>
   );
 };

@@ -186,7 +186,59 @@ export const deriveInpatientAccess = (f?: Partial<InpatientServiceFields> | null
   return 'unknown';
 };
 
-// ── Helpers for checking if any service-line data exists ──
+// ── Verification freshness derivation ──
+
+export type VerificationFreshness = 'fresh' | 'aging_soon' | 'stale' | 'unknown';
+
+export const FRESHNESS_LABELS: Record<VerificationFreshness, string> = {
+  fresh: 'Fresh',
+  aging_soon: 'Aging Soon',
+  stale: 'Stale',
+  unknown: 'Unknown',
+};
+
+const daysSince = (dateStr: string | null | undefined): number | null => {
+  if (!dateStr) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86_400_000);
+};
+
+const freshnessFromAge = (days: number | null, freshMax: number, agingMax: number): VerificationFreshness => {
+  if (days == null) return 'stale';
+  if (days <= freshMax) return 'fresh';
+  if (days <= agingMax) return 'aging_soon';
+  return 'stale';
+};
+
+export const derivePsychiatricFreshness = (f?: Partial<PsychiatricServiceFields> | null): VerificationFreshness => {
+  if (!f) return 'unknown';
+  const vs = f.psychiatric_verification_status;
+  const days = daysSince(f.psychiatric_verification_date);
+
+  if (vs === 'directly_verified') return days != null ? 'fresh' : 'unknown';
+  if (vs === 'verified_via_directory') return freshnessFromAge(days, 60, 90);
+  if (vs === 'reported_unverified') return freshnessFromAge(days, 30, 60);
+  if (vs === 'not_offered') return days != null ? 'fresh' : 'unknown';
+  if (vs === 'unable_to_confirm') return days != null ? freshnessFromAge(days, 30, 60) : 'unknown';
+
+  return 'unknown';
+};
+
+export const deriveInpatientFreshness = (f?: Partial<InpatientServiceFields> | null): VerificationFreshness => {
+  if (!f) return 'unknown';
+  const vs = f.inpatient_verification_status;
+  const days = daysSince(f.inpatient_verification_date);
+
+  if (vs === 'directly_verified') return days != null ? 'fresh' : 'unknown';
+  if (vs === 'verified_via_directory') return freshnessFromAge(days, 60, 90);
+  if (vs === 'reported_unverified') return freshnessFromAge(days, 30, 60);
+  if (vs === 'not_offered') return days != null ? 'fresh' : 'unknown';
+  if (vs === 'unable_to_confirm') return days != null ? freshnessFromAge(days, 30, 60) : 'unknown';
+
+  return 'unknown';
+};
+
 
 export const hasPsychiatricData = (fields?: Partial<PsychiatricServiceFields> | null): boolean => {
   if (!fields) return false;
