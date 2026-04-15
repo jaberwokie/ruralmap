@@ -132,6 +132,60 @@ export const TRANSFER_DEPENDENCY_LABELS: Record<InpatientTransferDependency, str
   low: 'Low',
 };
 
+// ── Operational access derivation ──
+
+export type PsychiatricOperationalAccess = 'operationally_usable' | 'fragile_access' | 'verification_needed' | 'not_available' | 'unknown';
+export type InpatientOperationalAccess = 'operationally_usable' | 'fragile_access' | 'transfer_dependent' | 'verification_needed' | 'not_available' | 'unknown';
+
+export const OPERATIONAL_ACCESS_LABELS: Record<string, string> = {
+  operationally_usable: 'Operationally Usable',
+  fragile_access: 'Fragile Access',
+  transfer_dependent: 'Transfer Dependent',
+  verification_needed: 'Verification Needed',
+  not_available: 'Not Available',
+  unknown: 'Unknown',
+};
+
+export const derivePsychiatricAccess = (f?: Partial<PsychiatricServiceFields> | null): PsychiatricOperationalAccess => {
+  if (!f) return 'unknown';
+  const vs = f.psychiatric_verification_status;
+  const offered = f.psychiatric_services_offered;
+
+  if (vs === 'not_offered' || offered === false) return 'not_available';
+
+  if (vs === 'reported_unverified' || vs === 'unable_to_confirm') return 'verification_needed';
+  if (offered === true && vs == null) return 'verification_needed';
+
+  if (vs === 'directly_verified' && f.psychiatric_medicaid_status === 'participating' && f.psychiatric_accepting_new_patients === 'yes') return 'operationally_usable';
+
+  if (vs === 'verified_via_directory' && f.psychiatric_medicaid_status === 'participating') return 'fragile_access';
+  if (vs === 'directly_verified' && f.psychiatric_accepting_new_patients !== 'yes') return 'fragile_access';
+
+  return 'unknown';
+};
+
+export const deriveInpatientAccess = (f?: Partial<InpatientServiceFields> | null): InpatientOperationalAccess => {
+  if (!f) return 'unknown';
+  const vs = f.inpatient_verification_status;
+  const offered = f.inpatient_services_offered;
+
+  if (vs === 'not_offered' || offered === false) return 'not_available';
+
+  if (vs === 'reported_unverified' || vs === 'unable_to_confirm') return 'verification_needed';
+  if (offered === true && vs == null) return 'verification_needed';
+
+  const verified = vs === 'directly_verified' || vs === 'verified_via_directory';
+
+  if (verified && (f.inpatient_referral_pathway === 'ED_required' || f.inpatient_referral_pathway === 'transfer_only') && f.inpatient_transfer_dependency === 'high') return 'transfer_dependent';
+
+  if (verified && f.inpatient_transfer_dependency === 'moderate') return 'fragile_access';
+  if (verified && f.inpatient_accepting_admissions === 'limited') return 'fragile_access';
+
+  if (vs === 'directly_verified' && f.inpatient_accepting_admissions === 'yes' && f.inpatient_referral_pathway === 'direct_admit_allowed' && f.inpatient_transfer_dependency === 'low') return 'operationally_usable';
+
+  return 'unknown';
+};
+
 // ── Helpers for checking if any service-line data exists ──
 
 export const hasPsychiatricData = (fields?: Partial<PsychiatricServiceFields> | null): boolean => {
