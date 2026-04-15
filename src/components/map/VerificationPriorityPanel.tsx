@@ -101,7 +101,7 @@ function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<
       r.is_fallback_destination ? 'Yes' : 'No', r.dependent_counties.join('; '), r.priority_reason.join('; '),
       o ? OUTREACH_STATUS_LABELS[o.verification_outreach_status] : 'Not Started',
       o?.verification_outreach_date ?? '', o?.verification_outreach_by ?? '', o?.verification_outreach_notes ?? '',
-      lv.date ?? '', lv.by ?? '',
+      lv.date ?? '', lv.by ?? '', o ? o.verification_outreach_status : '',
     ].map(esc).join(',');
   });
   const csv = [headers.join(','), ...rows].join('\n');
