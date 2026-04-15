@@ -1686,6 +1686,7 @@ const InpatientSection = ({ fields }: { fields: Partial<import('@/types/service-
       <MetaRow label="Medicaid Participating" value={fields.inpatient_medicaid_status ? MEDICAID_LABELS[fields.inpatient_medicaid_status] : null} />
       <MetaRow label="Referral Pathway" value={fields.inpatient_referral_pathway ? REFERRAL_PATHWAY_LABELS[fields.inpatient_referral_pathway] : null} />
       <MetaRow label="Bed Availability" value={fields.inpatient_bed_availability_model ? BED_AVAILABILITY_LABELS[fields.inpatient_bed_availability_model] : null} />
+      <MetaRow label="Transfer Dependency" value={fields.inpatient_transfer_dependency ? TRANSFER_DEPENDENCY_LABELS[fields.inpatient_transfer_dependency] : null} />
       <MetaRow label="Population Focus" value={fields.inpatient_population_focus !== 'unknown' ? fields.inpatient_population_focus : null} />
       <MetaRow label="Verification Source" value={fields.inpatient_verification_source} />
       <MetaRow label="Verification Date" value={fields.inpatient_verification_date} />
