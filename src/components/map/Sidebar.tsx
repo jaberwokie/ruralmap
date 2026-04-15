@@ -6,6 +6,7 @@ import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfi
 import { exportCsv } from '@/utils/csvExport';
 
 import { toast } from 'sonner';
+import VerificationPriorityPanel from './VerificationPriorityPanel';
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
@@ -375,6 +376,7 @@ const Sidebar = ({
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
+  const [verifQueueOpen, setVerifQueueOpen] = useState(false);
   const [csvDragActive, setCsvDragActive] = useState(false);
   const [csvImportState, setCsvImportState] = useState<'idle' | 'processing' | 'preview' | 'success' | 'error'>('idle');
   const [csvParsed, setCsvParsed] = useState<{ valid: Facility[]; invalidCount: number; errors: string[]; totalRows: number } | null>(null);
