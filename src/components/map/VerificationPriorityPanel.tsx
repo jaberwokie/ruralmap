@@ -446,8 +446,44 @@ const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
     let records = queue;
     if (serviceFilter !== 'all') records = records.filter(r => r.service_line === serviceFilter);
     if (tierFilter !== 'all') records = records.filter(r => r.priority_tier === tierFilter);
+
+    // Apply service-line filters from sidebar
+    if (filters) {
+      const facIndex = new Map(defaultFacilities.map(f => [f.id, f]));
+      const hasPsychFilters = filters.psychiatry || filters.verifiedPsychiatryOnly || filters.acceptingPsychPatients || filters.telepsychiatry;
+      const hasInpatientFilters = filters.inpatientServices || filters.verifiedInpatientOnly || filters.psychiatricInpatient || filters.detoxInpatient || filters.acceptingAdmissions || filters.medicaidInpatient;
+
+      if (hasPsychFilters || hasInpatientFilters) {
+        records = records.filter(r => {
+          const fac = facIndex.get(r.entity_id);
+          if (!fac) return false;
+
+          if (r.service_line === 'psychiatry' && hasPsychFilters) {
+            if (filters.psychiatry && !matchesPsychiatryFilter(fac.psychiatric)) return false;
+            if (filters.verifiedPsychiatryOnly && !matchesVerifiedPsychiatry(fac.psychiatric)) return false;
+            if (filters.acceptingPsychPatients && !matchesAcceptingPsych(fac.psychiatric)) return false;
+            if (filters.telepsychiatry && !matchesTelepsychiatry(fac.psychiatric)) return false;
+          }
+
+          if (r.service_line === 'inpatient' && hasInpatientFilters) {
+            if (filters.inpatientServices && !matchesInpatientFilter(fac.inpatient)) return false;
+            if (filters.verifiedInpatientOnly && !matchesVerifiedInpatient(fac.inpatient)) return false;
+            if (filters.psychiatricInpatient && !matchesPsychiatricInpatient(fac.inpatient)) return false;
+            if (filters.detoxInpatient && !matchesDetoxInpatient(fac.inpatient)) return false;
+            if (filters.acceptingAdmissions && !matchesAcceptingAdmissions(fac.inpatient)) return false;
+            if (filters.medicaidInpatient && !matchesMedicaidInpatient(fac.inpatient)) return false;
+          }
+
+          // County filter
+          if (filters.counties.size > 0 && !filters.counties.has(fac.county)) return false;
+
+          return true;
+        });
+      }
+    }
+
     return records;
-  }, [queue, serviceFilter, tierFilter]);
+  }, [queue, serviceFilter, tierFilter, filters]);
 
   const highCount = queue.filter(r => r.priority_tier === 'high').length;
   const medCount = queue.filter(r => r.priority_tier === 'medium').length;
