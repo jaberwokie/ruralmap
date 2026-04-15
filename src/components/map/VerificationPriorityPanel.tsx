@@ -1,10 +1,10 @@
 /**
- * Verification Priority Queue panel with workflow tracking, Apply Verification, and CSV export.
+ * Verification Priority Queue panel with workflow tracking, Apply Verification, audit trail, and CSV export.
  * Outreach state persisted in localStorage — no source data mutations.
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Download, Pencil, X, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { Download, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   deriveVerificationQueue,
@@ -18,6 +18,7 @@ import type { PsychiatricServiceFields, InpatientServiceFields, ServiceLineVerif
 import { applyVerificationOverride } from '@/utils/serviceLineOverrides';
 import { defaultFacilities } from '@/data/facilities';
 import { toast } from 'sonner';
+import { createAuditRecord, getAuditLog, getEntityAuditLog, deriveLastDirectlyVerified, type VerificationAuditRecord } from '@/utils/verificationAuditLog';
 
 // ── Outreach workflow types ──
 
@@ -431,6 +432,19 @@ const VerificationPriorityPanel = () => {
 
   const handleApplyVerification = useCallback((rec: VerificationPriorityRecord, fields: Partial<PsychiatricServiceFields> | Partial<InpatientServiceFields>) => {
     const outreach = outreachMap.get(outreachKey(rec.entity_id, rec.service_line));
+    const fac = defaultFacilities.find(f => f.id === rec.entity_id);
+
+    // Capture old fields for audit diff
+    const oldFields: Record<string, unknown> = {};
+    if (fac) {
+      const src = rec.service_line === 'psychiatry' ? fac.psychiatric : fac.inpatient;
+      if (src) {
+        for (const key of Object.keys(fields)) {
+          oldFields[key] = (src as Record<string, unknown>)[key] ?? null;
+        }
+      }
+    }
+
     applyVerificationOverride({
       entity_id: rec.entity_id,
       service_line: rec.service_line,
@@ -438,6 +452,28 @@ const VerificationPriorityPanel = () => {
       applied_at: new Date().toISOString(),
       applied_by: outreach?.verification_outreach_by ?? null,
     });
+
+    // Create audit record (skips if no fields actually changed)
+    const verSource = rec.service_line === 'psychiatry'
+      ? (fields as Partial<PsychiatricServiceFields>).psychiatric_verification_source
+      : (fields as Partial<InpatientServiceFields>).inpatient_verification_source;
+    const notesField = rec.service_line === 'psychiatry'
+      ? (fields as Partial<PsychiatricServiceFields>).psychiatric_access_notes
+      : (fields as Partial<InpatientServiceFields>).inpatient_access_notes;
+
+    createAuditRecord({
+      entity_id: rec.entity_id,
+      entity_name: rec.entity_name,
+      entity_type: rec.entity_type,
+      service_line: rec.service_line,
+      applied_by: outreach?.verification_outreach_by ?? null,
+      outreach_status: outreach?.verification_outreach_status as 'confirmed' | 'not_offered' | 'wrong_listing',
+      verification_source_applied: verSource ?? null,
+      notes_snapshot: notesField ?? null,
+      old_fields: oldFields,
+      new_fields: fields as Record<string, unknown>,
+    });
+
     setApplyingKey(null);
     setRefreshKey(k => k + 1);
     toast.success(`Verification applied to ${rec.entity_name}`);
