@@ -1740,7 +1740,7 @@ const MetaRow = ({ label, value }: { label: string; value: string | number | nul
   );
 };
 
-const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/service-lines').PsychiatricServiceFields> }) => {
+const PsychiatricSection = ({ fields, entityId }: { fields: Partial<import('@/types/service-lines').PsychiatricServiceFields>; entityId?: string }) => {
   const types = fields.psychiatric_service_types ?? [];
   return (
     <div className="space-y-1">
@@ -1765,7 +1765,7 @@ const PsychiatricSection = ({ fields }: { fields: Partial<import('@/types/servic
       <MetaRow label="Psychiatric Access" value={OPERATIONAL_ACCESS_LABELS[derivePsychiatricAccess(fields)]} />
       <MetaRow label="Verification Freshness" value={FRESHNESS_LABELS[derivePsychiatricFreshness(fields)]} />
       {(() => {
-        const lv = deriveLastDirectlyVerifiedFn(fields.__entity_id ?? '', 'psychiatry', fields.psychiatric_verification_status ?? null);
+        const lv = deriveLastDirectlyVerifiedFn(entityId ?? '', 'psychiatry', fields.psychiatric_verification_status ?? null);
         if (!lv.date) return null;
         return (
           <>
