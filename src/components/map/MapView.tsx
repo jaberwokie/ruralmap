@@ -845,8 +845,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
+    // Dev validation: log psychiatry filter pipeline
+    if (import.meta.env.DEV && hasServiceLineFilter) {
+      console.info('[ServiceLine Filter] Facility pipeline:', {
+        totalBase: providerMarkerFacilities.length,
+        afterMapViewFilters: result.length,
+        hasServiceLineFilter,
+        sample: result.slice(0, 5).map(f => ({ name: f.name, type: f.type, hasPsych: !!f.psychiatric, hasInpatient: !!f.inpatient })),
+      });
+    }
+
     return result;
-  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters]);
+  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters, hasServiceLineFilter]);
 
   const topProvidersVisible = useMemo(() => {
     const scored = providerFilteredFacilities.map((facility) => ({
