@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark, Brain } from 'lucide-react';
 import { ContactPhoneAction, formatPhone } from '@/components/ContactPhoneAction';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
