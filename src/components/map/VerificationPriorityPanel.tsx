@@ -587,8 +587,8 @@ const VerificationPriorityPanel = () => {
       {filtered.length === 0 ? (
         <p className="text-[11px] text-muted-foreground italic py-2">No records match current filters.</p>
       ) : (
-        <div className="max-h-[400px] overflow-y-scroll rounded-md border border-border sidebar-scroll">
-          <Table>
+        <div className="h-[400px] overflow-x-scroll overflow-y-scroll rounded-md border border-border sidebar-scroll">
+          <Table containerClassName="overflow-visible" className="min-w-max">
             <TableHeader>
               <TableRow>
                 <TableHead className="text-[9px] px-1.5 h-8">Tier</TableHead>
