@@ -1350,6 +1350,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
       {/* Psychiatric & Inpatient County Summary */}
       {(() => {
         const countyFacs = defaultFacilities.filter(fac => fac.county === county);
+        const hasHospital = countyHasHospital(county);
         const psychProviders = countyFacs.filter(fac => {
           const p = fac.psychiatric;
           return p?.psychiatric_services_offered === true ||
@@ -1360,7 +1361,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
           return ip?.inpatient_services_offered === true ||
             (ip?.inpatient_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(ip.inpatient_verification_status));
         });
-        if (psychProviders.length === 0 && inpatientHospitals.length === 0) return null;
+        if (psychProviders.length === 0 && inpatientHospitals.length === 0 && hasHospital) return null;
 
         const verifiedPsych = psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status === 'directly_verified' || f.psychiatric?.psychiatric_verification_status === 'verified_via_directory');
         const verifiedMedicaidPsych = verifiedPsych.filter(f => f.psychiatric?.psychiatric_medicaid_status === 'participating');
