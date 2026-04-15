@@ -1346,6 +1346,76 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
           </DetailSection>
         );
       })()}
+
+      {/* Psychiatric & Inpatient County Summary */}
+      {(() => {
+        const countyFacs = defaultFacilities.filter(fac => fac.county === county);
+        const psychProviders = countyFacs.filter(fac => {
+          const p = fac.psychiatric;
+          return p?.psychiatric_services_offered === true ||
+            (p?.psychiatric_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(p.psychiatric_verification_status));
+        });
+        const inpatientHospitals = countyFacs.filter(fac => {
+          const ip = fac.inpatient;
+          return ip?.inpatient_services_offered === true ||
+            (ip?.inpatient_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(ip.inpatient_verification_status));
+        });
+        if (psychProviders.length === 0 && inpatientHospitals.length === 0) return null;
+
+        const verifiedPsych = psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status === 'directly_verified' || f.psychiatric?.psychiatric_verification_status === 'verified_via_directory');
+        const verifiedMedicaidPsych = verifiedPsych.filter(f => f.psychiatric?.psychiatric_medicaid_status === 'participating');
+        const needsVerifPsych = psychProviders.filter(f =>
+          f.psychiatric?.psychiatric_services_offered === true && (!f.psychiatric?.psychiatric_verification_status || f.psychiatric.psychiatric_verification_status === 'reported_unverified' || f.psychiatric.psychiatric_verification_status === 'unable_to_confirm')
+        );
+
+        const verifiedInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status === 'directly_verified' || f.inpatient?.inpatient_verification_status === 'verified_via_directory');
+        const verifiedPsychInp = verifiedInp.filter(f => f.inpatient?.inpatient_service_types?.some(t => t.toLowerCase().includes('psychiatric inpatient')));
+        const medicaidInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_medicaid_status === 'participating');
+        const needsVerifInp = inpatientHospitals.filter(f =>
+          f.inpatient?.inpatient_services_offered === true && (!f.inpatient?.inpatient_verification_status || f.inpatient.inpatient_verification_status === 'reported_unverified' || f.inpatient.inpatient_verification_status === 'unable_to_confirm')
+        );
+        const directAdmit = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'direct_admit_allowed').length;
+        const edRequired = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'ED_required').length;
+        const transferOnly = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'transfer_only').length;
+
+        return (
+          <DetailSection title="Service-Line Summary" isOpen={isOpen('serviceLineSummary')} onToggle={() => toggle('serviceLineSummary')}>
+            <div className="space-y-2">
+              {psychProviders.length > 0 && (
+                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Psychiatric Providers</div>
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Offering</span><span className="font-bold text-foreground tabular-nums">{psychProviders.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedPsych.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified + Medicaid</span><span className="font-bold text-foreground tabular-nums">{verifiedMedicaidPsych.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifPsych.length}</span></div>
+                  </div>
+                </div>
+              )}
+              {inpatientHospitals.length > 0 && (
+                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Inpatient Hospitals</div>
+                  <div className="space-y-0.5">
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Inpatient</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedInp.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified Psych Inpatient</span><span className="font-bold text-foreground tabular-nums">{verifiedPsychInp.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Medicaid Participating</span><span className="font-bold text-foreground tabular-nums">{medicaidInp.length}</span></div>
+                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifInp.length}</span></div>
+                    {(directAdmit > 0 || edRequired > 0 || transferOnly > 0) && (
+                      <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                        <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Referral Pathway</div>
+                        {directAdmit > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Direct Admit</span><span className="font-bold text-foreground tabular-nums">{directAdmit}</span></div>}
+                        {edRequired > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">ED Required</span><span className="font-bold text-foreground tabular-nums">{edRequired}</span></div>}
+                        {transferOnly > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Only</span><span className="font-bold text-foreground tabular-nums">{transferOnly}</span></div>}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </DetailSection>
+        );
+      })()}
     </>
   );
 };
