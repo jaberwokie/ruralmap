@@ -4,6 +4,7 @@
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
+import type { Filters } from '@/types/filters';
 import { Download, Upload, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
 import { importVerificationCsv, type VerificationImportResult } from '@/utils/verificationCsvImport';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,7 +15,12 @@ import {
   type VerificationPriorityRecord,
   type PriorityTier,
 } from '@/utils/verificationPriorityQueue';
-import { OPERATIONAL_ACCESS_LABELS, FRESHNESS_LABELS } from '@/types/service-lines';
+import {
+  OPERATIONAL_ACCESS_LABELS, FRESHNESS_LABELS,
+  matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
+  matchesInpatientFilter, matchesVerifiedInpatient, matchesPsychiatricInpatient,
+  matchesDetoxInpatient, matchesAcceptingAdmissions, matchesMedicaidInpatient,
+} from '@/types/service-lines';
 import type { PsychiatricServiceFields, InpatientServiceFields, ServiceLineVerificationStatus, YesNoUnknown, MedicaidStatus, InpatientAdmissionStatus, InpatientReferralPathway, InpatientBedAvailabilityModel } from '@/types/service-lines';
 import { applyVerificationOverride } from '@/utils/serviceLineOverrides';
 import { defaultFacilities } from '@/data/facilities';
@@ -405,7 +411,7 @@ const ApplyInpatientForm = ({ record, outreach, onApply, onCancel }: {
 
 // ── Main panel ──
 
-const VerificationPriorityPanel = () => {
+const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const queue = useMemo(() => deriveVerificationQueue(), [refreshKey]);
   const [serviceFilter, setServiceFilter] = useState<'all' | 'psychiatry' | 'inpatient'>('all');
@@ -445,8 +451,44 @@ const VerificationPriorityPanel = () => {
     let records = queue;
     if (serviceFilter !== 'all') records = records.filter(r => r.service_line === serviceFilter);
     if (tierFilter !== 'all') records = records.filter(r => r.priority_tier === tierFilter);
+
+    // Apply service-line filters from sidebar
+    if (filters) {
+      const facIndex = new Map(defaultFacilities.map(f => [f.id, f]));
+      const hasPsychFilters = filters.psychiatry || filters.verifiedPsychiatryOnly || filters.acceptingPsychPatients || filters.telepsychiatry;
+      const hasInpatientFilters = filters.inpatientServices || filters.verifiedInpatientOnly || filters.psychiatricInpatient || filters.detoxInpatient || filters.acceptingAdmissions || filters.medicaidInpatient;
+
+      if (hasPsychFilters || hasInpatientFilters) {
+        records = records.filter(r => {
+          const fac = facIndex.get(r.entity_id);
+          if (!fac) return false;
+
+          if (r.service_line === 'psychiatry' && hasPsychFilters) {
+            if (filters.psychiatry && !matchesPsychiatryFilter(fac.psychiatric)) return false;
+            if (filters.verifiedPsychiatryOnly && !matchesVerifiedPsychiatry(fac.psychiatric)) return false;
+            if (filters.acceptingPsychPatients && !matchesAcceptingPsych(fac.psychiatric)) return false;
+            if (filters.telepsychiatry && !matchesTelepsychiatry(fac.psychiatric)) return false;
+          }
+
+          if (r.service_line === 'inpatient' && hasInpatientFilters) {
+            if (filters.inpatientServices && !matchesInpatientFilter(fac.inpatient)) return false;
+            if (filters.verifiedInpatientOnly && !matchesVerifiedInpatient(fac.inpatient)) return false;
+            if (filters.psychiatricInpatient && !matchesPsychiatricInpatient(fac.inpatient)) return false;
+            if (filters.detoxInpatient && !matchesDetoxInpatient(fac.inpatient)) return false;
+            if (filters.acceptingAdmissions && !matchesAcceptingAdmissions(fac.inpatient)) return false;
+            if (filters.medicaidInpatient && !matchesMedicaidInpatient(fac.inpatient)) return false;
+          }
+
+          // County filter
+          if (filters.counties.size > 0 && !filters.counties.has(fac.county)) return false;
+
+          return true;
+        });
+      }
+    }
+
     return records;
-  }, [queue, serviceFilter, tierFilter]);
+  }, [queue, serviceFilter, tierFilter, filters]);
 
   const highCount = queue.filter(r => r.priority_tier === 'high').length;
   const medCount = queue.filter(r => r.priority_tier === 'medium').length;

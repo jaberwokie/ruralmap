@@ -1550,7 +1550,7 @@ const Sidebar = ({
         </button>
         {verifQueueOpen && (
           <div className="mb-3">
-            <VerificationPriorityPanel />
+            <VerificationPriorityPanel filters={filters} />
           </div>
         )}
       </div>
