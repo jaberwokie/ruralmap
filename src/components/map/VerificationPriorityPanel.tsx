@@ -15,7 +15,12 @@ import {
   type VerificationPriorityRecord,
   type PriorityTier,
 } from '@/utils/verificationPriorityQueue';
-import { OPERATIONAL_ACCESS_LABELS, FRESHNESS_LABELS } from '@/types/service-lines';
+import {
+  OPERATIONAL_ACCESS_LABELS, FRESHNESS_LABELS,
+  matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
+  matchesInpatientFilter, matchesVerifiedInpatient, matchesPsychiatricInpatient,
+  matchesDetoxInpatient, matchesAcceptingAdmissions, matchesMedicaidInpatient,
+} from '@/types/service-lines';
 import type { PsychiatricServiceFields, InpatientServiceFields, ServiceLineVerificationStatus, YesNoUnknown, MedicaidStatus, InpatientAdmissionStatus, InpatientReferralPathway, InpatientBedAvailabilityModel } from '@/types/service-lines';
 import { applyVerificationOverride } from '@/utils/serviceLineOverrides';
 import { defaultFacilities } from '@/data/facilities';
