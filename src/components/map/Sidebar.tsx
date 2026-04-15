@@ -1755,6 +1755,9 @@ const Sidebar = ({
           </div>
         )}
       </div>
+      </div>
+      {/* Bottom fade overlay */}
+      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
     </div>
   );
 };
