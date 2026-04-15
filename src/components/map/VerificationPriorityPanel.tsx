@@ -4,7 +4,8 @@
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Download, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { Download, Upload, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { importVerificationCsv, type VerificationImportResult } from '@/utils/verificationCsvImport';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   deriveVerificationQueue,
@@ -83,18 +84,18 @@ function outreachKey(entityId: string, serviceLine: string) {
 
 function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<string, OutreachRecord>) {
   const headers = [
-    'Priority Tier', 'Priority Score', 'Entity Name', 'County', 'Service Line',
+    'entityId', 'Priority Tier', 'Priority Score', 'Entity Name', 'County', 'Service Line',
     'Operational Access', 'Verification Status', 'Verification Freshness',
     'Fallback Destination', 'Dependent Counties', 'Priority Reasons',
     'Outreach Status', 'Outreach Date', 'Outreach By', 'Outreach Notes',
-    'Last Directly Verified', 'Verified By',
+    'lastDirectlyVerified', 'verifiedBy', 'outreach',
   ];
   const esc = (v: string) => (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v.replace(/"/g, '""')}"` : v;
   const rows = records.map(r => {
     const o = outreachMap.get(outreachKey(r.entity_id, r.service_line));
     const lv = deriveLastDirectlyVerified(r.entity_id, r.service_line, r.verification_status);
     return [
-      PRIORITY_TIER_LABELS[r.priority_tier], String(r.priority_score), r.entity_name, r.county, r.service_line,
+      r.entity_id, PRIORITY_TIER_LABELS[r.priority_tier], String(r.priority_score), r.entity_name, r.county, r.service_line,
       r.operational_access ? (OPERATIONAL_ACCESS_LABELS[r.operational_access] ?? r.operational_access) : '',
       r.verification_status ?? '', r.verification_freshness ? FRESHNESS_LABELS[r.verification_freshness] : '',
       r.is_fallback_destination ? 'Yes' : 'No', r.dependent_counties.join('; '), r.priority_reason.join('; '),
