@@ -4,6 +4,7 @@
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
+import type { Filters } from '@/types/filters';
 import { Download, Upload, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
 import { importVerificationCsv, type VerificationImportResult } from '@/utils/verificationCsvImport';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
