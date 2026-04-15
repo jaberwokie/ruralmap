@@ -405,7 +405,7 @@ const ApplyInpatientForm = ({ record, outreach, onApply, onCancel }: {
 
 // ── Main panel ──
 
-const VerificationPriorityPanel = () => {
+const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
   const [refreshKey, setRefreshKey] = useState(0);
   const queue = useMemo(() => deriveVerificationQueue(), [refreshKey]);
   const [serviceFilter, setServiceFilter] = useState<'all' | 'psychiatry' | 'inpatient'>('all');
