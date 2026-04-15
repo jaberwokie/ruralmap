@@ -1739,6 +1739,14 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
 
       <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
 
+      {/* Service-line badges */}
+      {(hasPsychiatricData(facility.psychiatric) || hasInpatientData(facility.inpatient)) && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          <PsychiatryBadge fields={facility.psychiatric} />
+          <InpatientBadge fields={facility.inpatient} />
+        </div>
+      )}
+
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
