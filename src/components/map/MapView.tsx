@@ -826,6 +826,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   );
 
 
+  const providerFilteredFacilities = useMemo(() => {
     let result = providerMarkerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
     if (searchQuery) {
