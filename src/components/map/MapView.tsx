@@ -59,6 +59,7 @@ interface MapViewProps {
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
   serviceCategoryFilters?: Set<string>;
+  filters?: import('@/types/filters').Filters;
   onFacilityClick: (facility: Facility) => void;
   onMapClick?: () => void;
   searchQuery: string;
@@ -653,7 +654,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -815,6 +816,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
   const providerMarkerFacilities = useMemo(() => facilities, [facilities]);
 
+  // Detect if any service-line filter is active — if so, suppress rural service pins
+  const hasServiceLineFilter = !!(
+    externalFilters?.psychiatry || externalFilters?.verifiedPsychiatryOnly ||
+    externalFilters?.acceptingPsychPatients || externalFilters?.telepsychiatry ||
+    externalFilters?.inpatientServices || externalFilters?.verifiedInpatientOnly ||
+    externalFilters?.psychiatricInpatient || externalFilters?.detoxInpatient ||
+    externalFilters?.acceptingAdmissions || externalFilters?.medicaidInpatient
+  );
+
+
   const providerFilteredFacilities = useMemo(() => {
     let result = providerMarkerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
@@ -844,8 +855,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       }
     }
 
+    // Dev validation: log psychiatry filter pipeline
+    if (import.meta.env.DEV && hasServiceLineFilter) {
+      console.info('[ServiceLine Filter] Facility pipeline:', {
+        totalBase: providerMarkerFacilities.length,
+        afterMapViewFilters: result.length,
+        hasServiceLineFilter,
+        sample: result.slice(0, 5).map(f => ({ name: f.name, type: f.type, hasPsych: !!f.psychiatric, hasInpatient: !!f.inpatient })),
+      });
+    }
+
     return result;
-  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters]);
+  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters, hasServiceLineFilter]);
 
   const topProvidersVisible = useMemo(() => {
     const scored = providerFilteredFacilities.map((facility) => ({
@@ -880,7 +901,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
   const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), []);
 
+
   const filteredRuralServices = useMemo(() => {
+    // When a psychiatric or inpatient filter is active, rural services cannot match — suppress all
+    if (hasServiceLineFilter) {
+      if (import.meta.env.DEV) {
+        console.info('[ServiceLine Filter] Suppressing rural service pins — service-line filter active');
+      }
+      return [];
+    }
+
     let result = ruralServices;
 
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service') && !typeFilters.has('behavioralHealth')) {
@@ -896,23 +926,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     return result;
-  }, [countyFilters, serviceCategoryFilters, typeFilters]);
+  }, [countyFilters, hasServiceLineFilter, serviceCategoryFilters, typeFilters]);
 
   const filteredCommunityServices = useMemo(() => {
+    if (hasServiceLineFilter) return [];
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service')) {
       return [];
     }
 
     return filteredRuralServices.filter(isCommunitySupportService);
-  }, [filteredRuralServices, typeFilters]);
+  }, [filteredRuralServices, hasServiceLineFilter, typeFilters]);
 
   const filteredBehavioralHealthServices = useMemo(() => {
+    if (hasServiceLineFilter) return [];
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('behavioralHealth')) {
       return [];
     }
 
     return filteredRuralServices.filter(isBehavioralHealthService);
-  }, [filteredRuralServices, typeFilters]);
+  }, [filteredRuralServices, hasServiceLineFilter, typeFilters]);
 
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();

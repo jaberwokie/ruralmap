@@ -59,6 +59,7 @@ const Index = () => {
           typeFilters={filters.filters.types}
           countyFilters={filters.filters.counties}
           serviceCategoryFilters={filters.filters.serviceCategories}
+          filters={filters.filters}
           onFacilityClick={(f) => onEntity({ type: 'facility', facility: f })}
           onMapClick={selection.actions.handleMapClick}
           searchQuery={filters.searchQuery}
