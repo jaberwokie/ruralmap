@@ -1435,6 +1435,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsableInp}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragileInp}</span></div>
                       <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Dependent</span><span className="font-bold text-foreground tabular-nums">{transferDep}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'fresh').length}</span></div>
+                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'stale').length}</span></div>
                     </div>
                   </div>
                 </div>
