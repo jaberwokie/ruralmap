@@ -816,7 +816,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const providerFacilities = useMemo(() => allFacilities ?? facilities, [allFacilities, facilities]);
   const providerMarkerFacilities = useMemo(() => facilities, [facilities]);
 
-  const providerFilteredFacilities = useMemo(() => {
+  // Detect if any service-line filter is active — if so, suppress rural service pins
+  const hasServiceLineFilter = !!(
+    externalFilters?.psychiatry || externalFilters?.verifiedPsychiatryOnly ||
+    externalFilters?.acceptingPsychPatients || externalFilters?.telepsychiatry ||
+    externalFilters?.inpatientServices || externalFilters?.verifiedInpatientOnly ||
+    externalFilters?.psychiatricInpatient || externalFilters?.detoxInpatient ||
+    externalFilters?.acceptingAdmissions || externalFilters?.medicaidInpatient
+  );
+
+
     let result = providerMarkerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
     if (searchQuery) {
@@ -891,15 +900,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
   const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), []);
 
-  // Detect if any service-line filter is active — if so, suppress rural service pins
-  // since rural services are not psychiatric providers or inpatient hospitals
-  const hasServiceLineFilter = !!(
-    externalFilters?.psychiatry || externalFilters?.verifiedPsychiatryOnly ||
-    externalFilters?.acceptingPsychPatients || externalFilters?.telepsychiatry ||
-    externalFilters?.inpatientServices || externalFilters?.verifiedInpatientOnly ||
-    externalFilters?.psychiatricInpatient || externalFilters?.detoxInpatient ||
-    externalFilters?.acceptingAdmissions || externalFilters?.medicaidInpatient
-  );
 
   const filteredRuralServices = useMemo(() => {
     // When a psychiatric or inpatient filter is active, rural services cannot match — suppress all
