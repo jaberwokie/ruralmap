@@ -533,6 +533,7 @@ const VerificationPriorityPanel = () => {
                 <TableHead className="text-[9px] px-1.5 h-8">Dep.</TableHead>
                 <TableHead className="text-[9px] px-1.5 h-8">Outreach</TableHead>
                 <TableHead className="text-[9px] px-1.5 h-8">Last Date</TableHead>
+                <TableHead className="text-[9px] px-1.5 h-8">Verified</TableHead>
                 <TableHead className="text-[9px] px-1.5 h-8 w-8"></TableHead>
               </TableRow>
             </TableHeader>
@@ -542,9 +543,11 @@ const VerificationPriorityPanel = () => {
                 const outreach = outreachMap.get(key);
                 const isEditing = editingKey === key;
                 const isApplying = applyingKey === key;
+                const isAuditOpen = auditKey === key;
                 const statusLabel = outreach ? OUTREACH_STATUS_LABELS[outreach.verification_outreach_status] : 'Not Started';
                 const statusColor = outreach ? OUTREACH_STATUS_COLORS[outreach.verification_outreach_status] : 'text-muted-foreground';
                 const canApply = outreach && APPLY_ELIGIBLE.includes(outreach.verification_outreach_status);
+                const lastVerified = deriveLastDirectlyVerified(rec.entity_id, rec.service_line, rec.verification_status);
 
                 return (
                   <TableRow key={key}>
@@ -565,7 +568,10 @@ const VerificationPriorityPanel = () => {
                         <ApplyInpatientForm record={rec} outreach={outreach}
                           onApply={(f) => handleApplyVerification(rec, f)} onCancel={() => setApplyingKey(null)} />
                       )}
-                      {!isEditing && !isApplying && rec.priority_reason.length > 0 && (
+                      {isAuditOpen && (
+                        <InlineAuditHistory entityId={rec.entity_id} serviceLine={rec.service_line} />
+                      )}
+                      {!isEditing && !isApplying && !isAuditOpen && rec.priority_reason.length > 0 && (
                         <ul className="list-none mt-0.5">
                           {rec.priority_reason.slice(0, 2).map((r, i) => (
                             <li key={i} className="text-[9px] text-muted-foreground/70 leading-tight">• {r}</li>
@@ -593,10 +599,18 @@ const VerificationPriorityPanel = () => {
                     <TableCell className="text-[10px] px-1.5 py-1 text-muted-foreground tabular-nums">
                       {outreach?.verification_outreach_date ?? '—'}
                     </TableCell>
+                    <TableCell className="text-[10px] px-1.5 py-1 text-muted-foreground">
+                      {lastVerified.date ? (
+                        <div>
+                          <div className="tabular-nums">{lastVerified.date}</div>
+                          {lastVerified.by && <div className="text-[9px] text-muted-foreground/60 truncate max-w-[60px]" title={lastVerified.by}>{lastVerified.by}</div>}
+                        </div>
+                      ) : '—'}
+                    </TableCell>
                     <TableCell className="text-[10px] px-1.5 py-1">
                       <div className="flex items-center gap-0.5">
                         <button
-                          onClick={() => { setEditingKey(isEditing ? null : key); setApplyingKey(null); }}
+                          onClick={() => { setEditingKey(isEditing ? null : key); setApplyingKey(null); setAuditKey(null); }}
                           className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
                           title={isEditing ? 'Close' : 'Edit outreach'}
                         >
@@ -604,7 +618,7 @@ const VerificationPriorityPanel = () => {
                         </button>
                         {canApply && !isApplying && (
                           <button
-                            onClick={() => { setApplyingKey(key); setEditingKey(null); }}
+                            onClick={() => { setApplyingKey(key); setEditingKey(null); setAuditKey(null); }}
                             className="inline-flex items-center justify-center w-5 h-5 rounded hover:bg-emerald-100 transition-colors text-emerald-600 hover:text-emerald-700"
                             title="Apply verification to entity"
                           >
@@ -620,6 +634,13 @@ const VerificationPriorityPanel = () => {
                             <X className="w-3 h-3" />
                           </button>
                         )}
+                        <button
+                          onClick={() => { setAuditKey(isAuditOpen ? null : key); setEditingKey(null); setApplyingKey(null); }}
+                          className={`inline-flex items-center justify-center w-5 h-5 rounded hover:bg-secondary transition-colors ${isAuditOpen ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                          title={isAuditOpen ? 'Close audit history' : 'View audit history'}
+                        >
+                          <History className="w-3 h-3" />
+                        </button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -629,6 +650,64 @@ const VerificationPriorityPanel = () => {
           </Table>
         </div>
       )}
+    </div>
+  );
+};
+
+// ── Inline Audit History (per entity) ──
+
+const InlineAuditHistory = ({ entityId, serviceLine }: { entityId: string; serviceLine: 'psychiatry' | 'inpatient' }) => {
+  const records = useMemo(() => getEntityAuditLog(entityId, serviceLine), [entityId, serviceLine]);
+  if (records.length === 0) return <p className="text-[9px] text-muted-foreground italic mt-1">No audit history</p>;
+  return (
+    <div className="mt-1 space-y-1" onClick={e => e.stopPropagation()}>
+      {records.map(r => (
+        <div key={r.audit_id} className="rounded border border-border bg-secondary/50 px-1.5 py-1">
+          <div className="flex items-center justify-between text-[9px]">
+            <span className="font-medium text-foreground">{r.applied_date.slice(0, 10)}</span>
+            <span className="text-muted-foreground capitalize">{r.outreach_status.replace(/_/g, ' ')}</span>
+          </div>
+          {r.applied_by && <div className="text-[9px] text-muted-foreground">By: {r.applied_by}</div>}
+          {r.changed_fields.length > 0 && (
+            <div className="mt-0.5 space-y-0.5">
+              {r.changed_fields.map((cf, i) => (
+                <div key={i} className="text-[9px] text-muted-foreground/70">
+                  <span className="font-medium">{cf.field.replace(/^(psychiatric_|inpatient_)/, '')}</span>:{' '}
+                  <span className="line-through">{String(cf.old_value ?? '—')}</span> → <span className="text-foreground">{String(cf.new_value ?? '—')}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {r.notes_snapshot && <p className="text-[9px] text-muted-foreground/60 italic mt-0.5 leading-tight">{r.notes_snapshot.slice(0, 120)}{r.notes_snapshot.length > 120 ? '…' : ''}</p>}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ── Global Audit History Panel (exported for sidebar) ──
+
+export const VerificationAuditHistoryPanel = () => {
+  const log = useMemo(() => getAuditLog().slice(0, 50), []);
+  if (log.length === 0) return <p className="text-[11px] text-muted-foreground italic py-2">No verification audit records yet.</p>;
+  return (
+    <div className="space-y-1.5 max-h-[300px] overflow-auto">
+      {log.map(r => (
+        <div key={r.audit_id} className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-medium text-foreground truncate max-w-[140px]" title={r.entity_name}>{r.entity_name}</span>
+            <span className="text-[9px] text-muted-foreground tabular-nums">{r.applied_date.slice(0, 10)}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[9px] text-muted-foreground">
+            <span className="capitalize">{r.service_line}</span>
+            <span>·</span>
+            <span className="capitalize">{r.outreach_status.replace(/_/g, ' ')}</span>
+            <span>·</span>
+            <span>{r.changed_fields.length} field{r.changed_fields.length !== 1 ? 's' : ''}</span>
+          </div>
+          {r.applied_by && <div className="text-[9px] text-muted-foreground/60">By: {r.applied_by}</div>}
+        </div>
+      ))}
     </div>
   );
 };
