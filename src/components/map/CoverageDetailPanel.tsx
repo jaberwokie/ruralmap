@@ -34,6 +34,7 @@ import {
 } from '@/types/service-lines';
 import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
 import { deriveVerificationQueue as deriveVerificationQueueFn } from '@/utils/verificationPriorityQueue';
+import { deriveLastDirectlyVerified as deriveLastDirectlyVerifiedFn } from '@/utils/verificationAuditLog';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
