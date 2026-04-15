@@ -30,6 +30,7 @@ import {
   PSYCHIATRY_BADGE_COLORS, INPATIENT_BADGE_COLORS,
   REFERRAL_PATHWAY_LABELS, BED_AVAILABILITY_LABELS, TRANSFER_DEPENDENCY_LABELS,
   derivePsychiatricAccess, deriveInpatientAccess, OPERATIONAL_ACCESS_LABELS,
+  derivePsychiatricFreshness, deriveInpatientFreshness, FRESHNESS_LABELS,
 } from '@/types/service-lines';
 import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
 
