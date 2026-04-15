@@ -33,6 +33,7 @@ import {
   derivePsychiatricFreshness, deriveInpatientFreshness, FRESHNESS_LABELS,
 } from '@/types/service-lines';
 import { deriveCountyFallback, PSYCH_FALLBACK_REASON_LABELS, INPATIENT_FALLBACK_REASON_LABELS } from '@/utils/countyFallbackAccess';
+import { deriveVerificationQueue as deriveVerificationQueueFn } from '@/utils/verificationPriorityQueue';
 
 /** Counties with no hospital or clinic within ~50 km of their geographic center */
 const GAP_COUNTIES = (() => {
@@ -1477,6 +1478,29 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                           {fb.inpatient_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Hospital</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.inpatient_fallback_entity_name}</span></div>}
                           {fb.inpatient_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{INPATIENT_FALLBACK_REASON_LABELS[fb.inpatient_fallback_reason]}</span></div>}
                         </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+              {(() => {
+                const queue = deriveVerificationQueueFn();
+                const countyQueue = queue.filter(r => {
+                  // Include records for entities in this county OR where this county depends on entity
+                  return r.county === county || r.dependent_counties.includes(county);
+                });
+                const highPsych = countyQueue.filter(r => r.service_line === 'psychiatry' && r.priority_tier === 'high').length;
+                const highInp = countyQueue.filter(r => r.service_line === 'inpatient' && r.priority_tier === 'high').length;
+                if (highPsych === 0 && highInp === 0) return null;
+                return (
+                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Verification Priority</div>
+                    <div className="space-y-0.5">
+                      {highPsych > 0 && (
+                        <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">High Priority Psych</span><span className="font-bold text-destructive tabular-nums">{highPsych}</span></div>
+                      )}
+                      {highInp > 0 && (
+                        <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">High Priority Inpatient</span><span className="font-bold text-destructive tabular-nums">{highInp}</span></div>
                       )}
                     </div>
                   </div>

@@ -6,6 +6,7 @@ import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfi
 import { exportCsv } from '@/utils/csvExport';
 
 import { toast } from 'sonner';
+import VerificationPriorityPanel from './VerificationPriorityPanel';
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
@@ -375,6 +376,7 @@ const Sidebar = ({
 
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
+  const [verifQueueOpen, setVerifQueueOpen] = useState(false);
   const [csvDragActive, setCsvDragActive] = useState(false);
   const [csvImportState, setCsvImportState] = useState<'idle' | 'processing' | 'preview' | 'success' | 'error'>('idle');
   const [csvParsed, setCsvParsed] = useState<{ valid: Facility[]; invalidCount: number; errors: string[]; totalRows: number } | null>(null);
@@ -1531,6 +1533,24 @@ const Sidebar = ({
                 </div>
               </div>
         </div>
+      </div>
+
+      <div className="mx-4 border-t border-border" />
+
+      {/* Verification Priority Queue */}
+      <div className="px-4 pt-3">
+        <button
+          onClick={() => setVerifQueueOpen(!verifQueueOpen)}
+          className={SECTION_HEADER_CLASSNAME}
+        >
+          {verifQueueOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
+          Verification Priority Queue
+        </button>
+        {verifQueueOpen && (
+          <div className="mb-3">
+            <VerificationPriorityPanel />
+          </div>
+        )}
       </div>
 
       <div className="mx-4 border-t border-border" />
