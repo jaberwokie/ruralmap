@@ -1748,7 +1748,7 @@ const PsychiatricSection = ({ fields, entityId }: { fields: Partial<import('@/ty
       {types.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {types.map(t => (
-            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{t}</span>
+            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{formatTagLabel(t)}</span>
           ))}
         </div>
       )}
@@ -1786,7 +1786,7 @@ const InpatientSection = ({ fields, entityId }: { fields: Partial<import('@/type
       {types.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {types.map(t => (
-            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{t}</span>
+            <span key={t} className="rounded border border-border bg-secondary/70 px-1.5 py-0.5 text-[9px] text-muted-foreground">{formatTagLabel(t)}</span>
           ))}
         </div>
       )}
