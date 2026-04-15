@@ -587,7 +587,7 @@ const VerificationPriorityPanel = () => {
       {filtered.length === 0 ? (
         <p className="text-[11px] text-muted-foreground italic py-2">No records match current filters.</p>
       ) : (
-        <div className="max-h-[400px] overflow-auto rounded-md border border-border">
+        <div className="max-h-[400px] overflow-y-scroll rounded-md border border-border sidebar-scroll">
           <Table>
             <TableHeader>
               <TableRow>
@@ -758,7 +758,7 @@ export const VerificationAuditHistoryPanel = () => {
   const log = useMemo(() => getAuditLog().slice(0, 50), []);
   if (log.length === 0) return <p className="text-[11px] text-muted-foreground italic py-2">No verification audit records yet.</p>;
   return (
-    <div className="space-y-1.5 max-h-[300px] overflow-auto">
+    <div className="space-y-1.5 max-h-[300px] overflow-y-scroll sidebar-scroll">
       {log.map(r => (
         <div key={r.audit_id} className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
           <div className="flex items-center justify-between">
