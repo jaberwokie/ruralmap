@@ -273,7 +273,7 @@ export const matchesAcceptingPsych = (f?: Partial<PsychiatricServiceFields> | nu
   f?.psychiatric_accepting_new_patients === 'yes';
 
 export const matchesTelepsychiatry = (f?: Partial<PsychiatricServiceFields> | null): boolean =>
-  f?.psychiatric_telepsychiatry_available === 'yes' || (f?.psychiatric_service_types?.some(t => t.toLowerCase().includes('telepsychiatry')) ?? false);
+  matchesPsychiatryFilter(f) && (f?.psychiatric_telepsychiatry_available === 'yes' || (f?.psychiatric_service_types?.some(t => t.toLowerCase().includes('telepsychiatry')) ?? false));
 
 export const matchesInpatientFilter = (f?: Partial<InpatientServiceFields> | null): boolean =>
   f?.inpatient_services_offered === true || (f?.inpatient_verification_status != null && ACTIVE_STATUSES.includes(f.inpatient_verification_status));
