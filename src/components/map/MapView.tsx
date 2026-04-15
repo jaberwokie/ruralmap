@@ -881,7 +881,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
   const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), []);
 
+  // Detect if any service-line filter is active — if so, suppress rural service pins
+  // since rural services are not psychiatric providers or inpatient hospitals
+  const hasServiceLineFilter = !!(
+    externalFilters?.psychiatry || externalFilters?.verifiedPsychiatryOnly ||
+    externalFilters?.acceptingPsychPatients || externalFilters?.telepsychiatry ||
+    externalFilters?.inpatientServices || externalFilters?.verifiedInpatientOnly ||
+    externalFilters?.psychiatricInpatient || externalFilters?.detoxInpatient ||
+    externalFilters?.acceptingAdmissions || externalFilters?.medicaidInpatient
+  );
+
   const filteredRuralServices = useMemo(() => {
+    // When a psychiatric or inpatient filter is active, rural services cannot match — suppress all
+    if (hasServiceLineFilter) {
+      if (import.meta.env.DEV) {
+        console.info('[ServiceLine Filter] Suppressing rural service pins — service-line filter active');
+      }
+      return [];
+    }
+
     let result = ruralServices;
 
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service') && !typeFilters.has('behavioralHealth')) {
@@ -897,23 +915,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     return result;
-  }, [countyFilters, serviceCategoryFilters, typeFilters]);
+  }, [countyFilters, hasServiceLineFilter, serviceCategoryFilters, typeFilters]);
 
   const filteredCommunityServices = useMemo(() => {
+    if (hasServiceLineFilter) return [];
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service')) {
       return [];
     }
 
     return filteredRuralServices.filter(isCommunitySupportService);
-  }, [filteredRuralServices, typeFilters]);
+  }, [filteredRuralServices, hasServiceLineFilter, typeFilters]);
 
   const filteredBehavioralHealthServices = useMemo(() => {
+    if (hasServiceLineFilter) return [];
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('behavioralHealth')) {
       return [];
     }
 
     return filteredRuralServices.filter(isBehavioralHealthService);
-  }, [filteredRuralServices, typeFilters]);
+  }, [filteredRuralServices, hasServiceLineFilter, typeFilters]);
 
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();
