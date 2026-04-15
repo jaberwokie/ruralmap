@@ -4,7 +4,8 @@
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Download, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { Download, Upload, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { importVerificationCsv, type VerificationImportResult } from '@/utils/verificationCsvImport';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import {
   deriveVerificationQueue,
@@ -83,24 +84,24 @@ function outreachKey(entityId: string, serviceLine: string) {
 
 function exportQueueCsv(records: VerificationPriorityRecord[], outreachMap: Map<string, OutreachRecord>) {
   const headers = [
-    'Priority Tier', 'Priority Score', 'Entity Name', 'County', 'Service Line',
+    'entityId', 'Priority Tier', 'Priority Score', 'Entity Name', 'County', 'Service Line',
     'Operational Access', 'Verification Status', 'Verification Freshness',
     'Fallback Destination', 'Dependent Counties', 'Priority Reasons',
     'Outreach Status', 'Outreach Date', 'Outreach By', 'Outreach Notes',
-    'Last Directly Verified', 'Verified By',
+    'lastDirectlyVerified', 'verifiedBy', 'outreach',
   ];
   const esc = (v: string) => (v.includes(',') || v.includes('"') || v.includes('\n')) ? `"${v.replace(/"/g, '""')}"` : v;
   const rows = records.map(r => {
     const o = outreachMap.get(outreachKey(r.entity_id, r.service_line));
     const lv = deriveLastDirectlyVerified(r.entity_id, r.service_line, r.verification_status);
     return [
-      PRIORITY_TIER_LABELS[r.priority_tier], String(r.priority_score), r.entity_name, r.county, r.service_line,
+      r.entity_id, PRIORITY_TIER_LABELS[r.priority_tier], String(r.priority_score), r.entity_name, r.county, r.service_line,
       r.operational_access ? (OPERATIONAL_ACCESS_LABELS[r.operational_access] ?? r.operational_access) : '',
       r.verification_status ?? '', r.verification_freshness ? FRESHNESS_LABELS[r.verification_freshness] : '',
       r.is_fallback_destination ? 'Yes' : 'No', r.dependent_counties.join('; '), r.priority_reason.join('; '),
       o ? OUTREACH_STATUS_LABELS[o.verification_outreach_status] : 'Not Started',
       o?.verification_outreach_date ?? '', o?.verification_outreach_by ?? '', o?.verification_outreach_notes ?? '',
-      lv.date ?? '', lv.by ?? '',
+      lv.date ?? '', lv.by ?? '', o ? o.verification_outreach_status : '',
     ].map(esc).join(',');
   });
   const csv = [headers.join(','), ...rows].join('\n');
@@ -413,6 +414,32 @@ const VerificationPriorityPanel = () => {
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [applyingKey, setApplyingKey] = useState<string | null>(null);
   const [auditKey, setAuditKey] = useState<string | null>(null);
+  const [importResult, setImportResult] = useState<VerificationImportResult | null>(null);
+
+  const handleCsvImport = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.csv';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        if (!text) return;
+        const result = importVerificationCsv(text);
+        setImportResult(result);
+        if (result.updated > 0) {
+          setRefreshKey(k => k + 1);
+          toast.success(`${result.updated} verification(s) imported`);
+        } else {
+          toast.info('No verifications were updated');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  }, []);
 
   const filtered = useMemo(() => {
     let records = queue;
@@ -492,15 +519,52 @@ const VerificationPriorityPanel = () => {
           <span className="text-[10px] font-bold text-amber-600 tabular-nums">{medCount} Medium</span>
           <span className="text-[10px] font-bold text-muted-foreground tabular-nums">{queue.length} Total</span>
         </div>
-        <button
-          onClick={() => exportQueueCsv(filtered, outreachMap)}
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border border-border text-muted-foreground hover:bg-secondary/80 transition-colors"
-          title="Export filtered queue as CSV"
-        >
-          <Download className="w-3 h-3" />
-          CSV
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={handleCsvImport}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border border-border text-muted-foreground hover:bg-secondary/80 transition-colors"
+            title="Import verification CSV"
+          >
+            <Upload className="w-3 h-3" />
+            Import
+          </button>
+          <button
+            onClick={() => exportQueueCsv(filtered, outreachMap)}
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-medium border border-border text-muted-foreground hover:bg-secondary/80 transition-colors"
+            title="Export filtered queue as CSV"
+          >
+            <Download className="w-3 h-3" />
+            CSV
+          </button>
+        </div>
       </div>
+
+      {/* Import result summary */}
+      {importResult && (
+        <div className="rounded-md border border-border bg-secondary/50 p-2 space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-semibold text-foreground">Import Result</span>
+            <button onClick={() => setImportResult(null)} className="text-muted-foreground hover:text-foreground">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="grid grid-cols-4 gap-1 text-[9px]">
+            <div><span className="text-muted-foreground">Total:</span> {importResult.totalRows}</div>
+            <div><span className="text-emerald-600">Updated:</span> {importResult.updated}</div>
+            <div><span className="text-muted-foreground">Skipped:</span> {importResult.skipped}</div>
+            <div><span className="text-destructive">Failed:</span> {importResult.failed}</div>
+          </div>
+          {importResult.details.filter(d => d.status !== 'updated').length > 0 && (
+            <div className="max-h-[80px] overflow-auto text-[9px] space-y-0.5 mt-1">
+              {importResult.details.filter(d => d.status !== 'updated').map((d, i) => (
+                <div key={i} className={`${d.status === 'failed' ? 'text-destructive' : 'text-muted-foreground'}`}>
+                  Row {d.row}: {d.reason}{d.entityId ? ` (${d.entityId})` : ''}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="flex items-center gap-1.5 flex-wrap">
