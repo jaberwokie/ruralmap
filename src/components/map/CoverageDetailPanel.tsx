@@ -1413,6 +1413,18 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                   </div>
                 </div>
               )}
+              {!hasHospital && (
+                <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold text-amber-700">⚠ No Hospital in County</div>
+                  <p className="text-[9px] text-amber-600 mt-0.5">No hospital entities exist in {county} County</p>
+                </div>
+              )}
+              {verifiedPsych.length === 0 && psychProviders.length > 0 && (
+                <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
+                  <div className="text-[10px] font-semibold text-amber-700">⚠ Zero Verified Psychiatric Providers</div>
+                  <p className="text-[9px] text-amber-600 mt-0.5">All {psychProviders.length} psychiatric provider(s) need verification</p>
+                </div>
+              )}
             </div>
           </DetailSection>
         );
