@@ -510,7 +510,14 @@ const Sidebar = ({
     );
   }, [filteredServices, filterSuffix]);
 
-  const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size;
+  const serviceLineFilterCount =
+    (filters.psychiatry ? 1 : 0) + (filters.verifiedPsychiatryOnly ? 1 : 0) +
+    (filters.acceptingPsychPatients ? 1 : 0) + (filters.telepsychiatry ? 1 : 0) +
+    (filters.inpatientServices ? 1 : 0) + (filters.verifiedInpatientOnly ? 1 : 0) +
+    (filters.psychiatricInpatient ? 1 : 0) + (filters.detoxInpatient ? 1 : 0) +
+    (filters.acceptingAdmissions ? 1 : 0) + (filters.medicaidInpatient ? 1 : 0);
+
+  const activeFilterCount = filters.types.size + filters.counties.size + filters.serviceCategories.size + serviceLineFilterCount;
 
   const toggleTypeFilter = (type: string) => {
     const next = new Set(filters.types);
@@ -530,8 +537,17 @@ const Sidebar = ({
     onFiltersChange({ ...filters, serviceCategories: next });
   };
 
+  const toggleServiceLineFilter = (key: keyof typeof filters) => {
+    onFiltersChange({ ...filters, [key]: !filters[key as keyof typeof filters] });
+  };
+
   const clearFilters = () => {
-    onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() });
+    onFiltersChange({
+      types: new Set(), counties: new Set(), serviceCategories: new Set(),
+      psychiatry: false, verifiedPsychiatryOnly: false, acceptingPsychPatients: false, telepsychiatry: false,
+      inpatientServices: false, verifiedInpatientOnly: false, psychiatricInpatient: false, detoxInpatient: false,
+      acceptingAdmissions: false, medicaidInpatient: false,
+    });
   };
 
   const normalizeHeader = (h: string) =>
