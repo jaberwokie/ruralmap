@@ -800,7 +800,7 @@ const Sidebar = ({
 
   return (
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
-      <div className="flex-1 overflow-y-auto scroll-smooth sidebar-scroll pb-6">
+      <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
       <div className="px-4 pt-4 pb-3 space-y-2.5">
         <div>
@@ -1757,7 +1757,7 @@ const Sidebar = ({
       </div>
       </div>
       {/* Bottom fade overlay */}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
+      <div className="pointer-events-none absolute bottom-0 left-0 right-[5px] h-8 bg-gradient-to-t from-card to-transparent" />
     </div>
   );
 };
