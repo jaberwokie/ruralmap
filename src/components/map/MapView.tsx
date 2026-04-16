@@ -40,6 +40,7 @@ import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAcce
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
+import { localTransitZones } from '@/data/local-transit-zones';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -58,6 +59,8 @@ interface MapViewProps {
     tribalNations: boolean;
     /** Additive transport overlay — defaults to false. */
     railCorridor?: boolean;
+    /** Additive access-support overlay — defaults to false. */
+    localTransitZones?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -691,6 +694,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const memberPinRef = useRef<L.LayerGroup | null>(null);
   const memberRingsRef = useRef<L.LayerGroup | null>(null);
   const railLayerRef = useRef<L.LayerGroup | null>(null);
+  const localTransitLayerRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
