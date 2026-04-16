@@ -1462,8 +1462,39 @@ const Sidebar = ({
                         <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80 mb-1">
                           Transit Providers
                         </div>
-                        <ul className="space-y-0.5">
-                          {localTransitProviders.map((p) => {
+                        {(() => {
+                          // Operational ordering (UI-only). Not alphabetical.
+                          const STRUCTURED_ORDER = [
+                            'ltp-silver-rider',
+                            'ltp-jac',
+                            'ltp-pahrump-valley-public-transportation',
+                            'ltp-cart',
+                            'ltp-get-my-ride',
+                            'ltp-ely-bus',
+                          ];
+                          const LIMITED_ORDER = [
+                            'ltp-lincoln-county-transportation',
+                            'ltp-pleasant-senior-center',
+                            'ltp-lyon-county-human-services',
+                            'ltp-nye-senior-nutrition',
+                            'ltp-pyramid-lake-tribal-transit',
+                          ];
+                          const byId = new Map(localTransitProviders.map((p) => [p.id, p]));
+                          const structured = STRUCTURED_ORDER
+                            .map((id) => byId.get(id))
+                            .filter((p): p is NonNullable<typeof p> => !!p && p.supportLevel === 'structured_local_transit');
+                          const limited = LIMITED_ORDER
+                            .map((id) => byId.get(id))
+                            .filter((p): p is NonNullable<typeof p> => !!p && p.supportLevel === 'limited_community_transit');
+                          // Append any future providers not yet ranked, preserving group integrity.
+                          const ranked = new Set([...STRUCTURED_ORDER, ...LIMITED_ORDER]);
+                          for (const p of localTransitProviders) {
+                            if (ranked.has(p.id)) continue;
+                            if (p.supportLevel === 'structured_local_transit') structured.push(p);
+                            else limited.push(p);
+                          }
+
+                          const renderItem = (p: typeof localTransitProviders[number]) => {
                             const isStructured = p.supportLevel === 'structured_local_transit';
                             const levelLabel = isStructured ? 'Structured' : 'Limited';
                             const levelTitle = LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS[p.supportLevel];
@@ -1489,8 +1520,29 @@ const Sidebar = ({
                                 </button>
                               </li>
                             );
-                          })}
-                        </ul>
+                          };
+
+                          return (
+                            <>
+                              {structured.length > 0 && (
+                                <>
+                                  <div className="px-1 pt-0.5 pb-0.5 text-[9px] uppercase tracking-wide text-muted-foreground/70">
+                                    Structured Transit
+                                  </div>
+                                  <ul className="space-y-0.5">{structured.map(renderItem)}</ul>
+                                </>
+                              )}
+                              {limited.length > 0 && (
+                                <>
+                                  <div className="mt-1 border-t border-border/60 px-1 pt-1 pb-0.5 text-[9px] uppercase tracking-wide text-muted-foreground/70">
+                                    Limited Transit
+                                  </div>
+                                  <ul className="space-y-0.5">{limited.map(renderItem)}</ul>
+                                </>
+                              )}
+                            </>
+                          );
+                        })()}
                         <p
                           className="mt-1.5 px-1 text-[9px] leading-snug text-muted-foreground/80"
                           title="Transit reflects local mobility support, not guaranteed end-to-end coverage."
