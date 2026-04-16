@@ -1708,59 +1708,7 @@ const Sidebar = ({
         )}
       </div>
 
-      {/* Facilities List */}
-      <div className="flex flex-col px-4 pt-2 pb-4">
-        <button
-          onClick={toggleFacilities}
-          className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
-        >
-          {facilitiesOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          Facilities ({displayFacilities.length})
-        </button>
-        {facilitiesOpen && (
-          <div className="space-y-0.5">
-            {displayFacilities.length === 0 ? (
-              <div className="py-8 text-center">
-                <p className="text-xs text-muted-foreground">No facilities match your search or filters.</p>
-                {(searchQuery || filters.types.size > 0 || filters.counties.size > 0) && (
-                  <button
-                    onClick={() => { onSearchChange(''); onFiltersChange({ types: new Set(), counties: new Set(), serviceCategories: new Set() }); }}
-                    className="mt-2 text-[11px] text-primary hover:underline"
-                  >
-                    Clear all filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              displayFacilities.map(facility => (
-                <button
-                  key={facility.id}
-                  onClick={() => onFacilityClick(facility)}
-                  className="w-full text-left px-2 py-2 rounded hover:bg-secondary transition-colors duration-150"
-                >
-                  <div className="flex items-start gap-2">
-                    <div className="mt-0.5 flex-shrink-0">
-                      {renderPinVisual({
-                        pin: 'providerLocations',
-                        size: 14,
-                        color: facility.type === 'hospital' ? 'hsl(var(--hospital))' : 'hsl(var(--clinic))',
-                      })}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-medium text-foreground truncate">
-                        {facility.name}
-                      </div>
-                      <div className="text-[11px] text-muted-foreground">
-                        {facility.city}{facility.county ? `, ${facility.county} Co.` : ''}
-                      </div>
-                    </div>
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        )}
-      </div>
+      {/* Facilities List removed — search bar is the primary navigation */}
       </div>
       {/* Bottom fade overlay */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-[5px] h-8 bg-gradient-to-t from-card to-transparent" />
