@@ -55,6 +55,8 @@ interface MapViewProps {
     broadbandAccess: boolean;
     cellularCoverage: boolean;
     tribalNations: boolean;
+    /** Additive transport overlay — defaults to false. */
+    railCorridor?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
