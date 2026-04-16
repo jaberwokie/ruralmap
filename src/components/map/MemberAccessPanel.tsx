@@ -1,10 +1,11 @@
-import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route } from 'lucide-react';
+import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront } from 'lucide-react';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
+import { evaluateRailRelevance } from '@/utils/railProximity';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
