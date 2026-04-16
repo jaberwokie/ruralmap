@@ -71,7 +71,7 @@ export const localTransitProviders: LocalTransitProvider[] = [
     zoneIds: ['ltz-getmyride-elko'],
     serviceType: 'mixed',
     phone: '775-738-4647',
-    website: 'https://www.elkocountynv.net/departments/get_my_ride/index.php',
+    website: 'https://www.elkocountynv.net/new_page/transit_service19/index.php',
     note: 'Supports local transportation within Elko and surrounding communities.',
     fareNote: 'Local fares; reduced fares available for seniors and riders with disabilities.',
   },
