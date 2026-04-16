@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
+import nbhLogo from '@/assets/nbh-logo.png';
 import MapExplainerModal from './MapExplainerModal';
 import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
@@ -804,7 +805,15 @@ const Sidebar = ({
       {/* Header */}
       <div className="px-4 pt-4 pb-3 space-y-2.5">
         <div>
-          <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
+          <div className="flex items-center gap-2.5">
+            <img
+              src={nbhLogo}
+              alt="Nevada Behavioral Health Systems logo"
+              className="h-8 w-auto flex-shrink-0 object-contain"
+              decoding="async"
+            />
+            <h1 className="text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">Nevada Behavioral Health</p>
         </div>
         <div className="flex items-center gap-2">
