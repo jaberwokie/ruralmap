@@ -18,6 +18,17 @@ export interface RailCorridor {
   coordinates: [number, number][];
 }
 
+export interface RailStationSchedule {
+  /** Direction of travel along the California Zephyr */
+  direction: 'Eastbound' | 'Westbound';
+  /** Destination headsign for operational context */
+  headsign: string;
+  /** Published timetable time at this station, local time */
+  scheduledTime: string;
+  /** Published timetable stop type */
+  stopType: 'Departure' | 'Arrival';
+}
+
 export interface RailStation {
   id: string;
   name: string;
@@ -25,6 +36,14 @@ export interface RailStation {
   lat: number;
   lng: number;
   active: boolean;
+  /** Amtrak 3-letter station code for station page URL */
+  stationCode?: string;
+  /** Physical street address of the station/platform */
+  address?: string;
+  /** Route this station serves */
+  routeName?: string;
+  /** Published California Zephyr timetable entries at this station */
+  schedule?: RailStationSchedule[];
 }
 
 export const RAIL_NEAR_STATION_MI = 10;
@@ -57,8 +76,64 @@ export const railCorridors: RailCorridor[] = [
 ];
 
 export const railStations: RailStation[] = [
-  { id: 'rail-reno',       name: 'Reno Station',       city: 'Reno',       lat: 39.5294, lng: -119.8137, active: true },
-  { id: 'rail-sparks',     name: 'Sparks Station',     city: 'Sparks',     lat: 39.5349, lng: -119.7474, active: true },
-  { id: 'rail-winnemucca', name: 'Winnemucca Station', city: 'Winnemucca', lat: 40.9730, lng: -117.7357, active: true },
-  { id: 'rail-elko',       name: 'Elko Station',       city: 'Elko',       lat: 40.8324, lng: -115.7631, active: true },
+  {
+    id: 'rail-reno',
+    name: 'Reno Station',
+    city: 'Reno',
+    lat: 39.5294,
+    lng: -119.8137,
+    active: true,
+    stationCode: 'RNO',
+    address: '280 N Center St, Reno, NV 89501',
+    routeName: 'California Zephyr',
+    schedule: [
+      { direction: 'Eastbound', headsign: 'to Chicago', scheduledTime: '4:32 PM', stopType: 'Departure' },
+      { direction: 'Westbound', headsign: 'to Emeryville', scheduledTime: '8:36 AM', stopType: 'Departure' },
+    ],
+  },
+  {
+    id: 'rail-sparks',
+    name: 'Sparks Station',
+    city: 'Sparks',
+    lat: 39.5349,
+    lng: -119.7474,
+    active: true,
+    stationCode: 'SPK',
+    address: '1100 Victorian Ave, Sparks, NV 89431',
+    routeName: 'California Zephyr',
+    schedule: [
+      { direction: 'Eastbound', headsign: 'to Chicago', scheduledTime: '4:55 PM', stopType: 'Departure' },
+      { direction: 'Westbound', headsign: 'to Emeryville', scheduledTime: '8:14 AM', stopType: 'Departure' },
+    ],
+  },
+  {
+    id: 'rail-winnemucca',
+    name: 'Winnemucca Station',
+    city: 'Winnemucca',
+    lat: 40.9730,
+    lng: -117.7357,
+    active: true,
+    stationCode: 'WNN',
+    address: '209 S Main St, Winnemucca, NV 89445',
+    routeName: 'California Zephyr',
+    schedule: [
+      { direction: 'Eastbound', headsign: 'to Chicago', scheduledTime: '8:38 PM', stopType: 'Departure' },
+      { direction: 'Westbound', headsign: 'to Emeryville', scheduledTime: '4:25 AM', stopType: 'Departure' },
+    ],
+  },
+  {
+    id: 'rail-elko',
+    name: 'Elko Station',
+    city: 'Elko',
+    lat: 40.8324,
+    lng: -115.7631,
+    active: true,
+    stationCode: 'EKO',
+    address: '1010 Avenue F, Elko, NV 89801',
+    routeName: 'California Zephyr',
+    schedule: [
+      { direction: 'Eastbound', headsign: 'to Chicago', scheduledTime: '11:08 PM', stopType: 'Departure' },
+      { direction: 'Westbound', headsign: 'to Emeryville', scheduledTime: '1:55 AM', stopType: 'Departure' },
+    ],
+  },
 ];

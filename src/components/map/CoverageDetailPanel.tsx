@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark, Brain } from 'lucide-react';
+import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangle, Users, Radio, Route, ArrowRight, Navigation, Headphones, ExternalLink, ChevronDown, Copy, Check, Wifi, Signal, Landmark, Brain, TrainFront } from 'lucide-react';
 import { ContactPhoneAction, formatPhone } from '@/components/ContactPhoneAction';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
@@ -8,6 +8,7 @@ import { Facility, defaultFacilities, getFacilityClassification, getFacilityData
 import { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
+import type { RailStation } from '@/data/rail-corridors';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
@@ -307,6 +308,7 @@ const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; covera
     case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
+    case 'railStation': return <RailStationContent station={entity.station} />;
     case 'memberAccess': return <MemberAccessPanelLazy analysis={entity.analysis} />;
     default: return null;
   }
@@ -2440,6 +2442,89 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
+    </>
+  );
+};
+
+// ── Amtrak Rail Station (infrastructure overlay; not a provider/service) ──
+const RailStationContent = ({ station }: { station: RailStation }) => {
+  const bookingUrl = 'https://www.amtrak.com/tickets/departure.html';
+  const stationUrl = station.stationCode
+    ? `https://www.amtrak.com/stations/${station.stationCode.toLowerCase()}`
+    : null;
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-muted-foreground flex items-center gap-1">
+        <TrainFront className="w-3 h-3" /> Amtrak Rail Station
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-0.5">{station.name}</p>
+      <p className="text-[11px] text-muted-foreground mb-0.5">
+        {station.routeName ?? 'California Zephyr'}
+        {station.stationCode && <span className="ml-1 font-mono">· {station.stationCode}</span>}
+      </p>
+      <p className="text-[10px] text-muted-foreground mb-2">1 daily train each direction through Nevada</p>
+
+      {station.address && (
+        <div className="mb-2 flex items-start gap-1.5 text-[11px] text-muted-foreground">
+          <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
+          <span>{station.address}</span>
+        </div>
+      )}
+
+      {/* Schedule (Published Timetable) */}
+      {station.schedule && station.schedule.length > 0 && (
+        <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Published Timetable</span>
+            <span className="text-[9px] text-muted-foreground">not live status</span>
+          </div>
+          <div className="space-y-1">
+            {station.schedule.map((s, i) => (
+              <div key={i} className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">{s.direction}</span>
+                  <span className="ml-1">{s.headsign}</span>
+                </span>
+                <span className="font-mono text-foreground">{s.scheduledTime}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fare (intentionally not static) */}
+      <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+        <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Fare</div>
+        <div className="text-[11px] text-foreground">Fare varies by date and availability</div>
+        <div className="text-[10px] text-muted-foreground">Use live Amtrak lookup for current pricing</div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-1.5">
+        <a
+          href={bookingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Check current fare &amp; schedule
+        </a>
+        {stationUrl && (
+          <a
+            href={stationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Open station page
+          </a>
+        )}
+      </div>
     </>
   );
 };
