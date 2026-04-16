@@ -681,14 +681,9 @@ const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
                         <InlineAuditHistory entityId={rec.entity_id} serviceLine={rec.service_line} />
                       )}
                       {!isEditing && !isApplying && !isAuditOpen && rec.priority_reason.length > 0 && (
-                        <ul className="list-none mt-0.5">
-                          {rec.priority_reason.slice(0, 2).map((r, i) => (
-                            <li key={i} className="text-[9px] text-muted-foreground/70 leading-tight">• {r}</li>
-                          ))}
-                          {rec.priority_reason.length > 2 && (
-                            <li className="text-[9px] text-muted-foreground/50 leading-tight">+{rec.priority_reason.length - 2} more</li>
-                          )}
-                        </ul>
+                        <div className="text-[9px] text-muted-foreground/70 leading-tight mt-0.5 truncate" title={rec.priority_reason.join(' · ')}>
+                          {rec.priority_reason[0]}
+                        </div>
                       )}
                     </TableCell>
                     <TableCell className="text-[10px] px-1.5 py-1 text-muted-foreground">{rec.county}</TableCell>
@@ -798,7 +793,7 @@ const InlineAuditHistory = ({ entityId, serviceLine }: { entityId: string; servi
 
 export const VerificationAuditHistoryPanel = () => {
   const log = useMemo(() => getAuditLog().slice(0, 50), []);
-  if (log.length === 0) return <p className="text-[11px] text-muted-foreground italic py-2">No verification audit records yet.</p>;
+  if (log.length === 0) return <p className="text-[11px] text-muted-foreground italic py-2">No verification records yet</p>;
   return (
     <div className="space-y-1.5 max-h-[300px] overflow-y-scroll sidebar-scroll">
       {log.map(r => (
