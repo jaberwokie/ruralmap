@@ -2532,4 +2532,61 @@ const RailStationContent = ({ station }: { station: RailStation }) => {
 };
 
 
+// ── Local Transit Provider (additive access-support utility) ──
+const LocalTransitProviderContent = ({ provider }: { provider: LocalTransitProvider }) => {
+  const zones = getProviderZones(provider);
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-muted-foreground flex items-center gap-1">
+        <Route className="w-3 h-3" /> Local Transit Provider
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-0.5">{provider.name}</p>
+      <p className="text-[11px] text-muted-foreground mb-2">{LOCAL_TRANSIT_SERVICE_TYPE_LABELS[provider.serviceType]}</p>
+
+      {zones.length > 0 && (
+        <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Operating areas</div>
+          <ul className="space-y-0.5">
+            {zones.map((z) => (
+              <li key={z.id} className="text-[11px] text-foreground flex items-start gap-1">
+                <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                <span>{z.shortLabel}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <p className="text-[11px] text-foreground mb-2 leading-snug">{provider.note}</p>
+      <p className="text-[10px] text-muted-foreground mb-2 leading-snug">Supports local access, not statewide long-distance travel.</p>
+
+      {provider.fareNote && (
+        <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Fare</div>
+          <div className="text-[11px] text-foreground">{provider.fareNote}</div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        {provider.phone && (
+          <ContactPhoneAction phone={provider.phone} label={`Call ${provider.name}`} />
+        )}
+        {provider.website && (
+          <a
+            href={provider.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Open provider website
+          </a>
+        )}
+      </div>
+    </>
+  );
+};
+
+
 export default CoverageDetailPanel;
