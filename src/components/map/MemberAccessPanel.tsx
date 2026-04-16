@@ -246,6 +246,36 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
     });
   }
 
+  // ── Local Transit Context (additive) ──
+  // Strictly does not affect tier scoring, recommendation, or member distance math.
+  const memberZone = findZoneContaining(analysis.location.lat, analysis.location.lng);
+  const inRangeDestinations = analysis.tiers
+    .filter(t => t.key === 'local' || t.key === 'managed')
+    .flatMap(t => [
+      ...t.facilities.map(f => ({ lat: f.lat, lng: f.lng, distanceMi: f.distanceMi })),
+      ...t.services.map(s => ({ lat: s.lat, lng: s.lng, distanceMi: s.distanceMi })),
+    ])
+    .sort((a, b) => a.distanceMi - b.distanceMi);
+  const closestDest = inRangeDestinations[0];
+  const destZone = closestDest ? findZoneContaining(closestDest.lat, closestDest.lng) : null;
+  const sharedZone = memberZone && destZone && memberZone.id === destZone.id ? memberZone : null;
+
+  let transitMessage: string | null = null;
+  if (sharedZone) {
+    transitMessage = `Both member and closest in-range destination fall within the ${sharedZone.shortLabel}.`;
+  } else if (memberZone) {
+    transitMessage = `Local transit may support in-town access in the ${memberZone.shortLabel}.`;
+  }
+
+  if (import.meta.env.DEV) {
+    console.info('[LocalTransit] member context evaluation', {
+      memberZone: memberZone?.id ?? null,
+      destZone: destZone?.id ?? null,
+      sharedZone: sharedZone?.id ?? null,
+      message: transitMessage,
+    });
+  }
+
   return (
     <>
       <div className="flex items-center gap-1.5 mb-2">
