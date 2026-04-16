@@ -2832,12 +2832,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     localTransitZones.forEach((zone) => {
       if (!zone.active) return;
       const polygon = L.polygon(zone.geometry, {
-        pane: PANE_CONFIG.markers.id,
-        color: 'hsl(38, 70%, 45%)',
-        weight: 1,
-        opacity: 0.55,
-        fillColor: 'hsl(38, 85%, 65%)',
-        fillOpacity: 0.18,
+        pane: PANE_CONFIG.coverage.id,
+        color: 'hsl(210, 70%, 50%)',
+        weight: 1.2,
+        opacity: 0.7,
+        dashArray: '4 4',
+        fillColor: 'hsl(205, 85%, 70%)',
+        fillOpacity: 0.1,
         interactive: false,
         className: 'local-transit-zone',
       });
