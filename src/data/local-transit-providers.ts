@@ -106,6 +106,14 @@ export const localTransitProviders: LocalTransitProvider[] = [
   },
 ];
 
+if (import.meta.env.DEV) {
+  const totalZoneRefs = localTransitProviders.reduce((sum, p) => sum + p.zoneIds.length, 0);
+  console.info('[LocalTransit] providers loaded', {
+    providers: localTransitProviders.length,
+    zoneReferences: totalZoneRefs,
+  });
+}
+
 /** Return the resolved zone records for a provider (filters out unknown ids). */
 export function getProviderZones(provider: LocalTransitProvider): LocalTransitZone[] {
   const lookup = new Map(localTransitZones.map((z) => [z.id, z]));
