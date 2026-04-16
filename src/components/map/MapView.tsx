@@ -39,6 +39,7 @@ import MemberAccessSearch from '@/components/map/MemberAccessSearch';
 import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
+import { railCorridors, railStations } from '@/data/rail-corridors';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -55,6 +56,8 @@ interface MapViewProps {
     broadbandAccess: boolean;
     cellularCoverage: boolean;
     tribalNations: boolean;
+    /** Additive transport overlay — defaults to false. */
+    railCorridor?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -687,6 +690,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const tribalNationsRef = useRef<L.LayerGroup | null>(null);
   const memberPinRef = useRef<L.LayerGroup | null>(null);
   const memberRingsRef = useRef<L.LayerGroup | null>(null);
+  const railLayerRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
@@ -1432,6 +1436,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     highlightsRef.current = L.layerGroup().addTo(map);
     memberRingsRef.current = L.layerGroup().addTo(map);
     memberPinRef.current = L.layerGroup().addTo(map);
+    railLayerRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
@@ -2734,6 +2739,76 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
   }, [mapReady, memberLocation]);
+
+  // ── Rail Corridor overlay (additive transport layer) ──
+  // STRICTLY ADDITIVE: does not affect any other layer, filter, score, or queue.
+  useEffect(() => {
+    if (!mapReady || !railLayerRef.current) return;
+    railLayerRef.current.clearLayers();
+    if (!layers.railCorridor) {
+      if (import.meta.env.DEV) {
+        console.info('[Rail] toggle=OFF; overlay cleared');
+      }
+      return;
+    }
+
+    railCorridors.forEach((corridor) => {
+      if (!corridor.active) return;
+      const polyline = L.polyline(corridor.coordinates, {
+        pane: PANE_CONFIG.coverage.id,
+        color: 'hsl(0, 0%, 35%)',
+        weight: 1.6,
+        opacity: 0.7,
+        dashArray: '6 4',
+        interactive: false,
+        smoothFactor: 0,
+      });
+      polyline.bindTooltip(`${corridor.name} · ${corridor.frequencyNote}`, {
+        sticky: true,
+        opacity: 0.9,
+        className: 'rail-corridor-tooltip',
+      });
+      railLayerRef.current!.addLayer(polyline);
+    });
+
+    const stationIcon = L.divIcon({
+      className: '',
+      iconSize: [12, 12],
+      iconAnchor: [6, 6],
+      html: `<div style="width:12px;height:12px;border-radius:2px;background:hsl(0,0%,98%);border:1.5px solid hsl(0,0%,30%);box-shadow:0 1px 2px rgba(0,0,0,0.15);"></div>`,
+    });
+
+    railStations.forEach((station) => {
+      if (!station.active) return;
+      const marker = L.marker([station.lat, station.lng], {
+        icon: stationIcon,
+        pane: PANE_CONFIG.markers.id,
+        interactive: true,
+        keyboard: false,
+        zIndexOffset: -500,
+      });
+      marker.bindTooltip(station.name, {
+        direction: 'top',
+        offset: [0, -6],
+        opacity: 0.95,
+        className: 'rail-station-tooltip',
+      });
+      marker.on('click', (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e);
+      });
+      railLayerRef.current!.addLayer(marker);
+    });
+
+    if (import.meta.env.DEV) {
+      console.info('[Rail] overlay loaded', {
+        toggle: 'ON',
+        corridors: railCorridors.filter(c => c.active).length,
+        stations: railStations.filter(s => s.active).length,
+        memberActive: !!memberLocation,
+      });
+    }
+  }, [mapReady, layers.railCorridor, memberLocation]);
+
 
   return (
     <div className="relative h-full w-full">

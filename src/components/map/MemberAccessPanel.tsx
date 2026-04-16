@@ -1,10 +1,11 @@
-import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route } from 'lucide-react';
+import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront } from 'lucide-react';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
+import { evaluateRailRelevance } from '@/utils/railProximity';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -229,6 +230,21 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
     t.services.some(s => isBehavioralHealthService(s))
   );
 
+  // ── Transport Context (rail) — additive, only surfaces in narrow northern long-distance cases.
+  const railCandidates = analysis.tiers.flatMap(t => [
+    ...t.facilities.map(f => ({ name: f.name, lat: f.lat, lng: f.lng, distanceMi: f.distanceMi })),
+    ...t.services.map(s => ({ name: s.name, lat: s.lat, lng: s.lng, distanceMi: s.distanceMi })),
+  ]);
+  const railContext = evaluateRailRelevance(analysis.location, railCandidates);
+  if (import.meta.env.DEV) {
+    console.info('[Rail] member relevance evaluation', {
+      memberLat: analysis.location.lat,
+      candidates: railCandidates.length,
+      relevant: railContext.relevant,
+      message: railContext.message,
+    });
+  }
+
   return (
     <>
       <div className="flex items-center gap-1.5 mb-2">
@@ -258,6 +274,19 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
       {!bhInLocalManaged && totalResources > 0 && (
         <div className="mt-2 px-2 py-1 rounded text-[10px] italic" style={{ color: 'hsl(270, 50%, 55%)', background: 'hsl(270, 50%, 95%)' }}>
           No behavioral health access available within 25 miles
+        </div>
+      )}
+
+      {/* Transport Context — additive, only shown when rail is meaningfully relevant */}
+      {railContext.relevant && railContext.message && (
+        <div className="mt-2 px-2 py-1.5 rounded border border-border/60 bg-secondary/40">
+          <div className="flex items-start gap-1.5">
+            <TrainFront className="w-3 h-3 flex-shrink-0 mt-0.5 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Transport Context</p>
+              <p className="text-[10px] text-foreground leading-snug mt-0.5">{railContext.message}</p>
+            </div>
+          </div>
         </div>
       )}
 

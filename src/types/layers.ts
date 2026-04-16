@@ -12,6 +12,8 @@ export interface LayerState {
   broadbandAccess: boolean;
   cellularCoverage: boolean;
   tribalNations: boolean;
+  /** Additive transport overlay — Amtrak California Zephyr rail corridor. Default OFF. */
+  railCorridor: boolean;
 }
 
 export interface CoverageState {

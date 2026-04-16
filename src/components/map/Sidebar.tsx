@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
@@ -1437,6 +1437,15 @@ const Sidebar = ({
                         </p>
                       )}
                       <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">This is a scenario tool, not a claim of actual access. Access gaps use the current distance-to-provider setting ({kmToMiles(radiusKm)} mi).</p>
+
+                      {renderLayerToggleRow({
+                        label: 'Rail Corridor (Amtrak)',
+                        icon: TrainFront,
+                        iconClassName: 'text-muted-foreground',
+                        checked: layers.railCorridor,
+                        onCheckedChange: () => onToggleLayer('railCorridor'),
+                        subtitle: 'California Zephyr · 1 train daily each way · 4 NV stations',
+                      })}
                     </div>
                   )}
                 </div>
