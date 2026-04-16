@@ -82,6 +82,7 @@ export const localTransitProviders: LocalTransitProvider[] = [
     zoneIds: ['ltz-elybus-ely'],
     serviceType: 'demand_response',
     phone: '775-289-2877',
+    website: 'https://www.whitepinecounty.net/655/Ely-Bus',
     note: 'Demand-response service in and around Ely (White Pine County).',
   },
   {
