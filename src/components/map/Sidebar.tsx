@@ -803,18 +803,18 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
-      <div className="px-4 pt-3 pb-2 space-y-1.5">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <img
-              src={nbhLogo}
-              alt="Nevada Behavioral Health Systems logo"
-              className="h-[28px] w-auto flex-shrink-0 object-contain"
-              decoding="async"
-            />
+      <div className="px-4 pt-3 pb-2 space-y-2">
+        <div className="flex items-center gap-2.5">
+          <img
+            src={nbhLogo}
+            alt="Nevada Behavioral Health Systems logo"
+            className="h-[42px] w-auto flex-shrink-0 object-contain"
+            decoding="async"
+          />
+          <div className="min-w-0 flex flex-col justify-center leading-tight">
             <h1 className="text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
+            <p className="text-xs text-muted-foreground leading-tight mt-0.5">Nevada Behavioral Health</p>
           </div>
-          <p className="text-xs text-muted-foreground mt-px pl-[calc(28px+0.625rem)]">Nevada Behavioral Health</p>
         </div>
         <div className="flex items-center gap-2">
           <button
