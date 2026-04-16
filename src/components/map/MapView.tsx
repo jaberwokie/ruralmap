@@ -2817,6 +2817,48 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, [mapReady, layers.railCorridor, memberLocation]);
 
 
+  // ── Local Transit Zones overlay (additive access-support layer) ──
+  // STRICTLY ADDITIVE: does not affect any other layer, filter, score, or queue.
+  useEffect(() => {
+    if (!mapReady || !localTransitLayerRef.current) return;
+    localTransitLayerRef.current.clearLayers();
+    if (!layers.localTransitZones) {
+      if (import.meta.env.DEV) {
+        console.info('[LocalTransit] toggle=OFF; overlay cleared');
+      }
+      return;
+    }
+
+    localTransitZones.forEach((zone) => {
+      if (!zone.active) return;
+      const polygon = L.polygon(zone.geometry, {
+        pane: PANE_CONFIG.markers.id,
+        color: 'hsl(38, 70%, 45%)',
+        weight: 1,
+        opacity: 0.55,
+        fillColor: 'hsl(38, 85%, 65%)',
+        fillOpacity: 0.18,
+        interactive: false,
+        className: 'local-transit-zone',
+      });
+      polygon.bindTooltip(`${zone.name} · approximate footprint`, {
+        sticky: true,
+        opacity: 0.9,
+        className: 'rail-corridor-tooltip',
+      });
+      localTransitLayerRef.current!.addLayer(polygon);
+    });
+
+    if (import.meta.env.DEV) {
+      const activeCount = localTransitZones.filter(z => z.active).length;
+      console.info('[LocalTransit] overlay loaded', {
+        toggle: 'ON',
+        zones: activeCount,
+      });
+    }
+  }, [mapReady, layers.localTransitZones]);
+
+
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
