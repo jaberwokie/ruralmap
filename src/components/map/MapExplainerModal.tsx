@@ -48,7 +48,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-lg border-b border-border bg-card px-5 py-4">
           <h2 className="text-base font-semibold text-foreground tracking-tight">
-            How to Use the Rural Nevada Access Map
+            Map Guide
           </h2>
           <button
             type="button"
@@ -65,7 +65,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           <Section title="Core Map Layers">
             <ul className="list-disc pl-4 space-y-1">
               <li>Counties and tribal lands provide geographic context.</li>
-              <li>Providers, behavioral health sites, and services show mapped network locations.</li>
+              <li>Providers, behavioral health sites, and services mark network locations.</li>
             </ul>
           </Section>
 
@@ -74,8 +74,8 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           <Section title="Access Views">
             <ul className="list-disc pl-4 space-y-1">
               <li><span className="font-medium text-foreground">Distance to Provider</span> models geographic reach.</li>
-              <li><span className="font-medium text-foreground">Access Gaps</span> highlights areas outside the selected provider radius.</li>
-              <li>Distance helps estimate feasibility, but does not guarantee real access.</li>
+              <li><span className="font-medium text-foreground">Access Gaps</span> highlights areas outside the selected radius.</li>
+              <li>Distance estimates feasibility, not guaranteed access.</li>
             </ul>
           </Section>
 
@@ -83,11 +83,10 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
 
           <Section title="Rail and Transit">
             <ul className="list-disc pl-4 space-y-1">
-              <li><span className="font-medium text-foreground">Rail Corridor</span> shows the Nevada Amtrak corridor for long-distance northern travel support.</li>
-              <li><span className="font-medium text-foreground">Local Transit Zones</span> show areas where local mobility support may exist.</li>
-              <li><span className="font-medium text-foreground">Transit Providers</span> identify the operators serving those areas.</li>
-              <li><span className="font-medium text-foreground">Structured</span> transit indicates organized local transit.</li>
-              <li><span className="font-medium text-foreground">Limited</span> transit indicates community or senior transportation with narrower practical use.</li>
+              <li><span className="font-medium text-foreground">Rail Corridor</span> supports long-distance northern travel.</li>
+              <li><span className="font-medium text-foreground">Local Transit Zones</span> indicate where local mobility may exist.</li>
+              <li><span className="font-medium text-foreground">Transit Providers</span> identify operators.</li>
+              <li><span className="font-medium text-foreground">Structured</span> = organized local transit · <span className="font-medium text-foreground">Limited</span> = community / senior transport.</li>
             </ul>
           </Section>
 
@@ -95,8 +94,8 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
 
           <Section title="Verification and Review">
             <ul className="list-disc pl-4 space-y-1">
-              <li><span className="font-medium text-foreground">Verification Priority Queue</span> highlights locations that may need review first.</li>
-              <li><span className="font-medium text-foreground">Verification Audit History</span> shows recorded verification actions when available.</li>
+              <li><span className="font-medium text-foreground">Priority Queue</span> shows locations needing review.</li>
+              <li><span className="font-medium text-foreground">Audit History</span> tracks completed verification.</li>
             </ul>
           </Section>
 
@@ -104,9 +103,9 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
 
           <Section title="Important Limits">
             <ul className="list-disc pl-4 space-y-1">
-              <li>Transit layers support coordination, not guaranteed transportation.</li>
-              <li>Local transit does not imply full trip continuity across different service areas.</li>
-              <li>Counties without a listed provider should be treated as having no identified local transit support in this model.</li>
+              <li>Transit supports coordination, not guaranteed transportation.</li>
+              <li>Local transit does not ensure full trip continuity.</li>
+              <li>Some counties have no identified local transit provider.</li>
             </ul>
           </Section>
         </div>
