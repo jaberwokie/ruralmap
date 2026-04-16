@@ -997,7 +997,7 @@ const Sidebar = ({
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {renderSectionIntro(SECTION_META.coreMap.question, SECTION_META.coreMap.helper)}
+                      {/* section intro removed for cleanup */}
                       {(['counties', 'tribalNations', 'serviceLocations', 'behavioralHealth', 'services'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         const count = coreMapCounts[key];
@@ -1049,7 +1049,7 @@ const Sidebar = ({
                   {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
                   {operationsOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {renderSectionIntro(SECTION_META.operations.question, SECTION_META.operations.helper)}
+                      {/* section intro removed for cleanup */}
                       {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         return (
@@ -1323,7 +1323,7 @@ const Sidebar = ({
                   {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
                   {utilizationOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {renderSectionIntro(SECTION_META.utilization.question, SECTION_META.utilization.helper)}
+                      {/* section intro removed for cleanup */}
                       {(() => {
                         const { key, label, colorClassName, icon } = getLayerConfig('utilizationIntensity');
                         return (
@@ -1366,7 +1366,7 @@ const Sidebar = ({
                   {renderSectionHeader('ACCESS', accessOpen, toggleAccess)}
                   {accessOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {renderSectionIntro(SECTION_META.access.question, SECTION_META.access.helper)}
+                      <p className="px-2 pb-1 text-[10px] leading-relaxed text-muted-foreground">Distance-based access modeling for rural coverage.</p>
                       {renderLayerToggleRow({
                         label: 'Distance to Provider (Access View)',
                         icon: ACCESS_LAYER_CONFIG.coverageRadius.icon,
@@ -1377,9 +1377,6 @@ const Sidebar = ({
                         dataTutorial: 'toggle-coverage-radius',
                       })}
                       <div className="px-2 pb-1 pt-0.5">
-                        <p className="pb-1 text-[10px] leading-relaxed text-muted-foreground">
-                          Distance does not equal access. Rural engagement reliability decreases as distance increases.
-                        </p>
                         <div className="mb-1 flex items-center justify-between gap-2 px-1">
                           <span className={`truncate text-[10px] font-semibold transition-colors ${coverageRadius ? getProviderAccessTierTextClassName(radiusKm) : 'text-muted-foreground'}`}>
                             {PROVIDER_ACCESS_TIER_LABELS[getProviderAccessTierByKm(radiusKm)]}
@@ -1436,15 +1433,13 @@ const Sidebar = ({
                           Counties highlighted in red fall outside the current distance-to-provider scenario of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
                         </p>
                       )}
-                      <p className="px-2 pb-0.5 text-[9px] italic text-muted-foreground/60">This is a scenario tool, not a claim of actual access. Access gaps use the current distance-to-provider setting ({kmToMiles(radiusKm)} mi).</p>
-
                       {renderLayerToggleRow({
                         label: 'Rail Corridor (Amtrak)',
                         icon: TrainFront,
                         iconClassName: 'text-muted-foreground',
                         checked: layers.railCorridor,
                         onCheckedChange: () => onToggleLayer('railCorridor'),
-                        subtitle: 'California Zephyr · 1 train daily each way · 4 NV stations',
+                        subtitle: 'Northern corridor only · 4 stations',
                       })}
                     </div>
                   )}
@@ -1454,14 +1449,7 @@ const Sidebar = ({
                   {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
                   {connectivityOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      <div className="px-2 pb-1">
-                        <p className="text-[10px] font-medium text-muted-foreground/80 leading-relaxed">
-                          Do broadband and cellular infrastructure support remote service delivery?
-                        </p>
-                        <p className="text-[9px] text-muted-foreground/60 leading-relaxed">
-                          County-level broadband and cellular classification for telehealth, phone coordination, and remote feasibility.
-                        </p>
-                      </div>
+                      {/* connectivity intro removed for cleanup */}
                       {renderLayerToggleRow({
                         label: 'Broadband Access',
                         icon: Wifi,
