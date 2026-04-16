@@ -60,7 +60,7 @@ export const localTransitProviders: LocalTransitProvider[] = [
     zoneIds: ['ltz-jac-carson'],
     serviceType: 'fixed_route_and_paratransit',
     phone: '775-841-7433',
-    website: 'https://www.carson.org/government/departments-g-z/transportation/jump-around-carson-jac',
+    website: 'https://www.carsoncity.gov/government/departments-g-z/public-works/transportation/jac-jump-around-carson',
     note: 'Supports local access within Carson City.',
     fareNote: 'Standard local bus fare; paratransit available with eligibility.',
   },
