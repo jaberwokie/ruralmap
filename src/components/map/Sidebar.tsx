@@ -1445,6 +1445,14 @@ const Sidebar = ({
                         onCheckedChange: () => onToggleLayer('railCorridor'),
                         subtitle: 'Northern corridor only · 4 stations',
                       })}
+                      {renderLayerToggleRow({
+                        label: 'Local Transit Zones',
+                        icon: MapPin,
+                        iconClassName: 'text-muted-foreground',
+                        checked: layers.localTransitZones,
+                        onCheckedChange: () => onToggleLayer('localTransitZones'),
+                        subtitle: 'Silver Rider · JAC · approximate',
+                      })}
                     </div>
                   )}
                 </div>
