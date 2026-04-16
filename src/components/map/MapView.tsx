@@ -1441,6 +1441,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     memberRingsRef.current = L.layerGroup().addTo(map);
     memberPinRef.current = L.layerGroup().addTo(map);
     railLayerRef.current = L.layerGroup().addTo(map);
+    localTransitLayerRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
