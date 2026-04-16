@@ -67,6 +67,7 @@ export interface SidebarSelectionProps {
   selectedFteId?: string | null;
   onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
+  onTransitProviderClick?: (providerId: string) => void;
 }
 
 interface SidebarProps {
