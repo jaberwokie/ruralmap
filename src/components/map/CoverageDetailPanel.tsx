@@ -9,6 +9,7 @@ import { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import type { RailStation } from '@/data/rail-corridors';
+import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
@@ -309,6 +310,7 @@ const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; covera
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
     case 'railStation': return <RailStationContent station={entity.station} />;
+    case 'localTransitProvider': return <LocalTransitProviderContent provider={entity.provider} />;
     case 'memberAccess': return <MemberAccessPanelLazy analysis={entity.analysis} />;
     default: return null;
   }
@@ -2522,6 +2524,63 @@ const RailStationContent = ({ station }: { station: RailStation }) => {
           >
             <ExternalLink className="w-3 h-3" />
             Open station page
+          </a>
+        )}
+      </div>
+    </>
+  );
+};
+
+
+// ── Local Transit Provider (additive access-support utility) ──
+const LocalTransitProviderContent = ({ provider }: { provider: LocalTransitProvider }) => {
+  const zones = getProviderZones(provider);
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-muted-foreground flex items-center gap-1">
+        <Route className="w-3 h-3" /> Local Transit Provider
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-0.5">{provider.name}</p>
+      <p className="text-[11px] text-muted-foreground mb-2">{LOCAL_TRANSIT_SERVICE_TYPE_LABELS[provider.serviceType]}</p>
+
+      {zones.length > 0 && (
+        <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Operating areas</div>
+          <ul className="space-y-0.5">
+            {zones.map((z) => (
+              <li key={z.id} className="text-[11px] text-foreground flex items-start gap-1">
+                <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0 text-muted-foreground" />
+                <span>{z.shortLabel}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <p className="text-[11px] text-foreground mb-2 leading-snug">{provider.note}</p>
+      <p className="text-[10px] text-muted-foreground mb-2 leading-snug">Supports local access, not statewide long-distance travel.</p>
+
+      {provider.fareNote && (
+        <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Fare</div>
+          <div className="text-[11px] text-foreground">{provider.fareNote}</div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        {provider.phone && (
+          <ContactPhoneAction phone={provider.phone} />
+        )}
+        {provider.website && (
+          <a
+            href={provider.website}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Open provider website
           </a>
         )}
       </div>

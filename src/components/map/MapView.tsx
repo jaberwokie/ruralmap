@@ -89,6 +89,8 @@ interface MapViewProps {
   memberIsGeocoding?: boolean;
   memberGeocodeError?: string | null;
   memberManualMode?: boolean;
+  /** Additive: external request to fit map to a bounding box. Changing identity triggers a fitBounds. */
+  focusBounds?: [[number, number], [number, number]] | null;
 }
 
 interface CountyHoverMetrics {
@@ -660,7 +662,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -2858,6 +2860,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     }
   }, [mapReady, layers.localTransitZones]);
+
+  // Additive: fit map to externally requested bounds (e.g., transit provider click).
+  useEffect(() => {
+    if (!mapReady || !mapRef.current || !focusBounds) return;
+    const [[s, w], [n, e]] = focusBounds;
+    const bounds = L.latLngBounds([s, w], [n, e]);
+    if (!bounds.isValid()) return;
+    mapRef.current.fitBounds(bounds, { padding: [40, 40], maxZoom: 11, animate: true, duration: 0.4 });
+  }, [mapReady, focusBounds]);
 
 
   return (

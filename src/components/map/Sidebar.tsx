@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import nbhLogo from '@/assets/nbh-logo.png';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, type LucideIcon } from 'lucide-react';
+import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
@@ -12,6 +12,7 @@ import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
+import { localTransitProviders } from '@/data/local-transit-providers';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { tribalNations } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
@@ -67,6 +68,7 @@ export interface SidebarSelectionProps {
   selectedFteId?: string | null;
   onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
+  onTransitProviderClick?: (providerId: string) => void;
 }
 
 interface SidebarProps {
@@ -362,6 +364,7 @@ const Sidebar = ({
     selectedFteId,
     onFteCardClick,
     onCountySelect,
+    onTransitProviderClick,
   },
 }: SidebarProps) => {
   const usePersistToggle = (key: string, defaultOpen = false) => {
@@ -1453,6 +1456,27 @@ const Sidebar = ({
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
                         subtitle: 'Silver Rider · JAC · approximate',
                       })}
+
+                      {/* Transit Providers — additive utility list (not a facility/provider/service) */}
+                      <div className="mt-1 px-2">
+                        <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80 mb-1">
+                          Transit Providers
+                        </div>
+                        <ul className="space-y-0.5">
+                          {localTransitProviders.map((p) => (
+                            <li key={p.id}>
+                              <button
+                                type="button"
+                                onClick={() => onTransitProviderClick?.(p.id)}
+                                className="w-full rounded-sm px-1.5 py-1 text-left text-[11px] leading-tight text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring flex items-center gap-1.5"
+                              >
+                                <Route className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                <span className="truncate">{p.name}</span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </div>
                   )}
                 </div>
