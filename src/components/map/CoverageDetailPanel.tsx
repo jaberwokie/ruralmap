@@ -2576,23 +2576,25 @@ const LocalTransitProviderContent = ({ provider }: { provider: LocalTransitProvi
         </div>
       )}
 
-      <div className="flex flex-col gap-1.5">
-        {provider.phone && (
+      {provider.phone && (
+        <div className="mb-2">
+          <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-1">Contact</div>
           <ContactPhoneAction phone={provider.phone} />
-        )}
-        {provider.website && (
-          <a
-            href={provider.website}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
-          >
-            <ExternalLink className="w-3 h-3" />
-            Open provider website
-          </a>
-        )}
-      </div>
+        </div>
+      )}
+
+      {provider.website && (
+        <a
+          href={provider.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Visit Website
+        </a>
+      )}
     </>
   );
 };
