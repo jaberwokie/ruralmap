@@ -230,6 +230,21 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
     t.services.some(s => isBehavioralHealthService(s))
   );
 
+  // ── Transport Context (rail) — additive, only surfaces in narrow northern long-distance cases.
+  const railCandidates = analysis.tiers.flatMap(t => [
+    ...t.facilities.map(f => ({ name: f.name, lat: f.lat, lng: f.lng, distanceMi: f.distanceMi })),
+    ...t.services.map(s => ({ name: s.name, lat: s.lat, lng: s.lng, distanceMi: s.distanceMi })),
+  ]);
+  const railContext = evaluateRailRelevance(analysis.location, railCandidates);
+  if (import.meta.env.DEV) {
+    console.info('[Rail] member relevance evaluation', {
+      memberLat: analysis.location.lat,
+      candidates: railCandidates.length,
+      relevant: railContext.relevant,
+      message: railContext.message,
+    });
+  }
+
   return (
     <>
       <div className="flex items-center gap-1.5 mb-2">
