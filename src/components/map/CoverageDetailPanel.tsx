@@ -2569,7 +2569,7 @@ const LocalTransitProviderContent = ({ provider }: { provider: LocalTransitProvi
 
       <div className="flex flex-col gap-1.5">
         {provider.phone && (
-          <ContactPhoneAction phone={provider.phone} label={`Call ${provider.name}`} />
+          <ContactPhoneAction phone={provider.phone} />
         )}
         {provider.website && (
           <a
