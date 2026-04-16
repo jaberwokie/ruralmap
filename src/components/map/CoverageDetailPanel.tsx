@@ -249,6 +249,8 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isLocked, onClear]);
 
+  if (!display) return null;
+
   return (
     <div
       data-tutorial="details-panel"
@@ -280,21 +282,13 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
       {/* Body */}
       <div className="overflow-y-auto flex-1 px-3 pb-3">
-        {!display ? (
-          <p className="text-xs text-muted-foreground/70 italic">
-            Select a map element to view details.
-          </p>
-        ) : (
-          <>
-            {memberLocation && display.type === 'facility' && (
-              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
-            )}
-            {memberLocation && display.type === 'ruralService' && (
-              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
-            )}
-            <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
-          </>
+        {memberLocation && display.type === 'facility' && (
+          <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
         )}
+        {memberLocation && display.type === 'ruralService' && (
+          <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
+        )}
+        <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
       </div>
     </div>
   );
