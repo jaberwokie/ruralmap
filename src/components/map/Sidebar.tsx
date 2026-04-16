@@ -810,8 +810,7 @@ const Sidebar = ({
           className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
-        <h1 className="mt-2 text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
-        <p className="mt-0.5 text-xs text-muted-foreground leading-tight">Nevada Behavioral Health</p>
+        <h1 className="mt-1.5 text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
         <div className="mt-2 flex items-center gap-2">
           <button
             type="button"
