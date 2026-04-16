@@ -49,7 +49,7 @@ export const localTransitProviders: LocalTransitProvider[] = [
     ],
     serviceType: 'mixed',
     phone: '702-228-4800',
-    website: 'https://www.snvrtc.com/',
+    website: 'https://silverrider.net/services/',
     note: 'Supports local access in select Southern Nevada communities.',
     fareNote: 'Low-cost local fares; reduced fares available for seniors and riders with disabilities.',
   },
