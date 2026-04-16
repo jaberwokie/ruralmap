@@ -7,6 +7,11 @@ import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import { evaluateRailRelevance } from '@/utils/railProximity';
 import { findZoneContaining } from '@/data/local-transit-zones';
+import {
+  getProviderForZoneId,
+  LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS,
+  type LocalTransitSupportLevel,
+} from '@/data/local-transit-providers';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -260,11 +265,25 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
   const destZone = closestDest ? findZoneContaining(closestDest.lat, closestDest.lng) : null;
   const sharedZone = memberZone && destZone && memberZone.id === destZone.id ? memberZone : null;
 
+  // Resolve a support level for the zone, if any.
+  const memberProvider = memberZone ? getProviderForZoneId(memberZone.id) : null;
+  const destProvider = destZone ? getProviderForZoneId(destZone.id) : null;
+  const memberSupport: LocalTransitSupportLevel | null = memberProvider?.supportLevel ?? null;
+
   let transitMessage: string | null = null;
   if (sharedZone) {
-    transitMessage = `Both member and closest in-range destination fall within the ${sharedZone.shortLabel}.`;
+    transitMessage = 'Both member and destination fall within the same local transit support area.';
+  } else if (memberZone && destZone) {
+    transitMessage = 'Local transit exists in both areas, but continuity of service is not implied.';
+  } else if (memberZone && memberSupport === 'structured_local_transit') {
+    transitMessage = 'Structured local transit may support local access in this area.';
+  } else if (memberZone && memberSupport === 'limited_community_transit') {
+    transitMessage = 'Limited community transit may support some local access.';
   } else if (memberZone) {
+    // Zone present but provider/support unresolved — keep neutral.
     transitMessage = `Local transit may support in-town access in the ${memberZone.shortLabel}.`;
+  } else {
+    transitMessage = 'No local transit provider identified in this area.';
   }
 
   if (import.meta.env.DEV) {
@@ -272,6 +291,8 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
       memberZone: memberZone?.id ?? null,
       destZone: destZone?.id ?? null,
       sharedZone: sharedZone?.id ?? null,
+      memberSupportLevel: memberSupport,
+      destSupportLevel: destProvider?.supportLevel ?? null,
       message: transitMessage,
     });
   }

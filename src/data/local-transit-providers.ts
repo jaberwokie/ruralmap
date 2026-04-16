@@ -5,6 +5,9 @@
  * verification entities, scoring inputs, or queue inputs. They reference the
  * additive Local Transit Zones overlay so staff can quickly locate and review
  * an operator's local operating footprint.
+ *
+ * Source of truth: Nevada Department of Transportation (NDOT) Public Transit
+ * page. Greyhound (intercity) is intentionally excluded from this registry.
  */
 
 import { localTransitZones, type LocalTransitZone } from './local-transit-zones';
@@ -22,13 +25,48 @@ export const LOCAL_TRANSIT_SERVICE_TYPE_LABELS: Record<LocalTransitServiceType, 
   fixed_route_and_paratransit: 'Fixed route + paratransit',
 };
 
+/**
+ * Operational support classification.
+ *
+ * - structured_local_transit  — Clearly organized local public transit system
+ *   (e.g. fixed routes + paratransit operated by a transit authority).
+ * - limited_community_transit — Community / senior / human-services
+ *   transportation that may support some local access but is not equivalent
+ *   to broad local transit coverage.
+ *
+ * Conservative by design. Do NOT upgrade a provider without evidence.
+ */
+export type LocalTransitSupportLevel =
+  | 'structured_local_transit'
+  | 'limited_community_transit';
+
+export const LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS: Record<LocalTransitSupportLevel, string> = {
+  structured_local_transit: 'Structured local transit',
+  limited_community_transit: 'Limited community transit',
+};
+
+export const LOCAL_TRANSIT_SUPPORT_LEVEL_DESCRIPTIONS: Record<LocalTransitSupportLevel, string> = {
+  structured_local_transit:
+    'Organized local public transit (fixed route, paratransit, or demand-response system).',
+  limited_community_transit:
+    'Community, senior, or human-services transportation. May support some access; not equivalent to broad local transit coverage.',
+};
+
+export type LocalTransitCoverageConfidence = 'confirmed' | 'approximate';
+
 export interface LocalTransitProvider {
   id: string;
   name: string;
   type: 'local_transit_provider';
-  /** IDs from `localTransitZones`. */
+  /** IDs from `localTransitZones`. May be empty if no zone geometry is modeled yet. */
   zoneIds: string[];
   serviceType: LocalTransitServiceType;
+  /** Operational classification — see {@link LocalTransitSupportLevel}. */
+  supportLevel: LocalTransitSupportLevel;
+  /** Registry source. */
+  source: 'NDOT';
+  /** Confidence in the represented operating footprint. */
+  coverageConfidence: LocalTransitCoverageConfidence;
   phone?: string;
   website?: string;
   /** Short operational note (one short sentence). */
@@ -48,6 +86,9 @@ export const localTransitProviders: LocalTransitProvider[] = [
       'ltz-silverrider-pahrump',
     ],
     serviceType: 'mixed',
+    supportLevel: 'structured_local_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
     phone: '702-228-4800',
     website: 'https://silverrider.net/services/',
     note: 'Supports local access in select Southern Nevada communities.',
@@ -59,6 +100,9 @@ export const localTransitProviders: LocalTransitProvider[] = [
     type: 'local_transit_provider',
     zoneIds: ['ltz-jac-carson'],
     serviceType: 'fixed_route_and_paratransit',
+    supportLevel: 'structured_local_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
     phone: '775-841-7433',
     website: 'https://www.carsoncity.gov/government/departments-g-z/public-works/transportation/jac-jump-around-carson',
     note: 'Supports local access within Carson City.',
@@ -70,6 +114,9 @@ export const localTransitProviders: LocalTransitProvider[] = [
     type: 'local_transit_provider',
     zoneIds: ['ltz-getmyride-elko'],
     serviceType: 'mixed',
+    supportLevel: 'structured_local_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
     phone: '775-738-4647',
     website: 'https://www.elkocountynv.net/new_page/transit_service19/index.php',
     note: 'Supports local transportation within Elko and surrounding communities.',
@@ -81,6 +128,9 @@ export const localTransitProviders: LocalTransitProvider[] = [
     type: 'local_transit_provider',
     zoneIds: ['ltz-elybus-ely'],
     serviceType: 'demand_response',
+    supportLevel: 'structured_local_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
     phone: '775-289-2877',
     website: 'https://www.whitepinecounty.net/655/Ely-Bus',
     note: 'Demand-response service in and around Ely (White Pine County).',
@@ -91,6 +141,11 @@ export const localTransitProviders: LocalTransitProvider[] = [
     type: 'local_transit_provider',
     zoneIds: ['ltz-linctrans-corridor'],
     serviceType: 'demand_response',
+    // Conservative: per NDOT framing this is community/human-services style
+    // demand-response rather than a structured fixed-route system.
+    supportLevel: 'limited_community_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
     phone: '775-728-4477',
     note: 'Demand-response service across Pioche, Panaca, and Caliente.',
   },
@@ -100,19 +155,95 @@ export const localTransitProviders: LocalTransitProvider[] = [
     type: 'local_transit_provider',
     zoneIds: ['ltz-cart-fallon'],
     serviceType: 'mixed',
+    supportLevel: 'structured_local_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
     phone: '775-423-4356',
     website: 'https://www.churchillcountynv.gov/192/CART-Bus',
     note: 'Fixed-route and demand-response service in Fallon and Churchill County.',
     fareNote: 'Low-cost local fares; reduced fares available for seniors and riders with disabilities.',
   },
+
+  // ── NDOT-listed providers without modeled zone geometry yet ──
+  // These appear in the utility list only. No zoom-to-zone behavior until
+  // geometry is added. Conservative supportLevel assignments.
+  {
+    id: 'ltp-pahrump-valley-public-transportation',
+    name: 'Pahrump Valley Public Transportation',
+    type: 'local_transit_provider',
+    zoneIds: [],
+    serviceType: 'demand_response',
+    supportLevel: 'structured_local_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    note: 'Public transportation serving the Pahrump Valley (Nye County).',
+  },
+  {
+    id: 'ltp-pleasant-senior-center',
+    name: 'Pleasant Senior Center',
+    type: 'local_transit_provider',
+    zoneIds: [],
+    serviceType: 'demand_response',
+    supportLevel: 'limited_community_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    note: 'Senior-focused community transportation; limited general public access.',
+  },
+  {
+    id: 'ltp-lyon-county-human-services',
+    name: 'Lyon County Human Services',
+    type: 'local_transit_provider',
+    zoneIds: [],
+    serviceType: 'demand_response',
+    supportLevel: 'limited_community_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    note: 'Human-services transportation in Lyon County. Not a broad local transit system.',
+  },
+  {
+    id: 'ltp-nye-senior-nutrition',
+    name: 'Nye County Senior Nutrition',
+    type: 'local_transit_provider',
+    zoneIds: [],
+    serviceType: 'demand_response',
+    supportLevel: 'limited_community_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    note: 'Senior-focused supportive transportation in Nye County.',
+  },
+  {
+    id: 'ltp-pyramid-lake-tribal-transit',
+    name: 'Pyramid Lake Tribal Transit',
+    type: 'local_transit_provider',
+    zoneIds: [],
+    serviceType: 'demand_response',
+    // Conservative: framed as community/tribal-services transportation.
+    supportLevel: 'limited_community_transit',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    note: 'Tribal community transportation supporting Pyramid Lake Paiute Tribe communities.',
+  },
 ];
 
 if (import.meta.env.DEV) {
   const totalZoneRefs = localTransitProviders.reduce((sum, p) => sum + p.zoneIds.length, 0);
+  const byLevel = localTransitProviders.reduce<Record<string, number>>((acc, p) => {
+    acc[p.supportLevel] = (acc[p.supportLevel] ?? 0) + 1;
+    return acc;
+  }, {});
   console.info('[LocalTransit] providers loaded', {
     providers: localTransitProviders.length,
     zoneReferences: totalZoneRefs,
+    byLevel,
   });
+  for (const p of localTransitProviders) {
+    console.info('[LocalTransit] provider supportLevel', {
+      id: p.id,
+      name: p.name,
+      supportLevel: p.supportLevel,
+      coverageConfidence: p.coverageConfidence,
+    });
+  }
 }
 
 /** Return the resolved zone records for a provider (filters out unknown ids). */
@@ -147,4 +278,9 @@ export function getProviderBounds(
     [minLat, minLng],
     [maxLat, maxLng],
   ];
+}
+
+/** Look up a provider by one of its zone ids. Returns the first match. */
+export function getProviderForZoneId(zoneId: string): LocalTransitProvider | null {
+  return localTransitProviders.find((p) => p.zoneIds.includes(zoneId)) ?? null;
 }

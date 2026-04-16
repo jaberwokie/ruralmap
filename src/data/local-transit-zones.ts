@@ -22,6 +22,8 @@ export type LocalTransitOperator =
 
 export type LocalTransitSupportLevel = 'local';
 
+export type LocalTransitZoneCoverageConfidence = 'confirmed' | 'approximate';
+
 export interface LocalTransitZone {
   id: string;
   name: string;
@@ -36,6 +38,10 @@ export interface LocalTransitZone {
   supportLevel: LocalTransitSupportLevel;
   /** Short caption shown in member-access context lines. */
   shortLabel: string;
+  /** Registry source. Defaults to NDOT for all current zones. */
+  source?: 'NDOT';
+  /** Confidence in zone geometry. Current zones are conservative approximations. */
+  coverageConfidence?: LocalTransitZoneCoverageConfidence;
 }
 
 /**

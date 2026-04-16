@@ -10,6 +10,7 @@ import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-se
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import type { RailStation } from '@/data/rail-corridors';
 import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
+import { hasNoLocalTransit } from '@/data/no-transit-counties';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
@@ -1157,6 +1158,14 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
       <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {responseLabel}</p>
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      {hasNoLocalTransit(county) && (
+        <p
+          className="mt-1 mb-1.5 text-[10px] text-muted-foreground"
+          title="Per NDOT: no local transit provider identified for this county."
+        >
+          No local transit provider identified in this county.
+        </p>
+      )}
 
       <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
         <MemberVolumeSection county={county} />

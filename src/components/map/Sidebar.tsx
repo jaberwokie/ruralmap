@@ -12,7 +12,7 @@ import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
-import { localTransitProviders } from '@/data/local-transit-providers';
+import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { tribalNations } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
@@ -1463,19 +1463,42 @@ const Sidebar = ({
                           Transit Providers
                         </div>
                         <ul className="space-y-0.5">
-                          {localTransitProviders.map((p) => (
-                            <li key={p.id}>
-                              <button
-                                type="button"
-                                onClick={() => onTransitProviderClick?.(p.id)}
-                                className="w-full rounded-sm px-1.5 py-1 text-left text-[11px] leading-tight text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring flex items-center gap-1.5"
-                              >
-                                <Route className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                                <span className="truncate">{p.name}</span>
-                              </button>
-                            </li>
-                          ))}
+                          {localTransitProviders.map((p) => {
+                            const isStructured = p.supportLevel === 'structured_local_transit';
+                            const levelLabel = isStructured ? 'Structured' : 'Limited';
+                            const levelTitle = LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS[p.supportLevel];
+                            return (
+                              <li key={p.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => onTransitProviderClick?.(p.id)}
+                                  className="w-full rounded-sm px-1.5 py-1 text-left text-[11px] leading-tight text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring flex items-center gap-1.5"
+                                  title={levelTitle}
+                                >
+                                  <Route className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                                  <span className="truncate flex-1">{p.name}</span>
+                                  <span
+                                    className={`flex-shrink-0 rounded px-1 py-px text-[8px] font-medium uppercase tracking-wide ${
+                                      isStructured
+                                        ? 'bg-secondary text-foreground/80'
+                                        : 'bg-muted text-muted-foreground'
+                                    }`}
+                                  >
+                                    {levelLabel}
+                                  </span>
+                                </button>
+                              </li>
+                            );
+                          })}
                         </ul>
+                        <p
+                          className="mt-1.5 px-1 text-[9px] leading-snug text-muted-foreground/80"
+                          title="Transit reflects local mobility support, not guaranteed end-to-end coverage."
+                        >
+                          <span className="font-medium text-muted-foreground">Structured</span> = organized local transit ·{' '}
+                          <span className="font-medium text-muted-foreground">Limited</span> = community / senior transport.
+                          Reflects local mobility support, not guaranteed end-to-end coverage.
+                        </p>
                       </div>
                     </div>
                   )}
