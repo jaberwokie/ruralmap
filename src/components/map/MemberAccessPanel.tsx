@@ -321,6 +321,19 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
         </div>
       )}
 
+      {/* Local Transit Context — additive, only shown when member or shared zone is detected */}
+      {transitMessage && (
+        <div className="mt-2 px-2 py-1.5 rounded border border-border/60 bg-secondary/40">
+          <div className="flex items-start gap-1.5">
+            <Bus className="w-3 h-3 flex-shrink-0 mt-0.5 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Local Transit</p>
+              <p className="text-[10px] text-foreground leading-snug mt-0.5">{transitMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Recommendation */}
       <div className="mt-3 pt-2 border-t border-border rounded-md px-2 py-2" style={{ background: `${recStyle.color}10` }}>
         <div className="flex items-start gap-1.5">
