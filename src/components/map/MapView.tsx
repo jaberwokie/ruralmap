@@ -40,6 +40,7 @@ import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAcce
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
+import { localTransitZones } from '@/data/local-transit-zones';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -58,6 +59,8 @@ interface MapViewProps {
     tribalNations: boolean;
     /** Additive transport overlay — defaults to false. */
     railCorridor?: boolean;
+    /** Additive access-support overlay — defaults to false. */
+    localTransitZones?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -691,6 +694,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const memberPinRef = useRef<L.LayerGroup | null>(null);
   const memberRingsRef = useRef<L.LayerGroup | null>(null);
   const railLayerRef = useRef<L.LayerGroup | null>(null);
+  const localTransitLayerRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
@@ -1437,6 +1441,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     memberRingsRef.current = L.layerGroup().addTo(map);
     memberPinRef.current = L.layerGroup().addTo(map);
     railLayerRef.current = L.layerGroup().addTo(map);
+    localTransitLayerRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
@@ -2810,6 +2815,48 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     }
   }, [mapReady, layers.railCorridor, memberLocation]);
+
+
+  // ── Local Transit Zones overlay (additive access-support layer) ──
+  // STRICTLY ADDITIVE: does not affect any other layer, filter, score, or queue.
+  useEffect(() => {
+    if (!mapReady || !localTransitLayerRef.current) return;
+    localTransitLayerRef.current.clearLayers();
+    if (!layers.localTransitZones) {
+      if (import.meta.env.DEV) {
+        console.info('[LocalTransit] toggle=OFF; overlay cleared');
+      }
+      return;
+    }
+
+    localTransitZones.forEach((zone) => {
+      if (!zone.active) return;
+      const polygon = L.polygon(zone.geometry, {
+        pane: PANE_CONFIG.markers.id,
+        color: 'hsl(38, 70%, 45%)',
+        weight: 1,
+        opacity: 0.55,
+        fillColor: 'hsl(38, 85%, 65%)',
+        fillOpacity: 0.18,
+        interactive: false,
+        className: 'local-transit-zone',
+      });
+      polygon.bindTooltip(`${zone.name} · approximate footprint`, {
+        sticky: true,
+        opacity: 0.9,
+        className: 'rail-corridor-tooltip',
+      });
+      localTransitLayerRef.current!.addLayer(polygon);
+    });
+
+    if (import.meta.env.DEV) {
+      const activeCount = localTransitZones.filter(z => z.active).length;
+      console.info('[LocalTransit] overlay loaded', {
+        toggle: 'ON',
+        zones: activeCount,
+      });
+    }
+  }, [mapReady, layers.localTransitZones]);
 
 
   return (

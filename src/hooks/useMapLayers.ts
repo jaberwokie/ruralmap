@@ -16,6 +16,7 @@ const DEFAULT_LAYERS: LayerState = {
   cellularCoverage: false,
   tribalNations: true,
   railCorridor: false,
+  localTransitZones: false,
 };
 
 const DEFAULT_COVERAGE: CoverageState = {

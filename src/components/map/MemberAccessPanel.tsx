@@ -1,4 +1,4 @@
-import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront } from 'lucide-react';
+import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront, Bus } from 'lucide-react';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
@@ -6,6 +6,7 @@ import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import { evaluateRailRelevance } from '@/utils/railProximity';
+import { findZoneContaining } from '@/data/local-transit-zones';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -245,6 +246,36 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
     });
   }
 
+  // ── Local Transit Context (additive) ──
+  // Strictly does not affect tier scoring, recommendation, or member distance math.
+  const memberZone = findZoneContaining(analysis.location.lat, analysis.location.lng);
+  const inRangeDestinations = analysis.tiers
+    .filter(t => t.key === 'local' || t.key === 'managed')
+    .flatMap(t => [
+      ...t.facilities.map(f => ({ lat: f.lat, lng: f.lng, distanceMi: f.distanceMi })),
+      ...t.services.map(s => ({ lat: s.lat, lng: s.lng, distanceMi: s.distanceMi })),
+    ])
+    .sort((a, b) => a.distanceMi - b.distanceMi);
+  const closestDest = inRangeDestinations[0];
+  const destZone = closestDest ? findZoneContaining(closestDest.lat, closestDest.lng) : null;
+  const sharedZone = memberZone && destZone && memberZone.id === destZone.id ? memberZone : null;
+
+  let transitMessage: string | null = null;
+  if (sharedZone) {
+    transitMessage = `Both member and closest in-range destination fall within the ${sharedZone.shortLabel}.`;
+  } else if (memberZone) {
+    transitMessage = `Local transit may support in-town access in the ${memberZone.shortLabel}.`;
+  }
+
+  if (import.meta.env.DEV) {
+    console.info('[LocalTransit] member context evaluation', {
+      memberZone: memberZone?.id ?? null,
+      destZone: destZone?.id ?? null,
+      sharedZone: sharedZone?.id ?? null,
+      message: transitMessage,
+    });
+  }
+
   return (
     <>
       <div className="flex items-center gap-1.5 mb-2">
@@ -285,6 +316,19 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
             <div className="min-w-0">
               <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Transport Context</p>
               <p className="text-[10px] text-foreground leading-snug mt-0.5">{railContext.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Local Transit Context — additive, only shown when member or shared zone is detected */}
+      {transitMessage && (
+        <div className="mt-2 px-2 py-1.5 rounded border border-border/60 bg-secondary/40">
+          <div className="flex items-start gap-1.5">
+            <Bus className="w-3 h-3 flex-shrink-0 mt-0.5 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Local Transit</p>
+              <p className="text-[10px] text-foreground leading-snug mt-0.5">{transitMessage}</p>
             </div>
           </div>
         </div>
