@@ -15,6 +15,7 @@ const DEFAULT_LAYERS: LayerState = {
   broadbandAccess: false,
   cellularCoverage: false,
   tribalNations: true,
+  railCorridor: false,
 };
 
 const DEFAULT_COVERAGE: CoverageState = {
