@@ -821,13 +821,13 @@ const Sidebar = ({
           </button>
         </div>
         <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
-          <span className="text-foreground/80 flex items-center gap-1">
+          <span className="text-foreground/80 font-medium flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
-            <span className="font-mono font-semibold text-foreground">{hospitalCount}</span> Hospitals
+            <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
           </span>
-          <span className="text-foreground/80 flex items-center gap-1">
+          <span className="text-foreground/80 font-medium flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-clinic inline-block" />
-            <span className="font-mono font-semibold text-foreground">{clinicCount}</span> Clinics
+            <span className="font-mono font-medium text-foreground">{clinicCount}</span> Clinics
           </span>
         </div>
         <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
