@@ -277,6 +277,19 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
         </div>
       )}
 
+      {/* Transport Context — additive, only shown when rail is meaningfully relevant */}
+      {railContext.relevant && railContext.message && (
+        <div className="mt-2 px-2 py-1.5 rounded border border-border/60 bg-secondary/40">
+          <div className="flex items-start gap-1.5">
+            <TrainFront className="w-3 h-3 flex-shrink-0 mt-0.5 text-muted-foreground" />
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Transport Context</p>
+              <p className="text-[10px] text-foreground leading-snug mt-0.5">{railContext.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Recommendation */}
       <div className="mt-3 pt-2 border-t border-border rounded-md px-2 py-2" style={{ background: `${recStyle.color}10` }}>
         <div className="flex items-start gap-1.5">
