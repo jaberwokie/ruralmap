@@ -84,7 +84,7 @@ const LAYER_CONFIG = [
   { key: 'operationalCoverage' as const, label: 'Response Capability', colorClassName: 'text-response-active', icon: Radio },
   { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', colorClassName: 'text-staffing-medium', icon: Users },
   { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', colorClassName: 'text-utilization-mid', icon: Activity },
-  { key: 'engagementGap' as const, label: 'Engagement Gap', colorClassName: 'text-engagement-gap', icon: BarChart3 },
+  { key: 'engagementGap' as const, label: 'Gap Overlay', colorClassName: 'text-engagement-gap', icon: BarChart3 },
 ] as const;
 
 const ACCESS_LAYER_CONFIG = {
