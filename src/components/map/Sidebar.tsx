@@ -804,21 +804,28 @@ const Sidebar = ({
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
       <div className="px-3 pt-3 pb-2">
-        <img
-          src={nbhLogo}
-          alt="Nevada Behavioral Health Systems logo"
-          className="block w-full max-w-[180px] h-auto object-contain"
-          decoding="async"
-        />
-        <h1 className="mt-1.5 text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
-        <div className="mt-2 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setExplainerOpen(true)}
-            className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            Map Explainer
-          </button>
+        <div className="w-full max-w-[180px]">
+          <img
+            src={nbhLogo}
+            alt="Nevada Behavioral Health Systems logo"
+            className="block w-full h-auto object-contain"
+            decoding="async"
+          />
+          {/* Title aligned to NBH letters (logo NBH text spans ~25%–94% of width). */}
+          <div className="mt-1.5" style={{ paddingLeft: '25%', paddingRight: '6%' }}>
+            <h1 className="text-sm font-semibold text-foreground tracking-tight leading-tight text-center">
+              Rural Operations Map
+            </h1>
+          </div>
+          <div className="mt-2 flex items-center justify-center" style={{ paddingLeft: '25%', paddingRight: '6%' }}>
+            <button
+              type="button"
+              onClick={() => setExplainerOpen(true)}
+              className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              Map Explainer
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
           <span className="text-muted-foreground flex items-center gap-1">
