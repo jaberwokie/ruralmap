@@ -834,7 +834,7 @@ const Sidebar = ({
       </div>
 
       {/* Search */}
-      <div className="px-3 pb-3" data-tutorial="search-bar">
+      <div className="px-3 pt-2.5 pb-3" data-tutorial="search-bar">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
