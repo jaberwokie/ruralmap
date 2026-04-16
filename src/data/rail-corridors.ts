@@ -18,6 +18,17 @@ export interface RailCorridor {
   coordinates: [number, number][];
 }
 
+export interface RailStationSchedule {
+  /** Direction of travel along the California Zephyr */
+  direction: 'Eastbound' | 'Westbound';
+  /** Destination headsign for operational context */
+  headsign: string;
+  /** Published timetable time at this station, local time */
+  scheduledTime: string;
+  /** Published timetable stop type */
+  stopType: 'Departure' | 'Arrival';
+}
+
 export interface RailStation {
   id: string;
   name: string;
@@ -25,6 +36,14 @@ export interface RailStation {
   lat: number;
   lng: number;
   active: boolean;
+  /** Amtrak 3-letter station code for station page URL */
+  stationCode?: string;
+  /** Physical street address of the station/platform */
+  address?: string;
+  /** Route this station serves */
+  routeName?: string;
+  /** Published California Zephyr timetable entries at this station */
+  schedule?: RailStationSchedule[];
 }
 
 export const RAIL_NEAR_STATION_MI = 10;
