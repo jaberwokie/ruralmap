@@ -39,6 +39,7 @@ import MemberAccessSearch from '@/components/map/MemberAccessSearch';
 import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
+import { railCorridors, railStations } from '@/data/rail-corridors';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -689,6 +690,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const tribalNationsRef = useRef<L.LayerGroup | null>(null);
   const memberPinRef = useRef<L.LayerGroup | null>(null);
   const memberRingsRef = useRef<L.LayerGroup | null>(null);
+  const railLayerRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
@@ -1434,6 +1436,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     highlightsRef.current = L.layerGroup().addTo(map);
     memberRingsRef.current = L.layerGroup().addTo(map);
     memberPinRef.current = L.layerGroup().addTo(map);
+    railLayerRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
