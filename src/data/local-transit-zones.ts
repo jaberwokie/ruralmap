@@ -14,7 +14,11 @@
 
 export type LocalTransitOperator =
   | 'Silver Rider'
-  | 'Jump Around Carson';
+  | 'Jump Around Carson'
+  | 'GET My Ride'
+  | 'Ely Bus'
+  | 'Lincoln County Transportation'
+  | 'CART';
 
 export type LocalTransitSupportLevel = 'local';
 
@@ -139,6 +143,105 @@ export const localTransitZones: LocalTransitZone[] = [
       [39.1500, -119.8050],
       [39.1850, -119.8050],
       [39.2050, -119.7900],
+    ],
+  },
+
+  // ── GET My Ride — Elko ──
+  // Conservative polygon around Elko city + Spring Creek footprint.
+  {
+    id: 'ltz-getmyride-elko',
+    name: 'GET My Ride — Elko',
+    operator: 'GET My Ride',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Elko local transit zone',
+    geometry: [
+      [40.8950, -115.8400],
+      [40.8950, -115.7100],
+      [40.8550, -115.6400],
+      [40.7900, -115.6100],
+      [40.7250, -115.6500],
+      [40.6900, -115.7400],
+      [40.7100, -115.8400],
+      [40.7700, -115.8800],
+      [40.8400, -115.8800],
+      [40.8950, -115.8400],
+    ],
+  },
+
+  // ── Ely Bus — Ely / White Pine ──
+  // Conservative polygon around Ely, East Ely, Ruth corridor.
+  {
+    id: 'ltz-elybus-ely',
+    name: 'Ely Bus — Ely',
+    operator: 'Ely Bus',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Ely local transit zone',
+    geometry: [
+      [39.2700, -114.9700],
+      [39.2750, -114.8500],
+      [39.2550, -114.8200],
+      [39.2200, -114.8150],
+      [39.1850, -114.8400],
+      [39.1750, -114.9000],
+      [39.1900, -114.9600],
+      [39.2300, -114.9850],
+      [39.2700, -114.9700],
+    ],
+  },
+
+  // ── Lincoln County Transportation ──
+  // Conservative N–S corridor covering Pioche, Panaca, Caliente population centers.
+  {
+    id: 'ltz-linctrans-corridor',
+    name: 'Lincoln County Transportation — Pioche / Panaca / Caliente',
+    operator: 'Lincoln County Transportation',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Lincoln County local transit corridor',
+    geometry: [
+      [38.0150, -114.4900],
+      [38.0250, -114.4350],
+      [37.9550, -114.3700],
+      [37.8500, -114.3950],
+      [37.7300, -114.4700],
+      [37.6050, -114.5000],
+      [37.5950, -114.5650],
+      [37.6700, -114.5800],
+      [37.8000, -114.5450],
+      [37.9300, -114.5200],
+      [38.0150, -114.4900],
+    ],
+  },
+
+  // ── CART — Fallon / Churchill ──
+  // Conservative polygon around Fallon city + immediate service footprint.
+  {
+    id: 'ltz-cart-fallon',
+    name: 'CART — Fallon',
+    operator: 'CART',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Fallon local transit zone',
+    geometry: [
+      [39.5250, -118.8500],
+      [39.5350, -118.7500],
+      [39.5100, -118.6900],
+      [39.4700, -118.6700],
+      [39.4250, -118.7000],
+      [39.4050, -118.7700],
+      [39.4200, -118.8400],
+      [39.4700, -118.8700],
+      [39.5250, -118.8500],
     ],
   },
 ];
