@@ -803,7 +803,7 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
-      <div className="px-4 pt-3 pb-2">
+      <div className="px-3 pt-3 pb-2">
         <img
           src={nbhLogo}
           alt="Nevada Behavioral Health Systems logo"
@@ -834,7 +834,7 @@ const Sidebar = ({
       </div>
 
       {/* Search */}
-      <div className="px-4 pb-3" data-tutorial="search-bar">
+      <div className="px-3 pb-3" data-tutorial="search-bar">
         <div className="relative">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
           <input
@@ -848,7 +848,7 @@ const Sidebar = ({
       </div>
 
       {/* Filter Panel */}
-      <div className="px-4 py-3">
+      <div className="px-3 py-3">
         <div className="mb-2 flex items-center gap-2">
           <button
             type="button"
@@ -994,7 +994,7 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-4 pb-3">
+      <div className="px-3 pb-3">
         <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
                 <div data-tutorial="section-core-map">
@@ -1538,10 +1538,10 @@ const Sidebar = ({
         </div>
       </div>
 
-      <div className="mx-4 border-t border-border" />
+      <div className="mx-3 border-t border-border" />
 
       {/* Verification Priority Queue */}
-      <div className="px-4 pt-3">
+      <div className="px-3 pt-3">
         <button
           onClick={() => setVerifQueueOpen(!verifQueueOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1556,10 +1556,10 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="mx-4 border-t border-border" />
+      <div className="mx-3 border-t border-border" />
 
       {/* Verification Audit History */}
-      <div className="px-4 pt-3">
+      <div className="px-3 pt-3">
         <button
           onClick={() => setAuditHistoryOpen(!auditHistoryOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1574,8 +1574,8 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="mx-4 border-t border-border" />
-      <div className="px-4 pt-3">
+      <div className="mx-3 border-t border-border" />
+      <div className="px-3 pt-3">
         <button
           onClick={() => setCsvOpen(!csvOpen)}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
