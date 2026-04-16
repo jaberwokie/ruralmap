@@ -7,11 +7,13 @@ import { useMapSelection } from '@/hooks/useMapSelection';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
 import { useMemberAccess } from '@/hooks/useMemberAccess';
+import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
 
 const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const layers = useMapLayers();
   const selection = useMapSelection();
   const filters = useMapFilters();
@@ -21,6 +23,20 @@ const Index = () => {
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
+
+  const onTransitProviderClick = useCallback((providerId: string) => {
+    const provider = localTransitProviders.find(p => p.id === providerId);
+    if (!provider) return;
+    // Ensure overlay is visible (additive — does not disturb other layers)
+    layers.actions.setLayers(prev => prev.localTransitZones ? prev : { ...prev, localTransitZones: true });
+    const bounds = getProviderBounds(provider);
+    if (bounds) {
+      // Force new identity so MapView's effect retriggers on repeat clicks
+      setFocusBounds([[bounds[0][0], bounds[0][1]], [bounds[1][0], bounds[1][1]]]);
+    }
+    selection.actions.selectEntity({ type: 'localTransitProvider', provider });
+    setMobileSidebarOpen(false);
+  }, [layers.actions, selection.actions]);
 
   // Priority: 1) clicked entity (provider/service/county) 2) member analysis 3) null
   const memberAnalysisEntity = member.analysis
@@ -47,7 +63,7 @@ const Index = () => {
           layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView }}
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
           facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
-          selection={{ selectedFteId: selection.activeFteId, onFteCardClick: selection.actions.handleFteCardClick, onCountySelect: onCounty }}
+          selection={{ selectedFteId: selection.activeFteId, onFteCardClick: selection.actions.handleFteCardClick, onCountySelect: onCounty, onTransitProviderClick }}
         />
       </div>
 
@@ -82,6 +98,7 @@ const Index = () => {
           memberIsGeocoding={member.isGeocoding}
           memberGeocodeError={member.geocodeError}
           memberManualMode={member.manualPlacementMode}
+          focusBounds={focusBounds}
         />
         <CoverageDetailPanel
           entity={activeEntity}
