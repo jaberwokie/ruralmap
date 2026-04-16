@@ -41,8 +41,8 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
       }}
     >
       <div
-        className="relative w-full max-w-2xl rounded-lg border border-border bg-card shadow-xl flex flex-col"
-        style={{ maxHeight: '85vh' }}
+        className="relative w-full max-w-2xl rounded-lg border border-border bg-card shadow-xl flex flex-col overflow-hidden"
+        style={{ maxHeight: '90vh' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -60,8 +60,8 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="px-5 py-5 space-y-5 overflow-y-auto flex-1 min-h-0">
+        {/* Content — no fixed height; scrolls only if it would exceed the modal max-height */}
+        <div className="px-5 py-5 space-y-5 overflow-y-auto">
           <Section title="Core Map Layers">
             <ul className="list-disc pl-4 space-y-1">
               <li>Counties and tribal lands provide geographic context.</li>
