@@ -64,7 +64,55 @@ export const localTransitProviders: LocalTransitProvider[] = [
     note: 'Supports local access within Carson City.',
     fareNote: 'Standard local bus fare; paratransit available with eligibility.',
   },
+  {
+    id: 'ltp-get-my-ride',
+    name: 'GET My Ride',
+    type: 'local_transit_provider',
+    zoneIds: ['ltz-getmyride-elko'],
+    serviceType: 'mixed',
+    phone: '775-738-4647',
+    website: 'https://www.elkocountynv.net/departments/get_my_ride/index.php',
+    note: 'Supports local transportation within Elko and surrounding communities.',
+    fareNote: 'Local fares; reduced fares available for seniors and riders with disabilities.',
+  },
+  {
+    id: 'ltp-ely-bus',
+    name: 'Ely Bus',
+    type: 'local_transit_provider',
+    zoneIds: ['ltz-elybus-ely'],
+    serviceType: 'demand_response',
+    phone: '775-289-2877',
+    note: 'Demand-response service in and around Ely (White Pine County).',
+  },
+  {
+    id: 'ltp-lincoln-county-transportation',
+    name: 'Lincoln County Transportation',
+    type: 'local_transit_provider',
+    zoneIds: ['ltz-linctrans-corridor'],
+    serviceType: 'demand_response',
+    phone: '775-728-4477',
+    note: 'Demand-response service across Pioche, Panaca, and Caliente.',
+  },
+  {
+    id: 'ltp-cart',
+    name: 'Churchill Area Regional Transportation (CART)',
+    type: 'local_transit_provider',
+    zoneIds: ['ltz-cart-fallon'],
+    serviceType: 'mixed',
+    phone: '775-423-4356',
+    website: 'https://www.churchillcountynv.gov/192/CART-Bus',
+    note: 'Fixed-route and demand-response service in Fallon and Churchill County.',
+    fareNote: 'Low-cost local fares; reduced fares available for seniors and riders with disabilities.',
+  },
 ];
+
+if (import.meta.env.DEV) {
+  const totalZoneRefs = localTransitProviders.reduce((sum, p) => sum + p.zoneIds.length, 0);
+  console.info('[LocalTransit] providers loaded', {
+    providers: localTransitProviders.length,
+    zoneReferences: totalZoneRefs,
+  });
+}
 
 /** Return the resolved zone records for a provider (filters out unknown ids). */
 export function getProviderZones(provider: LocalTransitProvider): LocalTransitZone[] {
