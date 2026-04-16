@@ -820,7 +820,7 @@ const Sidebar = ({
             Map Explainer
           </button>
         </div>
-        <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs">
+        <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-xs">
           <span className="text-muted-foreground flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
             <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
