@@ -2795,6 +2795,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
       marker.on('click', (e: L.LeafletMouseEvent) => {
         L.DomEvent.stopPropagation(e);
+        armInteractionGuard('marker');
+        onEntityClickRef.current?.({ type: 'railStation', station });
       });
       railLayerRef.current!.addLayer(marker);
     });
