@@ -308,6 +308,7 @@ const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; covera
     case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
+    case 'railStation': return <RailStationContent station={entity.station} />;
     case 'memberAccess': return <MemberAccessPanelLazy analysis={entity.analysis} />;
     default: return null;
   }
