@@ -159,7 +159,7 @@ export const localTransitProviders: LocalTransitProvider[] = [
     source: 'NDOT',
     coverageConfidence: 'approximate',
     phone: '775-423-4356',
-    website: 'https://www.churchillcountynv.gov/192/CART-Bus',
+    website: 'https://www.churchillcountynv.gov/1163/Churchill-Area-Regional-Transportation-C',
     note: 'Fixed-route and demand-response service in Fallon and Churchill County.',
     fareNote: 'Low-cost local fares; reduced fares available for seniors and riders with disabilities.',
   },
