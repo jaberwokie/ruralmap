@@ -2446,5 +2446,88 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
   );
 };
 
+// ── Amtrak Rail Station (infrastructure overlay; not a provider/service) ──
+const RailStationContent = ({ station }: { station: RailStation }) => {
+  const bookingUrl = 'https://www.amtrak.com/tickets/departure.html';
+  const stationUrl = station.stationCode
+    ? `https://www.amtrak.com/stations/${station.stationCode.toLowerCase()}`
+    : null;
+
+  return (
+    <>
+      <div className="text-[10px] font-medium uppercase tracking-wide mb-1 text-muted-foreground flex items-center gap-1">
+        <TrainFront className="w-3 h-3" /> Amtrak Rail Station
+      </div>
+      <p className="text-sm font-semibold text-foreground mb-0.5">{station.name}</p>
+      <p className="text-[11px] text-muted-foreground mb-0.5">
+        {station.routeName ?? 'California Zephyr'}
+        {station.stationCode && <span className="ml-1 font-mono">· {station.stationCode}</span>}
+      </p>
+      <p className="text-[10px] text-muted-foreground mb-2">1 daily train each direction through Nevada</p>
+
+      {station.address && (
+        <div className="mb-2 flex items-start gap-1.5 text-[11px] text-muted-foreground">
+          <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
+          <span>{station.address}</span>
+        </div>
+      )}
+
+      {/* Schedule (Published Timetable) */}
+      {station.schedule && station.schedule.length > 0 && (
+        <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">Published Timetable</span>
+            <span className="text-[9px] text-muted-foreground">not live status</span>
+          </div>
+          <div className="space-y-1">
+            {station.schedule.map((s, i) => (
+              <div key={i} className="flex items-center justify-between text-[11px]">
+                <span className="text-muted-foreground">
+                  <span className="font-medium text-foreground">{s.direction}</span>
+                  <span className="ml-1">{s.headsign}</span>
+                </span>
+                <span className="font-mono text-foreground">{s.scheduledTime}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Fare (intentionally not static) */}
+      <div className="mb-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
+        <div className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground mb-0.5">Fare</div>
+        <div className="text-[11px] text-foreground">Fare varies by date and availability</div>
+        <div className="text-[10px] text-muted-foreground">Use live Amtrak lookup for current pricing</div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex flex-col gap-1.5">
+        <a
+          href={bookingUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+        >
+          <ExternalLink className="w-3 h-3" />
+          Check current fare &amp; schedule
+        </a>
+        {stationUrl && (
+          <a
+            href={stationUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary"
+          >
+            <ExternalLink className="w-3 h-3" />
+            Open station page
+          </a>
+        )}
+      </div>
+    </>
+  );
+};
+
 
 export default CoverageDetailPanel;
