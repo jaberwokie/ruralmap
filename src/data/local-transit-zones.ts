@@ -18,7 +18,11 @@ export type LocalTransitOperator =
   | 'GET My Ride'
   | 'Ely Bus'
   | 'Lincoln County Transportation'
-  | 'CART';
+  | 'CART'
+  | 'Pleasant Senior Center'
+  | 'Lyon County Human Services'
+  | 'Nye County Senior Nutrition'
+  | 'Pyramid Lake Tribal Transit';
 
 export type LocalTransitSupportLevel = 'local';
 
@@ -248,6 +252,134 @@ export const localTransitZones: LocalTransitZone[] = [
       [39.4200, -118.8400],
       [39.4700, -118.8700],
       [39.5250, -118.8500],
+    ],
+  },
+
+  // ── Pleasant Senior Center — Winnemucca ──
+  // Tight polygon around the Winnemucca city core. Limited community transport;
+  // do NOT extend to the rest of Humboldt County.
+  {
+    id: 'ltz-pleasant-senior-winnemucca',
+    name: 'Pleasant Senior Center — Winnemucca',
+    operator: 'Pleasant Senior Center',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Winnemucca limited transit zone',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    geometry: [
+      [40.9920, -117.7550],
+      [41.0050, -117.7350],
+      [40.9980, -117.7050],
+      [40.9750, -117.6950],
+      [40.9550, -117.7150],
+      [40.9550, -117.7450],
+      [40.9700, -117.7600],
+      [40.9920, -117.7550],
+    ],
+  },
+
+  // ── Lyon County Human Services — Yerington ──
+  // Tight polygon around Yerington city. Conservative.
+  {
+    id: 'ltz-lyon-hs-yerington',
+    name: 'Lyon County Human Services — Yerington',
+    operator: 'Lyon County Human Services',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Yerington limited transit zone',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    geometry: [
+      [38.9950, -119.1850],
+      [39.0080, -119.1500],
+      [38.9920, -119.1250],
+      [38.9700, -119.1200],
+      [38.9520, -119.1450],
+      [38.9550, -119.1800],
+      [38.9750, -119.1950],
+      [38.9950, -119.1850],
+    ],
+  },
+
+  // ── Lyon County Human Services — Dayton / Fernley corridor ──
+  // Two anchor towns connected by a narrow corridor along US-50 / I-80.
+  {
+    id: 'ltz-lyon-hs-dayton-fernley',
+    name: 'Lyon County Human Services — Dayton / Fernley corridor',
+    operator: 'Lyon County Human Services',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Dayton–Fernley limited transit corridor',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    geometry: [
+      [39.2500, -119.6050],
+      [39.2650, -119.5650],
+      [39.5050, -119.2350],
+      [39.6300, -119.2050],
+      [39.6450, -119.2400],
+      [39.5200, -119.2900],
+      [39.2700, -119.5950],
+      [39.2400, -119.6200],
+      [39.2500, -119.6050],
+    ],
+  },
+
+  // ── Nye County Senior Nutrition — Tonopah ──
+  // Tight polygon around Tonopah town only.
+  {
+    id: 'ltz-nye-senior-tonopah',
+    name: 'Nye County Senior Nutrition — Tonopah',
+    operator: 'Nye County Senior Nutrition',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Tonopah limited transit zone',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    geometry: [
+      [38.0850, -117.2500],
+      [38.0950, -117.2200],
+      [38.0820, -117.1950],
+      [38.0600, -117.1900],
+      [38.0420, -117.2100],
+      [38.0450, -117.2400],
+      [38.0650, -117.2550],
+      [38.0850, -117.2500],
+    ],
+  },
+
+  // ── Pyramid Lake Tribal Transit — Nixon ──
+  // Tight polygon around Nixon and the immediate Pyramid Lake reservation core.
+  // Intentionally small — distinct from the broader Tribal Nations layer.
+  {
+    id: 'ltz-pyramid-lake-nixon',
+    name: 'Pyramid Lake Tribal Transit — Nixon',
+    operator: 'Pyramid Lake Tribal Transit',
+    type: 'local_transit_zone',
+    geometryType: 'polygon',
+    active: true,
+    supportLevel: 'local',
+    shortLabel: 'Nixon / Pyramid Lake limited transit zone',
+    source: 'NDOT',
+    coverageConfidence: 'approximate',
+    geometry: [
+      [39.8400, -119.3850],
+      [39.8500, -119.3500],
+      [39.8350, -119.3200],
+      [39.8100, -119.3150],
+      [39.7900, -119.3400],
+      [39.7950, -119.3750],
+      [39.8150, -119.3950],
+      [39.8400, -119.3850],
     ],
   },
 ];
