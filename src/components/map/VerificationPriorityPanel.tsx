@@ -566,7 +566,7 @@ const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
     setApplyingKey(null);
     setRefreshKey(k => k + 1);
     toast.success(`Verification applied to ${rec.entity_name}`);
-  }, [outreachMap]);
+  }, [outreachMap, canApplyVerification]);
 
   return (
     <div className="space-y-2">
