@@ -65,12 +65,17 @@ const GAP_COUNTIES = (() => {
 })();
 
 import type { MapEntity } from '@/types/entities';
+import { UtilizationTogglesContext, type UtilizationToggles } from '@/components/map/utilization/UtilizationTogglesContext';
+import CountyUtilizationSection from '@/components/map/utilization/CountyUtilizationSection';
+import ProviderUtilizationReachSection from '@/components/map/utilization/ProviderUtilizationReachSection';
+import TribalUtilizationSection from '@/components/map/utilization/TribalUtilizationSection';
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
   memberLocation?: { lat: number; lng: number } | null;
+  utilizationToggles?: UtilizationToggles;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -235,7 +240,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
