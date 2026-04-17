@@ -825,7 +825,7 @@ const Sidebar = ({
           className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
-        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: 'hsl(var(--brand-health))' }}>Rural Operations Map</h1>
+        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: '#064f88' }}>Rural Operations Map</h1>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Search by facility, city, county, or enter a member address.
         </p>
