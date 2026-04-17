@@ -150,6 +150,9 @@ const Index = () => {
             tribalUtilization: layers.layers.tribalUtilization,
             tribalNations: layers.layers.tribalNations,
           }}
+          onProviderClick={onProviderClickFromUtilization}
+          onBack={selection.actions.goBack}
+          canGoBack={!!selection.previousEntity}
         />
       </div>
     </div>
