@@ -29,6 +29,8 @@ import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
+import { usePermissions } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 // LayerState imported from @/types/layers
 
@@ -381,6 +383,7 @@ const Sidebar = ({
     return [open, toggle, setOpen] as const;
   };
 
+  const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut, canImportData, canApplyVerification, canEditMapData } = usePermissions();
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
   const [verifQueueOpen, setVerifQueueOpen] = useState(false);
@@ -693,12 +696,17 @@ const Sidebar = ({
 
   const confirmImport = useCallback(() => {
     if (!csvParsed || csvParsed.valid.length === 0) return;
+    if (!canImportData) {
+      toast.error('You do not have permission to import data.');
+      console.warn('[csv-import] Blocked: caller is not authorized to import data.');
+      return;
+    }
     onAddFacilities(csvParsed.valid);
     toast.success(`Imported ${csvParsed.valid.length} facilities.`);
     console.log(`[csv-import] Imported ${csvParsed.valid.length} facilities`);
     setCsvImportState('success');
     setTimeout(() => { setCsvImportState('idle'); setCsvParsed(null); }, 3000);
-  }, [csvParsed, onAddFacilities]);
+  }, [csvParsed, onAddFacilities, canImportData]);
 
   const resetImport = useCallback(() => {
     setCsvImportState('idle');
@@ -821,6 +829,34 @@ const Sidebar = ({
         <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
           Start by selecting a county or entering a member address
         </p>
+        <div className="mt-1.5 flex items-center justify-center gap-1.5">
+          {!authReady ? null : isAdmin ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700"
+              title={user?.email ?? 'Admin'}
+            >
+              <span className="h-1 w-1 rounded-full bg-emerald-600" />
+              Admin Mode
+            </span>
+          ) : null}
+          {authReady && isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => { void signOut(); }}
+              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+              title={user?.email ?? undefined}
+            >
+              Sign out
+            </button>
+          ) : authReady ? (
+            <Link
+              to="/auth"
+              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              Staff sign in
+            </Link>
+          ) : null}
+        </div>
         <div className="mt-2.5 flex items-center justify-center gap-2">
           <button
             type="button"
@@ -1703,6 +1739,8 @@ const Sidebar = ({
         </div>
       </div>
 
+      {canEditMapData && (
+      <>
       <div className="mx-3 border-t border-border" />
 
       {/* Verification Priority Queue */}
@@ -1867,6 +1905,8 @@ const Sidebar = ({
           </div>
         )}
       </div>
+      </>
+      )}
 
       {/* Facilities List removed — search bar is the primary navigation */}
       </div>
