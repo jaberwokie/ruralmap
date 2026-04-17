@@ -6,43 +6,49 @@
 
 @layer base {
   :root {
-    --background: 240 10% 98%;
-    --foreground: 240 10% 10%;
+    /* NovumHealth brand theme
+       Primary navy:   #0F3A6B  ~ hsl(212 76% 24%)
+       Mid blue:       #1E76B8  ~ hsl(207 72% 42%)
+       Deep navy text: #0F2D5C  ~ hsl(216 72% 21%)
+       Brand green:    #2BC4A0  ~ hsl(165 65% 47%)
+       Neutrals: clean healthcare grays on warm white */
+    --background: 210 25% 98%;
+    --foreground: 216 35% 14%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 10%;
+    --card-foreground: 216 35% 14%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 10%;
+    --popover-foreground: 216 35% 14%;
 
-    --primary: 217 91% 60%;
+    --primary: 207 72% 42%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 10% 10%;
+    --secondary: 210 20% 95%;
+    --secondary-foreground: 216 35% 14%;
 
-    --muted: 240 5% 96%;
-    --muted-foreground: 240 4% 46%;
+    --muted: 210 20% 95%;
+    --muted-foreground: 215 16% 42%;
 
-    --accent: 240 5% 96%;
-    --accent-foreground: 240 10% 10%;
+    --accent: 165 65% 47%;
+    --accent-foreground: 216 72% 21%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 78% 52%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5% 84%;
-    --input: 240 5% 90%;
-    --ring: 217 91% 60%;
+    --border: 213 18% 87%;
+    --input: 213 18% 90%;
+    --ring: 207 72% 42%;
 
     --radius: 0.5rem;
 
-    --hospital: 0 84% 60%;
-    --clinic: 217 91% 60%;
+    --hospital: 0 78% 52%;
+    --clinic: 207 72% 42%;
     --tier1: 45 93% 47%;
-    --primary-zone: 217 91% 60%;
+    --primary-zone: 207 72% 42%;
     --secondary-zone: 35 92% 50%;
-    --frontier-zone: 240 5% 64%;
-    --service-presence: 142 56% 42%;
+    --frontier-zone: 215 16% 60%;
+    --service-presence: 165 60% 38%;
     --behavioral-health: 272 56% 48%;
     --tribal-nation: 30 65% 50%;
     --tribal-nation-fill: 30 65% 50% / 0.12;
@@ -58,38 +64,38 @@
     --response-remote-border: 220 10% 60% / 0.25;
     --staffing-low: 24 95% 53%;
     --staffing-medium: 44 96% 61%;
-    --staffing-high: 142 71% 45%;
+    --staffing-high: 165 65% 42%;
     --engagement-early: 200 70% 55%;
     --engagement-watch: 48 90% 50%;
     --engagement-gap: 30 90% 50%;
     --utilization-low: 270 30% 75%;
     --utilization-mid: 270 45% 55%;
     --utilization-high: 270 60% 40%;
-    --radius-stroke: 200 50% 50%;
-    --radius-stroke-soft: 200 50% 50% / 0.6;
-    --radius-fill: 200 50% 50% / 0.1;
-    --access-gap-fill: 0 84% 60% / 0.14;
-    --access-gap-border: 0 84% 60% / 0.3;
+    --radius-stroke: 207 72% 42%;
+    --radius-stroke-soft: 207 72% 42% / 0.6;
+    --radius-fill: 207 72% 42% / 0.1;
+    --access-gap-fill: 0 78% 52% / 0.14;
+    --access-gap-border: 0 78% 52% / 0.3;
 
-    --broadband-served: 160 50% 45%;
+    --broadband-served: 165 60% 38%;
     --broadband-underserved: 38 85% 52%;
     --broadband-unserved: 0 65% 55%;
 
-    --cellular-strong: 160 55% 40%;
+    --cellular-strong: 165 60% 38%;
     --cellular-moderate: 44 90% 50%;
     --cellular-weak: 20 85% 55%;
-    --cellular-none: 240 5% 60%;
+    --cellular-none: 215 16% 60%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 10% 10%;
-    --sidebar-primary: 217 91% 60%;
+    --sidebar-foreground: 216 35% 14%;
+    --sidebar-primary: 207 72% 42%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 5% 96%;
-    --sidebar-accent-foreground: 240 10% 10%;
-    --sidebar-border: 240 5% 90%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 210 20% 95%;
+    --sidebar-accent-foreground: 216 35% 14%;
+    --sidebar-border: 213 18% 90%;
+    --sidebar-ring: 207 72% 42%;
 
-    --shadow-panel: 0 0 0 1px rgba(0,0,0,.05), 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+    --shadow-panel: 0 0 0 1px rgba(15,45,92,.06), 0 4px 6px -1px rgba(15,45,92,.08), 0 2px 4px -1px rgba(15,45,92,.05);
   }
 
   .dark {
