@@ -160,7 +160,7 @@ const SECTION_META = {
 } as const;
 
 const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-[#064f88] transition-colors hover:text-[#064f88]/80';
-const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[30px] items-center gap-2 rounded-md border border-transparent px-2 py-0.5 transition-colors duration-150 hover:bg-secondary/60';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[30px] items-center gap-2 rounded-md border border-transparent px-2 py-0.5 transition-colors duration-150 hover:bg-secondary/40 hover:text-[hsl(var(--brand-health))] [&:hover_svg]:text-[hsl(var(--brand-health))]';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-px';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
