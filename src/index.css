@@ -172,7 +172,7 @@
 
 /* Leaflet overrides */
 .leaflet-container {
-  background: hsl(240 10% 98%);
+  background: hsl(210 25% 98%);
   font-family: 'Inter', system-ui, sans-serif;
 }
 
