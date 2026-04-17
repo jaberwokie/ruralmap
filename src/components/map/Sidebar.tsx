@@ -159,9 +159,9 @@ const SECTION_META = {
   },
 } as const;
 
-const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground';
-const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[36px] items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/60';
-const SECTION_CONTENT_CLASSNAME = 'mt-1 space-y-0.5';
+const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1.5 text-[12.5px] font-semibold tracking-tight text-foreground/90 transition-colors hover:text-foreground';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[34px] items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/60';
+const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
   <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
@@ -806,8 +806,8 @@ const Sidebar = ({
         >
           {renderLayerIcon(icon, iconClassName, !checked)}
           <span className="min-w-0 flex-1">
-            <span className={`block text-[12.5px] leading-snug ${checked ? 'text-foreground' : 'text-foreground/70'}`}>{label}</span>
-            {subtitle && <span className="block text-[10.5px] leading-tight text-muted-foreground mt-0.5">{subtitle}</span>}
+            <span className={`block text-[11.5px] leading-snug ${checked ? 'text-foreground/85' : 'text-foreground/55'}`}>{label}</span>
+            {subtitle && <span className="block text-[10px] leading-tight text-muted-foreground mt-0.5">{subtitle}</span>}
           </span>
         </button>
         {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
