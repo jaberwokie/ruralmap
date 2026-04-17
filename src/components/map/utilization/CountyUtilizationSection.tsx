@@ -10,6 +10,8 @@ import { useMemo } from 'react';
 import type { CountyGapSummary } from '@/types/utilization';
 import { useUtilizationData } from '@/hooks/useUtilizationData';
 import { normalizeCounty } from '@/utils/utilizationNormalize';
+import { formatDisplayValue } from '@/utils/displayFormat';
+import { useUtilizationProviderClick } from '@/components/map/utilization/UtilizationTogglesContext';
 
 interface Props {
   county: string;
@@ -37,6 +39,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 
 const CountyUtilizationSection = ({ county, enabled }: Props) => {
   const { data } = useUtilizationData(enabled);
+  const onProviderClick = useUtilizationProviderClick();
   const normalizedCounty = useMemo(() => normalizeCounty(county), [county]);
   const record = useMemo<CountyGapSummary | undefined>(() => {
     if (!data) return undefined;
@@ -128,12 +131,42 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
           <ol className="space-y-1">
             <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
               <span className="text-muted-foreground tabular-nums">1.</span>
-              <span className="break-words font-semibold">{topProvider1}</span>
+              {onProviderClick ? (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onProviderClick(topProvider1);
+                  }}
+                  className="break-words text-left font-semibold underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                  title="Open provider details"
+                >
+                  {formatDisplayValue(topProvider1)}
+                </button>
+              ) : (
+                <span className="break-words font-semibold">{formatDisplayValue(topProvider1)}</span>
+              )}
             </li>
             {topProvider2 && (
               <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
                 <span className="text-muted-foreground tabular-nums">2.</span>
-                <span className="break-words font-medium">{topProvider2}</span>
+                {onProviderClick ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onProviderClick(topProvider2);
+                    }}
+                    className="break-words text-left font-medium underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
+                    title="Open provider details"
+                  >
+                    {formatDisplayValue(topProvider2)}
+                  </button>
+                ) : (
+                  <span className="break-words font-medium">{formatDisplayValue(topProvider2)}</span>
+                )}
               </li>
             )}
           </ol>

@@ -32,6 +32,16 @@ const Index = () => {
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
 
+  /** Navigate from utilization → provider detail by name match (case-insensitive). */
+  const onProviderClickFromUtilization = useCallback((providerName: string): boolean => {
+    const target = providerName.trim().toLowerCase();
+    if (!target) return false;
+    const match = facility.facilities.find(f => f.name.trim().toLowerCase() === target);
+    if (!match) return false;
+    selection.actions.selectEntityWithBack({ type: 'facility', facility: match });
+    return true;
+  }, [facility.facilities, selection.actions]);
+
   const onTransitProviderClick = useCallback((providerId: string) => {
     const provider = localTransitProviders.find(p => p.id === providerId);
     if (!provider) return;
@@ -140,6 +150,9 @@ const Index = () => {
             tribalUtilization: layers.layers.tribalUtilization,
             tribalNations: layers.layers.tribalNations,
           }}
+          onProviderClick={onProviderClickFromUtilization}
+          onBack={selection.actions.goBack}
+          canGoBack={!!selection.previousEntity}
         />
       </div>
     </div>
