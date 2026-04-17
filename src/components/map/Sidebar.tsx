@@ -818,6 +818,9 @@ const Sidebar = ({
           decoding="async"
         />
         <h1 className="mt-1.5 text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
+        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+          Start by selecting a county or entering a member address
+        </p>
         <div className="mt-2.5 flex items-center justify-center gap-2">
           <button
             type="button"
@@ -827,6 +830,47 @@ const Sidebar = ({
             Map Explainer
           </button>
         </div>
+        {onSetLayers && (
+          <div className="mt-2.5 flex items-center justify-center gap-1.5" role="group" aria-label="View Mode">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">View</span>
+            <div className="inline-flex overflow-hidden rounded-md border border-border bg-background">
+              <button
+                type="button"
+                onClick={() => onSetLayers((prev) => ({
+                  ...prev,
+                  tribalNations: false,
+                  behavioralHealth: false,
+                  services: false,
+                }))}
+                className={`px-2 py-1 text-[10px] font-medium transition-colors ${
+                  !layers.tribalNations && !layers.behavioralHealth && !layers.services
+                    ? 'bg-secondary text-foreground'
+                    : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                }`}
+                aria-pressed={!layers.tribalNations && !layers.behavioralHealth && !layers.services}
+              >
+                Basic
+              </button>
+              <button
+                type="button"
+                onClick={() => onSetLayers((prev) => ({
+                  ...prev,
+                  tribalNations: true,
+                  behavioralHealth: true,
+                  services: true,
+                }))}
+                className={`border-l border-border px-2 py-1 text-[10px] font-medium transition-colors ${
+                  layers.tribalNations && layers.behavioralHealth && layers.services
+                    ? 'bg-secondary text-foreground'
+                    : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                }`}
+                aria-pressed={layers.tribalNations && layers.behavioralHealth && layers.services}
+              >
+                Full System
+              </button>
+            </div>
+          </div>
+        )}
         <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
           <span className="text-foreground/80 font-medium flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
