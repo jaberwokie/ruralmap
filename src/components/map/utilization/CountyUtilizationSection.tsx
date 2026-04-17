@@ -37,14 +37,24 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 
 const CountyUtilizationSection = ({ county, enabled }: Props) => {
   const { data } = useUtilizationData(enabled);
+  const normalizedCounty = useMemo(() => normalizeCounty(county), [county]);
   const record = useMemo<CountyGapSummary | undefined>(() => {
     if (!data) return undefined;
-    return data.indices.countyGapByCounty.get(normalizeCounty(county));
-  }, [data, county]);
+    return data.indices.countyGapByCounty.get(normalizedCounty);
+  }, [data, normalizedCounty]);
+  // Top providers derived from provider_util_flat — same metric (distinct members)
+  // used by the share calculation in county_gap_summary. Aggregate labels already excluded.
+  const topProviders = useMemo(() => {
+    if (!data) return [] as string[];
+    const rows = data.indices.providerUtilByCounty.get(normalizedCounty) ?? [];
+    return rows.filter((r) => r.distinctMembers > 0).map((r) => r.providerName);
+  }, [data, normalizedCounty]);
 
   if (!enabled || !record) return null;
 
   const dateRange = fmtDateRange(record.firstServiceDate, record.lastServiceDate);
+  const topProvider1 = topProviders[0];
+  const topProvider2 = topProviders[1];
 
   // Decision signals — display-only heuristics. Not used in scoring/filter/queue.
   const signals: Array<{ key: string; label: string; detail: string }> = [];
