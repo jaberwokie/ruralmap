@@ -866,7 +866,7 @@ const Sidebar = ({
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
-              className="inline-flex h-8 items-center justify-center rounded-md bg-[hsl(var(--brand-health))] px-3 text-xs font-medium text-white transition-colors hover:bg-[hsl(var(--primary-hover))] active:bg-[hsl(var(--primary-active))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-[#064f88]/40 bg-[hsl(var(--brand-health))] px-3 text-xs font-medium text-white transition-colors hover:bg-[hsl(var(--primary-hover))] hover:border-[#064f88]/60 active:bg-[hsl(var(--primary-active))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#064f88]/40"
             >
               Staff Sign In
             </Link>
@@ -876,7 +876,7 @@ const Sidebar = ({
           <button
             type="button"
             onClick={() => setExplainerOpen(true)}
-            className={`inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
+            className={`inline-flex h-8 items-center justify-center rounded-md border border-[hsl(var(--brand-health)/0.35)] bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:border-[hsl(var(--brand-health)/0.55)] hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--brand-health)/0.3)] ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
           >
             Map Explainer
           </button>
@@ -930,12 +930,12 @@ const Sidebar = ({
 
           {/* Stats row */}
           <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-            <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2 py-0.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-[hsl(var(--brand-health)/0.3)] bg-card px-2 py-0.5">
               <span className="h-1.5 w-1.5 rounded-full bg-hospital flex-shrink-0" />
               <span className="text-[10px] text-muted-foreground">Hospitals</span>
               <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{hospitalCount}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2 py-0.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-[hsl(var(--brand-health)/0.3)] bg-card px-2 py-0.5">
               <span className="h-1.5 w-1.5 rounded-full bg-clinic flex-shrink-0" />
               <span className="text-[10px] text-muted-foreground">Clinics</span>
               <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{clinicCount}</span>
