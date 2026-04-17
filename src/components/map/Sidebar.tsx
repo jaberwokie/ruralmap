@@ -1781,7 +1781,7 @@ const Sidebar = ({
       <SectionDivider />
 
       {/* Verification Priority Queue */}
-      <div className="px-4 pt-3">
+      <div className="px-4">
         <button
           onClick={() => setVerifQueueOpen(!verifQueueOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1799,7 +1799,7 @@ const Sidebar = ({
       <SectionDivider />
 
       {/* Verification Audit History */}
-      <div className="px-4 pt-3">
+      <div className="px-4">
         <button
           onClick={() => setAuditHistoryOpen(!auditHistoryOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1815,7 +1815,7 @@ const Sidebar = ({
       </div>
 
       <SectionDivider />
-      <div className="px-4 pt-3">
+      <div className="px-4">
         <button
           onClick={() => setCsvOpen(!csvOpen)}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
