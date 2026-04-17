@@ -67,7 +67,7 @@ const ProviderUtilizationReachSection = ({ providerName, enabled }: Props) => {
     <div className="mt-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
       <div className="mb-1 flex items-center justify-between">
         <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">
-          Utilization Reach
+          County Member Reach
         </span>
       </div>
       <div className="mb-1.5 grid grid-cols-2 gap-1">
