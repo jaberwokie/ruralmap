@@ -1907,6 +1907,9 @@ const Sidebar = ({
       </div>
       </>
       )}
+
+      {/* Facilities List removed — search bar is the primary navigation */}
+      </div>
       {/* Bottom fade overlay */}
       <div className="pointer-events-none absolute bottom-0 left-0 right-[5px] h-8 bg-gradient-to-t from-card to-transparent" />
     </div>
