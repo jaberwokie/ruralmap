@@ -887,8 +887,8 @@ const Sidebar = ({
 
       {/* View toggle */}
       {onSetLayers && (
-        <div className="px-4 pt-4 pb-3 border-b border-border/60">
-          <div className="flex flex-col gap-1.5" role="group" aria-label="View Mode">
+        <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
+          <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
             <span className="text-[11px] font-medium text-muted-foreground">View</span>
             <div className="flex w-full items-center rounded-md border border-border bg-secondary/40 p-0.5">
               <button
@@ -899,7 +899,7 @@ const Sidebar = ({
                   behavioralHealth: false,
                   services: false,
                 }))}
-                className={`flex-1 px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   !layers.tribalNations && !layers.behavioralHealth && !layers.services
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -916,7 +916,7 @@ const Sidebar = ({
                   behavioralHealth: true,
                   services: true,
                 }))}
-                className={`flex-1 px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   layers.tribalNations && layers.behavioralHealth && layers.services
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -929,13 +929,13 @@ const Sidebar = ({
           </div>
 
           {/* Stats row */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
               <span className="h-2 w-2 rounded-full bg-hospital flex-shrink-0" />
               <span className="text-[11px] text-muted-foreground">Hospitals</span>
               <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{hospitalCount}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
               <span className="h-2 w-2 rounded-full bg-clinic flex-shrink-0" />
               <span className="text-[11px] text-muted-foreground">Clinics</span>
               <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{clinicCount}</span>
