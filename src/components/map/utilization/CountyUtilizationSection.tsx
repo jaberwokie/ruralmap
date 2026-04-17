@@ -39,6 +39,7 @@ const Row = ({ label, value }: { label: string; value: string }) => (
 
 const CountyUtilizationSection = ({ county, enabled }: Props) => {
   const { data } = useUtilizationData(enabled);
+  const onProviderClick = useUtilizationProviderClick();
   const normalizedCounty = useMemo(() => normalizeCounty(county), [county]);
   const record = useMemo<CountyGapSummary | undefined>(() => {
     if (!data) return undefined;
