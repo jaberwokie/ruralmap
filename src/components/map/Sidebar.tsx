@@ -159,9 +159,9 @@ const SECTION_META = {
   },
 } as const;
 
-const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/65 transition-colors hover:text-foreground';
-const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[34px] items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/60';
-const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
+const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/65 transition-colors hover:text-foreground';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[30px] items-center gap-2 rounded-md border border-transparent px-2 py-1 transition-colors duration-150 hover:bg-secondary/60';
+const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-px';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
   <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
@@ -818,20 +818,20 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
-      <div className="flex flex-col items-center px-4 pt-5 pb-4 text-center border-b border-border/60">
+      <div className="flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
         <img
           src={novumLogo}
           alt="NovumHealth"
           className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
-        <h1 className="mt-3 text-base font-semibold tracking-tight leading-tight" style={{ color: 'hsl(var(--brand-health))' }}>Rural Operations Map</h1>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
+        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: 'hsl(var(--brand-health))' }}>Rural Operations Map</h1>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Select a county or search by facility, city, or enter a member address.
         </p>
 
         {/* Auth + admin row */}
-        <div className="mt-3 flex items-center justify-center gap-3 text-[11px]">
+        <div className="mt-2 flex items-center justify-center gap-3 text-[11px]">
           {!authReady ? null : isAdmin ? (
             <>
               <span
@@ -862,11 +862,11 @@ const Sidebar = ({
         </div>
 
         {/* Action buttons row: Staff sign in + Map Explainer */}
-        <div className="mt-3 grid grid-cols-2 gap-2 w-full">
+        <div className="mt-2 grid grid-cols-2 gap-2 w-full">
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               Staff sign in
             </Link>
@@ -876,7 +876,7 @@ const Sidebar = ({
           <button
             type="button"
             onClick={() => setExplainerOpen(true)}
-            className={`inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
+            className={`inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
           >
             Map Explainer
           </button>
@@ -887,8 +887,8 @@ const Sidebar = ({
 
       {/* View toggle */}
       {onSetLayers && (
-        <div className="px-4 pt-4 pb-3 border-b border-border/60">
-          <div className="flex flex-col gap-1.5" role="group" aria-label="View Mode">
+        <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
+          <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
             <span className="text-[11px] font-medium text-muted-foreground">View</span>
             <div className="flex w-full items-center rounded-md border border-border bg-secondary/40 p-0.5">
               <button
@@ -899,7 +899,7 @@ const Sidebar = ({
                   behavioralHealth: false,
                   services: false,
                 }))}
-                className={`flex-1 px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   !layers.tribalNations && !layers.behavioralHealth && !layers.services
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -916,7 +916,7 @@ const Sidebar = ({
                   behavioralHealth: true,
                   services: true,
                 }))}
-                className={`flex-1 px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   layers.tribalNations && layers.behavioralHealth && layers.services
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -929,13 +929,13 @@ const Sidebar = ({
           </div>
 
           {/* Stats row */}
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
               <span className="h-2 w-2 rounded-full bg-hospital flex-shrink-0" />
               <span className="text-[11px] text-muted-foreground">Hospitals</span>
               <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{hospitalCount}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
               <span className="h-2 w-2 rounded-full bg-clinic flex-shrink-0" />
               <span className="text-[11px] text-muted-foreground">Clinics</span>
               <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{clinicCount}</span>
@@ -945,7 +945,7 @@ const Sidebar = ({
       )}
 
       {/* Search */}
-      <div className="px-4 pt-4 pb-3" data-tutorial="search-bar">
+      <div className="px-4 pt-2.5 pb-2" data-tutorial="search-bar">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
@@ -959,8 +959,8 @@ const Sidebar = ({
       </div>
 
       {/* Filter Panel */}
-      <div className="px-4 pb-3">
-        <div className="mb-2 flex items-center gap-2">
+      <div className="px-4 pb-2">
+        <div className="mb-1.5 flex items-center gap-2">
           <button
             type="button"
             onClick={toggleFilters}
@@ -1105,9 +1105,9 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-4 pb-3">
-        <div className="space-y-3 border-t border-border pt-3">
-              <div className="space-y-2">
+      <div className="px-4 pb-2">
+        <div className="space-y-1.5 border-t border-border pt-2">
+              <div className="space-y-1">
                 <div data-tutorial="section-core-map">
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
