@@ -163,6 +163,14 @@ const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10
 const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[30px] items-center gap-2 rounded-md border border-transparent px-2 py-0.5 transition-colors duration-150 hover:bg-secondary/40 hover:text-[hsl(var(--brand-health))] [&:hover_svg]:text-[hsl(var(--brand-health))]';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-px';
 
+// Single source of truth for the horizontal rule that separates top-level
+// sidebar sections (Connectivity, Verification Priority Queue, Verification
+// Audit History, Data Import, etc.). Uniform inset, thickness, color, and
+// vertical breathing room.
+const SectionDivider = () => (
+  <div className="my-2 mx-4 h-px bg-border" aria-hidden="true" />
+);
+
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
   <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
     <Icon className={`h-3.5 w-3.5 stroke-[1.75] ${colorClassName}`} />
