@@ -33,15 +33,32 @@ const Index = () => {
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
 
-  /** Navigate from utilization → provider detail by name match (case-insensitive). */
+  /** Pre-built indexes for resolving provider names → facilities. */
+  const facilityIndex = useMemo(() => {
+    const exact = new Map<string, Facility>();
+    const alias = new Map<string, Facility>();
+    for (const f of facility.facilities) {
+      const k1 = normalizeProviderExact(f.name);
+      if (k1 && !exact.has(k1)) exact.set(k1, f);
+      const k2 = normalizeProviderForMatch(f.name);
+      if (k2 && !alias.has(k2)) alias.set(k2, f);
+    }
+    return { exact, alias };
+  }, [facility.facilities]);
+
+  /** Navigate from utilization → provider detail by controlled name match. */
   const onProviderClickFromUtilization = useCallback((providerName: string): boolean => {
-    const target = providerName.trim().toLowerCase();
-    if (!target) return false;
-    const match = facility.facilities.find(f => f.name.trim().toLowerCase() === target);
+    const exactKey = normalizeProviderExact(providerName);
+    if (!exactKey) return false;
+    let match = facilityIndex.exact.get(exactKey);
+    if (!match) {
+      const aliasKey = normalizeProviderForMatch(providerName);
+      if (aliasKey) match = facilityIndex.alias.get(aliasKey);
+    }
     if (!match) return false;
     selection.actions.selectEntityWithBack({ type: 'facility', facility: match });
     return true;
-  }, [facility.facilities, selection.actions]);
+  }, [facilityIndex, selection.actions]);
 
   const onTransitProviderClick = useCallback((providerId: string) => {
     const provider = localTransitProviders.find(p => p.id === providerId);
