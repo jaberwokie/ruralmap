@@ -5,6 +5,11 @@ import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth
 import { enrichFacilities, auditOperationalCoverage, logVerifiedAccessSummary } from '@/utils/operationalEnrichment';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { auditServiceClassification, getTaggingQueue, getQueueSummary, getDeferredSummary, getConfidenceSummary } from '@/utils/operationalServiceClass';
+import {
+  appendImportedFacilities,
+  getImportedFacilities,
+  subscribeToImportedFacilities,
+} from '@/utils/importedFacilitiesStore';
 import type { Filters } from '@/types/filters';
 import {
   matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
@@ -19,7 +24,10 @@ export interface UseFacilityDataReturn {
 }
 
 export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
-  const [importedFacilities, setImportedFacilities] = useState<Facility[]>([]);
+  const [importedFacilities, setImportedFacilities] = useState<Facility[]>(() => getImportedFacilities());
+
+  // Stay in sync with imports performed from any other route (e.g. /admin).
+  useEffect(() => subscribeToImportedFacilities(() => setImportedFacilities(getImportedFacilities())), []);
 
   const facilities = useMemo(
     () => enrichFacilities([...defaultFacilities, ...importedFacilities]),
@@ -53,7 +61,8 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
   }, [facilities, filters]);
 
   const addFacilities = useCallback((newFacilities: Facility[]) => {
-    setImportedFacilities(prev => [...prev, ...newFacilities]);
+    const next = appendImportedFacilities(newFacilities);
+    setImportedFacilities(next);
   }, []);
 
   // Dev-only audits
