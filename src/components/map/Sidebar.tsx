@@ -29,6 +29,8 @@ import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
+import { usePermissions } from '@/contexts/AuthContext';
+import { Link } from 'react-router-dom';
 
 // LayerState imported from @/types/layers
 
@@ -693,12 +695,17 @@ const Sidebar = ({
 
   const confirmImport = useCallback(() => {
     if (!csvParsed || csvParsed.valid.length === 0) return;
+    if (!canImportData) {
+      toast.error('You do not have permission to import data.');
+      console.warn('[csv-import] Blocked: caller is not authorized to import data.');
+      return;
+    }
     onAddFacilities(csvParsed.valid);
     toast.success(`Imported ${csvParsed.valid.length} facilities.`);
     console.log(`[csv-import] Imported ${csvParsed.valid.length} facilities`);
     setCsvImportState('success');
     setTimeout(() => { setCsvImportState('idle'); setCsvParsed(null); }, 3000);
-  }, [csvParsed, onAddFacilities]);
+  }, [csvParsed, onAddFacilities, canImportData]);
 
   const resetImport = useCallback(() => {
     setCsvImportState('idle');
