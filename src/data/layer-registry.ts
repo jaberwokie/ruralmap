@@ -4,7 +4,7 @@
 
 import type { LayerState, FullLayerState } from '@/types/layers';
 
-export type LayerGroup = 'coreMap' | 'operations' | 'utilization' | 'access' | 'connectivity';
+export type LayerGroup = 'coreMap' | 'operations' | 'utilization' | 'access' | 'demandUtilization' | 'connectivity';
 
 export interface LayerDefinition {
   id: string;
@@ -102,6 +102,32 @@ export const LAYER_REGISTRY: LayerDefinition[] = [
     dependencies: ['coverageRadius'],
   },
 
+  // ── Demand & Utilization (additive, display-only) ──
+  {
+    id: 'memberDemandZip',
+    label: 'Member Demand (ZIP)',
+    group: 'demandUtilization',
+    defaultVisible: false,
+  },
+  {
+    id: 'countyUtilization',
+    label: 'County Utilization Metrics',
+    group: 'demandUtilization',
+    defaultVisible: false,
+  },
+  {
+    id: 'providerUtilizationReach',
+    label: 'Provider Utilization Reach',
+    group: 'demandUtilization',
+    defaultVisible: false,
+  },
+  {
+    id: 'tribalUtilization',
+    label: 'Tribal Utilization',
+    group: 'demandUtilization',
+    defaultVisible: false,
+  },
+
   // ── Connectivity ──
   {
     id: 'broadbandAccess',
@@ -143,6 +169,10 @@ const defaultLayerKeys: Record<string, true> = {
   engagementGap: true,
   broadbandAccess: true,
   cellularCoverage: true,
+  memberDemandZip: true,
+  countyUtilization: true,
+  providerUtilizationReach: true,
+  tribalUtilization: true,
 };
 
 /** Diagnostic config for toggle logging */
