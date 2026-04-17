@@ -2086,6 +2086,9 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
           </div>
         </DetailSection>
       )}
+      {isBillingProvider && (
+        <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
+      )}
     </>
   );
 };
@@ -2174,6 +2177,8 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 
 // ── Tribal Nation ──
 const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
+  const t = useUtilizationToggles();
+  const tribalCounty = tribe.counties[0] ?? '';
   const { isOpen, toggle } = useAccordion('location');
   const normalizedWeb = normalizeWebsite(tribe.website);
   const hasContact = !!(tribe.phone || normalizedWeb);
@@ -2326,6 +2331,9 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
           <ExternalLink className="w-2.5 h-2.5" /> NV Dept. of Native American Affairs Directory
         </a>
       </div>
+      {tribalCounty && (
+        <TribalUtilizationSection county={tribalCounty} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
+      )}
     </>
   );
 };
