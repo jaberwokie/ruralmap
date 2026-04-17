@@ -17,6 +17,11 @@ const DEFAULT_LAYERS: LayerState = {
   tribalNations: true,
   railCorridor: false,
   localTransitZones: false,
+  // Demand & Utilization — additive, all default OFF
+  memberDemandZip: false,
+  countyUtilization: false,
+  providerUtilizationReach: false,
+  tribalUtilization: false,
 };
 
 const DEFAULT_COVERAGE: CoverageState = {

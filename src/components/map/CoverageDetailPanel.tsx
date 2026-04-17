@@ -65,12 +65,17 @@ const GAP_COUNTIES = (() => {
 })();
 
 import type { MapEntity } from '@/types/entities';
+import { UtilizationTogglesContext, useUtilizationToggles, type UtilizationToggles } from '@/components/map/utilization/UtilizationTogglesContext';
+import CountyUtilizationSection from '@/components/map/utilization/CountyUtilizationSection';
+import ProviderUtilizationReachSection from '@/components/map/utilization/ProviderUtilizationReachSection';
+import TribalUtilizationSection from '@/components/map/utilization/TribalUtilizationSection';
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
   onClear: () => void;
   coverageRadiusKm?: number;
   memberLocation?: { lat: number; lng: number } | null;
+  utilizationToggles?: UtilizationToggles;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -235,7 +240,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -254,46 +259,55 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
   if (!display) return null;
 
-  return (
-    <div
-      data-tutorial="details-panel"
-      className="absolute top-3 right-3 z-[1000] flex max-h-[calc(100vh-120px)] w-64 select-none flex-col rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm"
-      onClick={(event) => event.stopPropagation()}
-      onMouseDown={(event) => event.stopPropagation()}
-    >
-      {/* Header */}
-      <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Details
-        </h3>
-        {isLocked && (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              onClear();
-            }}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            aria-label="Close details panel"
-            title="Close details"
-          >
-            <X className="h-4 w-4 stroke-[1.75]" />
-          </button>
-        )}
-      </div>
+  const togglesValue: UtilizationToggles = utilizationToggles ?? {
+    countyUtilization: false,
+    providerUtilizationReach: false,
+    tribalUtilization: false,
+    tribalNations: false,
+  };
 
-      {/* Body */}
-      <div className="overflow-y-auto flex-1 px-3 pb-3">
-        {memberLocation && display.type === 'facility' && (
-          <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
-        )}
-        {memberLocation && display.type === 'ruralService' && (
-          <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
-        )}
-        <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+  return (
+    <UtilizationTogglesContext.Provider value={togglesValue}>
+      <div
+        data-tutorial="details-panel"
+        className="absolute top-3 right-3 z-[1000] flex max-h-[calc(100vh-120px)] w-64 select-none flex-col rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm"
+        onClick={(event) => event.stopPropagation()}
+        onMouseDown={(event) => event.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Details
+          </h3>
+          {isLocked && (
+            <button
+              type="button"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onClear();
+              }}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              aria-label="Close details panel"
+              title="Close details"
+            >
+              <X className="h-4 w-4 stroke-[1.75]" />
+            </button>
+          )}
+        </div>
+
+        {/* Body */}
+        <div className="overflow-y-auto flex-1 px-3 pb-3">
+          {memberLocation && display.type === 'facility' && (
+            <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
+          )}
+          {memberLocation && display.type === 'ruralService' && (
+            <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
+          )}
+          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+        </div>
       </div>
-    </div>
+    </UtilizationTogglesContext.Provider>
   );
 };
 
@@ -1134,6 +1148,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+  const t = useUtilizationToggles();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
@@ -1519,6 +1534,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
           </DetailSection>
         );
       })()}
+      <CountyUtilizationSection county={county} enabled={t.countyUtilization} />
+      <TribalUtilizationSection county={county} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
     </>
   );
 };
@@ -1895,6 +1912,8 @@ const CopyAddress = ({ text }: { text: string }) => {
 
 // ── Facility ──
 const FacilityContent = ({ facility }: { facility: Facility }) => {
+  const t = useUtilizationToggles();
+  const isBillingProvider = facility.type === 'hospital' || facility.type === 'clinic';
   const { isOpen, toggle } = useAccordion('provider');
   const isHighUtilClinic = facility.tier === 'tier1';
   const classification = getFacilityClassification(facility);
@@ -2067,6 +2086,9 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
           </div>
         </DetailSection>
       )}
+      {isBillingProvider && (
+        <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
+      )}
     </>
   );
 };
@@ -2155,6 +2177,8 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 
 // ── Tribal Nation ──
 const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
+  const t = useUtilizationToggles();
+  const tribalCounty = tribe.counties[0] ?? '';
   const { isOpen, toggle } = useAccordion('location');
   const normalizedWeb = normalizeWebsite(tribe.website);
   const hasContact = !!(tribe.phone || normalizedWeb);
@@ -2307,6 +2331,9 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
           <ExternalLink className="w-2.5 h-2.5" /> NV Dept. of Native American Affairs Directory
         </a>
       </div>
+      {tribalCounty && (
+        <TribalUtilizationSection county={tribalCounty} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
+      )}
     </>
   );
 };
