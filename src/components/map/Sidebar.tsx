@@ -203,15 +203,21 @@ const renderProviderTypeVisual = (dimmed = false, size = 12) => (
   </span>
 );
 
-const renderProviderLocationsBelowLegend = (dimmed = false) => (
+const renderProviderLocationsBelowLegend = (
+  hospitalCount: number,
+  clinicCount: number,
+  dimmed = false,
+) => (
   <span className={`flex items-center gap-3 text-[10px] text-muted-foreground ${dimmed ? 'opacity-60' : ''}`}>
     <span className="flex items-center gap-1">
       <span className="h-1.5 w-1.5 rounded-full bg-hospital" />
       <span>Hospital</span>
+      <span className="font-semibold tabular-nums text-foreground">{hospitalCount}</span>
     </span>
     <span className="flex items-center gap-1">
       <span className="h-1.5 w-1.5 rounded-full bg-clinic" />
       <span>Clinic</span>
+      <span className="font-semibold tabular-nums text-foreground">{clinicCount}</span>
     </span>
   </span>
 );
@@ -865,17 +871,6 @@ const Sidebar = ({
             </div>
           </div>
 
-          {/* Summary counts */}
-          <div className="mt-1.5 flex items-center justify-start gap-x-4 text-[11px]">
-            <div className="flex items-baseline gap-1">
-              <span className="text-muted-foreground">Hospitals</span>
-              <span className="font-semibold tabular-nums text-foreground">{hospitalCount}</span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-muted-foreground">Clinics</span>
-              <span className="font-semibold tabular-nums text-foreground">{clinicCount}</span>
-            </div>
-          </div>
         </div>
       )}
 
@@ -1076,7 +1071,7 @@ const Sidebar = ({
                                     : key === 'serviceLocations'
                                       ? 'toggle-provider-locations'
                                       : undefined,
-                              belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
+                              belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(hospitalCount, clinicCount, !layers.serviceLocations) : undefined,
                               inlineLegend: exportHandler ? (
                                 <button
                                   type="button"
