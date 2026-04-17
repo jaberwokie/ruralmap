@@ -129,45 +129,9 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
             Top Utilized Providers
           </div>
           <ol className="space-y-1">
-            <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
-              <span className="text-muted-foreground tabular-nums">1.</span>
-              {onProviderClick ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onProviderClick(topProvider1);
-                  }}
-                  className="break-words text-left font-semibold underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
-                  title="Open provider details"
-                >
-                  {formatDisplayValue(topProvider1)}
-                </button>
-              ) : (
-                <span className="break-words font-semibold">{formatDisplayValue(topProvider1)}</span>
-              )}
-            </li>
+            <ProviderEntry rank={1} bold rawName={topProvider1} onProviderClick={onProviderClick} unmatched={unmatched.has(topProvider1)} onUnmatched={markUnmatched} />
             {topProvider2 && (
-              <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
-                <span className="text-muted-foreground tabular-nums">2.</span>
-                {onProviderClick ? (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onProviderClick(topProvider2);
-                    }}
-                    className="break-words text-left font-medium underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary"
-                    title="Open provider details"
-                  >
-                    {formatDisplayValue(topProvider2)}
-                  </button>
-                ) : (
-                  <span className="break-words font-medium">{formatDisplayValue(topProvider2)}</span>
-                )}
-              </li>
+              <ProviderEntry rank={2} bold={false} rawName={topProvider2} onProviderClick={onProviderClick} unmatched={unmatched.has(topProvider2)} onUnmatched={markUnmatched} />
             )}
           </ol>
         </div>
