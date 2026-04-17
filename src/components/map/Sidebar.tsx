@@ -829,6 +829,34 @@ const Sidebar = ({
         <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
           Start by selecting a county or entering a member address
         </p>
+        <div className="mt-1.5 flex items-center justify-center gap-1.5">
+          {!authReady ? null : isAdmin ? (
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700"
+              title={user?.email ?? 'Admin'}
+            >
+              <span className="h-1 w-1 rounded-full bg-emerald-600" />
+              Admin Mode
+            </span>
+          ) : null}
+          {authReady && isAuthenticated ? (
+            <button
+              type="button"
+              onClick={() => { void signOut(); }}
+              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+              title={user?.email ?? undefined}
+            >
+              Sign out
+            </button>
+          ) : authReady ? (
+            <Link
+              to="/auth"
+              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+            >
+              Staff sign in
+            </Link>
+          ) : null}
+        </div>
         <div className="mt-2.5 flex items-center justify-center gap-2">
           <button
             type="button"
