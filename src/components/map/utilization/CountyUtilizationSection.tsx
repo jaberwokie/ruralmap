@@ -118,10 +118,29 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
         <Row label="Providers per 100 ZIP Members" value={fmtNum(record.providersPer100ZipMembers, 1)} />
         {record.topProviderName && <Row label="Top Provider" value={record.topProviderName} />}
         <Row label="Top Provider Share" value={fmtPct(record.topProviderSharePct)} />
-        {topProvider1 && <Row label="Top Provider" value={topProvider1} />}
+        {topProvider1 && (
+          <div className="py-0.5">
+            <div className="text-[10px] text-muted-foreground">Top Provider</div>
+            <div className="mt-0.5 max-w-full break-words text-[11px] font-medium leading-snug text-foreground">
+              {topProvider1}
+            </div>
+          </div>
+        )}
         <Row label="Top 2 Provider Share" value={fmtPct(record.top2ProviderSharePct)} />
         {topProvider1 && topProvider2 && (
-          <Row label="Top 2 Providers" value={`${topProvider1}, ${topProvider2}`} />
+          <div className="py-0.5">
+            <div className="text-[10px] text-muted-foreground">Top 2 Providers</div>
+            <ol className="mt-0.5 space-y-0.5">
+              <li className="flex max-w-full gap-1.5 text-[11px] font-medium leading-snug text-foreground">
+                <span className="text-muted-foreground">1.</span>
+                <span className="break-words">{topProvider1}</span>
+              </li>
+              <li className="flex max-w-full gap-1.5 text-[11px] font-medium leading-snug text-foreground">
+                <span className="text-muted-foreground">2.</span>
+                <span className="break-words">{topProvider2}</span>
+              </li>
+            </ol>
+          </div>
         )}
         {dateRange && <Row label="Service Date Span" value={dateRange} />}
       </div>
