@@ -159,13 +159,13 @@ const SECTION_META = {
   },
 } as const;
 
-const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
-const TOGGLE_ROW_CLASSNAME = 'group flex min-h-8 items-center gap-2.5 rounded-md border border-transparent px-2 py-1 transition-colors duration-150 hover:border-border/70 hover:bg-secondary/70';
-const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
+const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[36px] items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/60';
+const SECTION_CONTENT_CLASSNAME = 'mt-1 space-y-0.5';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
-  <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-60' : ''}`}>
-    <Icon className={`h-3.5 w-3.5 stroke-[1.75] ${colorClassName}`} />
+  <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
+    <Icon className={`h-4 w-4 stroke-[1.75] ${colorClassName}`} />
   </span>
 );
 
@@ -757,16 +757,22 @@ const Sidebar = ({
     </div>
   );
 
-  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={SECTION_HEADER_CLASSNAME}
-    >
-      {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-      <span>{label}</span>
-    </button>
-  );
+  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => {
+    // Convert ALL CAPS labels to Title Case for a calmer, more professional feel
+    const display = label
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        className={SECTION_HEADER_CLASSNAME}
+      >
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        <span>{display}</span>
+      </button>
+    );
+  };
 
   const renderLayerToggleRow = ({
     label,
@@ -800,8 +806,8 @@ const Sidebar = ({
         >
           {renderLayerIcon(icon, iconClassName, !checked)}
           <span className="min-w-0 flex-1">
-            <span className={`block text-xs leading-snug ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
-            {subtitle && <span className="block text-[10px] leading-tight text-muted-foreground/70">{subtitle}</span>}
+            <span className={`block text-[12.5px] leading-snug ${checked ? 'text-foreground' : 'text-foreground/70'}`}>{label}</span>
+            {subtitle && <span className="block text-[10.5px] leading-tight text-muted-foreground mt-0.5">{subtitle}</span>}
           </span>
         </button>
         {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
@@ -818,30 +824,32 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
-      <div className="flex flex-col items-center px-3 pt-3 pb-2 text-center">
+      <div className="flex flex-col items-center px-4 pt-5 pb-4 text-center border-b border-border/60">
         <img
           src={nbhLogo}
           alt="Nevada Behavioral Health Systems logo"
-          className="block w-full max-w-[180px] h-auto object-contain"
+          className="block w-full max-w-[150px] h-auto object-contain"
           decoding="async"
         />
-        <h1 className="mt-1.5 text-sm font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
-        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-          Start by selecting a county or entering a member address
+        <h1 className="mt-3 text-base font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
+          Select a county or search by facility, city, or member.
         </p>
-        <div className="mt-1.5 flex items-center justify-center gap-1.5">
+
+        {/* Auth + admin row */}
+        <div className="mt-3 flex items-center justify-center gap-3 text-[11px]">
           {!authReady ? null : isAdmin ? (
             <>
               <span
-                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700"
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
                 title={user?.email ?? 'Admin'}
               >
-                <span className="h-1 w-1 rounded-full bg-emerald-600" />
-                Admin Mode
+                <span className="h-1 w-1 rounded-full bg-primary" />
+                Admin
               </span>
               <Link
                 to="/admin/users"
-                className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+                className="text-muted-foreground transition-colors hover:text-foreground"
               >
                 Manage users
               </Link>
@@ -851,7 +859,7 @@ const Sidebar = ({
             <button
               type="button"
               onClick={() => { void signOut(); }}
-              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+              className="text-muted-foreground transition-colors hover:text-foreground"
               title={user?.email ?? undefined}
             >
               Sign out
@@ -859,25 +867,31 @@ const Sidebar = ({
           ) : authReady ? (
             <Link
               to="/auth"
-              className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+              className="text-muted-foreground transition-colors hover:text-foreground"
             >
               Staff sign in
             </Link>
           ) : null}
         </div>
-        <div className="mt-2.5 flex items-center justify-center gap-2">
-          <button
-            type="button"
-            onClick={() => setExplainerOpen(true)}
-            className="rounded-md border border-border bg-background px-2.5 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          >
-            Map Explainer
-          </button>
-        </div>
-        {onSetLayers && (
-          <div className="mt-2.5 flex items-center justify-center gap-1.5" role="group" aria-label="View Mode">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">View</span>
-            <div className="inline-flex overflow-hidden rounded-md border border-border bg-background">
+
+        {/* Map Explainer secondary action */}
+        <button
+          type="button"
+          onClick={() => setExplainerOpen(true)}
+          className="mt-3 inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        >
+          Map Explainer
+        </button>
+
+        <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
+      </div>
+
+      {/* View toggle */}
+      {onSetLayers && (
+        <div className="px-4 pt-4 pb-3 border-b border-border/60">
+          <div className="flex items-center justify-between gap-3" role="group" aria-label="View Mode">
+            <span className="text-[11px] font-medium text-muted-foreground">View</span>
+            <div className="inline-flex items-center rounded-md border border-border bg-secondary/40 p-0.5">
               <button
                 type="button"
                 onClick={() => onSetLayers((prev) => ({
@@ -886,10 +900,10 @@ const Sidebar = ({
                   behavioralHealth: false,
                   services: false,
                 }))}
-                className={`px-2 py-1 text-[10px] font-medium transition-colors ${
+                className={`px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   !layers.tribalNations && !layers.behavioralHealth && !layers.services
-                    ? 'bg-secondary text-foreground'
-                    : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-pressed={!layers.tribalNations && !layers.behavioralHealth && !layers.services}
               >
@@ -903,10 +917,10 @@ const Sidebar = ({
                   behavioralHealth: true,
                   services: true,
                 }))}
-                className={`border-l border-border px-2 py-1 text-[10px] font-medium transition-colors ${
+                className={`px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   layers.tribalNations && layers.behavioralHealth && layers.services
-                    ? 'bg-secondary text-foreground'
-                    : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+                    ? 'bg-card text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-pressed={layers.tribalNations && layers.behavioralHealth && layers.services}
               >
@@ -914,48 +928,51 @@ const Sidebar = ({
               </button>
             </div>
           </div>
-        )}
-        <div className="mt-3 flex flex-wrap justify-center gap-x-3 gap-y-1 text-xs">
-          <span className="text-foreground/80 font-medium flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-hospital inline-block" />
-            <span className="font-mono font-medium text-foreground">{hospitalCount}</span> Hospitals
-          </span>
-          <span className="text-foreground/80 font-medium flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-clinic inline-block" />
-            <span className="font-mono font-medium text-foreground">{clinicCount}</span> Clinics
-          </span>
+
+          {/* Stats row */}
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+              <span className="h-2 w-2 rounded-full bg-hospital flex-shrink-0" />
+              <span className="text-[11px] text-muted-foreground">Hospitals</span>
+              <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{hospitalCount}</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2.5 py-1.5">
+              <span className="h-2 w-2 rounded-full bg-clinic flex-shrink-0" />
+              <span className="text-[11px] text-muted-foreground">Clinics</span>
+              <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{clinicCount}</span>
+            </div>
+          </div>
         </div>
-        <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
-      </div>
+      )}
 
       {/* Search */}
-      <div className="px-3 pt-2.5 pb-3" data-tutorial="search-bar">
+      <div className="px-4 pt-4 pb-3" data-tutorial="search-bar">
         <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search facilities, cities..."
-            className="w-full h-8 pl-8 pr-3 text-xs bg-secondary rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            placeholder="Search facilities, cities, or counties"
+            className="w-full h-9 pl-9 pr-3 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground/80 transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
           />
         </div>
       </div>
 
       {/* Filter Panel */}
-      <div className="px-3 py-3">
+      <div className="px-4 pb-3">
         <div className="mb-2 flex items-center gap-2">
           <button
             type="button"
             onClick={toggleFilters}
-            className="flex flex-1 items-center gap-1.5 text-left text-[11px] font-semibold text-foreground transition-colors hover:text-foreground/80"
+            className="flex flex-1 items-center gap-1.5 text-left text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground"
           >
-            {filtersOpen ? <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />}
+            {filtersOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             <span>Filters</span>
           </button>
           {activeFilterCount > 0 && (
             <div className="flex items-center gap-1">
-              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[9px] font-bold text-primary-foreground font-mono">
+              <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground tabular-nums">
                 {activeFilterCount}
               </span>
               <button
@@ -1089,7 +1106,7 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-3 pb-3">
+      <div className="px-4 pb-3">
         <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
                 <div data-tutorial="section-core-map">
@@ -1752,7 +1769,7 @@ const Sidebar = ({
       <div className="mx-3 border-t border-border" />
 
       {/* Verification Priority Queue */}
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-3">
         <button
           onClick={() => setVerifQueueOpen(!verifQueueOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1770,7 +1787,7 @@ const Sidebar = ({
       <div className="mx-3 border-t border-border" />
 
       {/* Verification Audit History */}
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-3">
         <button
           onClick={() => setAuditHistoryOpen(!auditHistoryOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1786,7 +1803,7 @@ const Sidebar = ({
       </div>
 
       <div className="mx-3 border-t border-border" />
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-3">
         <button
           onClick={() => setCsvOpen(!csvOpen)}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
