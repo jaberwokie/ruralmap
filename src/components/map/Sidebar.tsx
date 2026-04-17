@@ -752,43 +752,49 @@ const Sidebar = ({
         </p>
 
         {/* Auth + admin row */}
-        <div className="mt-2 flex w-full flex-nowrap items-center justify-start gap-x-1.5 whitespace-nowrap text-[10.5px] leading-none">
+        <div className="mt-2 flex w-full flex-col items-start gap-y-1 text-[10.5px] leading-none">
           {!authReady ? null : isAdmin ? (
-            <>
-              <span
-                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary"
-                title={user?.email ?? 'Admin'}
-              >
-                <span className="h-1 w-1 rounded-full bg-primary" />
-                Admin
-              </span>
-              <Link
-                to="/admin"
-                className="ml-1 font-normal text-muted-foreground/70 transition-colors hover:text-foreground"
-              >
-                Admin Panel
-              </Link>
-              <span aria-hidden className="text-muted-foreground/30">·</span>
-              <Link
-                to="/admin/provider-mapping-import"
-                className="font-normal text-muted-foreground/70 transition-colors hover:text-foreground"
-              >
-                Provider Mapping
-              </Link>
-              {authReady && isAuthenticated ? (
-                <span aria-hidden className="text-muted-foreground/30">·</span>
-              ) : null}
-            </>
-          ) : null}
-          {authReady && isAuthenticated ? (
-            <button
-              type="button"
-              onClick={() => { void signOut(); }}
-              className="font-normal text-muted-foreground/70 transition-colors hover:text-foreground"
-              title={user?.email ?? undefined}
+            <span
+              className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary"
+              title={user?.email ?? 'Admin'}
             >
-              Sign out
-            </button>
+              <span className="h-1 w-1 rounded-full bg-primary" />
+              Admin
+            </span>
+          ) : null}
+          {authReady && (isAdmin || isAuthenticated) ? (
+            <div className="flex flex-nowrap items-center whitespace-nowrap text-muted-foreground/70">
+              {isAdmin ? (
+                <>
+                  <Link
+                    to="/admin"
+                    className="font-normal transition-colors hover:text-foreground"
+                  >
+                    Admin Panel
+                  </Link>
+                  <span aria-hidden className="px-2 text-muted-foreground/30">|</span>
+                  <Link
+                    to="/admin/provider-mapping-import"
+                    className="font-normal transition-colors hover:text-foreground"
+                  >
+                    Provider Mapping
+                  </Link>
+                </>
+              ) : null}
+              {isAdmin && isAuthenticated ? (
+                <span aria-hidden className="px-2 text-muted-foreground/30">|</span>
+              ) : null}
+              {isAuthenticated ? (
+                <button
+                  type="button"
+                  onClick={() => { void signOut(); }}
+                  className="font-normal transition-colors hover:text-foreground"
+                  title={user?.email ?? undefined}
+                >
+                  Sign out
+                </button>
+              ) : null}
+            </div>
           ) : null}
         </div>
 
