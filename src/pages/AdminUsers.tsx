@@ -248,9 +248,9 @@ export default function AdminUsers() {
             <span className="text-muted-foreground">Active</span>
             <span className="font-semibold tabular-nums">{summary.active}</span>
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/5 px-2.5 py-1">
+          <span className="inline-flex items-center gap-1.5 rounded-md border border-primary/40 bg-primary/5 px-2.5 py-1">
             <span className="text-muted-foreground">Active admins</span>
-            <span className="font-semibold tabular-nums text-emerald-700">{summary.activeAdmins}</span>
+            <span className="font-semibold tabular-nums text-primary">{summary.activeAdmins}</span>
           </span>
         </div>
 
