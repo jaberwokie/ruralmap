@@ -160,12 +160,12 @@ const SECTION_META = {
 } as const;
 
 const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/65 transition-colors hover:text-foreground';
-const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[30px] items-center gap-2 rounded-md border border-transparent px-2 py-1 transition-colors duration-150 hover:bg-secondary/60';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[30px] items-center gap-2 rounded-md border border-transparent px-2 py-0.5 transition-colors duration-150 hover:bg-secondary/60';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-px';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
-  <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
-    <Icon className={`h-4 w-4 stroke-[1.75] ${colorClassName}`} />
+  <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
+    <Icon className={`h-3.5 w-3.5 stroke-[1.75] ${colorClassName}`} />
   </span>
 );
 
@@ -827,7 +827,7 @@ const Sidebar = ({
         />
         <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: 'hsl(var(--brand-health))' }}>Rural Operations Map</h1>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
-          Select a county or search by facility, city, or enter a member address.
+          Search by facility, city, county, or enter a member address.
         </p>
 
         {/* Auth + admin row */}
@@ -862,7 +862,7 @@ const Sidebar = ({
         </div>
 
         {/* Action buttons row: Staff sign in + Map Explainer */}
-        <div className="mt-2 grid grid-cols-2 gap-2 w-full">
+        <div className="mt-1.5 grid grid-cols-2 gap-2 w-full">
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
@@ -929,16 +929,16 @@ const Sidebar = ({
           </div>
 
           {/* Stats row */}
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
-              <span className="h-2 w-2 rounded-full bg-hospital flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Hospitals</span>
-              <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{hospitalCount}</span>
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2 py-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-hospital flex-shrink-0" />
+              <span className="text-[10px] text-muted-foreground">Hospitals</span>
+              <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{hospitalCount}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
-              <span className="h-2 w-2 rounded-full bg-clinic flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Clinics</span>
-              <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{clinicCount}</span>
+            <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2 py-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-clinic flex-shrink-0" />
+              <span className="text-[10px] text-muted-foreground">Clinics</span>
+              <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{clinicCount}</span>
             </div>
           </div>
         </div>
@@ -1105,8 +1105,8 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-4 pb-2">
-        <div className="space-y-1.5 border-t border-border pt-2">
+      <div className="px-4 pb-2 border-t border-border/50">
+        <div className="space-y-1.5 pt-2">
               <div className="space-y-1">
                 <div data-tutorial="section-core-map">
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
