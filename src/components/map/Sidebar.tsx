@@ -959,8 +959,8 @@ const Sidebar = ({
       </div>
 
       {/* Filter Panel */}
-      <div className="px-4 pb-3">
-        <div className="mb-2 flex items-center gap-2">
+      <div className="px-4 pb-2">
+        <div className="mb-1.5 flex items-center gap-2">
           <button
             type="button"
             onClick={toggleFilters}
