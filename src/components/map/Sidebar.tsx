@@ -866,9 +866,9 @@ const Sidebar = ({
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
-              className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              className="inline-flex h-8 items-center justify-center rounded-md bg-[hsl(var(--brand-health))] px-3 text-xs font-medium text-white transition-colors hover:bg-[hsl(var(--primary-hover))] active:bg-[hsl(var(--primary-active))] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
-              Staff sign in
+              Staff Sign In
             </Link>
           ) : (
             <span aria-hidden="true" />
@@ -918,7 +918,7 @@ const Sidebar = ({
                 }))}
                 className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   layers.tribalNations && layers.behavioralHealth && layers.services
-                    ? 'bg-card text-foreground shadow-sm'
+                    ? 'bg-[hsl(var(--brand-health))] text-white shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-pressed={layers.tribalNations && layers.behavioralHealth && layers.services}
