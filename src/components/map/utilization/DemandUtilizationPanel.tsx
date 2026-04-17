@@ -80,8 +80,8 @@ const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
   return (
     <div data-tutorial="section-demand-utilization">
       <button type="button" onClick={() => setOpen((v) => !v)} className={SECTION_HEADER_CLASSNAME}>
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        DEMAND &amp; UTILIZATION
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        <span>Demand &amp; Utilization</span>
       </button>
       {open && (
         <div className="mt-0.5 space-y-0.5">
