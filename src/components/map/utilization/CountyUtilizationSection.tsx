@@ -116,34 +116,33 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
         <Row label="Claims per Member" value={fmtNum(record.claimsPerMember)} />
         <Row label="Claims per ZIP Member" value={fmtNum(record.claimsPerZipMember)} />
         <Row label="Providers per 100 ZIP Members" value={fmtNum(record.providersPer100ZipMembers, 1)} />
-        {record.topProviderName && <Row label="Top Provider" value={record.topProviderName} />}
         <Row label="Top Provider Share" value={fmtPct(record.topProviderSharePct)} />
-        {topProvider1 && (
-          <div className="py-0.5">
-            <div className="text-[10px] text-muted-foreground">Top Provider</div>
-            <div className="mt-0.5 max-w-full break-words text-[11px] font-medium leading-snug text-foreground">
-              {topProvider1}
-            </div>
-          </div>
-        )}
         <Row label="Top 2 Provider Share" value={fmtPct(record.top2ProviderSharePct)} />
-        {topProvider1 && topProvider2 && (
-          <div className="py-0.5">
-            <div className="text-[10px] text-muted-foreground">Top 2 Providers</div>
-            <ol className="mt-0.5 space-y-0.5">
-              <li className="flex max-w-full gap-1.5 text-[11px] font-medium leading-snug text-foreground">
-                <span className="text-muted-foreground">1.</span>
-                <span className="break-words">{topProvider1}</span>
-              </li>
-              <li className="flex max-w-full gap-1.5 text-[11px] font-medium leading-snug text-foreground">
-                <span className="text-muted-foreground">2.</span>
-                <span className="break-words">{topProvider2}</span>
-              </li>
-            </ol>
-          </div>
-        )}
         {dateRange && <Row label="Service Date Span" value={dateRange} />}
       </div>
+      {topProvider1 && (
+        <div className="mt-2 border-t border-border/60 pt-1.5">
+          <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+            Top Utilized Providers
+          </div>
+          <div className="space-y-1.5">
+            <div>
+              <div className="text-[10px] text-muted-foreground">Primary</div>
+              <div className="mt-0.5 max-w-full break-words text-[11px] font-medium leading-snug text-foreground">
+                {topProvider1}
+              </div>
+            </div>
+            {topProvider2 && (
+              <div>
+                <div className="text-[10px] text-muted-foreground">Secondary</div>
+                <div className="mt-0.5 max-w-full break-words text-[11px] font-medium leading-snug text-foreground">
+                  {topProvider2}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
       {signals.length > 0 && (
         <div className="mt-2 border-t border-border/60 pt-1.5">
           <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
