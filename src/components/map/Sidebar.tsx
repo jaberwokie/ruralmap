@@ -752,7 +752,7 @@ const Sidebar = ({
         </p>
 
         {/* Auth + admin row */}
-        <div className="mt-2 flex items-center justify-center gap-3 text-[11px]">
+        <div className="mt-2 flex flex-nowrap items-center justify-start gap-x-4 gap-y-1 whitespace-nowrap text-[11px]">
           {!authReady ? null : isAdmin ? (
             <>
               <span
