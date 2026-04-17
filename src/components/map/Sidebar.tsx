@@ -905,8 +905,8 @@ const Sidebar = ({
                 }))}
                 className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                   !layers.tribalNations && !layers.behavioralHealth && !layers.services
-                    ? 'bg-card text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-card text-foreground shadow-sm border border-[hsl(var(--brand-health)/0.35)]'
+                    : 'text-muted-foreground hover:text-foreground border border-transparent'
                 }`}
                 aria-pressed={!layers.tribalNations && !layers.behavioralHealth && !layers.services}
               >
