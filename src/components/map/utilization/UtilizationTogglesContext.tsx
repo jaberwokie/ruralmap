@@ -18,3 +18,15 @@ const DEFAULT: UtilizationToggles = {
 export const UtilizationTogglesContext = createContext<UtilizationToggles>(DEFAULT);
 
 export const useUtilizationToggles = (): UtilizationToggles => useContext(UtilizationTogglesContext);
+
+/**
+ * Optional callback context — when provided, allows utilization sub-sections
+ * to navigate the details panel to a provider entity by name. Returns true
+ * when a matching facility was found and selected; false otherwise.
+ */
+export type UtilizationProviderClickHandler = (providerName: string) => boolean;
+
+export const UtilizationProviderClickContext = createContext<UtilizationProviderClickHandler | null>(null);
+
+export const useUtilizationProviderClick = (): UtilizationProviderClickHandler | null =>
+  useContext(UtilizationProviderClickContext);
