@@ -766,7 +766,7 @@ const Sidebar = ({
                 to="/admin"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Admin
+                Admin Panel
               </Link>
               <Link
                 to="/admin/provider-mapping-import"
