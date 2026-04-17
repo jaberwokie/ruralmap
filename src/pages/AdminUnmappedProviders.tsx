@@ -70,43 +70,45 @@ export default function AdminUnmappedProviders() {
     if (visibleRows.length === 0) return;
     exportCsv(
       visibleRows.map((r) => ({
+        // Required reference columns
         provider_name: r.providerName,
-        provider_grand_total: r.providerGrandTotal,
-        total_distinct_members: r.totalDistinctMembers,
-        county_count: r.countyCount,
-        top_county: r.topCounty ?? '',
-        top_county_members: r.topCountyMembers,
-        all_counties: r.counties.join('; '),
-        candidate_match: r.candidateMatch ?? '',
+        utilization_count: r.providerGrandTotal,
+        county_signals: [
+          r.topCounty ? `${r.topCounty} (${r.topCountyMembers})` : '',
+          r.counties.length > 1 ? `+${r.counties.length - 1} more: ${r.counties.slice(1).join(', ')}` : '',
+        ].filter(Boolean).join(' · '),
         match_confidence: r.matchConfidence,
-        excluded_reason: r.excludedReason ?? '',
-        // Empty columns for reviewer to fill in for the import flow
+        // Diagnostic context (kept for reviewer judgement; ignored on import)
+        candidate_match: r.candidateMatch ?? '',
+        likely_non_site_reason: r.excludedReason ?? '',
+        // Blank verified_* columns — reviewer fills these offline.
+        // No guessed coordinates, no placeholder addresses.
+        verified_name: '',
         verified_address: '',
         verified_city: '',
         verified_county: '',
+        verified_state: 'NV',
+        verified_zip: '',
         verified_lat: '',
         verified_lng: '',
-        npi: '',
-        notes: '',
+        verified_npi: '',
       })),
       [
-        { key: 'provider_name', header: 'Provider Name' },
-        { key: 'provider_grand_total', header: 'Provider Grand Total' },
-        { key: 'total_distinct_members', header: 'Total Distinct Members (sum)' },
-        { key: 'county_count', header: 'County Count' },
-        { key: 'top_county', header: 'Top County' },
-        { key: 'top_county_members', header: 'Top County Members' },
-        { key: 'all_counties', header: 'All Counties' },
-        { key: 'candidate_match', header: 'Candidate Match' },
-        { key: 'match_confidence', header: 'Match Confidence' },
-        { key: 'excluded_reason', header: 'Likely Non-Site Reason' },
-        { key: 'verified_address', header: 'Verified Address' },
-        { key: 'verified_city', header: 'Verified City' },
-        { key: 'verified_county', header: 'Verified County' },
-        { key: 'verified_lat', header: 'Verified Lat' },
-        { key: 'verified_lng', header: 'Verified Lng' },
-        { key: 'npi', header: 'NPI' },
-        { key: 'notes', header: 'Notes' },
+        { key: 'provider_name', header: 'provider_name' },
+        { key: 'utilization_count', header: 'utilization_count' },
+        { key: 'county_signals', header: 'county_signals' },
+        { key: 'match_confidence', header: 'match_confidence' },
+        { key: 'candidate_match', header: 'candidate_match' },
+        { key: 'likely_non_site_reason', header: 'likely_non_site_reason' },
+        { key: 'verified_name', header: 'verified_name' },
+        { key: 'verified_address', header: 'verified_address' },
+        { key: 'verified_city', header: 'verified_city' },
+        { key: 'verified_county', header: 'verified_county' },
+        { key: 'verified_state', header: 'verified_state' },
+        { key: 'verified_zip', header: 'verified_zip' },
+        { key: 'verified_lat', header: 'verified_lat' },
+        { key: 'verified_lng', header: 'verified_lng' },
+        { key: 'verified_npi', header: 'verified_npi' },
       ],
       `unmapped_top_utilized_providers_${new Date().toISOString().slice(0, 10)}.csv`,
     );
@@ -119,16 +121,21 @@ export default function AdminUnmappedProviders() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-4 py-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
-              <Link to="/"><ArrowLeft className="h-4 w-4 mr-1" />Back to Map</Link>
+              <Link to="/admin"><ArrowLeft className="h-4 w-4 mr-1" />Admin</Link>
             </Button>
             <h1 className="text-xl font-semibold">Unmapped Top Utilized Providers</h1>
           </div>
-          <Button onClick={handleExport} disabled={visibleRows.length === 0} size="sm" variant="outline">
-            <Download className="h-4 w-4 mr-1" /> Export CSV
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild size="sm" variant="ghost">
+              <Link to="/admin/provider-mapping-import">Open Import</Link>
+            </Button>
+            <Button onClick={handleExport} disabled={visibleRows.length === 0} size="sm" variant="outline">
+              <Download className="h-4 w-4 mr-1" /> Export for Mapping (CSV)
+            </Button>
+          </div>
         </div>
 
         <p className="text-sm text-muted-foreground mb-4 max-w-3xl">

@@ -7,8 +7,10 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
 import Auth from "./pages/Auth.tsx";
+import AdminHome from "./pages/AdminHome.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminUnmappedProviders from "./pages/AdminUnmappedProviders.tsx";
+import AdminProviderMappingImport from "./pages/AdminProviderMappingImport.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -25,8 +27,10 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
+                <Route path="/admin/provider-mapping-import" element={<AdminProviderMappingImport />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>

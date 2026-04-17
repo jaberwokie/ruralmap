@@ -5,6 +5,7 @@ import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCi
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
+import { parseFacilityCsv, type CsvImportResult } from '@/utils/csvImport';
 
 import { toast } from 'sonner';
 import VerificationPriorityPanel, { VerificationAuditHistoryPanel } from './VerificationPriorityPanel';
@@ -572,40 +573,6 @@ const Sidebar = ({
     });
   };
 
-  const normalizeHeader = (h: string) =>
-    String(h).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  const parseCSVLine = (line: string): string[] => {
-    const values: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        values.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    values.push(current.trim());
-    return values;
-  };
-
-  const stripLineQuotes = (line: string): string => {
-    const trimmed = line.trim();
-    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
-      return trimmed.slice(1, -1);
-    }
-    return trimmed;
-  };
 
   const processCSVFile = useCallback((file: File) => {
     if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
@@ -623,75 +590,21 @@ const Sidebar = ({
       setCsvImportState('error');
     };
     reader.onload = (event) => {
-      let text = event.target?.result as string;
+      const text = event.target?.result as string;
       if (!text) { toast.error('Failed to read file.'); setCsvImportState('error'); return; }
 
-      // Strip BOM
-      if (text.startsWith('\uFEFF')) text = text.substring(1);
+      const result: CsvImportResult = parseFacilityCsv(text);
 
-      const lines = text.split(/\r?\n/).filter(l => l.trim());
-      if (lines.length < 2) { toast.error('CSV file has no data rows.'); setCsvImportState('error'); return; }
-
-      const headers = parseCSVLine(stripLineQuotes(lines[0]));
-      const norm = headers.map(normalizeHeader);
-
-      const find = (key: string) => {
-        let idx = norm.indexOf(key);
-        if (idx === -1) idx = norm.findIndex(h => h.startsWith(key));
-        if (idx === -1) idx = norm.findIndex(h => h.includes(key));
-        return idx;
-      };
-
-      const nameIdx = find('name');
-      const latIdx = find('lat');
-      const lngIdx = find('lon') !== -1 ? find('lon') : find('lng');
-      const typeIdx = find('type');
-      const cityIdx = find('city');
-      const countyIdx = find('county');
-      const notesIdx = find('note');
-      const tierIdx = find('tier');
-
-      if (nameIdx === -1 || latIdx === -1 || lngIdx === -1) {
-        const missing = [nameIdx === -1 && 'name', latIdx === -1 && 'latitude', lngIdx === -1 && 'longitude'].filter(Boolean).join(', ');
-        toast.error(`Missing required columns: ${missing}`);
+      if (result.valid.length === 0 && result.errors.length > 0 && result.totalRows === 0) {
+        toast.error(result.errors[0]);
         setCsvImportState('error');
-        setCsvParsed({ valid: [], invalidCount: 0, errors: [`Missing required columns: ${missing}`], totalRows: lines.length - 1 });
         return;
       }
 
-      const valid: Facility[] = [];
-      const errors: string[] = [];
-      let invalidCount = 0;
-
-      for (let i = 1; i < lines.length; i++) {
-        const cols = parseCSVLine(stripLineQuotes(lines[i]));
-        const name = cols[nameIdx]?.trim();
-        const lat = parseFloat(cols[latIdx]);
-        const lng = parseFloat(cols[lngIdx]);
-
-        if (!name) { invalidCount++; errors.push(`Row ${i}: missing name`); continue; }
-        if (!Number.isFinite(lat) || !Number.isFinite(lng)) { invalidCount++; errors.push(`Row ${i}: invalid coordinates for "${name}"`); continue; }
-
-        const rawType = (typeIdx !== -1 ? cols[typeIdx] || '' : '').toLowerCase();
-        const type: FacilityType = rawType.includes('hospital') ? 'hospital' : 'clinic';
-
-        valid.push({
-          id: `csv-${Date.now()}-${i}`,
-          name,
-          type,
-          city: cityIdx !== -1 ? cols[cityIdx] || '' : '',
-          county: countyIdx !== -1 ? cols[countyIdx] || '' : '',
-          lat,
-          lng,
-          notes: notesIdx !== -1 ? cols[notesIdx] : undefined,
-          tier: tierIdx !== -1 ? (cols[tierIdx] as any) : undefined,
-        });
-      }
-
-      console.log(`[csv-import] Parsed: ${valid.length} valid, ${invalidCount} invalid out of ${lines.length - 1} rows`);
-      setCsvParsed({ valid, invalidCount, errors, totalRows: lines.length - 1 });
-      setCsvImportState(valid.length > 0 ? 'preview' : 'error');
-      if (valid.length === 0) toast.error('No valid rows found in the CSV.');
+      console.log(`[csv-import] Parsed: ${result.valid.length} valid, ${result.invalidCount} invalid out of ${result.totalRows} rows`);
+      setCsvParsed({ valid: result.valid, invalidCount: result.invalidCount, errors: result.errors, totalRows: result.totalRows });
+      setCsvImportState(result.valid.length > 0 ? 'preview' : 'error');
+      if (result.valid.length === 0) toast.error('No valid rows found in the CSV.');
     };
     reader.readAsText(file);
   }, []);
