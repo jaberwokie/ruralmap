@@ -37,9 +37,61 @@ const Row = ({ label, value }: { label: string; value: string }) => (
   </div>
 );
 
+interface ProviderEntryProps {
+  rank: number;
+  rawName: string;
+  bold: boolean;
+  unmatched: boolean;
+  onProviderClick: ((name: string) => boolean) | null;
+  onUnmatched: (name: string) => void;
+}
+
+const ProviderEntry = ({ rank, rawName, bold, unmatched, onProviderClick, onUnmatched }: ProviderEntryProps) => {
+  const display = formatProviderName(rawName);
+  const weightCls = bold ? 'font-semibold' : 'font-medium';
+  return (
+    <li className="flex max-w-full flex-col gap-0.5 text-[11px] leading-snug text-foreground">
+      <div className="flex max-w-full gap-1.5">
+        <span className="text-muted-foreground tabular-nums">{rank}.</span>
+        {onProviderClick && !unmatched ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const ok = onProviderClick(rawName);
+              if (!ok) onUnmatched(rawName);
+            }}
+            className={`break-words text-left underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary ${weightCls}`}
+            title="Open provider details"
+          >
+            {display}
+          </button>
+        ) : (
+          <span className={`break-words ${weightCls}`}>{display}</span>
+        )}
+      </div>
+      {unmatched && (
+        <span className="ml-4 text-[9px] text-muted-foreground/80">
+          Provider details not available on map
+        </span>
+      )}
+    </li>
+  );
+};
+
 const CountyUtilizationSection = ({ county, enabled }: Props) => {
   const { data } = useUtilizationData(enabled);
   const onProviderClick = useUtilizationProviderClick();
+  const [unmatched, setUnmatched] = useState<Set<string>>(() => new Set());
+  const markUnmatched = useCallback((name: string) => {
+    setUnmatched((prev) => {
+      if (prev.has(name)) return prev;
+      const next = new Set(prev);
+      next.add(name);
+      return next;
+    });
+  }, []);
   const normalizedCounty = useMemo(() => normalizeCounty(county), [county]);
   const record = useMemo<CountyGapSummary | undefined>(() => {
     if (!data) return undefined;
