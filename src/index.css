@@ -471,21 +471,21 @@
   box-shadow: none !important;
 }
 
-/* Sidebar scrollbar — always visible, thin, subtle */
+/* Sidebar scrollbar — branded Health blue, thin, subtle */
 .sidebar-scroll::-webkit-scrollbar {
-  width: 5px;
+  width: 7px;
 }
 .sidebar-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: hsl(var(--muted-foreground) / 0.25);
+  background: hsl(var(--brand-health) / 0.35);
   border-radius: 9999px;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.4);
+  background: hsl(var(--brand-health) / 0.55);
 }
 .sidebar-scroll {
   scrollbar-width: thin;
-  scrollbar-color: hsl(var(--muted-foreground) / 0.25) transparent;
+  scrollbar-color: hsl(var(--brand-health) / 0.35) transparent;
 }
