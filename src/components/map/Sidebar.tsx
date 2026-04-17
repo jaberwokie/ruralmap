@@ -769,7 +769,7 @@ const Sidebar = ({
             </span>
           ) : null}
           {authReady && (isAdmin || isAuthenticated) ? (
-            <div className="mt-1.5 flex w-full flex-nowrap items-center whitespace-nowrap text-muted-foreground/70">
+            <div className="mt-1.5 flex w-full flex-nowrap items-center justify-between whitespace-nowrap text-muted-foreground/70">
               {isAdmin ? (
                 <>
                   <Link
@@ -778,19 +778,23 @@ const Sidebar = ({
                   >
                     Admin Panel
                   </Link>
+                  <span aria-hidden className="mx-1.5 text-[#4a92c9]">|</span>
                   <Link
                     to="/admin/provider-mapping-import"
-                    className="ml-auto font-normal transition-colors hover:text-foreground"
+                    className="font-normal transition-colors hover:text-foreground"
                   >
                     Provider Mapping
                   </Link>
+                  {isAuthenticated ? (
+                    <span aria-hidden className="mx-1.5 text-[#4a92c9]">|</span>
+                  ) : null}
                 </>
               ) : null}
               {isAuthenticated ? (
                 <button
                   type="button"
                   onClick={() => { void signOut(); }}
-                  className={`${isAdmin ? 'ml-auto' : ''} font-normal transition-colors hover:text-foreground`}
+                  className="font-normal transition-colors hover:text-foreground"
                   title={user?.email ?? undefined}
                 >
                   Sign Out
