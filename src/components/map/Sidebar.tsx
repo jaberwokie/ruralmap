@@ -831,13 +831,21 @@ const Sidebar = ({
         </p>
         <div className="mt-1.5 flex items-center justify-center gap-1.5">
           {!authReady ? null : isAdmin ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700"
-              title={user?.email ?? 'Admin'}
-            >
-              <span className="h-1 w-1 rounded-full bg-emerald-600" />
-              Admin Mode
-            </span>
+            <>
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-emerald-700"
+                title={user?.email ?? 'Admin'}
+              >
+                <span className="h-1 w-1 rounded-full bg-emerald-600" />
+                Admin Mode
+              </span>
+              <Link
+                to="/admin/users"
+                className="text-[10px] text-muted-foreground underline decoration-dotted underline-offset-2 hover:text-foreground"
+              >
+                Manage users
+              </Link>
+            </>
           ) : null}
           {authReady && isAuthenticated ? (
             <button
