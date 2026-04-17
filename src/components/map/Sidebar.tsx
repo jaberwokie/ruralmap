@@ -763,10 +763,16 @@ const Sidebar = ({
                 Admin
               </span>
               <Link
-                to="/admin/users"
+                to="/admin"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                Manage users
+                Admin
+              </Link>
+              <Link
+                to="/admin/provider-mapping-import"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Provider Mapping
               </Link>
             </>
           ) : null}
