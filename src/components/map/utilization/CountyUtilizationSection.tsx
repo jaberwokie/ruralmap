@@ -10,6 +10,8 @@ import { useMemo } from 'react';
 import type { CountyGapSummary } from '@/types/utilization';
 import { useUtilizationData } from '@/hooks/useUtilizationData';
 import { normalizeCounty } from '@/utils/utilizationNormalize';
+import { formatDisplayValue } from '@/utils/displayFormat';
+import { useUtilizationProviderClick } from '@/components/map/utilization/UtilizationTogglesContext';
 
 interface Props {
   county: string;
