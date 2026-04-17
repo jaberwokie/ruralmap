@@ -159,13 +159,13 @@ const SECTION_META = {
   },
 } as const;
 
-const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
-const TOGGLE_ROW_CLASSNAME = 'group flex min-h-8 items-center gap-2.5 rounded-md border border-transparent px-2 py-1 transition-colors duration-150 hover:border-border/70 hover:bg-secondary/70';
-const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
+const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1 text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground';
+const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[36px] items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/60';
+const SECTION_CONTENT_CLASSNAME = 'mt-1 space-y-0.5';
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
-  <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-60' : ''}`}>
-    <Icon className={`h-3.5 w-3.5 stroke-[1.75] ${colorClassName}`} />
+  <span className={`flex h-5 w-5 flex-shrink-0 items-center justify-center ${dimmed ? 'opacity-50' : ''}`}>
+    <Icon className={`h-4 w-4 stroke-[1.75] ${colorClassName}`} />
   </span>
 );
 
