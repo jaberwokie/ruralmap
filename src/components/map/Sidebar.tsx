@@ -894,9 +894,9 @@ const Sidebar = ({
       {/* View toggle */}
       {onSetLayers && (
         <div className="px-4 pt-4 pb-3 border-b border-border/60">
-          <div className="flex items-center justify-between gap-3" role="group" aria-label="View Mode">
+          <div className="flex flex-col gap-1.5" role="group" aria-label="View Mode">
             <span className="text-[11px] font-medium text-muted-foreground">View</span>
-            <div className="inline-flex items-center rounded-md border border-border bg-secondary/40 p-0.5">
+            <div className="flex w-full items-center rounded-md border border-border bg-secondary/40 p-0.5">
               <button
                 type="button"
                 onClick={() => onSetLayers((prev) => ({
@@ -905,7 +905,7 @@ const Sidebar = ({
                   behavioralHealth: false,
                   services: false,
                 }))}
-                className={`px-3 py-1 text-[11px] font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
                   !layers.tribalNations && !layers.behavioralHealth && !layers.services
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
@@ -922,7 +922,7 @@ const Sidebar = ({
                   behavioralHealth: true,
                   services: true,
                 }))}
-                className={`px-3 py-1 text-[11px] font-medium rounded transition-colors ${
+                className={`flex-1 px-3 py-1.5 text-[11px] font-medium rounded transition-colors ${
                   layers.tribalNations && layers.behavioralHealth && layers.services
                     ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
