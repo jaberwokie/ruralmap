@@ -203,15 +203,21 @@ const renderProviderTypeVisual = (dimmed = false, size = 12) => (
   </span>
 );
 
-const renderProviderLocationsBelowLegend = (dimmed = false) => (
+const renderProviderLocationsBelowLegend = (
+  hospitalCount: number,
+  clinicCount: number,
+  dimmed = false,
+) => (
   <span className={`flex items-center gap-3 text-[10px] text-muted-foreground ${dimmed ? 'opacity-60' : ''}`}>
     <span className="flex items-center gap-1">
       <span className="h-1.5 w-1.5 rounded-full bg-hospital" />
       <span>Hospital</span>
+      <span className="font-semibold tabular-nums text-foreground">{hospitalCount}</span>
     </span>
     <span className="flex items-center gap-1">
       <span className="h-1.5 w-1.5 rounded-full bg-clinic" />
       <span>Clinic</span>
+      <span className="font-semibold tabular-nums text-foreground">{clinicCount}</span>
     </span>
   </span>
 );
