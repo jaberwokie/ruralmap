@@ -1521,8 +1521,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       NEVADA_FEATURE,
       MAP_PANES.stateOutline,
       {
-        color: 'hsl(240, 5%, 55%)',
-        weight: 2,
+        color: 'hsl(240, 5%, 48%)',
+        weight: 2.5,
         fillColor: 'transparent',
         fillOpacity: 0,
       },
