@@ -763,7 +763,7 @@ const Sidebar = ({
             </span>
           ) : null}
           {authReady && (isAdmin || isAuthenticated) ? (
-            <div className="flex flex-nowrap items-center whitespace-nowrap text-muted-foreground/70">
+            <div className="flex w-full flex-nowrap items-center justify-center whitespace-nowrap text-muted-foreground/70">
               {isAdmin ? (
                 <>
                   <Link
