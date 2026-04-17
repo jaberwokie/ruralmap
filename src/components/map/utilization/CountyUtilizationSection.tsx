@@ -6,11 +6,11 @@
  * Display-only. Not consumed by any filter/score/verification pipeline.
  */
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import type { CountyGapSummary } from '@/types/utilization';
 import { useUtilizationData } from '@/hooks/useUtilizationData';
 import { normalizeCounty } from '@/utils/utilizationNormalize';
-import { formatDisplayValue } from '@/utils/displayFormat';
+import { formatProviderName } from '@/utils/providerNameFormat';
 import { useUtilizationProviderClick } from '@/components/map/utilization/UtilizationTogglesContext';
 
 interface Props {
