@@ -134,6 +134,12 @@ const Index = () => {
           }}
           coverageRadiusKm={layers.coverageRadiusKm}
           memberLocation={member.memberLocation}
+          utilizationToggles={{
+            countyUtilization: layers.layers.countyUtilization,
+            providerUtilizationReach: layers.layers.providerUtilizationReach,
+            tribalUtilization: layers.layers.tribalUtilization,
+            tribalNations: layers.layers.tribalNations,
+          }}
         />
       </div>
     </div>
