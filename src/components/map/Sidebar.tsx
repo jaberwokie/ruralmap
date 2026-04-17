@@ -757,16 +757,22 @@ const Sidebar = ({
     </div>
   );
 
-  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={SECTION_HEADER_CLASSNAME}
-    >
-      {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-      <span>{label}</span>
-    </button>
-  );
+  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => {
+    // Convert ALL CAPS labels to Title Case for a calmer, more professional feel
+    const display = label
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        className={SECTION_HEADER_CLASSNAME}
+      >
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        <span>{display}</span>
+      </button>
+    );
+  };
 
   const renderLayerToggleRow = ({
     label,
