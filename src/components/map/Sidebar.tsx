@@ -818,20 +818,20 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
-      <div className="flex flex-col items-center px-4 pt-5 pb-4 text-center border-b border-border/60">
+      <div className="flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
         <img
           src={novumLogo}
           alt="NovumHealth"
           className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
-        <h1 className="mt-3 text-base font-semibold tracking-tight leading-tight" style={{ color: 'hsl(var(--brand-health))' }}>Rural Operations Map</h1>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
+        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: 'hsl(var(--brand-health))' }}>Rural Operations Map</h1>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Select a county or search by facility, city, or enter a member address.
         </p>
 
         {/* Auth + admin row */}
-        <div className="mt-3 flex items-center justify-center gap-3 text-[11px]">
+        <div className="mt-2 flex items-center justify-center gap-3 text-[11px]">
           {!authReady ? null : isAdmin ? (
             <>
               <span
@@ -862,11 +862,11 @@ const Sidebar = ({
         </div>
 
         {/* Action buttons row: Staff sign in + Map Explainer */}
-        <div className="mt-3 grid grid-cols-2 gap-2 w-full">
+        <div className="mt-2 grid grid-cols-2 gap-2 w-full">
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
-              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              className="inline-flex h-8 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
             >
               Staff sign in
             </Link>
@@ -876,7 +876,7 @@ const Sidebar = ({
           <button
             type="button"
             onClick={() => setExplainerOpen(true)}
-            className={`inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
+            className={`inline-flex h-8 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
           >
             Map Explainer
           </button>
