@@ -763,7 +763,7 @@ const Sidebar = ({
             </span>
           ) : null}
           {authReady && (isAdmin || isAuthenticated) ? (
-            <div className="flex w-full flex-nowrap items-center justify-center whitespace-nowrap text-muted-foreground/70">
+            <div className="mt-1.5 flex w-full flex-nowrap items-center whitespace-nowrap text-muted-foreground/70">
               {isAdmin ? (
                 <>
                   <Link
@@ -772,23 +772,19 @@ const Sidebar = ({
                   >
                     Admin Panel
                   </Link>
-                  <span aria-hidden className="px-2 text-muted-foreground/30">|</span>
                   <Link
                     to="/admin/provider-mapping-import"
-                    className="font-normal transition-colors hover:text-foreground"
+                    className="ml-auto font-normal transition-colors hover:text-foreground"
                   >
                     Provider Mapping
                   </Link>
                 </>
               ) : null}
-              {isAdmin && isAuthenticated ? (
-                <span aria-hidden className="px-2 text-muted-foreground/30">|</span>
-              ) : null}
               {isAuthenticated ? (
                 <button
                   type="button"
                   onClick={() => { void signOut(); }}
-                  className="font-normal transition-colors hover:text-foreground"
+                  className={`${isAdmin ? 'ml-auto' : ''} font-normal transition-colors hover:text-foreground`}
                   title={user?.email ?? undefined}
                 >
                   Sign Out
@@ -800,11 +796,11 @@ const Sidebar = ({
 
         {/* Divider between admin/auth row and map interaction controls */}
         {authReady && (isAdmin || isAuthenticated) ? (
-          <div className="mt-3 border-t border-border" />
+          <div className="mt-2 border-t border-border" />
         ) : null}
 
         {/* Action buttons row: Staff sign in + Map Explainer */}
-        <div className={`${authReady && (isAdmin || isAuthenticated) ? 'mt-3' : 'mt-1.5'} grid grid-cols-2 gap-2 w-full`}>
+        <div className={`${authReady && (isAdmin || isAuthenticated) ? 'mt-2' : 'mt-1.5'} grid grid-cols-2 gap-2 w-full`}>
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
