@@ -800,8 +800,8 @@ const Sidebar = ({
         >
           {renderLayerIcon(icon, iconClassName, !checked)}
           <span className="min-w-0 flex-1">
-            <span className={`block text-xs leading-snug ${checked ? 'text-foreground' : 'text-muted-foreground'}`}>{label}</span>
-            {subtitle && <span className="block text-[10px] leading-tight text-muted-foreground/70">{subtitle}</span>}
+            <span className={`block text-[12.5px] leading-snug ${checked ? 'text-foreground' : 'text-foreground/70'}`}>{label}</span>
+            {subtitle && <span className="block text-[10.5px] leading-tight text-muted-foreground mt-0.5">{subtitle}</span>}
           </span>
         </button>
         {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
@@ -1100,7 +1100,7 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-3 pb-3">
+      <div className="px-4 pb-3">
         <div className="space-y-3 border-t border-border pt-3">
               <div className="space-y-2">
                 <div data-tutorial="section-core-map">
@@ -1763,7 +1763,7 @@ const Sidebar = ({
       <div className="mx-3 border-t border-border" />
 
       {/* Verification Priority Queue */}
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-3">
         <button
           onClick={() => setVerifQueueOpen(!verifQueueOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1781,7 +1781,7 @@ const Sidebar = ({
       <div className="mx-3 border-t border-border" />
 
       {/* Verification Audit History */}
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-3">
         <button
           onClick={() => setAuditHistoryOpen(!auditHistoryOpen)}
           className={SECTION_HEADER_CLASSNAME}
@@ -1797,7 +1797,7 @@ const Sidebar = ({
       </div>
 
       <div className="mx-3 border-t border-border" />
-      <div className="px-3 pt-3">
+      <div className="px-4 pt-3">
         <button
           onClick={() => setCsvOpen(!csvOpen)}
           className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
