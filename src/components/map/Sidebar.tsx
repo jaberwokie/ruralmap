@@ -1071,7 +1071,7 @@ const Sidebar = ({
                                     : key === 'serviceLocations'
                                       ? 'toggle-provider-locations'
                                       : undefined,
-                              belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(!layers.serviceLocations) : undefined,
+                              belowLegend: key === 'serviceLocations' ? renderProviderLocationsBelowLegend(hospitalCount, clinicCount, !layers.serviceLocations) : undefined,
                               inlineLegend: exportHandler ? (
                                 <button
                                   type="button"
