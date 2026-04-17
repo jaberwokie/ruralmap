@@ -42,6 +42,9 @@
 
     --radius: 0.5rem;
 
+    /* NovumHealth wordmark "Health" exact color (#4a92c9) */
+    --brand-health: 206 54% 54%;
+
     --hospital: 0 78% 52%;
     --clinic: 207 72% 42%;
     --tier1: 45 93% 47%;
