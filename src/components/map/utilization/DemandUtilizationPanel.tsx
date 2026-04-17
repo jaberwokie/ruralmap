@@ -50,7 +50,7 @@ const ToggleRow = ({
 );
 
 const SECTION_HEADER_CLASSNAME =
-  'flex w-full items-center gap-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground';
+  'flex w-full items-center gap-1.5 py-1 text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground';
 
 const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
   const [open, setOpen] = useState(false);
@@ -80,8 +80,8 @@ const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
   return (
     <div data-tutorial="section-demand-utilization">
       <button type="button" onClick={() => setOpen((v) => !v)} className={SECTION_HEADER_CLASSNAME}>
-        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        DEMAND &amp; UTILIZATION
+        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+        <span>Demand &amp; Utilization</span>
       </button>
       {open && (
         <div className="mt-0.5 space-y-0.5">
