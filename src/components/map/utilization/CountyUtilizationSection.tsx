@@ -46,6 +46,35 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
 
   const dateRange = fmtDateRange(record.firstServiceDate, record.lastServiceDate);
 
+  // Decision signals — display-only heuristics. Not used in scoring/filter/queue.
+  const signals: Array<{ key: string; label: string; detail: string }> = [];
+  const topShare = record.topProviderSharePct;
+  const top2Share = record.top2ProviderSharePct;
+  if ((Number.isFinite(topShare) && topShare >= 0.4) || (Number.isFinite(top2Share) && top2Share >= 0.6)) {
+    signals.push({
+      key: 'dependency',
+      label: 'High Dependency Risk',
+      detail: `Top ${fmtPct(topShare)} · Top 2 ${fmtPct(top2Share)}`,
+    });
+  }
+  if (record.zipMemberCount > 0) {
+    const engagement = record.claimsUniqueMembers / record.zipMemberCount;
+    if (Number.isFinite(engagement) && engagement < 0.2) {
+      signals.push({
+        key: 'low-engagement',
+        label: 'Low Engagement',
+        detail: `${(engagement * 100).toFixed(1)}% of ZIP members with claims`,
+      });
+    }
+  }
+  if (record.zipMemberCount >= 100 && Number.isFinite(record.claimsPerZipMember) && record.claimsPerZipMember < 1.5) {
+    signals.push({
+      key: 'high-demand-low-util',
+      label: 'High Demand / Low Utilization',
+      detail: `${fmtInt(record.zipMemberCount)} ZIP members · ${fmtNum(record.claimsPerZipMember)} claims/member`,
+    });
+  }
+
   return (
     <div className="mt-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
       <div className="mb-1 flex items-center justify-between">
@@ -63,11 +92,32 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
         <Row label="Claims per Member" value={fmtNum(record.claimsPerMember)} />
         <Row label="Claims per ZIP Member" value={fmtNum(record.claimsPerZipMember)} />
         <Row label="Providers per 100 ZIP Members" value={fmtNum(record.providersPer100ZipMembers, 1)} />
-        <Row label="Top Provider" value={record.topProviderName || '—'} />
+        {record.topProviderName && <Row label="Top Provider" value={record.topProviderName} />}
         <Row label="Top Provider Share" value={fmtPct(record.topProviderSharePct)} />
         <Row label="Top 2 Provider Share" value={fmtPct(record.top2ProviderSharePct)} />
         {dateRange && <Row label="Service Date Span" value={dateRange} />}
       </div>
+      {signals.length > 0 && (
+        <div className="mt-2 border-t border-border/60 pt-1.5">
+          <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+            Decision Signals
+          </div>
+          <ul className="space-y-1">
+            {signals.map((s) => (
+              <li
+                key={s.key}
+                className="rounded-sm border border-border/60 bg-background/60 px-1.5 py-1"
+              >
+                <div className="text-[10px] font-medium text-foreground">{s.label}</div>
+                <div className="text-[9px] text-muted-foreground">{s.detail}</div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 px-0.5 text-[8px] leading-snug text-muted-foreground/70">
+            Heuristic signals — not verified conclusions.
+          </p>
+        </div>
+      )}
     </div>
   );
 };

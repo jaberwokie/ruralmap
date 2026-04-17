@@ -49,16 +49,21 @@ const ProviderUtilizationReachSection = ({ providerName, enabled }: Props) => {
           <div className="text-[12px] font-semibold tabular-nums text-foreground">{fmtInt(result.total)}</div>
         </div>
       </div>
-      <ul className="space-y-0.5">
+      <ul className="space-y-1">
         {result.rows.map((r) => (
           <li
             key={`${r.county}-${r.providerKey}`}
-            className="flex items-baseline justify-between gap-2 rounded-sm px-1 py-0.5"
+            className="rounded-sm bg-background/60 px-1.5 py-1"
           >
-            <span className="truncate text-[11px] text-foreground">{r.county}</span>
-            <span className="flex-shrink-0 text-[10px] tabular-nums text-muted-foreground">
-              {fmtInt(r.distinctMembers)} mbrs · {fmtInt(r.providerGrandTotal)}
-            </span>
+            <div className="truncate text-[11px] font-medium text-foreground">{r.county}</div>
+            <div className="mt-0.5 flex items-baseline justify-between gap-2">
+              <span className="text-[10px] text-muted-foreground">Members</span>
+              <span className="text-[11px] tabular-nums text-foreground">{fmtInt(r.distinctMembers)}</span>
+            </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[10px] text-muted-foreground">Claims</span>
+              <span className="text-[11px] tabular-nums text-foreground">{fmtInt(r.providerGrandTotal)}</span>
+            </div>
           </li>
         ))}
       </ul>
