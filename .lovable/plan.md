@@ -1,4 +1,4 @@
 
-The user says my previous spacing/alignment changes didn't visibly tighten the admin row. Looking at the screenshot: "Admin" badge, then "Admin Panel", "Provider Mapping", "Sign out" — they look loosely spaced and the links look as heavy as the badge. User wants it visibly tighter.
+The user says the legend dots still aren't aligned with "Provider Locations" text. Looking at the screenshot: the red Hospital dot is clearly indented to the right of where "Provider Locations" text starts. My previous `pl-[26px]` is still too much.
 
-Let me look at the actual current state of Sidebar.tsx to see what's really rendered.
+Let me check the actual structure of the row above.
