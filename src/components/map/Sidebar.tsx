@@ -1796,7 +1796,7 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="mx-3 border-t border-border" />
+      <SectionDivider />
 
       {/* Verification Audit History */}
       <div className="px-4 pt-3">
@@ -1814,7 +1814,7 @@ const Sidebar = ({
         )}
       </div>
 
-      <div className="mx-3 border-t border-border" />
+      <SectionDivider />
       <div className="px-4 pt-3">
         <button
           onClick={() => setCsvOpen(!csvOpen)}
