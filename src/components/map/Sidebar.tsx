@@ -1117,8 +1117,9 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-4 pb-2 border-t border-border/50">
-        <div className="space-y-1.5 pt-2">
+      <SectionDivider />
+      <div className="px-4 pb-2">
+        <div className="space-y-1.5">
               <div className="space-y-1">
                 <div data-tutorial="section-core-map">
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
@@ -1777,7 +1778,7 @@ const Sidebar = ({
 
       {canEditMapData && (
       <>
-      <div className="mx-3 border-t border-border" />
+      <SectionDivider />
 
       {/* Verification Priority Queue */}
       <div className="px-4 pt-3">
