@@ -58,6 +58,10 @@ const parseCountyGap = (rows: unknown[]): CountyGapSummary[] =>
       const o = r as Record<string, unknown>;
       const county = normalizeCounty(o['Member County']);
       if (!county) return null;
+      const rawTopName = str(o['top_provider_1']);
+      const normalizedTop = normalizeProviderName(rawTopName);
+      const topProviderName = isAggregateProviderLabel(normalizedTop) ? '' : rawTopName;
+      const topProviderMembers = isAggregateProviderLabel(normalizedTop) ? 0 : num(o['top_provider_1_members']);
       return {
         county,
         claimsUniqueMembers: num(o['claims_unique_members']),
@@ -70,8 +74,8 @@ const parseCountyGap = (rows: unknown[]): CountyGapSummary[] =>
         claimLinesPerMember: num(o['claim_lines_per_member']),
         zipMemberCount: num(o['zip_member_count']),
         providerMemberSum: num(o['provider_member_sum']),
-        topProviderName: str(o['top_provider_1']),
-        topProviderMembers: num(o['top_provider_1_members']),
+        topProviderName,
+        topProviderMembers,
         top2Members: num(o['top_2_members']),
         memberCountGap: num(o['member_count_gap']),
         claimsPerZipMember: num(o['claims_per_zip_member']),

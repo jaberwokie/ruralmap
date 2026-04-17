@@ -191,7 +191,7 @@ const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
                     })}
                   </ul>
                   <p className="mt-1.5 px-1 text-[9px] leading-snug text-muted-foreground/80">
-                    ZIP polygon overlay not yet wired. Showing county-grouped fallback list.
+                    ZIP boundaries are not available yet. Showing ZIP member counts grouped by county.
                   </p>
                 </>
               )}
