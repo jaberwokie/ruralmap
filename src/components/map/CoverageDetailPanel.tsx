@@ -65,7 +65,7 @@ const GAP_COUNTIES = (() => {
 })();
 
 import type { MapEntity } from '@/types/entities';
-import { UtilizationTogglesContext, type UtilizationToggles } from '@/components/map/utilization/UtilizationTogglesContext';
+import { UtilizationTogglesContext, useUtilizationToggles, type UtilizationToggles } from '@/components/map/utilization/UtilizationTogglesContext';
 import CountyUtilizationSection from '@/components/map/utilization/CountyUtilizationSection';
 import ProviderUtilizationReachSection from '@/components/map/utilization/ProviderUtilizationReachSection';
 import TribalUtilizationSection from '@/components/map/utilization/TribalUtilizationSection';
