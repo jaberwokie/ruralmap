@@ -1105,9 +1105,9 @@ const Sidebar = ({
 
       </div>
 
-      <div className="px-4 pb-3">
-        <div className="space-y-3 border-t border-border pt-3">
-              <div className="space-y-2">
+      <div className="px-4 pb-2">
+        <div className="space-y-1.5 border-t border-border pt-2">
+              <div className="space-y-1">
                 <div data-tutorial="section-core-map">
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
