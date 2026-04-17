@@ -731,7 +731,7 @@ const Sidebar = ({
           <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
         </div>
       </div>
-      {belowLegend ? <div className="pl-7 pb-0.5">{belowLegend}</div> : null}
+      {belowLegend ? <div className="pl-[30px] pb-0.5">{belowLegend}</div> : null}
     </div>
   );
 
