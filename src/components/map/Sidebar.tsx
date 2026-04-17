@@ -794,13 +794,8 @@ const Sidebar = ({
           ) : null}
         </div>
 
-        {/* Divider between admin/auth row and map interaction controls */}
-        {authReady && (isAdmin || isAuthenticated) ? (
-          <div className="mt-2 border-t border-border" />
-        ) : null}
-
         {/* Action buttons row: Staff sign in + Map Explainer */}
-        <div className={`${authReady && (isAdmin || isAuthenticated) ? 'mt-2' : 'mt-1.5'} grid grid-cols-2 gap-2 w-full`}>
+        <div className="mt-2 grid grid-cols-2 gap-2 w-full">
           {authReady && !isAuthenticated ? (
             <Link
               to="/auth"
