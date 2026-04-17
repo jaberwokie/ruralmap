@@ -85,6 +85,17 @@ export default function AdminUsers() {
   const updateRole = async (row: Row, nextRole: AppRole) => {
     if (nextRole === row.role) return;
     if (!perms.isAdmin) return;
+    if (row.user_id === selfId) {
+      toast.error('You cannot change your own role');
+      return;
+    }
+    // Confirm admin demotion
+    if (row.role === 'admin' && nextRole !== 'admin') {
+      const ok = window.confirm(
+        `Demote ${row.email ?? 'this user'} from admin to ${nextRole}? They will lose admin access immediately.`
+      );
+      if (!ok) return;
+    }
     setPendingId(row.user_id);
     const { error } = await (supabase.rpc as any)('admin_set_user_role', {
       _user_id: row.user_id,
@@ -93,6 +104,7 @@ export default function AdminUsers() {
     setPendingId(null);
     if (error) {
       toast.error(error.message || 'Failed to update role');
+      load();
       return;
     }
     toast.success(`Role updated to ${nextRole}`);
@@ -102,6 +114,16 @@ export default function AdminUsers() {
   const updateActive = async (row: Row, nextActive: boolean) => {
     if (nextActive === row.is_active) return;
     if (!perms.isAdmin) return;
+    if (row.user_id === selfId) {
+      toast.error('You cannot change your own active status');
+      return;
+    }
+    if (!nextActive) {
+      const ok = window.confirm(
+        `Deactivate ${row.email ?? 'this user'}? They will lose access immediately.`
+      );
+      if (!ok) return;
+    }
     setPendingId(row.user_id);
     const { error } = await (supabase.rpc as any)('admin_set_user_active', {
       _user_id: row.user_id,
@@ -110,12 +132,12 @@ export default function AdminUsers() {
     setPendingId(null);
     if (error) {
       toast.error(error.message || 'Failed to update status');
+      load();
       return;
     }
     toast.success(nextActive ? 'User activated' : 'User deactivated');
     load();
   };
-
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
@@ -163,14 +185,16 @@ export default function AdminUsers() {
                     <td className="px-4 py-2">
                       <div className="font-medium">{row.email ?? '—'}</div>
                       {isSelf && (
-                        <div className="text-[11px] text-muted-foreground">you</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          you · You cannot change your own admin access.
+                        </div>
                       )}
                     </td>
                     <td className="px-4 py-2">
                       <Select
                         value={row.role}
                         onValueChange={(v) => updateRole(row, v as AppRole)}
-                        disabled={busy}
+                        disabled={busy || isSelf}
                       >
                         <SelectTrigger className="h-8">
                           <SelectValue />
@@ -205,8 +229,8 @@ export default function AdminUsers() {
         </div>
 
         <p className="text-[11px] text-muted-foreground mt-3">
-          Inactive users lose elevated access on next sign-in. Self-lockout
-          protections prevent removing the last active admin.
+          Deactivation takes effect immediately. The last active admin cannot be
+          demoted or deactivated.
         </p>
       </div>
     </div>
