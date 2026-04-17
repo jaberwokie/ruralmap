@@ -951,13 +951,13 @@ const Sidebar = ({
       {/* Search */}
       <div className="px-4 pt-2.5 pb-2" data-tutorial="search-bar">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--brand-health))]" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search facilities, cities, or counties"
-            className="w-full h-9 pl-9 pr-3 text-sm bg-card border border-[hsl(var(--brand-health)/0.35)] rounded-md text-foreground placeholder:text-muted-foreground/80 transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus:outline-none focus:border-[hsl(var(--brand-health))] focus:ring-2 focus:ring-[hsl(var(--brand-health)/0.2)]"
+            className="w-full h-9 pl-9 pr-3 text-sm bg-card border border-[hsl(var(--brand-health)/0.35)] rounded-md text-foreground placeholder:text-[hsl(var(--brand-health)/0.6)] transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus:outline-none focus:border-[hsl(var(--brand-health))] focus:ring-2 focus:ring-[hsl(var(--brand-health)/0.2)]"
           />
         </div>
       </div>

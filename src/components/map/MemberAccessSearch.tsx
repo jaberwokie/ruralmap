@@ -36,13 +36,13 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
           onChange={e => setValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Enter member address"
-          className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none w-52 md:w-64"
+          className="bg-transparent text-sm text-foreground placeholder:text-[hsl(var(--brand-health)/0.6)] outline-none w-52 md:w-64"
           disabled={isGeocoding}
         />
         <button
           onClick={handleSearch}
           disabled={isGeocoding || !value.trim()}
-          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-40"
+          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-[hsl(var(--brand-health))] hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-40"
           aria-label="Search address"
         >
           {isGeocoding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
