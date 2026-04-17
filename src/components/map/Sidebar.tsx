@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
-import nbhLogo from '@/assets/nbh-logo.png';
+import novumLogo from '@/assets/novumhealth-logo.svg';
 import MapExplainerModal from './MapExplainerModal';
 import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
@@ -826,9 +826,9 @@ const Sidebar = ({
       {/* Header */}
       <div className="flex flex-col items-center px-4 pt-5 pb-4 text-center border-b border-border/60">
         <img
-          src={nbhLogo}
-          alt="Nevada Behavioral Health Systems logo"
-          className="block w-full max-w-[150px] h-auto object-contain"
+          src={novumLogo}
+          alt="NovumHealth"
+          className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
         <h1 className="mt-3 text-base font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
