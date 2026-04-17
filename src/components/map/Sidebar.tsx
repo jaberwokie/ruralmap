@@ -383,6 +383,7 @@ const Sidebar = ({
     return [open, toggle, setOpen] as const;
   };
 
+  const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut, canImportData, canApplyVerification, canEditMapData } = usePermissions();
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   const [csvOpen, setCsvOpen] = useState(false);
   const [verifQueueOpen, setVerifQueueOpen] = useState(false);
