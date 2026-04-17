@@ -143,7 +143,7 @@ export default function AdminProviderMappingImport() {
                 </Button>
               )}
               {imported && (
-                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                <span className="text-xs font-medium text-foreground">
                   Imported · open the map to view
                 </span>
               )}
