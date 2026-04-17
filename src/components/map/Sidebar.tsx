@@ -865,17 +865,6 @@ const Sidebar = ({
             </div>
           </div>
 
-          {/* Summary counts */}
-          <div className="mt-1.5 flex items-center justify-start gap-x-4 text-[11px]">
-            <div className="flex items-baseline gap-1">
-              <span className="text-muted-foreground">Hospitals</span>
-              <span className="font-semibold tabular-nums text-foreground">{hospitalCount}</span>
-            </div>
-            <div className="flex items-baseline gap-1">
-              <span className="text-muted-foreground">Clinics</span>
-              <span className="font-semibold tabular-nums text-foreground">{clinicCount}</span>
-            </div>
-          </div>
         </div>
       )}
 
