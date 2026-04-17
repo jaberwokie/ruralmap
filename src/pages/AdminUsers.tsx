@@ -67,6 +67,9 @@ export default function AdminUsers() {
     }
   }, [perms.ready, perms.isAdmin]);
 
+  const sortedRows = useMemo(() => rows.slice(), [rows]);
+  const selfId = perms.user?.id ?? null;
+
   // Gating: wait for auth resolution; redirect non-admins.
   if (!perms.ready) {
     return (
@@ -113,8 +116,6 @@ export default function AdminUsers() {
     load();
   };
 
-  const sortedRows = useMemo(() => rows.slice(), [rows]);
-  const selfId = perms.user?.id ?? null;
 
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
