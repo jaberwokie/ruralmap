@@ -4,6 +4,7 @@
  * Apply Verification promotes confirmed outreach into entity service-line fields.
  */
 import { useCallback, useMemo, useState } from 'react';
+import { usePermissions } from '@/contexts/AuthContext';
 import type { Filters } from '@/types/filters';
 import { Download, Upload, Pencil, X, CheckCircle2, ShieldCheck, History, ChevronDown, ChevronRight } from 'lucide-react';
 import { importVerificationCsv, type VerificationImportResult } from '@/utils/verificationCsvImport';
@@ -500,6 +501,10 @@ const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
   const medCount = queue.filter(r => r.priority_tier === 'medium').length;
 
   const handleSaveOutreach = useCallback((key: string, rec: OutreachRecord) => {
+    if (!canApplyVerification) {
+      toast.error('You do not have permission to update outreach.');
+      return;
+    }
     setOutreachMap(prev => {
       const next = new Map(prev);
       next.set(key, rec);
@@ -507,9 +512,14 @@ const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
       return next;
     });
     setEditingKey(null);
-  }, []);
+  }, [canApplyVerification]);
 
   const handleApplyVerification = useCallback((rec: VerificationPriorityRecord, fields: Partial<PsychiatricServiceFields> | Partial<InpatientServiceFields>) => {
+    if (!canApplyVerification) {
+      toast.error('You do not have permission to apply verification.');
+      console.warn('[verification-apply] Blocked: caller is not authorized.');
+      return;
+    }
     const outreach = outreachMap.get(outreachKey(rec.entity_id, rec.service_line));
     const fac = defaultFacilities.find(f => f.id === rec.entity_id);
 
