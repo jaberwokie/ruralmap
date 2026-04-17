@@ -74,6 +74,20 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
       detail: `${fmtInt(record.zipMemberCount)} ZIP members · ${fmtNum(record.claimsPerZipMember)} claims/member`,
     });
   }
+  if (record.zipMemberCount < 25 || record.claimsUniqueMembers < 10) {
+    signals.push({
+      key: 'low-data-reliability',
+      label: 'Low Data Reliability',
+      detail: 'Small population size. Utilization patterns may not reflect stable access.',
+    });
+  }
+  if (record.uniqueClaimProviders < 10 && record.zipMemberCount >= 50) {
+    signals.push({
+      key: 'thin-provider-base',
+      label: 'Thin Provider Base',
+      detail: 'Limited provider diversity for population size. Access may be constrained.',
+    });
+  }
 
   return (
     <div className="mt-2 rounded-md border border-border bg-secondary/40 px-2 py-1.5">
