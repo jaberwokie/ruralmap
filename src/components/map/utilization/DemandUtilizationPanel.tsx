@@ -50,7 +50,7 @@ const ToggleRow = ({
 );
 
 const SECTION_HEADER_CLASSNAME =
-  'flex w-full items-center gap-1.5 py-1.5 text-[12.5px] font-semibold tracking-tight text-foreground/90 transition-colors hover:text-foreground';
+  'flex w-full items-center gap-1.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/65 transition-colors hover:text-foreground';
 
 const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
   const [open, setOpen] = useState(false);

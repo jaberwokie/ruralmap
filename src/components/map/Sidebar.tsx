@@ -159,7 +159,7 @@ const SECTION_META = {
   },
 } as const;
 
-const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1.5 text-[12.5px] font-semibold tracking-tight text-foreground/90 transition-colors hover:text-foreground';
+const SECTION_HEADER_CLASSNAME = 'flex w-full items-center gap-1.5 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-foreground/65 transition-colors hover:text-foreground';
 const TOGGLE_ROW_CLASSNAME = 'group flex min-h-[34px] items-center gap-2.5 rounded-md border border-transparent px-2 py-1.5 transition-colors duration-150 hover:bg-secondary/60';
 const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-0.5';
 
@@ -757,22 +757,16 @@ const Sidebar = ({
     </div>
   );
 
-  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => {
-    // Convert ALL CAPS labels to Title Case for a calmer, more professional feel
-    const display = label
-      .toLowerCase()
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-    return (
+  const renderSectionHeader = (label: string, open: boolean, onToggle: () => void) => (
       <button
         type="button"
         onClick={onToggle}
         className={SECTION_HEADER_CLASSNAME}
       >
-        {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
-        <span>{display}</span>
+        {open ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+        <span>{label}</span>
       </button>
-    );
-  };
+  );
 
   const renderLayerToggleRow = ({
     label,
