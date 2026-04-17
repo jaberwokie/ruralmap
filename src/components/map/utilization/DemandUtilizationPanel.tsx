@@ -20,7 +20,7 @@ interface Props {
 }
 
 const ROW_CLASS =
-  'group flex min-h-8 items-center gap-2.5 rounded-md border border-transparent px-2 py-1 transition-colors duration-150 hover:border-border/70 hover:bg-secondary/70';
+  'group flex min-h-8 items-center gap-2.5 rounded-md border border-transparent px-2 py-1 transition-colors duration-150 hover:border-border/70 hover:bg-secondary/40 hover:text-[hsl(var(--brand-health))]';
 
 const ToggleRow = ({
   label,
