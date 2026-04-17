@@ -393,6 +393,7 @@ const Sidebar = ({
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
   const [utilizationOpen, toggleUtilization] = usePersistToggle('sidebar_layer_util');
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
+  const [transitOpen, toggleTransit, setTransitOpen] = usePersistToggle('sidebar_layer_transit');
   const [connectivityOpen, toggleConnectivity, setConnectivityOpen] = usePersistToggle('sidebar_layer_connectivity');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1441,6 +1442,16 @@ const Sidebar = ({
                           Counties highlighted in red fall outside the current distance-to-provider scenario of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
                         </p>
                       )}
+                    </div>
+                  )}
+                </div>
+
+                <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />
+
+                <div data-tutorial="section-transit">
+                  {renderSectionHeader('TRANSIT PROVIDERS', transitOpen, toggleTransit)}
+                  {transitOpen && (
+                    <div className="mt-0.5 space-y-0.5">
                       {renderLayerToggleRow({
                         label: 'Rail Corridor (Amtrak)',
                         icon: TrainFront,
@@ -1556,8 +1567,6 @@ const Sidebar = ({
                     </div>
                   )}
                 </div>
-
-                <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />
 
                 <div data-tutorial="section-connectivity">
                   {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
