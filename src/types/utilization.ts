@@ -92,6 +92,8 @@ export interface UtilizationIndices {
   zipDemandByCounty: Map<string, ZipDemandRecord[]>;
   countyGapByCounty: Map<string, CountyGapSummary>;
   providerUtilByKey: Map<string, ProviderUtilizationRecord[]>;
+  /** county -> provider rows sorted by distinctMembers desc (aggregate labels already excluded) */
+  providerUtilByCounty: Map<string, ProviderUtilizationRecord[]>;
   tribalByCounty: Map<string, TribalUtilizationSummary>;
   /** ZIP -> rollup rows (pre-sorted by totalClaims desc) */
   zipRollupByZip: Map<string, ZipProviderRollupRecord[]>;
