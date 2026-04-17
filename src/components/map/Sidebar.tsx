@@ -752,11 +752,11 @@ const Sidebar = ({
         </p>
 
         {/* Auth + admin row */}
-        <div className="mt-2 flex flex-nowrap items-center justify-start gap-x-3.5 whitespace-nowrap text-[11px] leading-none">
+        <div className="mt-2 flex w-full flex-nowrap items-center justify-start gap-x-1.5 whitespace-nowrap text-[10.5px] leading-none">
           {!authReady ? null : isAdmin ? (
             <>
               <span
-                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium leading-none text-primary mr-1"
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary"
                 title={user?.email ?? 'Admin'}
               >
                 <span className="h-1 w-1 rounded-full bg-primary" />
@@ -764,23 +764,27 @@ const Sidebar = ({
               </span>
               <Link
                 to="/admin"
-                className="font-normal text-muted-foreground/80 transition-colors hover:text-foreground"
+                className="ml-1 font-normal text-muted-foreground/70 transition-colors hover:text-foreground"
               >
                 Admin Panel
               </Link>
+              <span aria-hidden className="text-muted-foreground/30">·</span>
               <Link
                 to="/admin/provider-mapping-import"
-                className="font-normal text-muted-foreground/80 transition-colors hover:text-foreground"
+                className="font-normal text-muted-foreground/70 transition-colors hover:text-foreground"
               >
                 Provider Mapping
               </Link>
+              {authReady && isAuthenticated ? (
+                <span aria-hidden className="text-muted-foreground/30">·</span>
+              ) : null}
             </>
           ) : null}
           {authReady && isAuthenticated ? (
             <button
               type="button"
               onClick={() => { void signOut(); }}
-              className="font-normal text-muted-foreground/80 transition-colors hover:text-foreground"
+              className="font-normal text-muted-foreground/70 transition-colors hover:text-foreground"
               title={user?.email ?? undefined}
             >
               Sign out
