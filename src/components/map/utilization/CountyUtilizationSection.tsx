@@ -122,25 +122,50 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
         <Row label="Top 2 Provider Share" value={fmtPct(record.top2ProviderSharePct)} />
         {dateRange && <Row label="Service Date Span" value={dateRange} />}
       </div>
-      {topProvider1 && (
-        <div className="mt-2.5 border-t border-border pt-2">
-          <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
-            Top Utilized Providers
-          </div>
-          <ol className="space-y-1">
-            <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
-              <span className="text-muted-foreground tabular-nums">1.</span>
-              <span className="break-words font-semibold">{topProvider1}</span>
-            </li>
-            {topProvider2 && (
+      {topProvider1 && (() => {
+        const onProviderClick = useUtilizationProviderClick();
+        const display1 = formatDisplayValue(topProvider1);
+        const display2 = topProvider2 ? formatDisplayValue(topProvider2) : null;
+        const renderName = (raw: string, display: string, bold: boolean) => {
+          const canClick = !!onProviderClick;
+          if (!canClick) {
+            return <span className={`break-words ${bold ? 'font-semibold' : 'font-medium'}`}>{display}</span>;
+          }
+          return (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onProviderClick(raw);
+              }}
+              className={`break-words text-left underline decoration-dotted underline-offset-2 transition-colors hover:text-primary focus-visible:outline-none focus-visible:text-primary ${bold ? 'font-semibold' : 'font-medium'}`}
+              title="Open provider details"
+            >
+              {display}
+            </button>
+          );
+        };
+        return (
+          <div className="mt-2.5 border-t border-border pt-2">
+            <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+              Top Utilized Providers
+            </div>
+            <ol className="space-y-1">
               <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
-                <span className="text-muted-foreground tabular-nums">2.</span>
-                <span className="break-words font-medium">{topProvider2}</span>
+                <span className="text-muted-foreground tabular-nums">1.</span>
+                {renderName(topProvider1, display1, true)}
               </li>
-            )}
-          </ol>
-        </div>
-      )}
+              {topProvider2 && display2 && (
+                <li className="flex max-w-full gap-1.5 text-[11px] leading-snug text-foreground">
+                  <span className="text-muted-foreground tabular-nums">2.</span>
+                  {renderName(topProvider2, display2, false)}
+                </li>
+              )}
+            </ol>
+          </div>
+        );
+      })()}
       {signals.length > 0 && (
         <div className="mt-2 border-t border-border/60 pt-1.5">
           <div className="mb-1 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80">
