@@ -274,45 +274,65 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
   return (
     <UtilizationTogglesContext.Provider value={togglesValue}>
-      <div
-        data-tutorial="details-panel"
-        className="absolute top-3 right-3 z-[1000] flex max-h-[calc(100vh-120px)] w-64 select-none flex-col rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm"
-        onClick={(event) => event.stopPropagation()}
-        onMouseDown={(event) => event.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Details
-          </h3>
-          {isLocked && (
-            <button
-              type="button"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                onClear();
-              }}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              aria-label="Close details panel"
-              title="Close details"
-            >
-              <X className="h-4 w-4 stroke-[1.75]" />
-            </button>
-          )}
-        </div>
+      <UtilizationProviderClickContext.Provider value={onProviderClick ?? null}>
+        <div
+          data-tutorial="details-panel"
+          className="absolute top-3 right-3 z-[1000] flex max-h-[calc(100vh-120px)] w-64 select-none flex-col rounded-lg border border-border bg-card/95 shadow-md backdrop-blur-sm"
+          onClick={(event) => event.stopPropagation()}
+          onMouseDown={(event) => event.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-3 pb-2 flex-shrink-0">
+            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Details
+            </h3>
+            {isLocked && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onClear();
+                }}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                aria-label="Close details panel"
+                title="Close details"
+              >
+                <X className="h-4 w-4 stroke-[1.75]" />
+              </button>
+            )}
+          </div>
 
-        {/* Body */}
-        <div className="overflow-y-auto flex-1 px-3 pb-3">
-          {memberLocation && display.type === 'facility' && (
-            <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
+          {canGoBack && onBack && (
+            <div className="px-3 pb-1.5 flex-shrink-0">
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onBack();
+                }}
+                className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                title="Return to previous selection"
+              >
+                <span aria-hidden="true">←</span>
+                <span>Back to County</span>
+              </button>
+            </div>
           )}
-          {memberLocation && display.type === 'ruralService' && (
-            <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
-          )}
-          <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+
+          {/* Body */}
+          <div className="overflow-y-auto flex-1 px-3 pb-3">
+            {memberLocation && display.type === 'facility' && (
+              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
+            )}
+            {memberLocation && display.type === 'ruralService' && (
+              <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
+            )}
+            <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+          </div>
         </div>
-      </div>
+      </UtilizationProviderClickContext.Provider>
     </UtilizationTogglesContext.Provider>
   );
 };
