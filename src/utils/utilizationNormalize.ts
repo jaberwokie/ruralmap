@@ -60,6 +60,29 @@ export const normalizeProviderName = (input: unknown): string => {
   return noSuffix.replace(/\s+/g, ' ').trim();
 };
 
+/**
+ * Aggregate / summary labels that must NEVER be treated as a provider identity.
+ * Compared against the already-normalized provider name (uppercase, no punctuation).
+ * Exact-match only — no fuzzy logic.
+ */
+const AGGREGATE_PROVIDER_LABELS: ReadonlySet<string> = new Set([
+  'GRAND TOTAL',
+  'TOTAL',
+  'SUBTOTAL',
+  'SUB TOTAL',
+  'ALL PROVIDERS',
+  'UNKNOWN TOTAL',
+  'UNKNOWN',
+  'TOTALS',
+  'SUM',
+]);
+
+/** Returns true when the normalized provider name is an aggregate/summary row, not a real provider. */
+export const isAggregateProviderLabel = (normalizedName: string): boolean => {
+  if (!normalizedName) return true;
+  return AGGREGATE_PROVIDER_LABELS.has(normalizedName);
+};
+
 /** Normalize a 5-digit zip; returns '' if invalid. */
 export const normalizeZip = (input: unknown): string => {
   if (typeof input === 'number' && Number.isFinite(input)) {

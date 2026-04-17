@@ -16,6 +16,7 @@ import {
   ZipProviderRollupRecord,
 } from '@/types/utilization';
 import {
+  isAggregateProviderLabel,
   minMaxNormalize,
   normalizeCounty,
   normalizeProviderName,
@@ -89,6 +90,7 @@ const parseProviderUtil = (rows: unknown[]): ProviderUtilizationRecord[] =>
       const providerKey = normalizeProviderName(providerName);
       const county = normalizeCounty(o['Member County']);
       if (!providerKey || !county) return null;
+      if (isAggregateProviderLabel(providerKey)) return null;
       return {
         providerName,
         providerKey,
@@ -124,6 +126,7 @@ const parseZipRollup = (rows: unknown[]): ZipProviderRollupRecord[] => {
       const providerName = str(o['Billing Provider Name']);
       const providerKey = normalizeProviderName(providerName);
       if (!zip || !providerKey) return null;
+      if (isAggregateProviderLabel(providerKey)) return null;
       return {
         zip,
         county: normalizeCounty(o['Member County']),
