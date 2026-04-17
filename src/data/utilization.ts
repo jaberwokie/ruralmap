@@ -185,13 +185,22 @@ const buildIndices = (
   for (const r of countyGap) countyGapByCounty.set(r.county, r);
 
   const providerUtilByKey = new Map<string, ProviderUtilizationRecord[]>();
+  const providerUtilByCounty = new Map<string, ProviderUtilizationRecord[]>();
   for (const r of providerUtil) {
     const arr = providerUtilByKey.get(r.providerKey) ?? [];
     arr.push(r);
     providerUtilByKey.set(r.providerKey, arr);
+    const carr = providerUtilByCounty.get(r.county) ?? [];
+    carr.push(r);
+    providerUtilByCounty.set(r.county, carr);
   }
   for (const arr of providerUtilByKey.values()) {
     arr.sort((a, b) => b.providerGrandTotal - a.providerGrandTotal);
+  }
+  // Sort county provider lists by distinctMembers desc — matches the share metric
+  // (top_provider_*_members / provider_member_sum) used in county_gap_summary.
+  for (const arr of providerUtilByCounty.values()) {
+    arr.sort((a, b) => b.distinctMembers - a.distinctMembers);
   }
 
   // Tribal index: prefer the row where the flag is true; fall back to false-row only if no true-row exists.
@@ -231,6 +240,7 @@ const buildIndices = (
     zipDemandByCounty,
     countyGapByCounty,
     providerUtilByKey,
+    providerUtilByCounty,
     tribalByCounty,
     zipRollupByZip,
     zipsWithTribalActivity,
