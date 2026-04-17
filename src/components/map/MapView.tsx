@@ -496,12 +496,12 @@ const getEntityDebugMeta = (entity: MapEntity | null | undefined) => {
 };
 
 const getDeclutterRadiusByZoom = (zoom: number) => {
-  if (zoom <= 7) return 26;
-  if (zoom === 8) return 22;
-  if (zoom === 9) return 18;
-  if (zoom === 10) return 14;
-  if (zoom === 11) return 10;
-  return 6;
+  if (zoom <= 7) return 22;
+  if (zoom === 8) return 18;
+  if (zoom === 9) return 14;
+  if (zoom === 10) return 10;
+  if (zoom === 11) return 6;
+  return 4;
 };
 
 const getClusterBadgeLabel = (count: number) => (count > 99 ? '99+' : String(count));
@@ -1386,7 +1386,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: false,
-      disableClusteringAtZoom: 13,
+      disableClusteringAtZoom: 12,
       removeOutsideVisibleBounds: false,
       animate: true,
       animateAddingMarkers: false,
@@ -1412,7 +1412,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
       spiderfyOnMaxZoom: false,
-      disableClusteringAtZoom: 13,
+      disableClusteringAtZoom: 12,
       removeOutsideVisibleBounds: false,
       animate: true,
       animateAddingMarkers: false,
@@ -1573,8 +1573,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         clipped,
         MAP_PANES.countyBorders,
         {
-          color: 'hsl(240, 5%, 75%)',
-          weight: 1,
+          color: 'hsl(240, 5%, 80%)',
+          weight: 0.75,
+          opacity: 0.7,
           fillColor: 'transparent',
           fillOpacity: 0,
           dashArray: '4 4',
