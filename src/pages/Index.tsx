@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
@@ -11,14 +11,22 @@ import { localTransitProviders, getProviderBounds } from '@/data/local-transit-p
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
 
+const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
+
 const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
+  const [showInitialMapCover, setShowInitialMapCover] = useState(true);
   const layers = useMapLayers();
   const selection = useMapSelection();
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setShowInitialMapCover(false), THUMBNAIL_PLACEHOLDER_DURATION_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
 
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
@@ -27,18 +35,15 @@ const Index = () => {
   const onTransitProviderClick = useCallback((providerId: string) => {
     const provider = localTransitProviders.find(p => p.id === providerId);
     if (!provider) return;
-    // Ensure overlay is visible (additive — does not disturb other layers)
     layers.actions.setLayers(prev => prev.localTransitZones ? prev : { ...prev, localTransitZones: true });
     const bounds = getProviderBounds(provider);
     if (bounds) {
-      // Force new identity so MapView's effect retriggers on repeat clicks
       setFocusBounds([[bounds[0][0], bounds[0][1]], [bounds[1][0], bounds[1][1]]]);
     }
     selection.actions.selectEntity({ type: 'localTransitProvider', provider });
     setMobileSidebarOpen(false);
   }, [layers.actions, selection.actions]);
 
-  // Priority: 1) clicked entity (provider/service/county) 2) member analysis 3) null
   const memberAnalysisEntity = member.analysis
     ? { type: 'memberAccess' as const, analysis: member.analysis }
     : null;
@@ -100,16 +105,28 @@ const Index = () => {
           memberManualMode={member.manualPlacementMode}
           focusBounds={focusBounds}
         />
+        {showInitialMapCover && (
+          <div className="pointer-events-none absolute inset-0 z-[675] flex items-center justify-center bg-background/95 backdrop-blur-[1px]">
+            <div className="mx-6 flex max-w-xl flex-col items-center gap-4 text-center">
+              <div className="inline-flex items-center rounded-full border border-border bg-card px-3 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground shadow-sm">
+                Nevada Behavioral Health
+              </div>
+              <div className="space-y-2">
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-4xl">Rural Operations Map</h1>
+                <p className="mx-auto max-w-md text-sm leading-6 text-muted-foreground md:text-base">
+                  County-level operational visibility for outreach, staffing coverage, and rural care coordination.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         <CoverageDetailPanel
           entity={activeEntity}
           onClear={() => {
-            // If a specific entity is selected (not member analysis), just clear that selection
-            // so the panel falls back to member analysis
             if (selection.lockedEntity && member.memberLocation) {
               selection.actions.clearSelection();
               return;
             }
-            // Otherwise clear everything
             if (member.memberLocation) {
               member.clearMember();
             }
