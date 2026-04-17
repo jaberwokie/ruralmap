@@ -65,7 +65,7 @@ const GAP_COUNTIES = (() => {
 })();
 
 import type { MapEntity } from '@/types/entities';
-import { UtilizationTogglesContext, useUtilizationToggles, type UtilizationToggles } from '@/components/map/utilization/UtilizationTogglesContext';
+import { UtilizationTogglesContext, useUtilizationToggles, UtilizationProviderClickContext, type UtilizationToggles, type UtilizationProviderClickHandler } from '@/components/map/utilization/UtilizationTogglesContext';
 import CountyUtilizationSection from '@/components/map/utilization/CountyUtilizationSection';
 import ProviderUtilizationReachSection from '@/components/map/utilization/ProviderUtilizationReachSection';
 import TribalUtilizationSection from '@/components/map/utilization/TribalUtilizationSection';
@@ -76,6 +76,12 @@ interface CoverageDetailPanelProps {
   coverageRadiusKm?: number;
   memberLocation?: { lat: number; lng: number } | null;
   utilizationToggles?: UtilizationToggles;
+  /** Resolve a provider name → facility entity and select it (preserving back-nav). */
+  onProviderClick?: UtilizationProviderClickHandler;
+  /** Restore the previously selected entity. */
+  onBack?: () => void;
+  /** Whether a previous entity exists for back-navigation. */
+  canGoBack?: boolean;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
