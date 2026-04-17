@@ -1739,6 +1739,8 @@ const Sidebar = ({
         </div>
       </div>
 
+      {canEditMapData && (
+      <>
       <div className="mx-3 border-t border-border" />
 
       {/* Verification Priority Queue */}
