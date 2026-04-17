@@ -40,7 +40,7 @@ const ToggleRow = ({
   <div className={ROW_CLASS}>
     <Icon className={`h-3.5 w-3.5 stroke-[1.75] flex-shrink-0 ${iconClass}`} />
     <div className="flex-1 min-w-0">
-      <div className="text-[12px] leading-tight text-foreground">{label}</div>
+      <div className="text-[11.5px] leading-tight text-foreground/85">{label}</div>
       {subtitle && (
         <div className="text-[9px] leading-tight text-muted-foreground/80">{subtitle}</div>
       )}
@@ -50,7 +50,7 @@ const ToggleRow = ({
 );
 
 const SECTION_HEADER_CLASSNAME =
-  'flex w-full items-center gap-1.5 py-1 text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground';
+  'flex w-full items-center gap-1.5 py-1.5 text-[12.5px] font-semibold tracking-tight text-foreground/90 transition-colors hover:text-foreground';
 
 const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
   const [open, setOpen] = useState(false);
