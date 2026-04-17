@@ -1148,6 +1148,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+  const t = useUtilizationToggles();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
@@ -1533,6 +1534,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
           </DetailSection>
         );
       })()}
+      <CountyUtilizationSection county={county} enabled={t.countyUtilization} />
+      <TribalUtilizationSection county={county} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
     </>
   );
 };
@@ -1909,6 +1912,8 @@ const CopyAddress = ({ text }: { text: string }) => {
 
 // ── Facility ──
 const FacilityContent = ({ facility }: { facility: Facility }) => {
+  const t = useUtilizationToggles();
+  const isBillingProvider = facility.type === 'hospital' || facility.type === 'clinic';
   const { isOpen, toggle } = useAccordion('provider');
   const isHighUtilClinic = facility.tier === 'tier1';
   const classification = getFacilityClassification(facility);
