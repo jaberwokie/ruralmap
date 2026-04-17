@@ -26,8 +26,39 @@ const ProviderUtilizationReachSection = ({ providerName, enabled }: Props) => {
     if (!key) return null;
     const rows = data.indices.providerUtilByKey.get(key);
     if (!rows || rows.length === 0) return null;
-    const total = rows.reduce((acc, r) => acc + r.providerGrandTotal, 0);
-    return { rows, total, counties: rows.length };
+
+    // Source field `Provider Grand Total` is provider-wide (repeated identically on
+    // every county row), NOT a per-county claim count. We surface it once as the
+    // provider total and avoid summing it across counties (which would multiply it
+    // by the number of counties).
+    //
+    // `Distinct Members` IS per-county (member county-scoped). De-dupe defensively
+    // by county in case the source ever contains true row duplicates.
+    const byCounty = new Map<string, { county: string; distinctMembers: number }>();
+    for (const r of rows) {
+      if (!r.county) continue;
+      const existing = byCounty.get(r.county);
+      if (!existing) {
+        byCounty.set(r.county, { county: r.county, distinctMembers: r.distinctMembers });
+      } else {
+        // Same provider+county appearing twice: keep the larger member count.
+        existing.distinctMembers = Math.max(existing.distinctMembers, r.distinctMembers);
+      }
+    }
+    const countyRows = Array.from(byCounty.values())
+      .filter((r) => r.distinctMembers > 0)
+      .sort((a, b) => b.distinctMembers - a.distinctMembers);
+
+    // Provider grand total: take the max across rows (they should all be identical;
+    // max is robust if any row is missing/zero).
+    const providerTotal = rows.reduce((m, r) => Math.max(m, r.providerGrandTotal), 0);
+
+    return {
+      countyRows,
+      providerTotal,
+      counties: countyRows.length,
+      hasCountyBreakdown: countyRows.length > 0,
+    };
   }, [data, providerName]);
 
   if (!enabled || !result) return null;
@@ -45,28 +76,34 @@ const ProviderUtilizationReachSection = ({ providerName, enabled }: Props) => {
           <div className="text-[12px] font-semibold tabular-nums text-foreground">{result.counties}</div>
         </div>
         <div className="rounded-sm bg-background/60 px-1.5 py-1">
-          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Total Utilization</div>
-          <div className="text-[12px] font-semibold tabular-nums text-foreground">{fmtInt(result.total)}</div>
+          <div className="text-[9px] uppercase tracking-wide text-muted-foreground">Provider Total Claims</div>
+          <div className="text-[12px] font-semibold tabular-nums text-foreground">{fmtInt(result.providerTotal)}</div>
         </div>
       </div>
-      <ul className="space-y-1">
-        {result.rows.map((r) => (
-          <li
-            key={`${r.county}-${r.providerKey}`}
-            className="rounded-sm bg-background/60 px-1.5 py-1"
-          >
-            <div className="truncate text-[11px] font-medium text-foreground">{r.county}</div>
-            <div className="mt-0.5 flex items-baseline justify-between gap-2">
-              <span className="text-[10px] text-muted-foreground">Members</span>
-              <span className="text-[11px] tabular-nums text-foreground">{fmtInt(r.distinctMembers)}</span>
-            </div>
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-[10px] text-muted-foreground">Claims</span>
-              <span className="text-[11px] tabular-nums text-foreground">{fmtInt(r.providerGrandTotal)}</span>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {result.hasCountyBreakdown ? (
+        <>
+          <div className="mb-1 text-[9px] uppercase tracking-wide text-muted-foreground">
+            Members by county
+          </div>
+          <ul className="space-y-1">
+            {result.countyRows.map((r) => (
+              <li
+                key={r.county}
+                className="rounded-sm bg-background/60 px-1.5 py-1"
+              >
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="truncate text-[11px] font-medium text-foreground">{r.county}</span>
+                  <span className="text-[11px] tabular-nums text-foreground">{fmtInt(r.distinctMembers)}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <div className="rounded-sm bg-background/60 px-1.5 py-1 text-[10px] text-muted-foreground">
+          County-level utilization not available
+        </div>
+      )}
     </div>
   );
 };
