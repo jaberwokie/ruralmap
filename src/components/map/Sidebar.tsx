@@ -890,7 +890,11 @@ const Sidebar = ({
         <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
           <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
             <span className="text-[11px] font-medium text-muted-foreground">View</span>
-            <div className="flex w-full items-center rounded-md border border-border bg-secondary/40 p-0.5">
+            <div className={`flex w-full items-center rounded-md border bg-secondary/40 p-0.5 transition-colors ${
+              layers.tribalNations && layers.behavioralHealth && layers.services
+                ? 'border-[#064f88]/50'
+                : 'border-[hsl(var(--brand-health)/0.35)]'
+            }`}>
               <button
                 type="button"
                 onClick={() => onSetLayers((prev) => ({
