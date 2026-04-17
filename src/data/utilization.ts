@@ -116,8 +116,8 @@ const parseTribal = (rows: unknown[]): TribalUtilizationSummary[] =>
     })
     .filter((r): r is TribalUtilizationSummary => r !== null);
 
-const parseZipRollup = (rows: unknown[]): ZipProviderRollupRecord[] =>
-  rows
+const parseZipRollup = (rows: unknown[]): ZipProviderRollupRecord[] => {
+  const out = rows
     .map((r) => {
       const o = r as Record<string, unknown>;
       const zip = normalizeZip(o['Member Zip']);
@@ -135,6 +135,15 @@ const parseZipRollup = (rows: unknown[]): ZipProviderRollupRecord[] =>
       } satisfies ZipProviderRollupRecord;
     })
     .filter((r): r is ZipProviderRollupRecord => r !== null);
+  if (rows.length > 0 && out.length === 0) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[Utilization] zip_provider_rollup.json appears malformed — required columns missing. ' +
+        'Top Providers sub-block will be hidden. Other Demand & Utilization features remain functional.',
+    );
+  }
+  return out;
+};
 
 export interface UtilizationDataset {
   zipDemand: ZipDemandRecord[];
@@ -245,12 +254,21 @@ export const loadUtilizationDataset = (): Promise<UtilizationDataset> => {
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     };
+    const fetchJsonOptional = async (file: string): Promise<unknown[]> => {
+      try {
+        return await fetchJson(file);
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn(`[Utilization] optional dataset ${file} failed to load — continuing.`, err);
+        return [];
+      }
+    };
     const [zipDemandRaw, countyGapRaw, providerUtilRaw, tribalRaw, zipRollupRaw] = await Promise.all([
       fetchJson('zip_member_demand.json'),
       fetchJson('county_gap_summary.json'),
       fetchJson('provider_util_flat.json'),
       fetchJson('tribal_provider_summary.json'),
-      fetchJson('zip_provider_rollup.json'),
+      fetchJsonOptional('zip_provider_rollup.json'),
     ]);
     const zipDemand = parseZipDemand(zipDemandRaw);
     const countyGap = parseCountyGap(countyGapRaw);
