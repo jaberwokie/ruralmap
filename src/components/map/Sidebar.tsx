@@ -929,16 +929,16 @@ const Sidebar = ({
           </div>
 
           {/* Stats row */}
-          <div className="mt-2 grid grid-cols-2 gap-2">
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
-              <span className="h-2 w-2 rounded-full bg-hospital flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Hospitals</span>
-              <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{hospitalCount}</span>
+          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
+            <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2 py-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-hospital flex-shrink-0" />
+              <span className="text-[10px] text-muted-foreground">Hospitals</span>
+              <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{hospitalCount}</span>
             </div>
-            <div className="flex items-center gap-2 rounded-md border border-border/60 bg-card px-2 py-1">
-              <span className="h-2 w-2 rounded-full bg-clinic flex-shrink-0" />
-              <span className="text-[11px] text-muted-foreground">Clinics</span>
-              <span className="ml-auto text-xs font-semibold tabular-nums text-foreground">{clinicCount}</span>
+            <div className="flex items-center gap-1.5 rounded-md border border-border/60 bg-card px-2 py-0.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-clinic flex-shrink-0" />
+              <span className="text-[10px] text-muted-foreground">Clinics</span>
+              <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{clinicCount}</span>
             </div>
           </div>
         </div>
