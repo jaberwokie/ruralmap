@@ -874,17 +874,15 @@ const Sidebar = ({
             </div>
           </div>
 
-          {/* Stats row */}
-          <div className="mt-1.5 grid grid-cols-2 gap-1.5">
-            <div className="flex items-center gap-1.5 rounded-md border border-[hsl(var(--brand-health)/0.3)] bg-card px-2 py-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-hospital flex-shrink-0" />
-              <span className="text-[10px] text-muted-foreground">Hospitals</span>
-              <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{hospitalCount}</span>
+          {/* Summary counts */}
+          <div className="mt-1.5 flex items-center justify-start gap-x-4 text-[11px]">
+            <div className="flex items-baseline gap-1">
+              <span className="text-muted-foreground">Hospitals</span>
+              <span className="font-semibold tabular-nums text-foreground">{hospitalCount}</span>
             </div>
-            <div className="flex items-center gap-1.5 rounded-md border border-[hsl(var(--brand-health)/0.3)] bg-card px-2 py-0.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-clinic flex-shrink-0" />
-              <span className="text-[10px] text-muted-foreground">Clinics</span>
-              <span className="ml-auto text-[11px] font-semibold tabular-nums text-foreground">{clinicCount}</span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-muted-foreground">Clinics</span>
+              <span className="font-semibold tabular-nums text-foreground">{clinicCount}</span>
             </div>
           </div>
         </div>
