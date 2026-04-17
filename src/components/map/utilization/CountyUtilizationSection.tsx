@@ -118,7 +118,11 @@ const CountyUtilizationSection = ({ county, enabled }: Props) => {
         <Row label="Providers per 100 ZIP Members" value={fmtNum(record.providersPer100ZipMembers, 1)} />
         {record.topProviderName && <Row label="Top Provider" value={record.topProviderName} />}
         <Row label="Top Provider Share" value={fmtPct(record.topProviderSharePct)} />
+        {topProvider1 && <Row label="Top Provider" value={topProvider1} />}
         <Row label="Top 2 Provider Share" value={fmtPct(record.top2ProviderSharePct)} />
+        {topProvider1 && topProvider2 && (
+          <Row label="Top 2 Providers" value={`${topProvider1}, ${topProvider2}`} />
+        )}
         {dateRange && <Row label="Service Date Span" value={dateRange} />}
       </div>
       {signals.length > 0 && (
