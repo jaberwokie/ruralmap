@@ -412,6 +412,7 @@ const ApplyInpatientForm = ({ record, outreach, onApply, onCancel }: {
 // ── Main panel ──
 
 const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
+  const { canApplyVerification, canImportData } = usePermissions();
   const [refreshKey, setRefreshKey] = useState(0);
   const queue = useMemo(() => deriveVerificationQueue(), [refreshKey]);
   const [serviceFilter, setServiceFilter] = useState<'all' | 'psychiatry' | 'inpatient'>('all');
@@ -423,6 +424,11 @@ const VerificationPriorityPanel = ({ filters }: { filters?: Filters }) => {
   const [importResult, setImportResult] = useState<VerificationImportResult | null>(null);
 
   const handleCsvImport = useCallback(() => {
+    if (!canImportData) {
+      toast.error('You do not have permission to import verification data.');
+      console.warn('[verification-import] Blocked: caller is not authorized.');
+      return;
+    }
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.csv';
