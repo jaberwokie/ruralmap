@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
+import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
 
 // LayerState imported from @/types/layers
 
@@ -1555,6 +1556,8 @@ const Sidebar = ({
                     </div>
                   )}
                 </div>
+
+                <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />
 
                 <div data-tutorial="section-connectivity">
                   {renderSectionHeader('CONNECTIVITY', connectivityOpen, toggleConnectivity)}
