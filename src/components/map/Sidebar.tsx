@@ -953,7 +953,7 @@ const Sidebar = ({
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Search facilities, cities, or counties"
-            className="w-full h-9 pl-9 pr-3 text-sm bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground/80 transition-colors focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
+            className="w-full h-9 pl-9 pr-3 text-sm bg-card border border-[hsl(var(--brand-health)/0.35)] rounded-md text-foreground placeholder:text-muted-foreground/80 transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus:outline-none focus:border-[hsl(var(--brand-health))] focus:ring-2 focus:ring-[hsl(var(--brand-health)/0.2)]"
           />
         </div>
       </div>
