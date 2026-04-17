@@ -864,24 +864,29 @@ const Sidebar = ({
             >
               Sign out
             </button>
-          ) : authReady ? (
-            <Link
-              to="/auth"
-              className="text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Staff sign in
-            </Link>
           ) : null}
         </div>
 
-        {/* Map Explainer secondary action */}
-        <button
-          type="button"
-          onClick={() => setExplainerOpen(true)}
-          className="mt-3 inline-flex items-center justify-center rounded-md border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-        >
-          Map Explainer
-        </button>
+        {/* Action buttons row: Staff sign in + Map Explainer */}
+        <div className="mt-3 grid grid-cols-2 gap-2 w-full">
+          {authReady && !isAuthenticated ? (
+            <Link
+              to="/auth"
+              className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-background px-3 text-xs font-medium text-foreground transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            >
+              Staff sign in
+            </Link>
+          ) : (
+            <span aria-hidden="true" />
+          )}
+          <button
+            type="button"
+            onClick={() => setExplainerOpen(true)}
+            className={`inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
+          >
+            Map Explainer
+          </button>
+        </div>
 
         <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
       </div>
