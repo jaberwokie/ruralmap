@@ -752,11 +752,11 @@ const Sidebar = ({
         </p>
 
         {/* Auth + admin row */}
-        <div className="mt-2 flex flex-nowrap items-center justify-start gap-x-4 gap-y-1 whitespace-nowrap text-[11px]">
+        <div className="mt-2 flex flex-nowrap items-center justify-start gap-x-3.5 whitespace-nowrap text-[11px] leading-none">
           {!authReady ? null : isAdmin ? (
             <>
               <span
-                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary"
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium leading-none text-primary mr-1"
                 title={user?.email ?? 'Admin'}
               >
                 <span className="h-1 w-1 rounded-full bg-primary" />
@@ -764,13 +764,13 @@ const Sidebar = ({
               </span>
               <Link
                 to="/admin"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="font-normal text-muted-foreground/80 transition-colors hover:text-foreground"
               >
                 Admin Panel
               </Link>
               <Link
                 to="/admin/provider-mapping-import"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="font-normal text-muted-foreground/80 transition-colors hover:text-foreground"
               >
                 Provider Mapping
               </Link>
@@ -780,7 +780,7 @@ const Sidebar = ({
             <button
               type="button"
               onClick={() => { void signOut(); }}
-              className="text-muted-foreground transition-colors hover:text-foreground"
+              className="font-normal text-muted-foreground/80 transition-colors hover:text-foreground"
               title={user?.email ?? undefined}
             >
               Sign out
