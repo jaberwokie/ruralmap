@@ -35,6 +35,7 @@ import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizati
 export interface SidebarLayerProps {
   layers: LayerState;
   onToggleLayer: (layer: keyof LayerState) => void;
+  onSetLayers?: React.Dispatch<React.SetStateAction<LayerState>>;
   coverageRadius: boolean;
   coverageGaps: boolean;
   onCoverageRadiusChange: (checked: boolean) => void;
@@ -334,6 +335,7 @@ const Sidebar = ({
   layer: {
     layers,
     onToggleLayer,
+    onSetLayers,
     coverageRadius,
     coverageGaps,
     onCoverageRadiusChange,
