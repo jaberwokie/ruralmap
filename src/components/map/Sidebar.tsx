@@ -815,7 +815,7 @@ const Sidebar = ({
   );
 
   return (
-    <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80">
+    <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80 border-r border-[hsl(var(--brand-health)/0.3)]">
       <div className="flex-1 overflow-y-scroll scroll-smooth sidebar-scroll pb-6">
       {/* Header */}
       <div className="flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
