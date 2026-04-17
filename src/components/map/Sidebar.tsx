@@ -791,7 +791,7 @@ const Sidebar = ({
                   className="font-normal transition-colors hover:text-foreground"
                   title={user?.email ?? undefined}
                 >
-                  Sign out
+                  Sign Out
                 </button>
               ) : null}
             </div>
