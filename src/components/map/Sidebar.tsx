@@ -833,7 +833,7 @@ const Sidebar = ({
         />
         <h1 className="mt-3 text-base font-semibold text-foreground tracking-tight leading-tight">Rural Operations Map</h1>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
-          Select a county or search by facility, city, or member.
+          Select a county or search by facility, city, or enter a member address.
         </p>
 
         {/* Auth + admin row */}
