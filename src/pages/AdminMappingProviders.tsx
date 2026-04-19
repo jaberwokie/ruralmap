@@ -131,11 +131,17 @@ export default function AdminMappingProviders() {
           { canonical: 'verified_lng', aliases: ['longitude', 'lng', 'lon'] },
         ]}
         optional={[
-          { name: 'verified_address' }, { name: 'verified_city' }, { name: 'verified_county' },
-          { name: 'verified_state' }, { name: 'verified_zip' }, { name: 'verified_npi' },
-          { name: 'type' }, { name: 'subtype' }, { name: 'source' }, { name: 'notes' },
-          { name: 'phone' }, { name: 'website' }, { name: 'medicaid_participation' },
-          { name: 'psychiatric_flag' }, { name: 'inpatient_flag' },
+          { name: 'verified_address', description: 'Parsed and stored on the imported pin' },
+          { name: 'verified_city', description: 'Parsed and stored' },
+          { name: 'verified_county', description: 'Parsed and stored' },
+          { name: 'type', description: 'Hospital vs clinic — anything else defaults to clinic' },
+          { name: 'notes', description: 'Parsed and stored' },
+          { name: 'verified_state', description: 'Accepted, kept in source CSV only' },
+          { name: 'verified_zip', description: 'Accepted, kept in source CSV only' },
+          { name: 'verified_npi', description: 'Accepted, kept in source CSV only' },
+          { name: 'source', description: 'Accepted, kept in source CSV only' },
+          { name: 'phone', description: 'Accepted, kept in source CSV only' },
+          { name: 'website', description: 'Accepted, kept in source CSV only' },
         ]}
         validationRules={[
           'Coordinates must parse as valid finite numbers within range.',
