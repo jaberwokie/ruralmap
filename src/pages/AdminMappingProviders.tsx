@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/contexts/AuthContext';
 import { parseFacilityCsv, type CsvImportResult } from '@/utils/csvImport';
 import { appendImportedFacilities } from '@/utils/importedFacilitiesStore';
+import { PROVIDER_TEMPLATE } from '@/utils/csvTemplates';
 
 export default function AdminMappingProviders() {
   const perms = usePermissions();

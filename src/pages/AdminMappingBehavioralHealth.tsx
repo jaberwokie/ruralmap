@@ -8,6 +8,7 @@
 
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import MappingImportShell from '@/components/admin/MappingImportShell';
+import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 
 export default function AdminMappingBehavioralHealth() {
   return (
