@@ -4,6 +4,14 @@
  * Combines existing verification dates from operational metadata with
  * enrichment_imported_at from the local enrichment store. Does not invent
  * verification logic; only summarizes what already exists.
+ *
+ * Label set (intentionally tight — avoids muddy "Recently verified" wording):
+ *   • Verified              — has a verification date within the aging window
+ *   • Verified (aging)      — has a verification date older than the aging window
+ *   • Recently enriched     — enrichment is the freshest signal within recency window
+ *   • Imported only         — enrichment exists but no verification has ever occurred
+ *   • No recent activity    — neither signal qualifies (reserved; current logic
+ *                             returns null when no signals exist at all)
  */
 
 import type { Facility } from '@/data/facilities';
@@ -11,9 +19,9 @@ import { getOperationalTagIndex } from '@/data/operational-metadata';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 
 export type RecencyStatus =
-  | 'recently_verified'
-  | 'recently_enriched'
+  | 'verified'
   | 'verified_aging'
+  | 'recently_enriched'
   | 'imported_only'
   | 'no_recent_activity';
 
@@ -28,9 +36,9 @@ const RECENT_DAYS = 90;
 const AGING_DAYS = 365;
 
 const STATUS_LABEL: Record<RecencyStatus, string> = {
-  recently_verified: 'Recently verified',
+  verified: 'Verified',
+  verified_aging: 'Verified (aging)',
   recently_enriched: 'Recently enriched',
-  verified_aging: 'Verified, but aging',
   imported_only: 'Imported only',
   no_recent_activity: 'No recent activity',
 };
@@ -66,11 +74,8 @@ export const deriveRecency = (facility: Facility): RecencySummary | null => {
   // Verified-only branch
   if (verifiedDate && !enrichedDate) {
     const days = daysSince(verifiedDate);
-    if (days <= RECENT_DAYS) {
-      return { status: 'recently_verified', label: STATUS_LABEL.recently_verified, verifiedDate: verifiedDateRaw };
-    }
     if (days <= AGING_DAYS) {
-      return { status: 'recently_verified', label: STATUS_LABEL.recently_verified, verifiedDate: verifiedDateRaw };
+      return { status: 'verified', label: STATUS_LABEL.verified, verifiedDate: verifiedDateRaw };
     }
     return { status: 'verified_aging', label: STATUS_LABEL.verified_aging, verifiedDate: verifiedDateRaw };
   }
@@ -90,8 +95,8 @@ export const deriveRecency = (facility: Facility): RecencySummary | null => {
 
   if (verifiedDays <= AGING_DAYS) {
     return {
-      status: 'recently_verified',
-      label: STATUS_LABEL.recently_verified,
+      status: 'verified',
+      label: STATUS_LABEL.verified,
       verifiedDate: verifiedDateRaw,
       enrichedDate: enrichment?.enrichment_imported_at,
     };

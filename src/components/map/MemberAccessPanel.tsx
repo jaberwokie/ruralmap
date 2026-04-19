@@ -50,6 +50,9 @@ interface TaggedResource {
   distanceMi: number;
   isBH: boolean;
   highwayCorridor?: string;
+  /** Original entity for click-through. Exactly one of facility/service is set. */
+  facility?: Facility;
+  service?: RuralService;
 }
 
 const classifyFacility = (f: Facility & { distanceMi: number }): TaggedResource => {
@@ -59,6 +62,7 @@ const classifyFacility = (f: Facility & { distanceMi: number }): TaggedResource 
     distanceMi: f.distanceMi,
     isBH: facilityOffersBehavioralHealth(f),
     highwayCorridor: hw.hasAccess ? hw.corridor?.label : undefined,
+    facility: f,
   };
 };
 
@@ -69,26 +73,53 @@ const classifyService = (s: RuralService & { distanceMi: number }): TaggedResour
     distanceMi: s.distanceMi,
     isBH: isBehavioralHealthService(s),
     highwayCorridor: hw.hasAccess ? hw.corridor?.label : undefined,
+    service: s,
   };
 };
 
-const ResourceName = ({ name, distanceMi, isBH, highwayCorridor }: { name: string; distanceMi: number; isBH?: boolean; highwayCorridor?: string }) => (
-  <div className="flex items-center justify-between gap-1 text-[10px]">
-    <span className="text-foreground truncate flex items-center gap-1">
-      {isBH && <Brain className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'hsl(270, 50%, 55%)' }} />}
-      {name}
-    </span>
-    <span className="text-muted-foreground flex-shrink-0 flex items-center gap-1">
-      {highwayCorridor && (
-        <span className="inline-flex items-center gap-0.5 text-[8px] text-muted-foreground/70" title={`Near ${highwayCorridor}`}>
-          <Route className="w-2 h-2" />
-          {highwayCorridor}
-        </span>
-      )}
-      {distanceMi.toFixed(1)} mi
-    </span>
-  </div>
-);
+interface ResourceNameProps {
+  resource: TaggedResource;
+  onSelect?: (r: TaggedResource) => void;
+}
+
+const ResourceName = ({ resource, onSelect }: ResourceNameProps) => {
+  const { name, distanceMi, isBH, highwayCorridor } = resource;
+  const clickable = !!onSelect && (resource.facility || resource.service);
+  const content = (
+    <>
+      <span className="text-foreground truncate flex items-center gap-1 text-left">
+        {isBH && <Brain className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'hsl(270, 50%, 55%)' }} />}
+        {name}
+      </span>
+      <span className="text-muted-foreground flex-shrink-0 flex items-center gap-1">
+        {highwayCorridor && (
+          <span className="inline-flex items-center gap-0.5 text-[8px] text-muted-foreground/70" title={`Near ${highwayCorridor}`}>
+            <Route className="w-2 h-2" />
+            {highwayCorridor}
+          </span>
+        )}
+        {distanceMi.toFixed(1)} mi
+      </span>
+    </>
+  );
+  if (clickable) {
+    return (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onSelect?.(resource); }}
+        className="w-full flex items-center justify-between gap-1 text-[10px] rounded px-1 py-0.5 -mx-1 hover:bg-secondary/60 focus-visible:bg-secondary/60 focus-visible:outline-none transition-colors cursor-pointer text-left"
+        title="Open provider details"
+      >
+        {content}
+      </button>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between gap-1 text-[10px]">
+      {content}
+    </div>
+  );
+};
 
 const BHCounts = ({ bhCount, total, hwCount }: { bhCount: number; total: number; hwCount?: number }) => (
   <div className="ml-3.5 mt-0.5 flex items-center gap-2 text-[9px]">
@@ -121,9 +152,10 @@ interface TierSectionProps {
   tierKey: AccessTierKey;
   facilities: (Facility & { distanceMi: number })[];
   services: (RuralService & { distanceMi: number })[];
+  onSelectResource?: (r: TaggedResource) => void;
 }
 
-const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierSectionProps) => {
+const TierSection = ({ label, rangeLabel, tierKey, facilities, services, onSelectResource }: TierSectionProps) => {
   const combined: TaggedResource[] = [
     ...facilities.map(classifyFacility),
     ...services.map(classifyService),
@@ -167,7 +199,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
         {showItems.length > 0 && (
           <div className="ml-3.5 mt-1 space-y-0.5 opacity-80">
             {showItems.map((item, i) => (
-              <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} highwayCorridor={item.highwayCorridor} />
+              <ResourceName key={i} resource={item} onSelect={onSelectResource} />
             ))}
             {combined.length > showItems.length && (
               <p className="text-[9px] text-muted-foreground/50">+{combined.length - showItems.length} more</p>
@@ -203,7 +235,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
       {showItems.length > 0 && (
         <div className="ml-3.5 mt-1 space-y-0.5">
           {showItems.map((item, i) => (
-            <ResourceName key={i} name={item.name} distanceMi={item.distanceMi} isBH={item.isBH} highwayCorridor={item.highwayCorridor} />
+            <ResourceName key={i} resource={item} onSelect={onSelectResource} />
           ))}
           {prioritized.length > showItems.length && (
             <p className="text-[9px] text-muted-foreground/60">+{prioritized.length - showItems.length} more</p>
@@ -217,13 +249,26 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services }: TierS
   );
 };
 
-const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => {
+interface MemberAccessPanelProps {
+  analysis: MemberAccessAnalysis;
+  /** Open a facility's detail view, preserving member context. */
+  onFacilitySelect?: (facility: Facility) => void;
+  /** Open a rural service's detail view, preserving member context. */
+  onServiceSelect?: (service: RuralService) => void;
+}
+
+const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
   const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
     color: 'hsl(0, 0%, 55%)',
     support: 'No realistic in-person options were found within the defined access ranges.',
   };
   const RecIcon = recStyle.icon;
+
+  const handleSelectResource = (r: TaggedResource) => {
+    if (r.facility) onFacilitySelect?.(r.facility);
+    else if (r.service) onServiceSelect?.(r.service);
+  };
 
   const totalResources = analysis.tiers.reduce(
     (sum, t) => sum + t.facilities.length + t.services.length, 0
@@ -318,6 +363,7 @@ const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => 
             tierKey={tier.key}
             facilities={tier.facilities}
             services={tier.services}
+            onSelectResource={handleSelectResource}
           />
         ))}
       </div>

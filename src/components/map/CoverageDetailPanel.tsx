@@ -87,8 +87,10 @@ interface CoverageDetailPanelProps {
   canGoBack?: boolean;
   /** Full facility set for backup-options lookup. */
   allFacilities?: Facility[];
-  /** Direct facility selection (for backup-options jumping). */
+  /** Direct facility selection (for backup-options jumping and Member Access list clicks). */
   onFacilitySelect?: (facility: Facility) => void;
+  /** Direct rural service selection (for Member Access list clicks). */
+  onServiceSelect?: (service: RuralService) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -253,7 +255,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect, onServiceSelect }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -342,6 +344,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
               memberLocation={memberLocation ?? null}
               allFacilities={allFacilities}
               onFacilitySelect={onFacilitySelect}
+              onServiceSelect={onServiceSelect}
             />
           </div>
         </div>
@@ -358,12 +361,14 @@ const EntityContent = ({
   memberLocation,
   allFacilities,
   onFacilitySelect,
+  onServiceSelect,
 }: {
   entity: MapEntity;
   coverageRadiusKm: number;
   memberLocation: { lat: number; lng: number } | null;
   allFacilities?: Facility[];
   onFacilitySelect?: (f: Facility) => void;
+  onServiceSelect?: (s: RuralService) => void;
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
@@ -384,7 +389,13 @@ const EntityContent = ({
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
     case 'railStation': return <RailStationContent station={entity.station} />;
     case 'localTransitProvider': return <LocalTransitProviderContent provider={entity.provider} />;
-    case 'memberAccess': return <MemberAccessPanelLazy analysis={entity.analysis} />;
+    case 'memberAccess': return (
+      <MemberAccessPanelLazy
+        analysis={entity.analysis}
+        onFacilitySelect={onFacilitySelect}
+        onServiceSelect={onServiceSelect}
+      />
+    );
     default: return null;
   }
 };

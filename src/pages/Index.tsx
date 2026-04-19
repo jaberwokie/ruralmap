@@ -10,6 +10,7 @@ import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
+import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
@@ -32,6 +33,8 @@ const Index = () => {
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
+  /** Open a rural service detail panel from list-driven contexts (e.g. Member Access list). */
+  const onService = useCallback((s: RuralService) => { selection.actions.selectEntity({ type: 'ruralService', service: s }); setMobileSidebarOpen(false); }, [selection.actions]);
 
   /** Pre-built indexes for resolving provider names → facilities. */
   const facilityIndex = useMemo(() => {
@@ -186,6 +189,7 @@ const Index = () => {
           canGoBack={!!selection.previousEntity}
           allFacilities={facility.facilities}
           onFacilitySelect={onFacility}
+          onServiceSelect={onService}
         />
       </div>
     </div>
