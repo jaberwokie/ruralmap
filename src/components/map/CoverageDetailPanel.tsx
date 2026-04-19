@@ -27,6 +27,8 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
+import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
+import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import {
   resolvePsychiatryBadge, resolveInpatientBadge,
@@ -83,6 +85,10 @@ interface CoverageDetailPanelProps {
   onBack?: () => void;
   /** Whether a previous entity exists for back-navigation. */
   canGoBack?: boolean;
+  /** Full facility set for backup-options lookup. */
+  allFacilities?: Facility[];
+  /** Direct facility selection (for backup-options jumping). */
+  onFacilitySelect?: (facility: Facility) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -247,7 +253,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -330,7 +336,13 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
             {memberLocation && display.type === 'ruralService' && (
               <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
             )}
-            <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+            <EntityContent
+              entity={display}
+              coverageRadiusKm={coverageRadiusKm}
+              memberLocation={memberLocation ?? null}
+              allFacilities={allFacilities}
+              onFacilitySelect={onFacilitySelect}
+            />
           </div>
         </div>
       </UtilizationProviderClickContext.Provider>
@@ -340,11 +352,30 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
 // ── Renderer per entity type ──
 
-const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; coverageRadiusKm: number }) => {
+const EntityContent = ({
+  entity,
+  coverageRadiusKm,
+  memberLocation,
+  allFacilities,
+  onFacilitySelect,
+}: {
+  entity: MapEntity;
+  coverageRadiusKm: number;
+  memberLocation: { lat: number; lng: number } | null;
+  allFacilities?: Facility[];
+  onFacilitySelect?: (f: Facility) => void;
+}) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
     case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
-    case 'facility': return <FacilityContent facility={entity.facility} />;
+    case 'facility': return (
+      <FacilityContent
+        facility={entity.facility}
+        memberLocation={memberLocation}
+        allFacilities={allFacilities}
+        onFacilitySelect={onFacilitySelect}
+      />
+    );
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
@@ -1938,7 +1969,17 @@ const CopyAddress = ({ text }: { text: string }) => {
 };
 
 // ── Facility ──
-const FacilityContent = ({ facility }: { facility: Facility }) => {
+const FacilityContent = ({
+  facility,
+  memberLocation,
+  allFacilities,
+  onFacilitySelect,
+}: {
+  facility: Facility;
+  memberLocation?: { lat: number; lng: number } | null;
+  allFacilities?: Facility[];
+  onFacilitySelect?: (f: Facility) => void;
+}) => {
   const t = useUtilizationToggles();
   const isBillingProvider = facility.type === 'hospital' || facility.type === 'clinic';
   const { isOpen, toggle } = useAccordion('provider');
@@ -1955,10 +1996,16 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const isMember = isNRHPMember(facility);
   const fullAddress = facility.address ? `${facility.address}, ${facility.city}, NV` : undefined;
 
+  // Imported/unverified fallbacks for Quick Action strip — only used when verified value missing.
+  const enrichment = getEnrichmentForProvider(facility.id);
+  const effectivePhone = facility.phone || enrichment?.imported_phone || undefined;
+  const effectiveWebsite = facility.website || enrichment?.imported_website || undefined;
+
   const hasServices = !!facility.service;
   const hasContact = !!(facility.phone || normalizeWebsite(facility.website));
   const hasAccess = !!(facility.type === 'hospital' || facility.accessType);
   const util = getFacilityUtilization(facility);
+  const memLoc = memberLocation ?? null;
 
   return (
     <>
@@ -1972,13 +2019,19 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         {facility.name}
       </h3>
 
+      {/* Decision-support: top-of-panel guidance (Phase 1) */}
+      <RecommendedNextStep facility={facility} memberLocation={memLoc} />
+      <AccessFrictionSummary facility={facility} memberLocation={memLoc} />
+      <LastTouchedSummary facility={facility} />
+
+      {/* Quick Action Strip — falls back to imported values when verified is missing */}
       <ActionButtonRow
-        phone={facility.phone}
+        phone={effectivePhone}
         address={facility.address}
         lat={facility.lat}
         lng={facility.lng}
         city={facility.city}
-        website={facility.website}
+        website={effectiveWebsite}
       />
 
       <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
@@ -2116,7 +2169,15 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       {isBillingProvider && (
         <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
       )}
-      <ImportedMetadataSection providerId={facility.id} />
+      <ImportedMetadataSection providerId={facility.id} facility={facility} />
+      {allFacilities && onFacilitySelect && (
+        <BackupOptions
+          facility={facility}
+          allFacilities={allFacilities}
+          memberLocation={memLoc}
+          onSelect={onFacilitySelect}
+        />
+      )}
     </>
   );
 };
