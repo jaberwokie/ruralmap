@@ -10,6 +10,7 @@ import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
+import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
