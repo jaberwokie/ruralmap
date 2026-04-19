@@ -27,6 +27,7 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
+import CHWNotesSection from '@/components/map/CHWNotesSection';
 import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
@@ -2181,6 +2182,7 @@ const FacilityContent = ({
         <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
       )}
       <ImportedMetadataSection providerId={facility.id} facility={facility} />
+      <CHWNotesSection providerId={facility.id} />
       {allFacilities && onFacilitySelect && (
         <BackupOptions
           facility={facility}
