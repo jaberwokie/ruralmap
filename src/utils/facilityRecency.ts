@@ -7,7 +7,7 @@
  */
 
 import type { Facility } from '@/data/facilities';
-import { resolveOperationalMeta } from '@/types/medicaid';
+import { getOperationalTagIndex } from '@/data/operational-metadata';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 
 export type RecencyStatus =
@@ -45,10 +45,10 @@ const daysSince = (d: Date): number =>
   Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24));
 
 export const deriveRecency = (facility: Facility): RecencySummary | null => {
-  const meta = resolveOperationalMeta(facility.id, 'facility');
+  const tag = getOperationalTagIndex().get(facility.id);
   const enrichment = getEnrichmentForProvider(facility.id);
 
-  const verifiedDateRaw = meta?.verificationDate;
+  const verifiedDateRaw = tag?.verificationDate;
   const verifiedDate = tryParse(verifiedDateRaw);
   const enrichedDate = tryParse(enrichment?.enrichment_imported_at);
 

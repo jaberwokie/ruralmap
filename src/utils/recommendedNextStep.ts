@@ -7,7 +7,7 @@
 
 import type { Facility } from '@/data/facilities';
 import type { ProviderEnrichmentRecord } from '@/utils/providerEnrichmentStore';
-import { resolveOperationalMeta } from '@/types/medicaid';
+import { getOperationalTagIndex } from '@/data/operational-metadata';
 
 export type NextStepTone = 'go' | 'caution' | 'verify' | 'fallback';
 
@@ -37,10 +37,10 @@ const memberTier = (mi: number): 'tier1' | 'tier2' | 'tier3' | 'nonViable' => {
 };
 
 const isVerified = (facility: Facility): boolean => {
-  const meta = resolveOperationalMeta(facility.id, 'facility');
-  if (meta?.verificationStatus === 'verified_participating') return true;
-  if (meta?.verificationStatus === 'verified_non_participating') return true;
-  // Service-line directory verification also counts as verified record
+  const tag = getOperationalTagIndex().get(facility.id);
+  if (tag?.verificationStatus === 'verified_participating') return true;
+  if (tag?.verificationStatus === 'verified_non_participating') return true;
+  // Service-line directory verification also counts as a verified record
   if (facility.psychiatric?.psychiatric_verification_status === 'verified_via_directory') return true;
   if (facility.inpatient?.inpatient_verification_status === 'verified_via_directory') return true;
   return false;
