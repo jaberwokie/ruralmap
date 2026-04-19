@@ -45,6 +45,8 @@ export interface MappingImportShellProps {
   uploadSlot?: ReactNode;
   /** Set true to show the disabled "Pipeline pending" upload button. */
   pipelinePending?: boolean;
+  /** CSV template — drives the "Download template" button. */
+  template: CsvTemplate;
   /** Bottom callouts e.g. "Open verification queue". */
   relatedLinks?: { label: string; to: string }[];
   /** Optional explainer block shown under the upload zone. */
@@ -62,6 +64,7 @@ export default function MappingImportShell({
   sampleRows,
   uploadSlot,
   pipelinePending = false,
+  template,
   relatedLinks,
   postUploadExplainer,
 }: MappingImportShellProps) {
