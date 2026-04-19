@@ -255,7 +255,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect, onServiceSelect }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
