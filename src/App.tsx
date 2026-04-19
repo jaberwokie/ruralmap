@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +10,13 @@ import Auth from "./pages/Auth.tsx";
 import AdminHome from "./pages/AdminHome.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminUnmappedProviders from "./pages/AdminUnmappedProviders.tsx";
-import AdminProviderMappingImport from "./pages/AdminProviderMappingImport.tsx";
+import AdminMapping from "./pages/AdminMapping.tsx";
+import AdminMappingProviders from "./pages/AdminMappingProviders.tsx";
+import AdminMappingServices from "./pages/AdminMappingServices.tsx";
+import AdminMappingBehavioralHealth from "./pages/AdminMappingBehavioralHealth.tsx";
+import AdminMappingVerificationQueue from "./pages/AdminMappingVerificationQueue.tsx";
+import AdminMappingAuditHistory from "./pages/AdminMappingAuditHistory.tsx";
+import AdminMappingImport from "./pages/AdminMappingImport.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 const queryClient = new QueryClient();
@@ -30,7 +36,22 @@ const App = () => {
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
-                <Route path="/admin/provider-mapping-import" element={<AdminProviderMappingImport />} />
+
+                {/* Admin > Mapping (canonical IA) */}
+                <Route path="/admin/mapping" element={<AdminMapping />} />
+                <Route path="/admin/mapping/providers" element={<AdminMappingProviders />} />
+                <Route path="/admin/mapping/services" element={<AdminMappingServices />} />
+                <Route path="/admin/mapping/behavioral-health" element={<AdminMappingBehavioralHealth />} />
+                <Route path="/admin/mapping/verification-queue" element={<AdminMappingVerificationQueue />} />
+                <Route path="/admin/mapping/audit-history" element={<AdminMappingAuditHistory />} />
+                <Route path="/admin/mapping/import" element={<AdminMappingImport />} />
+
+                {/* Backward-compat: keep old bookmarks alive */}
+                <Route
+                  path="/admin/provider-mapping-import"
+                  element={<Navigate to="/admin/mapping/providers" replace />}
+                />
+
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AuthProvider>
