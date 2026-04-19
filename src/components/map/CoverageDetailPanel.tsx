@@ -27,6 +27,8 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
+import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
+import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import {
   resolvePsychiatryBadge, resolveInpatientBadge,
@@ -83,6 +85,10 @@ interface CoverageDetailPanelProps {
   onBack?: () => void;
   /** Whether a previous entity exists for back-navigation. */
   canGoBack?: boolean;
+  /** Full facility set for backup-options lookup. */
+  allFacilities?: Facility[];
+  /** Direct facility selection (for backup-options jumping). */
+  onFacilitySelect?: (facility: Facility) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
