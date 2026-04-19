@@ -46,7 +46,7 @@ export interface MappingImportShellProps {
   /** Set true to show the disabled "Pipeline pending" upload button. */
   pipelinePending?: boolean;
   /** CSV template — drives the "Download template" button. */
-  template: CsvTemplate;
+  template?: CsvTemplate;
   /** Bottom callouts e.g. "Open verification queue". */
   relatedLinks?: { label: string; to: string }[];
   /** Optional explainer block shown under the upload zone. */
@@ -179,6 +179,7 @@ export default function MappingImportShell({
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Upload
             </h3>
+            {template && (
             <button
               type="button"
               onClick={() => downloadCsvTemplate(template)}
@@ -188,6 +189,7 @@ export default function MappingImportShell({
               <Download className="h-3 w-3" />
               CSV template
             </button>
+            )}
           </div>
           {uploadSlot ?? (
             <div className="mt-3 space-y-3">
