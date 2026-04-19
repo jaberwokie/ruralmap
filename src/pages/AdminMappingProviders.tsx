@@ -131,17 +131,17 @@ export default function AdminMappingProviders() {
           { canonical: 'verified_lng', aliases: ['longitude', 'lng', 'lon'] },
         ]}
         optional={[
-          { name: 'verified_address', description: 'Parsed and stored on the imported pin' },
-          { name: 'verified_city', description: 'Parsed and stored' },
-          { name: 'verified_county', description: 'Parsed and stored' },
-          { name: 'type', description: 'Hospital vs clinic — anything else defaults to clinic' },
-          { name: 'notes', description: 'Parsed and stored' },
-          { name: 'verified_state', description: 'Accepted, kept in source CSV only' },
-          { name: 'verified_zip', description: 'Accepted, kept in source CSV only' },
-          { name: 'verified_npi', description: 'Accepted, kept in source CSV only' },
-          { name: 'source', description: 'Accepted, kept in source CSV only' },
-          { name: 'phone', description: 'Accepted, kept in source CSV only' },
-          { name: 'website', description: 'Accepted, kept in source CSV only' },
+          { name: 'verified_address', description: 'Stored on import' },
+          { name: 'verified_city', description: 'Stored on import' },
+          { name: 'verified_county', description: 'Stored on import' },
+          { name: 'type', description: 'Stored on import — hospital vs clinic; anything else defaults to clinic' },
+          { name: 'notes', description: 'Stored on import' },
+          { name: 'verified_state', description: 'Ignored at import time' },
+          { name: 'verified_zip', description: 'Ignored at import time' },
+          { name: 'verified_npi', description: 'Ignored at import time' },
+          { name: 'source', description: 'Ignored at import time' },
+          { name: 'phone', description: 'Ignored at import time' },
+          { name: 'website', description: 'Ignored at import time' },
         ]}
         validationRules={[
           'Coordinates must parse as valid finite numbers within range.',
