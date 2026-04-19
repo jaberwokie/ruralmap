@@ -7,6 +7,7 @@
  *   - Required columns + accepted aliases + optional columns
  *   - Validation rules
  *   - Sample table
+ *   - "Download CSV template" button (header row + one example row)
  *   - Upload button (active or disabled with "Pipeline pending")
  *   - Optional "What happens after upload" footer
  *   - Optional related-workflow links
@@ -17,9 +18,10 @@
  */
 
 import { type ReactNode } from 'react';
-import { Upload } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
 
 export interface SchemaColumn {
   name: string;
