@@ -768,22 +768,16 @@ const Sidebar = ({
               Admin
             </span>
           ) : null}
-          {authReady && (isAdmin || isAuthenticated) ? (
+      {authReady && (isAdmin || isAuthenticated) ? (
             <div className="mt-1.5 flex w-full flex-nowrap items-center justify-between whitespace-nowrap text-muted-foreground/70">
               {isAdmin ? (
                 <>
                   <Link
-                    to="/admin"
+                    to="/admin/mapping"
                     className="font-normal transition-colors hover:text-foreground"
+                    title="All ingestion, mapping, verification, and audit workflows"
                   >
-                    Admin Panel
-                  </Link>
-                  <span aria-hidden className="mx-1.5 text-[#4a92c9]">|</span>
-                  <Link
-                    to="/admin/provider-mapping-import"
-                    className="font-normal transition-colors hover:text-foreground"
-                  >
-                    Provider Mapping
+                    Manage Map Data
                   </Link>
                   {isAuthenticated ? (
                     <span aria-hidden className="mx-1.5 text-[#4a92c9]">|</span>
@@ -1698,174 +1692,12 @@ const Sidebar = ({
         </div>
       </div>
 
-      {canEditMapData && (
-      <>
-      <SectionDivider />
-
-      {/* Verification Priority Queue */}
-      <div className="px-4">
-        <button
-          onClick={() => setVerifQueueOpen(!verifQueueOpen)}
-          className={SECTION_HEADER_CLASSNAME}
-        >
-          {verifQueueOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          Verification Priority Queue
-        </button>
-        {verifQueueOpen && (
-          <div className="mb-3">
-            <VerificationPriorityPanel filters={filters} />
-          </div>
-        )}
-      </div>
-
-      <SectionDivider />
-
-      {/* Verification Audit History */}
-      <div className="px-4">
-        <button
-          onClick={() => setAuditHistoryOpen(!auditHistoryOpen)}
-          className={SECTION_HEADER_CLASSNAME}
-        >
-          {auditHistoryOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          Verification Audit History
-        </button>
-        {auditHistoryOpen && (
-          <div className="mb-3">
-            <VerificationAuditHistoryPanel />
-          </div>
-        )}
-      </div>
-
-      <SectionDivider />
-      <div className="px-4">
-        <button
-          onClick={() => setCsvOpen(!csvOpen)}
-          className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-semibold text-muted-foreground mb-2 hover:text-foreground transition-colors"
-        >
-          {csvOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-          Data Import
-        </button>
-        {csvOpen && (
-          <div className="mb-3 space-y-2">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,text/csv"
-              onChange={handleCSVUpload}
-              className="hidden"
-            />
-
-            {csvImportState === 'idle' || csvImportState === 'error' ? (
-              <>
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={handleDragOver}
-                  onDragLeave={handleDragLeave}
-                  onDrop={handleDrop}
-                  className={`w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed rounded-md text-xs transition-colors duration-200 ${
-                    csvDragActive
-                      ? 'border-primary bg-primary/5 text-foreground'
-                      : 'border-border text-muted-foreground hover:text-foreground hover:border-foreground/30'
-                  }`}
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>{csvDragActive ? 'Drop file here' : 'Drop CSV or click to upload'}</span>
-                </button>
-                <p className="text-[10px] text-muted-foreground px-1">
-                  Required: name, latitude, longitude. Optional: type, city, county, tier.
-                </p>
-                {csvImportState === 'error' && csvParsed && csvParsed.errors.length > 0 && (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 space-y-0.5">
-                    {csvParsed.errors.slice(0, 5).map((err, i) => (
-                      <p key={i} className="text-[10px] text-destructive">{err}</p>
-                    ))}
-                    {csvParsed.errors.length > 5 && (
-                      <p className="text-[10px] text-destructive">…and {csvParsed.errors.length - 5} more</p>
-                    )}
-                    <button type="button" onClick={resetImport} className="text-[10px] text-primary hover:underline mt-1">
-                      Try again
-                    </button>
-                  </div>
-                )}
-              </>
-            ) : csvImportState === 'processing' ? (
-              <div className="w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed border-border rounded-md text-xs text-muted-foreground">
-                <span className="animate-pulse">Processing…</span>
-              </div>
-            ) : csvImportState === 'preview' && csvParsed ? (
-              <div className="space-y-2">
-                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Total rows</span>
-                    <span className="font-medium text-foreground">{csvParsed.totalRows}</span>
-                  </div>
-                  <div className="flex justify-between text-[11px]">
-                    <span className="text-muted-foreground">Valid</span>
-                    <span className="font-medium text-primary">{csvParsed.valid.length}</span>
-                  </div>
-                  {csvParsed.invalidCount > 0 && (
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-muted-foreground">Invalid (skipped)</span>
-                      <span className="font-medium text-destructive">{csvParsed.invalidCount}</span>
-                    </div>
-                  )}
-                </div>
-
-                {csvParsed.errors.length > 0 && (
-                  <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 space-y-0.5">
-                    {csvParsed.errors.slice(0, 3).map((err, i) => (
-                      <p key={i} className="text-[10px] text-destructive">{err}</p>
-                    ))}
-                    {csvParsed.errors.length > 3 && (
-                      <p className="text-[10px] text-destructive">…and {csvParsed.errors.length - 3} more</p>
-                    )}
-                  </div>
-                )}
-
-                {/* Preview table */}
-                <div className="rounded-md border border-border overflow-hidden">
-                  <div className="text-[9px] uppercase tracking-wider font-semibold text-muted-foreground px-2 py-1 bg-secondary/70">
-                    Preview ({Math.min(csvParsed.valid.length, 5)} of {csvParsed.valid.length})
-                  </div>
-                  <div className="divide-y divide-border">
-                    {csvParsed.valid.slice(0, 5).map((f, i) => (
-                      <div key={i} className="flex items-center gap-1.5 px-2 py-1 text-[10px]">
-                        <span className="font-medium text-foreground truncate flex-1">{f.name}</span>
-                        <span className="text-muted-foreground tabular-nums">{f.lat.toFixed(2)}, {f.lng.toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex gap-1.5">
-                  <button
-                    type="button"
-                    onClick={confirmImport}
-                    className="flex-1 rounded-md bg-primary px-2 py-1.5 text-[11px] font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                  >
-                    Import {csvParsed.valid.length} rows
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetImport}
-                    className="rounded-md border border-border bg-secondary px-2 py-1.5 text-[11px] font-medium text-foreground hover:bg-secondary/80 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : csvImportState === 'success' ? (
-              <div className="w-full flex items-center justify-center gap-2 h-16 border-2 border-dashed border-primary/40 bg-primary/5 rounded-md text-xs text-primary">
-                <Check className="w-4 h-4" />
-                <span>Import complete</span>
-              </div>
-            ) : null}
-          </div>
-        )}
-      </div>
-      </>
-      )}
+      {/*
+        Verification Priority Queue, Verification Audit History, and Data Import
+        sections were removed from the main map sidebar. They now live in
+        Admin > Mapping (/admin/mapping). The map sidebar is read-only — write,
+        ingestion, and verification actions never originate from the map view.
+      */}
 
       {/* Facilities List removed — search bar is the primary navigation */}
       </div>
