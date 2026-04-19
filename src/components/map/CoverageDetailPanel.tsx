@@ -344,6 +344,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
               memberLocation={memberLocation ?? null}
               allFacilities={allFacilities}
               onFacilitySelect={onFacilitySelect}
+              onServiceSelect={onServiceSelect}
             />
           </div>
         </div>
