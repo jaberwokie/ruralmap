@@ -189,6 +189,7 @@ const Index = () => {
           canGoBack={!!selection.previousEntity}
           allFacilities={facility.facilities}
           onFacilitySelect={onFacility}
+          onServiceSelect={onService}
         />
       </div>
     </div>
