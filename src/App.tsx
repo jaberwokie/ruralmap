@@ -12,6 +12,7 @@ import AdminUsers from "./pages/AdminUsers.tsx";
 import AdminUnmappedProviders from "./pages/AdminUnmappedProviders.tsx";
 import AdminMapping from "./pages/AdminMapping.tsx";
 import AdminMappingProviders from "./pages/AdminMappingProviders.tsx";
+import AdminMappingProviderMetadata from "./pages/AdminMappingProviderMetadata.tsx";
 import AdminMappingServices from "./pages/AdminMappingServices.tsx";
 import AdminMappingBehavioralHealth from "./pages/AdminMappingBehavioralHealth.tsx";
 import AdminMappingVerificationQueue from "./pages/AdminMappingVerificationQueue.tsx";
@@ -40,6 +41,7 @@ const App = () => {
                 {/* Admin > Mapping (canonical IA) */}
                 <Route path="/admin/mapping" element={<AdminMapping />} />
                 <Route path="/admin/mapping/providers" element={<AdminMappingProviders />} />
+                <Route path="/admin/mapping/provider-metadata" element={<AdminMappingProviderMetadata />} />
                 <Route path="/admin/mapping/services" element={<AdminMappingServices />} />
                 <Route path="/admin/mapping/behavioral-health" element={<AdminMappingBehavioralHealth />} />
                 <Route path="/admin/mapping/verification-queue" element={<AdminMappingVerificationQueue />} />

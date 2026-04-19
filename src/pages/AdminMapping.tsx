@@ -6,7 +6,7 @@
  */
 
 import { Link } from 'react-router-dom';
-import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload } from 'lucide-react';
+import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 
 interface ToolCardProps {
@@ -50,6 +50,12 @@ export default function AdminMapping() {
           title="Provider Mapping"
           description="Upload verified provider/facility locations using the verified_* schema."
           icon={<MapPin className="h-4 w-4" />}
+        />
+        <ToolCard
+          to="/admin/mapping/provider-metadata"
+          title="Provider Metadata Enrichment"
+          description="Attach imported/unverified metadata (phone, NPI, etc.) to existing providers. Never creates pins."
+          icon={<Tag className="h-4 w-4" />}
         />
         <ToolCard
           to="/admin/mapping/services"
