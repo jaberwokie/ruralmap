@@ -189,6 +189,7 @@ export default function MappingImportShell({
               <Download className="h-3 w-3" />
               CSV template
             </button>
+            )}
           </div>
           {uploadSlot ?? (
             <div className="mt-3 space-y-3">
