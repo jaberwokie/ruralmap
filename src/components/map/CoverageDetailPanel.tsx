@@ -87,8 +87,10 @@ interface CoverageDetailPanelProps {
   canGoBack?: boolean;
   /** Full facility set for backup-options lookup. */
   allFacilities?: Facility[];
-  /** Direct facility selection (for backup-options jumping). */
+  /** Direct facility selection (for backup-options jumping and Member Access list clicks). */
   onFacilitySelect?: (facility: Facility) => void;
+  /** Direct rural service selection (for Member Access list clicks). */
+  onServiceSelect?: (service: RuralService) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
