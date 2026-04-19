@@ -5,10 +5,9 @@ import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCi
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
-import { parseFacilityCsv, type CsvImportResult } from '@/utils/csvImport';
+// CSV import + verification panels relocated to Admin > Mapping.
 
 import { toast } from 'sonner';
-import VerificationPriorityPanel, { VerificationAuditHistoryPanel } from './VerificationPriorityPanel';
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
@@ -411,7 +410,7 @@ const Sidebar = ({
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
   const [transitOpen, toggleTransit, setTransitOpen] = usePersistToggle('sidebar_layer_transit');
   const [connectivityOpen, toggleConnectivity, setConnectivityOpen] = usePersistToggle('sidebar_layer_connectivity');
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
 
   // Counts from filtered set
