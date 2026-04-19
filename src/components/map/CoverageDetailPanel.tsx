@@ -253,7 +253,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -336,7 +336,13 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
             {memberLocation && display.type === 'ruralService' && (
               <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.service.lat} targetLng={display.service.lng} />
             )}
-            <EntityContent entity={display} coverageRadiusKm={coverageRadiusKm} />
+            <EntityContent
+              entity={display}
+              coverageRadiusKm={coverageRadiusKm}
+              memberLocation={memberLocation ?? null}
+              allFacilities={allFacilities}
+              onFacilitySelect={onFacilitySelect}
+            />
           </div>
         </div>
       </UtilizationProviderClickContext.Provider>
@@ -346,11 +352,30 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
 // ── Renderer per entity type ──
 
-const EntityContent = ({ entity, coverageRadiusKm }: { entity: MapEntity; coverageRadiusKm: number }) => {
+const EntityContent = ({
+  entity,
+  coverageRadiusKm,
+  memberLocation,
+  allFacilities,
+  onFacilitySelect,
+}: {
+  entity: MapEntity;
+  coverageRadiusKm: number;
+  memberLocation: { lat: number; lng: number } | null;
+  allFacilities?: Facility[];
+  onFacilitySelect?: (f: Facility) => void;
+}) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
     case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
-    case 'facility': return <FacilityContent facility={entity.facility} />;
+    case 'facility': return (
+      <FacilityContent
+        facility={entity.facility}
+        memberLocation={memberLocation}
+        allFacilities={allFacilities}
+        onFacilitySelect={onFacilitySelect}
+      />
+    );
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
     case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
     case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
