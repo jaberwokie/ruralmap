@@ -583,7 +583,7 @@ const Sidebar = ({
   // CSV ingestion + verification queue + audit history were moved to
   // Admin > Mapping (/admin/mapping). The map sidebar is read-only.
 
-
+  const displayFacilities = useMemo(() => {
     const filtered = searchQuery
       ? facilities.filter(f =>
           f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
