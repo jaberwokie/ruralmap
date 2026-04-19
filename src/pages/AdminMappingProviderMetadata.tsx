@@ -112,14 +112,18 @@ export default function AdminMappingProviderMetadata() {
       toast.error('You do not have permission to apply enrichment.');
       return;
     }
+    // Audit identity: prefer authenticated email, then user id, then a generic
+    // fallback. Never use role as identity — role is permission, not identity.
+    const actor =
+      perms.user?.email ?? perms.user?.id ?? 'unknown-admin';
     const records = matches
-      .map((m) => buildEnrichmentRecord(m, { sourceFileName: fileName, importedBy: perms.role ?? undefined }))
+      .map((m) => buildEnrichmentRecord(m, { sourceFileName: fileName, importedBy: actor }))
       .filter((r): r is NonNullable<typeof r> => r !== null);
 
     upsertEnrichmentRecords(records);
     const audit = {
       timestamp: new Date().toISOString(),
-      admin: perms.role ?? null,
+      admin: actor,
       source_file_name: fileName,
       rows_processed: matches.length,
       rows_applied: records.length,
@@ -203,6 +207,7 @@ export default function AdminMappingProviderMetadata() {
           'Rows missing name are rejected.',
           'Rows lacking all of county, city, and npi are rejected (cannot be matched).',
           'Matching is deterministic: NPI → name+county → name+city → unique-name. No fuzzy matching.',
+          'NPI matching is inactive in practice — current provider records do not carry NPI, so name+county and name+city are the operative match paths today.',
           'Ambiguous matches (multiple candidates) are never auto-applied — they remain in the preview only.',
           'Unmatched rows are visible in the preview and skipped on apply.',
           'Imported metadata never overwrites verified authoritative fields.',
