@@ -1,13 +1,12 @@
 /**
- * Admin home (/admin) — lightweight directory of admin-only tools.
+ * Admin home (/admin) — directory of admin tools.
  *
- * Adds the "Provider Mapping Import" entry point per the verified-mapping
- * workflow. The actual upload lives on a dedicated subroute so this index
- * stays scannable.
+ * The Mapping workspace is the canonical location for all data-writing,
+ * ingestion, mapping maintenance, verification, and audit workflows.
  */
 
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, ListChecks, MapPinPlus, Users } from 'lucide-react';
+import { ArrowRight, Layers, ListChecks, Users } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -45,13 +44,19 @@ export default function AdminHome() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-4 py-6">
         <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold">Admin</h1>
+          <h1 className="text-xl font-semibold" style={{ color: '#064f88' }}>Admin</h1>
           <Button asChild variant="ghost" size="sm">
             <Link to="/">Back to Map</Link>
           </Button>
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
+          <ToolCard
+            to="/admin/mapping"
+            title="Mapping"
+            description="Provider, service, and BH ingestion · verification queue · audit history · data import."
+            icon={<Layers className="h-4 w-4" />}
+          />
           <ToolCard
             to="/admin/users"
             title="User Management"
@@ -63,12 +68,6 @@ export default function AdminHome() {
             title="Unmapped Top Utilized Providers"
             description="Review high-utilization billing providers not currently mapped."
             icon={<ListChecks className="h-4 w-4" />}
-          />
-          <ToolCard
-            to="/admin/provider-mapping-import"
-            title="Provider Mapping Import"
-            description="Upload a CSV of verified provider locations to add them to the map."
-            icon={<MapPinPlus className="h-4 w-4" />}
           />
         </div>
       </div>
