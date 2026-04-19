@@ -81,7 +81,13 @@ const Index = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
-      <div className="md:hidden flex items-center justify-between p-3 bg-card border-b border-border">
+      {/*
+        Mobile chrome header. Always rendered on <md viewports regardless of
+        auth state. `relative z-50` keeps the header above the Leaflet map
+        panes (which can reach z-index 700+) so the Filters/Map toggle is
+        never visually buried after auth resolves and the layout reflows.
+      */}
+      <div className="md:hidden relative z-50 flex shrink-0 items-center justify-between p-3 bg-card border-b border-border">
         <div>
           <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
           <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
@@ -91,7 +97,14 @@ const Index = () => {
         </button>
       </div>
 
-      <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 h-[calc(100vh-52px)] md:h-full`}>
+      {/*
+        Sidebar + map use flex sizing instead of calc(100vh - 52px). On
+        mobile Safari/Chrome, 100vh is the *largest* viewport (address bar
+        collapsed), which pushes the bottom of the layout offscreen after
+        an auth-driven reflow and can hide controls. Using flex-1 + min-h-0
+        keeps both panels inside the actual viewport rect.
+      */}
+      <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 flex-1 min-h-0 md:h-full`}>
         <Sidebar
           layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView }}
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
