@@ -26,6 +26,7 @@ import type { ServiceOperationalMeta } from '@/types/medicaid';
 import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
+import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import {
   resolvePsychiatryBadge, resolveInpatientBadge,
@@ -2115,6 +2116,7 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
       {isBillingProvider && (
         <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
       )}
+      <ImportedMetadataSection providerId={facility.id} />
     </>
   );
 };

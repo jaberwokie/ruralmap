@@ -23,6 +23,7 @@ export interface MappingNavItem {
 export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping', label: 'Overview' },
   { to: '/admin/mapping/providers', label: 'Provider Mapping' },
+  { to: '/admin/mapping/provider-metadata', label: 'Provider Metadata' },
   { to: '/admin/mapping/services', label: 'Service Mapping' },
   { to: '/admin/mapping/behavioral-health', label: 'Behavioral Health' },
   { to: '/admin/mapping/verification-queue', label: 'Verification Queue' },
