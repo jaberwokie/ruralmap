@@ -363,6 +363,7 @@ const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: Memb
             tierKey={tier.key}
             facilities={tier.facilities}
             services={tier.services}
+            onSelectResource={handleSelectResource}
           />
         ))}
       </div>
