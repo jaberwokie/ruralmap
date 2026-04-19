@@ -580,87 +580,10 @@ const Sidebar = ({
   };
 
 
-  const processCSVFile = useCallback((file: File) => {
-    if (!file.name.toLowerCase().endsWith('.csv') && file.type !== 'text/csv') {
-      toast.error('Only CSV files are accepted.');
-      setCsvImportState('error');
-      return;
-    }
-    console.log('[csv-import] File selected:', file.name);
-    setCsvImportState('processing');
-    setCsvParsed(null);
+  // CSV ingestion + verification queue + audit history were moved to
+  // Admin > Mapping (/admin/mapping). The map sidebar is read-only.
 
-    const reader = new FileReader();
-    reader.onerror = () => {
-      toast.error('Failed to read file.');
-      setCsvImportState('error');
-    };
-    reader.onload = (event) => {
-      const text = event.target?.result as string;
-      if (!text) { toast.error('Failed to read file.'); setCsvImportState('error'); return; }
 
-      const result: CsvImportResult = parseFacilityCsv(text);
-
-      if (result.valid.length === 0 && result.errors.length > 0 && result.totalRows === 0) {
-        toast.error(result.errors[0]);
-        setCsvImportState('error');
-        return;
-      }
-
-      console.log(`[csv-import] Parsed: ${result.valid.length} valid, ${result.invalidCount} invalid out of ${result.totalRows} rows`);
-      setCsvParsed({ valid: result.valid, invalidCount: result.invalidCount, errors: result.errors, totalRows: result.totalRows });
-      setCsvImportState(result.valid.length > 0 ? 'preview' : 'error');
-      if (result.valid.length === 0) toast.error('No valid rows found in the CSV.');
-    };
-    reader.readAsText(file);
-  }, []);
-
-  const handleCSVUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) processCSVFile(file);
-    e.target.value = '';
-  }, [processCSVFile]);
-
-  const confirmImport = useCallback(() => {
-    if (!csvParsed || csvParsed.valid.length === 0) return;
-    if (!canImportData) {
-      toast.error('You do not have permission to import data.');
-      console.warn('[csv-import] Blocked: caller is not authorized to import data.');
-      return;
-    }
-    onAddFacilities(csvParsed.valid);
-    toast.success(`Imported ${csvParsed.valid.length} facilities.`);
-    console.log(`[csv-import] Imported ${csvParsed.valid.length} facilities`);
-    setCsvImportState('success');
-    setTimeout(() => { setCsvImportState('idle'); setCsvParsed(null); }, 3000);
-  }, [csvParsed, onAddFacilities, canImportData]);
-
-  const resetImport = useCallback(() => {
-    setCsvImportState('idle');
-    setCsvParsed(null);
-  }, []);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCsvDragActive(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCsvDragActive(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setCsvDragActive(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processCSVFile(file);
-  }, [processCSVFile]);
-
-  const displayFacilities = useMemo(() => {
     const filtered = searchQuery
       ? facilities.filter(f =>
           f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
