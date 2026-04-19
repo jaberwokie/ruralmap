@@ -175,9 +175,20 @@ export default function MappingImportShell({
           'rounded border bg-card p-4',
           pipelinePending ? 'border-dashed border-[hsl(var(--brand-health)/0.4)]' : 'border-border',
         )}>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Upload
-          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Upload
+            </h3>
+            <button
+              type="button"
+              onClick={() => downloadCsvTemplate(template)}
+              className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-foreground/40"
+              title={`Download ${template.filename}`}
+            >
+              <Download className="h-3 w-3" />
+              CSV template
+            </button>
+          </div>
           {uploadSlot ?? (
             <div className="mt-3 space-y-3">
               <Button disabled className="w-full" title="Ingestion pipeline pending">
@@ -189,7 +200,7 @@ export default function MappingImportShell({
                   Pipeline pending
                 </p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  Schema and structure are locked. Ingestion will activate here without changing the URL or fields.
+                  Schema and structure are locked. Ingestion will activate here without changing the URL or fields. The downloadable template above already matches this schema.
                 </p>
               </div>
             </div>
