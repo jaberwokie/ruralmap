@@ -130,7 +130,7 @@ export default function AdminUnmappedProviders() {
           </div>
           <div className="flex items-center gap-2">
             <Button asChild size="sm" variant="ghost">
-              <Link to="/admin/provider-mapping-import">Open Import</Link>
+              <Link to="/admin/mapping/providers">Open Import</Link>
             </Button>
             <Button onClick={handleExport} disabled={visibleRows.length === 0} size="sm" variant="outline">
               <Download className="h-4 w-4 mr-1" /> Export for Mapping (CSV)
