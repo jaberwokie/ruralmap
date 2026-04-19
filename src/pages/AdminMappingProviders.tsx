@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { usePermissions } from '@/contexts/AuthContext';
 import { parseFacilityCsv, type CsvImportResult } from '@/utils/csvImport';
 import { appendImportedFacilities } from '@/utils/importedFacilitiesStore';
+import { PROVIDER_TEMPLATE } from '@/utils/csvTemplates';
 
 export default function AdminMappingProviders() {
   const perms = usePermissions();
@@ -147,6 +148,7 @@ export default function AdminMappingProviders() {
           { verified_name: 'Battle Mountain General Hospital', verified_lat: '40.63812', verified_lng: '-116.93429', verified_city: 'Battle Mountain', verified_county: 'Lander' },
           { verified_name: 'Pershing General Hospital', verified_lat: '40.42178', verified_lng: '-118.12631', verified_city: 'Lovelock', verified_county: 'Pershing' },
         ]}
+        template={PROVIDER_TEMPLATE}
         uploadSlot={uploadSlot}
         relatedLinks={[
           { label: 'Open Unmapped Providers list', to: '/admin/unmapped-providers' },

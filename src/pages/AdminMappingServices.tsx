@@ -8,6 +8,7 @@
 
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import MappingImportShell from '@/components/admin/MappingImportShell';
+import { SERVICE_TEMPLATE } from '@/utils/csvTemplates';
 
 export default function AdminMappingServices() {
   return (
@@ -43,6 +44,7 @@ export default function AdminMappingServices() {
           { name: 'Carson Valley Family Resource Center', latitude: '38.93366', longitude: '-119.77321', service_type: 'Family Support', city: 'Minden', county: 'Douglas' },
         ]}
         pipelinePending
+        template={SERVICE_TEMPLATE}
       />
     </AdminMappingLayout>
   );

@@ -8,6 +8,7 @@
 
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import MappingImportShell from '@/components/admin/MappingImportShell';
+import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 
 export default function AdminMappingBehavioralHealth() {
   return (
@@ -42,6 +43,7 @@ export default function AdminMappingBehavioralHealth() {
           { name: 'Bridges to Recovery — Fallon', latitude: '39.47368', longitude: '-118.77745', bh_type: 'SUD Outpatient', city: 'Fallon', county: 'Churchill' },
         ]}
         pipelinePending
+        template={BEHAVIORAL_HEALTH_TEMPLATE}
       />
     </AdminMappingLayout>
   );

@@ -7,6 +7,7 @@
  *   - Required columns + accepted aliases + optional columns
  *   - Validation rules
  *   - Sample table
+ *   - "Download CSV template" button (header row + one example row)
  *   - Upload button (active or disabled with "Pipeline pending")
  *   - Optional "What happens after upload" footer
  *   - Optional related-workflow links
@@ -17,9 +18,10 @@
  */
 
 import { type ReactNode } from 'react';
-import { Upload } from 'lucide-react';
+import { Download, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
 
 export interface SchemaColumn {
   name: string;
@@ -43,6 +45,8 @@ export interface MappingImportShellProps {
   uploadSlot?: ReactNode;
   /** Set true to show the disabled "Pipeline pending" upload button. */
   pipelinePending?: boolean;
+  /** CSV template — drives the "Download template" button. */
+  template: CsvTemplate;
   /** Bottom callouts e.g. "Open verification queue". */
   relatedLinks?: { label: string; to: string }[];
   /** Optional explainer block shown under the upload zone. */
@@ -60,6 +64,7 @@ export default function MappingImportShell({
   sampleRows,
   uploadSlot,
   pipelinePending = false,
+  template,
   relatedLinks,
   postUploadExplainer,
 }: MappingImportShellProps) {
@@ -170,9 +175,20 @@ export default function MappingImportShell({
           'rounded border bg-card p-4',
           pipelinePending ? 'border-dashed border-[hsl(var(--brand-health)/0.4)]' : 'border-border',
         )}>
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Upload
-          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Upload
+            </h3>
+            <button
+              type="button"
+              onClick={() => downloadCsvTemplate(template)}
+              className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-foreground/40"
+              title={`Download ${template.filename}`}
+            >
+              <Download className="h-3 w-3" />
+              CSV template
+            </button>
+          </div>
           {uploadSlot ?? (
             <div className="mt-3 space-y-3">
               <Button disabled className="w-full" title="Ingestion pipeline pending">
@@ -184,7 +200,7 @@ export default function MappingImportShell({
                   Pipeline pending
                 </p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  Schema and structure are locked. Ingestion will activate here without changing the URL or fields.
+                  Schema and structure are locked. Ingestion will activate here without changing the URL or fields. The downloadable template above already matches this schema.
                 </p>
               </div>
             </div>
