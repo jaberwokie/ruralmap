@@ -7,7 +7,7 @@ import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfi
 import { exportCsv } from '@/utils/csvExport';
 // CSV import + verification panels relocated to Admin > Mapping.
 
-import { toast } from 'sonner';
+
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
