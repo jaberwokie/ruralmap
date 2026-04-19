@@ -249,13 +249,26 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services, onSelec
   );
 };
 
-const MemberAccessPanel = ({ analysis }: { analysis: MemberAccessAnalysis }) => {
+interface MemberAccessPanelProps {
+  analysis: MemberAccessAnalysis;
+  /** Open a facility's detail view, preserving member context. */
+  onFacilitySelect?: (facility: Facility) => void;
+  /** Open a rural service's detail view, preserving member context. */
+  onServiceSelect?: (service: RuralService) => void;
+}
+
+const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
   const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
     color: 'hsl(0, 0%, 55%)',
     support: 'No realistic in-person options were found within the defined access ranges.',
   };
   const RecIcon = recStyle.icon;
+
+  const handleSelectResource = (r: TaggedResource) => {
+    if (r.facility) onFacilitySelect?.(r.facility);
+    else if (r.service) onServiceSelect?.(r.service);
+  };
 
   const totalResources = analysis.tiers.reduce(
     (sum, t) => sum + t.facilities.length + t.services.length, 0
