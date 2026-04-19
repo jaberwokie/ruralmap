@@ -43,6 +43,7 @@ export default function AdminMappingBehavioralHealth() {
           { name: 'Bridges to Recovery — Fallon', latitude: '39.47368', longitude: '-118.77745', bh_type: 'SUD Outpatient', city: 'Fallon', county: 'Churchill' },
         ]}
         pipelinePending
+        template={BEHAVIORAL_HEALTH_TEMPLATE}
       />
     </AdminMappingLayout>
   );
