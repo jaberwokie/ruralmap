@@ -1969,7 +1969,17 @@ const CopyAddress = ({ text }: { text: string }) => {
 };
 
 // ── Facility ──
-const FacilityContent = ({ facility }: { facility: Facility }) => {
+const FacilityContent = ({
+  facility,
+  memberLocation,
+  allFacilities,
+  onFacilitySelect,
+}: {
+  facility: Facility;
+  memberLocation?: { lat: number; lng: number } | null;
+  allFacilities?: Facility[];
+  onFacilitySelect?: (f: Facility) => void;
+}) => {
   const t = useUtilizationToggles();
   const isBillingProvider = facility.type === 'hospital' || facility.type === 'clinic';
   const { isOpen, toggle } = useAccordion('provider');
@@ -1986,10 +1996,16 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
   const isMember = isNRHPMember(facility);
   const fullAddress = facility.address ? `${facility.address}, ${facility.city}, NV` : undefined;
 
+  // Imported/unverified fallbacks for Quick Action strip — only used when verified value missing.
+  const enrichment = getEnrichmentForProvider(facility.id);
+  const effectivePhone = facility.phone || enrichment?.imported_phone || undefined;
+  const effectiveWebsite = facility.website || enrichment?.imported_website || undefined;
+
   const hasServices = !!facility.service;
   const hasContact = !!(facility.phone || normalizeWebsite(facility.website));
   const hasAccess = !!(facility.type === 'hospital' || facility.accessType);
   const util = getFacilityUtilization(facility);
+  const memLoc = memberLocation ?? null;
 
   return (
     <>
@@ -2003,13 +2019,19 @@ const FacilityContent = ({ facility }: { facility: Facility }) => {
         {facility.name}
       </h3>
 
+      {/* Decision-support: top-of-panel guidance (Phase 1) */}
+      <RecommendedNextStep facility={facility} memberLocation={memLoc} />
+      <AccessFrictionSummary facility={facility} memberLocation={memLoc} />
+      <LastTouchedSummary facility={facility} />
+
+      {/* Quick Action Strip — falls back to imported values when verified is missing */}
       <ActionButtonRow
-        phone={facility.phone}
+        phone={effectivePhone}
         address={facility.address}
         lat={facility.lat}
         lng={facility.lng}
         city={facility.city}
-        website={facility.website}
+        website={effectiveWebsite}
       />
 
       <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
