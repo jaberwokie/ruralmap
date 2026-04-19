@@ -30,7 +30,7 @@ import {
 } from '@/utils/providerEnrichmentStore';
 import type { Filters } from '@/types/filters';
 
-const EMPTY_FILTERS: Filters = { types: new Set(), counties: new Set() } as unknown as Filters;
+const EMPTY_FILTERS: Filters = { types: new Set<string>(), counties: new Set<string>(), serviceCategories: new Set<string>() };
 
 const StatusBadge = ({ status }: { status: 'matched' | 'ambiguous' | 'unmatched' }) => {
   const cls =
