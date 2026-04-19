@@ -1,13 +1,13 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import novumLogo from '@/assets/novumhealth-logo.svg';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, Upload, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, type LucideIcon } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
 // CSV import + verification panels relocated to Admin > Mapping.
 
-import { toast } from 'sonner';
+
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
@@ -397,7 +397,7 @@ const Sidebar = ({
     return [open, toggle, setOpen] as const;
   };
 
-  const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut, canImportData, canApplyVerification, canEditMapData } = usePermissions();
+  const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut } = usePermissions();
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   // Removed: csvOpen, verifQueueOpen, auditHistoryOpen, csvDragActive,
   // csvImportState, csvParsed — moved to Admin > Mapping.
