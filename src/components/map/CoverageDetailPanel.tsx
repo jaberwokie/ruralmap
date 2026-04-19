@@ -360,12 +360,14 @@ const EntityContent = ({
   memberLocation,
   allFacilities,
   onFacilitySelect,
+  onServiceSelect,
 }: {
   entity: MapEntity;
   coverageRadiusKm: number;
   memberLocation: { lat: number; lng: number } | null;
   allFacilities?: Facility[];
   onFacilitySelect?: (f: Facility) => void;
+  onServiceSelect?: (s: RuralService) => void;
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
@@ -386,7 +388,13 @@ const EntityContent = ({
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
     case 'railStation': return <RailStationContent station={entity.station} />;
     case 'localTransitProvider': return <LocalTransitProviderContent provider={entity.provider} />;
-    case 'memberAccess': return <MemberAccessPanelLazy analysis={entity.analysis} />;
+    case 'memberAccess': return (
+      <MemberAccessPanelLazy
+        analysis={entity.analysis}
+        onFacilitySelect={onFacilitySelect}
+        onServiceSelect={onServiceSelect}
+      />
+    );
     default: return null;
   }
 };
