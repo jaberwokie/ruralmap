@@ -2169,7 +2169,15 @@ const FacilityContent = ({
       {isBillingProvider && (
         <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
       )}
-      <ImportedMetadataSection providerId={facility.id} />
+      <ImportedMetadataSection providerId={facility.id} facility={facility} />
+      {allFacilities && onFacilitySelect && (
+        <BackupOptions
+          facility={facility}
+          allFacilities={allFacilities}
+          memberLocation={memLoc}
+          onSelect={onFacilitySelect}
+        />
+      )}
     </>
   );
 };
