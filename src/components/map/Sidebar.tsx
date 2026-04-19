@@ -400,12 +400,8 @@ const Sidebar = ({
 
   const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut, canImportData, canApplyVerification, canEditMapData } = usePermissions();
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
-  const [csvOpen, setCsvOpen] = useState(false);
-  const [verifQueueOpen, setVerifQueueOpen] = useState(false);
-  const [auditHistoryOpen, setAuditHistoryOpen] = useState(false);
-  const [csvDragActive, setCsvDragActive] = useState(false);
-  const [csvImportState, setCsvImportState] = useState<'idle' | 'processing' | 'preview' | 'success' | 'error'>('idle');
-  const [csvParsed, setCsvParsed] = useState<{ valid: Facility[]; invalidCount: number; errors: string[]; totalRows: number } | null>(null);
+  // Removed: csvOpen, verifQueueOpen, auditHistoryOpen, csvDragActive,
+  // csvImportState, csvParsed — moved to Admin > Mapping.
   const [explainerOpen, setExplainerOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
