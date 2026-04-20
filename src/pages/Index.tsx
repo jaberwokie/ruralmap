@@ -151,6 +151,10 @@ const Index = () => {
           memberGeocodeError={member.geocodeError}
           memberManualMode={member.manualPlacementMode}
           focusBounds={focusBounds}
+          presentationIsPresenting={presentation.isPresenting}
+          presentationPhase={presentation.phase}
+          onPresentationToggle={presentation.toggle}
+          onPresentationPhaseChange={presentation.setPhase}
         />
         {showInitialMapCover && (
           <div className="pointer-events-none absolute inset-0 z-[675] flex items-center justify-center bg-background/95 backdrop-blur-[1px]">
@@ -193,6 +197,11 @@ const Index = () => {
           allFacilities={facility.facilities}
           onFacilitySelect={onFacility}
           onServiceSelect={onService}
+        />
+        <PresentationOverlay
+          isPresenting={presentation.isPresenting}
+          phase={presentation.phase}
+          hasDetailPanel={!!activeEntity}
         />
       </div>
     </div>
