@@ -383,6 +383,7 @@ const Sidebar = ({
   },
   selection: {
     selectedFteId,
+    activeFteCoverageIds = [],
     onFteCardClick,
     onCountySelect,
     onTransitProviderClick,
