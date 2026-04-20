@@ -1004,6 +1004,58 @@ const Sidebar = ({
                           </div>
                         );
                       })}
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
+                  {operationsOpen && (
+                    <div className="mt-0.5 space-y-0.5">
+                      {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
+                        const { label, colorClassName, icon } = getLayerConfig(key);
+                        return (
+                          <div key={key}>
+                            {renderLayerToggleRow({
+                              label,
+                              icon,
+                              iconClassName: colorClassName,
+                              checked: layers[key],
+                              onCheckedChange: () => onToggleLayer(key),
+                              helpKey: key,
+                              dataTutorial: key === 'engagementGap' ? 'toggle-engagement-gap' : undefined,
+                            })}
+
+                            {key === 'operationalCoverage' && layers.operationalCoverage && (() => {
+                              const radius = coverageRadiusKm ?? 120;
+                              const counts = { active: 0, scheduled: 0, remote: 0 };
+
+                              nevadaCounties.forEach((c) => {
+                                const bd = getCountyCoverageBreakdown(c.name, radius);
+                                if (bd.activePercent >= 50) counts.active++;
+                                else if (bd.activePercent > 0 || bd.anchoringFtes.length > 0) counts.scheduled++;
+                                else counts.remote++;
+                              });
+
+                              return (
+                                <div className="space-y-2.5 px-2 pb-2 pt-1.5">
+                                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Field Coverage Status</div>
+                                    <div className="space-y-0.5 text-[10px] text-muted-foreground">
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-active" />
+                                        <span><span className="font-semibold text-foreground">{counts.active}</span> counties with same-day field response</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-scheduled" />
+                                        <span><span className="font-semibold text-foreground">{counts.scheduled}</span> counties with scheduled outreach only</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-remote" />
+                                        <span><span className="font-semibold text-foreground">{counts.remote}</span> counties with remote-only support</span>
+                                      </div>
+                                    </div>
+                                  </div>
                                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                                     <div className="mb-1 flex items-center justify-between">
                                       <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Response Radius</span>
