@@ -78,6 +78,8 @@ interface MapViewProps {
   selectedCounty?: string | null;
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
+  /** Multi-select: every FTE id whose coverage overlay should be drawn. */
+  activeFteCoverageIds?: string[];
   coverageRadiusKm?: number;
   topProvidersOnly?: boolean;
   engagementRateBelow20Only?: boolean;
