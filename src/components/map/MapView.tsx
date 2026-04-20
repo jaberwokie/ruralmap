@@ -2889,6 +2889,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         error={memberGeocodeError}
         hasPin={!!memberLocation}
       />
+      {onPresentationToggle && onPresentationPhaseChange && (
+        <PresentationToggle
+          isPresenting={presentationIsPresenting}
+          phase={presentationPhase}
+          onToggle={onPresentationToggle}
+          onPhaseChange={onPresentationPhaseChange}
+        />
+      )}
       <TooltipProvider delayDuration={120}>
         {(countyHoverPreview || markerHoverPreview) && (
           <div
