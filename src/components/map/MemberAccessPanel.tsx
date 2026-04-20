@@ -13,6 +13,7 @@ import {
   type LocalTransitSupportLevel,
 } from '@/data/local-transit-providers';
 import { getCountyForLocation } from '@/utils/countyLookup';
+import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
@@ -413,6 +414,28 @@ const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: Memb
             title="Transportation Coordination Available"
           />
         );
+      })()}
+
+      {/* In-Person Engagement availability — explicit, never ambiguous */}
+      {(() => {
+        const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
+        const hasField = countyHasFieldCoverage(memberCounty);
+        if (memberCounty && !hasField) {
+          return (
+            <div className="mt-3 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-2">
+              <div className="flex items-start gap-1.5">
+                <AlertTriangle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5 text-destructive" />
+                <div className="min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-destructive">In-Person Engagement: Not Available</p>
+                  <p className="text-[10px] text-destructive/90 mt-0.5 leading-snug">
+                    This area is outside active field coverage. In-person engagement does not occur in this region. Use Remote Coordination as the primary approach.
+                  </p>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        return null;
       })()}
 
       {/* Recommendation */}

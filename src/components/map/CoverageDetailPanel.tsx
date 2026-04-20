@@ -18,6 +18,7 @@ import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILI
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
 import { getCountyBroadband } from '@/data/broadband-coverage';
 import { getCountyRemoteFeasibility, getBroadbandOperationalNote, FEASIBILITY_COLORS, READINESS_COLORS } from '@/utils/broadbandFeasibility';
+import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
 import { getCountyCellular, getReliabilityCategory, READINESS_COLORS as CELLULAR_READINESS_COLORS } from '@/data/cellular-coverage';
 import { getCountyMobileFeasibility, getCellularOperationalNote, RELIABILITY_COLORS } from '@/utils/cellularFeasibility';
 import { resolveOperationalMeta, PARTICIPATION_STATUS_LABELS, PARTICIPATION_STATUS_COLORS } from '@/types/medicaid';
@@ -581,9 +582,20 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
           <div className="text-[10px] text-teal-600 italic">Primary: in-person when feasible, remote support to bridge gaps</div>
         </div>
       ) : (
-        <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2 space-y-0.5">
-          <div className="text-[11px] font-semibold text-foreground">Remote Coordination</div>
-          <div className="text-[10px] text-muted-foreground">Remote triage and coordination only. No routine field-based outreach is currently available in this county.</div>
+        <div className="space-y-1.5 mb-2">
+          <div className="rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5 space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <AlertTriangle className="w-3 h-3 flex-shrink-0 text-destructive" />
+              <span className="text-[10px] font-bold uppercase tracking-wide text-destructive">In-Person Engagement: Not Available</span>
+            </div>
+            <div className="text-[10px] text-destructive/90 leading-snug">
+              This area is outside active field coverage. In-person engagement does not occur in this region.
+            </div>
+          </div>
+          <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 space-y-0.5">
+            <div className="text-[11px] font-semibold text-foreground">Remote Coordination</div>
+            <div className="text-[10px] text-muted-foreground">Telephonic and virtual coordination only. No routine field-based outreach is currently available in this county.</div>
+          </div>
         </div>
       )}
 
@@ -1299,7 +1311,8 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
         const bb = getCountyBroadband(county);
         if (!bb) return null;
         const feasibility = getCountyRemoteFeasibility(county);
-        const note = getBroadbandOperationalNote(bb);
+        const hasField = countyHasFieldCoverage(county);
+        const note = getBroadbandOperationalNote(bb, hasField);
         return (
           <DetailSection title="Broadband Access" isOpen={isOpen('broadband')} onToggle={() => toggle('broadband')}>
             <div className="space-y-1.5">
@@ -1366,8 +1379,14 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                 </div>
               )}
               {bb.coverageUnevenness && (
-                <div className="rounded-md border border-engagement-watch/30 bg-engagement-watch/5 px-2 py-1 text-[10px] text-engagement-watch">
-                  ⚠ Coverage varies significantly across this county — do not assume uniform access.
+                <div className={`rounded-md px-2 py-1 text-[10px] ${
+                  hasField
+                    ? 'border border-engagement-watch/30 bg-engagement-watch/5 text-engagement-watch'
+                    : 'border border-destructive/30 bg-destructive/5 text-destructive'
+                }`}>
+                  {hasField
+                    ? '⚠ Broadband coverage is uneven across this county — do not assume uniform remote access.'
+                    : '⚠ This area is outside active field coverage. Do not assume in-person support is available; broadband coverage is also uneven for remote coordination.'}
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>

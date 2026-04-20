@@ -30,20 +30,39 @@ export const getCountyRemoteFeasibility = (countyName: string): RemoteFeasibilit
 
 /**
  * Generate operational interpretation based on distribution data.
+ *
+ * `hasFieldCoverage` controls whether in-person phrasing is allowed. When the
+ * county is outside active FTE field coverage, we never recommend in-person
+ * deployment — only remote coordination feasibility is described.
  */
-export const getBroadbandOperationalNote = (data: CountyBroadbandData): string => {
+export const getBroadbandOperationalNote = (
+  data: CountyBroadbandData,
+  hasFieldCoverage: boolean = true,
+): string => {
   const parts: string[] = [];
 
   if (data.operationalReadiness === 'High') {
     parts.push('Telehealth and remote coordination are viable primary delivery methods.');
   } else if (data.operationalReadiness === 'Low') {
-    parts.push('Mobile-first or in-person deployment is likely required. Broadband limitations restrict remote service delivery.');
+    if (hasFieldCoverage) {
+      parts.push('Mobile-first or in-person deployment is likely required. Broadband limitations restrict remote service delivery.');
+    } else {
+      parts.push('Broadband limitations restrict remote service delivery, and this area is outside active field coverage — expect reduced engagement reliability.');
+    }
   } else {
-    parts.push('Hybrid deployment recommended — remote where possible, in-person for coverage gaps.');
+    if (hasFieldCoverage) {
+      parts.push('Hybrid deployment recommended — remote where possible, in-person for coverage gaps.');
+    } else {
+      parts.push('Remote coordination is the only available delivery method — in-person engagement does not occur in this area.');
+    }
   }
 
   if (data.coverageUnevenness) {
-    parts.push('Coverage varies significantly across this county — do not assume uniform access.');
+    if (hasFieldCoverage) {
+      parts.push('Broadband coverage is uneven across this county — do not assume uniform remote access.');
+    } else {
+      parts.push('Broadband coverage is uneven across this county — do not assume uniform remote access. This area is outside active field coverage; in-person support is not available.');
+    }
   }
 
   if (data.satelliteShare >= 50) {
