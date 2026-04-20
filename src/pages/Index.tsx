@@ -115,7 +115,7 @@ const Index = () => {
           layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView }}
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
           facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
-          selection={{ selectedFteId: selection.activeFteId, onFteCardClick: selection.actions.handleFteCardClick, onCountySelect: onCounty, onTransitProviderClick }}
+          selection={{ selectedFteId: selection.activeFteId, activeFteCoverageIds: selection.activeFteCoverageIds, onFteCardClick: selection.actions.handleFteCardClick, onCountySelect: onCounty, onTransitProviderClick }}
         />
       </div>
 
@@ -138,6 +138,7 @@ const Index = () => {
           selectedCounty={selection.selectedCounty}
           onFteHubClick={selection.actions.handleFteHubClick}
           selectedFteId={selection.activeFteId}
+          activeFteCoverageIds={selection.activeFteCoverageIds}
           coverageRadiusKm={layers.coverageRadiusKm}
           topProvidersOnly={filters.topProvidersOnly}
           engagementRateBelow20Only={filters.engagementRateBelow20Only}
