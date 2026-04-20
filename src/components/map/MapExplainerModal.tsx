@@ -1,24 +1,55 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
-
 
 interface MapExplainerModalProps {
   open: boolean;
   onClose: () => void;
 }
 
-const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="space-y-1.5">
-    <h3 className="text-sm font-semibold text-foreground">{title}</h3>
-    <div className="text-[13px] leading-relaxed text-foreground/80 space-y-2">{children}</div>
-  </div>
+type TabKey =
+  | 'overview'
+  | 'how-to-use'
+  | 'layers'
+  | 'access'
+  | 'verification'
+  | 'transit'
+  | 'limits';
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'how-to-use', label: 'How to Use' },
+  { key: 'layers', label: 'Layers' },
+  { key: 'access', label: 'Access' },
+  { key: 'verification', label: 'Verification' },
+  { key: 'transit', label: 'Transit' },
+  { key: 'limits', label: 'Limits' },
+];
+
+const Bullets = ({ items }: { items: React.ReactNode[] }) => (
+  <ul className="list-disc pl-5 space-y-1.5 marker:text-muted-foreground/60">
+    {items.map((item, i) => (
+      <li key={i} className="text-[13px] leading-relaxed text-foreground/85">
+        {item}
+      </li>
+    ))}
+  </ul>
+);
+
+const Lead = ({ children }: { children: React.ReactNode }) => (
+  <p className="text-[13px] leading-relaxed text-foreground/85">{children}</p>
+);
+
+const Term = ({ children }: { children: React.ReactNode }) => (
+  <span className="font-medium text-foreground">{children}</span>
 );
 
 const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
   const backdropRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<TabKey>('overview');
 
   useEffect(() => {
     if (!open) return;
+    setActiveTab('overview');
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
@@ -31,6 +62,108 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
   }, [open, onClose]);
 
   if (!open) return null;
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <Lead>
+            This map provides an operational view of rural Nevada access. It brings together
+            provider locations, behavioral health resources, community services, county
+            boundaries, tribal lands, transit context, and selected utilization signals to
+            support coverage analysis, routing decisions, and coordination planning.
+          </Lead>
+        );
+      case 'how-to-use':
+        return (
+          <Bullets
+            items={[
+              'Start with core layers to understand what exists in a region',
+              'Use filters to narrow by provider type or service need',
+              'Enter a member address to evaluate distance and travel friction',
+              'Use access and verification signals to prioritize options',
+              'Treat the map as a coordination tool, not proof of real-time availability',
+            ]}
+          />
+        );
+      case 'layers':
+        return (
+          <Bullets
+            items={[
+              <><Term>County Boundaries:</Term> geographic reference for county-level review</>,
+              <><Term>Tribal Nations:</Term> tribal land context and tribally operated services</>,
+              <><Term>Provider Locations:</Term> hospitals and clinics</>,
+              <><Term>Behavioral Health:</Term> behavioral health-specific locations</>,
+              <><Term>Services:</Term> community-based and support services</>,
+            ]}
+          />
+        );
+      case 'access':
+        return (
+          <div className="space-y-3">
+            <Lead>
+              Distance estimates geographic reach, not guaranteed access. A nearby resource may
+              still be unusable due to scheduling, referral limits, transportation barriers, or
+              availability.
+            </Lead>
+            <Bullets
+              items={[
+                'Shorter distance generally means lower travel friction',
+                'Longer distance increases coordination difficulty',
+                'A mapped resource is not the same as a usable placement',
+                'Access improves when distance, verification, and transportation align',
+              ]}
+            />
+          </div>
+        );
+      case 'verification':
+        return (
+          <div className="space-y-3">
+            <Lead>
+              Verification signals help distinguish stronger routing options from uncertain or
+              fallback options.
+            </Lead>
+            <Bullets
+              items={[
+                <><Term>Verified:</Term> confirmed and higher confidence</>,
+                <><Term>Unverified:</Term> exists but requires confirmation</>,
+                <><Term>Fallback:</Term> limited or last-resort option</>,
+                'Priority Queue and audit history support follow-up work',
+              ]}
+            />
+          </div>
+        );
+      case 'transit':
+        return (
+          <div className="space-y-3">
+            <Lead>
+              Transit and rail layers provide mobility context but do not guarantee trip
+              completion.
+            </Lead>
+            <Bullets
+              items={[
+                <><Term>Rail Corridor</Term> shows long-distance corridor presence</>,
+                <><Term>Local Transit Zones</Term> indicate possible local mobility</>,
+                <><Term>Transit Providers</Term> identify operators, not reliability</>,
+                'Transit supports planning, not guaranteed transportation',
+              ]}
+            />
+          </div>
+        );
+      case 'limits':
+        return (
+          <Bullets
+            items={[
+              'No real-time appointment availability',
+              'No guarantee a provider is accepting referrals',
+              'No guarantee of transportation continuity',
+              'Some areas have limited or no local services',
+              'Final decisions require outreach and confirmation',
+            ]}
+          />
+        );
+    }
+  };
 
   return (
     <div
@@ -46,7 +179,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-lg border-b border-border bg-card px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
           <h2 className="text-base font-semibold text-foreground tracking-tight">
             Map Guide
           </h2>
@@ -60,55 +193,40 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           </button>
         </div>
 
-        {/* Content — no fixed height; scrolls only if it would exceed the modal max-height */}
-        <div className="px-5 py-5 space-y-5 overflow-y-auto">
-          <Section title="Core Map Layers">
-            <ul className="list-disc pl-4 space-y-1">
-              <li>Counties and tribal lands provide geographic context.</li>
-              <li>Providers, behavioral health sites, and services mark network locations.</li>
-            </ul>
-          </Section>
-
-          <div className="border-t border-border/50" />
-
-          <Section title="Access Views">
-            <ul className="list-disc pl-4 space-y-1">
-              <li><span className="font-medium text-foreground">Distance to Provider</span> models geographic reach.</li>
-              <li><span className="font-medium text-foreground">Access Gaps</span> highlights areas outside the selected radius.</li>
-              <li>Distance estimates feasibility, not guaranteed access.</li>
-            </ul>
-          </Section>
-
-          <div className="border-t border-border/50" />
-
-          <Section title="Rail and Transit">
-            <ul className="list-disc pl-4 space-y-1">
-              <li><span className="font-medium text-foreground">Rail Corridor</span> supports long-distance northern travel.</li>
-              <li><span className="font-medium text-foreground">Local Transit Zones</span> indicate where local mobility may exist.</li>
-              <li><span className="font-medium text-foreground">Transit Providers</span> identify operators.</li>
-              <li><span className="font-medium text-foreground">Structured</span> = organized local transit · <span className="font-medium text-foreground">Limited</span> = community / senior transport.</li>
-            </ul>
-          </Section>
-
-          <div className="border-t border-border/50" />
-
-          <Section title="Verification and Review">
-            <ul className="list-disc pl-4 space-y-1">
-              <li><span className="font-medium text-foreground">Priority Queue</span> shows locations needing review.</li>
-              <li><span className="font-medium text-foreground">Audit History</span> tracks completed verification.</li>
-            </ul>
-          </Section>
-
-          <div className="border-t border-border/50" />
-
-          <Section title="Important Limits">
-            <ul className="list-disc pl-4 space-y-1">
-              <li>Transit supports coordination, not guaranteed transportation.</li>
-              <li>Local transit does not ensure full trip continuity.</li>
-              <li>Some counties have no identified local transit provider.</li>
-            </ul>
-          </Section>
+        {/* Tabs */}
+        <div
+          role="tablist"
+          aria-label="Map Guide sections"
+          className="flex w-full items-stretch overflow-x-auto border-b border-border bg-card whitespace-nowrap scrollbar-thin"
+        >
+          {TABS.map((tab) => {
+            const isActive = tab.key === activeTab;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative px-4 py-2.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring ${
+                  isActive
+                    ? 'text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                style={
+                  isActive
+                    ? { boxShadow: 'inset 0 -2px 0 0 hsl(var(--brand-health))' }
+                    : undefined
+                }
+              >
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
+
+        {/* Active tab content */}
+        <div className="px-5 py-5 overflow-y-auto">{renderTab()}</div>
       </div>
     </div>
   );
