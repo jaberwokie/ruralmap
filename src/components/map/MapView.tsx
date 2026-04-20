@@ -93,6 +93,11 @@ interface MapViewProps {
   memberManualMode?: boolean;
   /** Additive: external request to fit map to a bounding box. Changing identity triggers a fitBounds. */
   focusBounds?: [[number, number], [number, number]] | null;
+  /** Presentation Mode demo overlay — passive, removable. */
+  presentationIsPresenting?: boolean;
+  presentationPhase?: PresentationPhase;
+  onPresentationToggle?: () => void;
+  onPresentationPhaseChange?: (phase: PresentationPhase) => void;
 }
 
 interface CountyHoverMetrics {
@@ -664,7 +669,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
