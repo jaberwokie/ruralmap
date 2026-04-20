@@ -41,6 +41,8 @@ import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
+import PresentationToggle from '@/components/map/presentation/PresentationToggle';
+import { usePresentationMode } from '@/hooks/usePresentationMode';
 
 interface MapViewProps {
   facilities: Facility[];
