@@ -1001,6 +1001,27 @@ const Sidebar = ({
                           </div>
                         );
                       })}
+
+                      {/* CHW Coverage Model — static legend (no toggle, no logic) */}
+                      <div className="mt-2 pt-2 border-t border-border/40">
+                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80 mb-1 text-left">
+                          CHW Coverage Model
+                        </div>
+                        <div className="space-y-1.5 text-left">
+                          <div>
+                            <div className="text-[11px] font-medium text-foreground/90">Primary CHW Coverage</div>
+                            <p className="text-[10px] leading-snug text-muted-foreground/80">
+                              Local CHW responsible. In-person and telehealth engagement available.
+                            </p>
+                          </div>
+                          <div>
+                            <div className="text-[11px] font-medium text-foreground/90">Remote CHW Coverage</div>
+                            <p className="text-[10px] leading-snug text-muted-foreground/80">
+                              Assigned CHW responsible via telehealth. No in-person engagement. Remote CHWs may support but do not replace assigned coverage.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
