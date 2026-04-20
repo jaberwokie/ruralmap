@@ -687,7 +687,7 @@ const Sidebar = ({
             </span>
           ) : null}
       {authReady && (isAdmin || isAuthenticated) ? (
-            <div className="mt-1.5 flex w-full items-center justify-between whitespace-nowrap text-muted-foreground/70">
+            <div className="mt-1.5 flex w-full items-center justify-center gap-2 whitespace-nowrap text-muted-foreground/70">
               {isAdmin ? (
                 <Link
                   to="/admin/mapping"
@@ -696,19 +696,19 @@ const Sidebar = ({
                 >
                   Manage Map Data
                 </Link>
-              ) : <span />}
+              ) : null}
+              {isAdmin && isAuthenticated ? (
+                <span aria-hidden className="h-3 w-px bg-[#4a92c9]" />
+              ) : null}
               {isAuthenticated ? (
-                <div className="flex items-center gap-2">
-                  {isAdmin ? <span aria-hidden className="h-3 w-px bg-[#4a92c9]" /> : null}
-                  <button
-                    type="button"
-                    onClick={() => { void signOut(); }}
-                    className="font-normal transition-colors hover:text-foreground"
-                    title={user?.email ?? undefined}
-                  >
-                    Sign Out
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => { void signOut(); }}
+                  className="font-normal transition-colors hover:text-foreground"
+                  title={user?.email ?? undefined}
+                >
+                  Sign Out
+                </button>
               ) : null}
             </div>
           ) : null}
