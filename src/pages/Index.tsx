@@ -26,6 +26,7 @@ const Index = () => {
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
+  const presentation = usePresentationMode();
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setShowInitialMapCover(false), THUMBNAIL_PLACEHOLDER_DURATION_MS);
