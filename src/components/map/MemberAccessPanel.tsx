@@ -403,6 +403,18 @@ const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: Memb
         </div>
       )}
 
+      {/* Transportation Coordination — Mobility Manager for member's county. */}
+      {(() => {
+        const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
+        if (!memberCounty) return null;
+        return (
+          <TransportationCoordinationSection
+            county={memberCounty}
+            title="Transportation Coordination Available"
+          />
+        );
+      })()}
+
       {/* Recommendation */}
       <div className="mt-3 pt-2 border-t border-border rounded-md px-2 py-2" style={{ background: `${recStyle.color}10` }}>
         <div className="flex items-start gap-1.5">
