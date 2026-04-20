@@ -175,7 +175,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
     >
       <div
         className="relative w-full max-w-2xl rounded-lg border border-border bg-card shadow-xl flex flex-col overflow-hidden"
-        style={{ maxHeight: '90vh' }}
+        style={{ height: 'min(560px, 90vh)' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
