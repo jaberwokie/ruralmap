@@ -1106,6 +1106,20 @@ const Sidebar = ({
 
                             {key === 'fteCapacity' && layers.fteCapacity && (
                               <div className="space-y-2 px-2 pb-2 pt-1.5">
+                                {/* CHW Coverage Model — inline contextual guidance for the FTE cards below. No toggles, no logic. */}
+                                <div className="rounded-md border border-border/50 bg-secondary/30 px-2 py-1.5">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                                    CHW Coverage Model
+                                  </div>
+                                  <div className="mt-1 space-y-1 text-[10px] leading-snug text-muted-foreground">
+                                    <div>
+                                      <span className="font-medium text-foreground/90">Primary (Field)</span> — In-person + telehealth engagement
+                                    </div>
+                                    <div>
+                                      <span className="font-medium text-foreground/90">Remote</span> — Telephonic/virtual only. Supports coverage but does not replace field presence
+                                    </div>
+                                  </div>
+                                </div>
                                 {fteCapacityData.filter((fte) => fte.hubLocation !== null).map((fte) => {
                                   const role = FTE_ROLE_COLORS[fte.id];
                                   const isActive = activeFteCoverageIds.includes(fte.id);
