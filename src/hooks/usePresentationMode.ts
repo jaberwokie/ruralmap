@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 /**
  * Presentation Mode — passive demo overlay state.
@@ -9,9 +9,15 @@ import { useCallback, useState } from 'react';
  *  - `?present=1` URL param is a one-shot read on initial mount; it is never written back.
  *  - Closing/reopening the tab starts clean. The mode cannot accidentally linger.
  *
+ * Activation:
+ *  - No visible UI control. Toggled via Ctrl+Shift+P (global document listener).
+ *  - The hotkey is ignored when focus is in an input, textarea, or contenteditable element
+ *    so it never interferes with typing in the search field or other forms.
+ *
  * Phase is a manual presenter selector (1–4). It is NOT step progression — there is no
  * next/previous, no auto-advance, and the selector does not interact with map state,
- * filters, or selection.
+ * filters, or selection. Phase is currently only switchable programmatically; in normal
+ * use it stays at 1 since there is no UI selector.
  */
 export type PresentationPhase = 1 | 2 | 3 | 4;
 
@@ -23,6 +29,14 @@ const readInitialFromUrl = (): boolean => {
   } catch {
     return false;
   }
+};
+
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof HTMLElement)) return false;
+  const tag = target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+  if (target.isContentEditable) return true;
+  return false;
 };
 
 export interface PresentationModeState {
@@ -48,6 +62,21 @@ export const usePresentationMode = (): PresentationModeState => {
   const setPhase = useCallback((p: PresentationPhase) => {
     setPhaseState(p);
   }, []);
+
+  // Global hotkey: Ctrl+Shift+P toggles Presentation Mode.
+  // No URL writes, no persistence — refresh still resets to off.
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const handler = (e: KeyboardEvent) => {
+      if (!e.ctrlKey || !e.shiftKey) return;
+      if (e.key !== 'P' && e.key !== 'p') return;
+      if (isEditableTarget(e.target)) return;
+      e.preventDefault();
+      toggle();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [toggle]);
 
   return { isPresenting, phase, toggle, setPhase };
 };

@@ -41,7 +41,6 @@ import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
-import PresentationToggle from '@/components/map/presentation/PresentationToggle';
 import type { PresentationPhase } from '@/hooks/usePresentationMode';
 
 interface MapViewProps {
@@ -2889,13 +2888,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         error={memberGeocodeError}
         hasPin={!!memberLocation}
       />
-      {onPresentationToggle && onPresentationPhaseChange && (
-        <PresentationToggle
-          isPresenting={presentationIsPresenting}
-          phase={presentationPhase}
-          onToggle={onPresentationToggle}
-          onPhaseChange={onPresentationPhaseChange}
-        />
+      {presentationIsPresenting && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute top-3 right-3 z-[820] rounded-full border border-border/60 bg-card/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground shadow-sm backdrop-blur-sm"
+        >
+          Presentation Mode
+        </div>
       )}
       <TooltipProvider delayDuration={120}>
         {(countyHoverPreview || markerHoverPreview) && (
