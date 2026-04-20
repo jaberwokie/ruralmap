@@ -29,6 +29,7 @@ import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusC
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
 import CHWNotesSection from '@/components/map/CHWNotesSection';
+import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
@@ -563,6 +564,8 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
           {isRemoteOnly ? 'Remote Coordination' : 'NBH Routing'}
         </span>
       </div>
+
+      <EngagementOwnershipBlock county={county} />
 
       {/* Coverage-based routing info */}
       {coverageType === 'active' ? (

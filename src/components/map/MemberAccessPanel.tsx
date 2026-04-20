@@ -14,6 +14,7 @@ import {
 } from '@/data/local-transit-providers';
 import { getCountyForLocation } from '@/utils/countyLookup';
 import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
+import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
