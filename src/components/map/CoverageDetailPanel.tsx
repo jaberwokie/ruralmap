@@ -1379,8 +1379,14 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
                 </div>
               )}
               {bb.coverageUnevenness && (
-                <div className="rounded-md border border-engagement-watch/30 bg-engagement-watch/5 px-2 py-1 text-[10px] text-engagement-watch">
-                  ⚠ Coverage varies significantly across this county — do not assume uniform access.
+                <div className={`rounded-md px-2 py-1 text-[10px] ${
+                  hasField
+                    ? 'border border-engagement-watch/30 bg-engagement-watch/5 text-engagement-watch'
+                    : 'border border-destructive/30 bg-destructive/5 text-destructive'
+                }`}>
+                  {hasField
+                    ? '⚠ Broadband coverage is uneven across this county — do not assume uniform remote access.'
+                    : '⚠ This area is outside active field coverage. Do not assume in-person support is available; broadband coverage is also uneven for remote coordination.'}
                 </div>
               )}
               <p className="text-[10px] text-muted-foreground leading-relaxed">{note}</p>
