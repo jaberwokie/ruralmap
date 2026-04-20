@@ -169,12 +169,18 @@ export const useMapSelection = (): UseMapSelectionReturn => {
     handleFteCardClick,
   }), [selectEntity, selectEntityWithBack, goBack, clearSelection, selectCounty, selectFte, clearFteSelection, handleMapClick, handleFteHubClick, handleFteCardClick]);
 
+  const activeFteCoverageIds = useMemo(
+    () => Array.from(activeFteCoverageSet),
+    [activeFteCoverageSet],
+  );
+
   return {
     lockedEntity,
     previousEntity,
     selectedFteId,
     selectedCounty,
     activeFteId,
+    activeFteCoverageIds,
     actions,
   };
 };
