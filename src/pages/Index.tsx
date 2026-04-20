@@ -29,6 +29,14 @@ const Index = () => {
   const member = useMemberAccess(facility.facilities);
   const presentation = usePresentationMode();
 
+  // Dev-only invariant + transition logging for Staffing Capacity & Load.
+  // Stripped from production builds via import.meta.env.DEV check inside.
+  useStaffingValidation({
+    masterEnabled: layers.layers.fteCapacity,
+    activeFteCoverageIds: selection.activeFteCoverageIds,
+    selectedFteId: selection.activeFteId,
+  });
+
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setShowInitialMapCover(false), THUMBNAIL_PLACEHOLDER_DURATION_MS);
     return () => window.clearTimeout(timeoutId);
