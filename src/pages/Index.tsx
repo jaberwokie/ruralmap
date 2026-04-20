@@ -2,11 +2,13 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
+import PresentationOverlay from '@/components/map/presentation/PresentationOverlay';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
 import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
 import { useMemberAccess } from '@/hooks/useMemberAccess';
+import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
@@ -24,6 +26,7 @@ const Index = () => {
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
+  const presentation = usePresentationMode();
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setShowInitialMapCover(false), THUMBNAIL_PLACEHOLDER_DURATION_MS);
@@ -148,6 +151,10 @@ const Index = () => {
           memberGeocodeError={member.geocodeError}
           memberManualMode={member.manualPlacementMode}
           focusBounds={focusBounds}
+          presentationIsPresenting={presentation.isPresenting}
+          presentationPhase={presentation.phase}
+          onPresentationToggle={presentation.toggle}
+          onPresentationPhaseChange={presentation.setPhase}
         />
         {showInitialMapCover && (
           <div className="pointer-events-none absolute inset-0 z-[675] flex items-center justify-center bg-background/95 backdrop-blur-[1px]">
@@ -190,6 +197,11 @@ const Index = () => {
           allFacilities={facility.facilities}
           onFacilitySelect={onFacility}
           onServiceSelect={onService}
+        />
+        <PresentationOverlay
+          isPresenting={presentation.isPresenting}
+          phase={presentation.phase}
+          hasDetailPanel={!!activeEntity}
         />
       </div>
     </div>
