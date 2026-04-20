@@ -9,6 +9,7 @@ import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
 import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useStaffingValidation } from '@/hooks/useStaffingValidation';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
