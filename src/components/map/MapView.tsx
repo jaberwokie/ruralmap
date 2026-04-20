@@ -42,7 +42,7 @@ import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data
 import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
 import PresentationToggle from '@/components/map/presentation/PresentationToggle';
-import { usePresentationMode } from '@/hooks/usePresentationMode';
+import type { PresentationPhase } from '@/hooks/usePresentationMode';
 
 interface MapViewProps {
   facilities: Facility[];
