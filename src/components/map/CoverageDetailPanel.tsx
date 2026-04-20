@@ -1607,6 +1607,7 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
       })()}
       <CountyUtilizationSection county={county} enabled={t.countyUtilization} />
       <TribalUtilizationSection county={county} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
+      <TransportationCoordinationSection county={county} />
     </>
   );
 };
