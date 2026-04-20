@@ -1131,17 +1131,17 @@ const Sidebar = ({
                               <div className="space-y-2 px-2 pb-2 pt-1.5">
                                 {fteCapacityData.filter((fte) => fte.hubLocation !== null).map((fte) => {
                                   const role = FTE_ROLE_COLORS[fte.id];
-                                  const isSelected = selectedFteId === fte.id;
-                                  const isDimmed = selectedFteId != null && !isSelected;
+                                  const isActive = activeFteCoverageIds.includes(fte.id);
                                   const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
 
                                   return (
-                                    <button key={fte.id} onClick={() => onFteCardClick?.(fte.id)} className={`w-full cursor-pointer rounded-md border-2 px-2 py-1.5 text-left transition-all duration-200 hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isDimmed ? 'opacity-40' : ''}`}>
+                                    <button key={fte.id} onClick={() => onFteCardClick?.(fte.id)} className={`w-full cursor-pointer rounded-md border-2 px-2 py-1.5 text-left transition-all duration-200 hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'} ${isActive ? 'ring-2 ring-primary ring-offset-1 shadow-md' : 'opacity-80'}`}>
                                       <div className="mb-0.5 flex items-center justify-between">
                                         <div className="flex items-center gap-1.5">
                                           <div className="h-2.5 w-2.5 flex-shrink-0 rounded-full" style={{ backgroundColor: role?.primary }} />
                                           <span className="text-[11px] font-semibold text-foreground">{fte.label}</span>
                                         </div>
+                                        <span className={`text-[9px] font-medium uppercase tracking-wide ${isActive ? 'text-primary' : 'text-muted-foreground/70'}`}>{isActive ? 'On' : 'Off'}</span>
                                       </div>
                                       <div className="text-[10px] text-foreground/70">{coverageLabel}</div>
                                       <div className="mt-0.5 text-[10px] text-muted-foreground">{fte.counties.length} counties served</div>
@@ -1154,14 +1154,16 @@ const Sidebar = ({
                                   if (!remote) return null;
 
                                   const role = FTE_ROLE_COLORS[remote.id];
-                                  const isRemoteSelected = selectedFteId === remote.id;
-                                  const isRemoteDimmed = selectedFteId != null && !isRemoteSelected;
+                                  const isRemoteActive = activeFteCoverageIds.includes(remote.id);
 
                                   return (
-                                    <button onClick={() => onFteCardClick?.(remote.id)} className={`w-full cursor-pointer rounded-md border-2 border-dashed px-2 py-2 text-left transition-all duration-200 hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteSelected ? 'ring-2 ring-primary ring-offset-1 shadow-md' : ''} ${isRemoteDimmed ? 'opacity-40' : ''}`}>
-                                      <div className="mb-1 flex items-center gap-1.5">
-                                        <Headphones className="h-3.5 w-3.5" style={{ color: role?.primary }} />
-                                        <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
+                                    <button onClick={() => onFteCardClick?.(remote.id)} className={`w-full cursor-pointer rounded-md border-2 border-dashed px-2 py-2 text-left transition-all duration-200 hover:shadow-sm ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-muted-foreground/30'} ${isRemoteActive ? 'ring-2 ring-primary ring-offset-1 shadow-md' : 'opacity-80'}`}>
+                                      <div className="mb-1 flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5">
+                                          <Headphones className="h-3.5 w-3.5" style={{ color: role?.primary }} />
+                                          <span className="text-[11px] font-bold text-foreground">Remote Coordination Team</span>
+                                        </div>
+                                        <span className={`text-[9px] font-medium uppercase tracking-wide ${isRemoteActive ? 'text-primary' : 'text-muted-foreground/70'}`}>{isRemoteActive ? 'On' : 'Off'}</span>
                                       </div>
                                       <div className="text-[10px] text-foreground/70">Remote Only</div>
                                       <div className="mt-1 text-[9px] text-muted-foreground">Statewide telephonic and virtual coordination (no in-person response)</div>
