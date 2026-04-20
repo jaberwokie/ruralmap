@@ -687,30 +687,28 @@ const Sidebar = ({
             </span>
           ) : null}
       {authReady && (isAdmin || isAuthenticated) ? (
-            <div className="mt-1.5 flex w-full flex-nowrap items-center justify-between whitespace-nowrap text-muted-foreground/70">
+            <div className="mt-1.5 flex w-full items-center justify-between whitespace-nowrap text-muted-foreground/70">
               {isAdmin ? (
-                <>
-                  <Link
-                    to="/admin/mapping"
-                    className="font-normal transition-colors hover:text-foreground"
-                    title="All ingestion, mapping, verification, and audit workflows"
-                  >
-                    Manage Map Data
-                  </Link>
-                  {isAuthenticated ? (
-                    <span aria-hidden className="mx-1.5 text-[#4a92c9]">|</span>
-                  ) : null}
-                </>
-              ) : null}
-              {isAuthenticated ? (
-                <button
-                  type="button"
-                  onClick={() => { void signOut(); }}
+                <Link
+                  to="/admin/mapping"
                   className="font-normal transition-colors hover:text-foreground"
-                  title={user?.email ?? undefined}
+                  title="All ingestion, mapping, verification, and audit workflows"
                 >
-                  Sign Out
-                </button>
+                  Manage Map Data
+                </Link>
+              ) : <span />}
+              {isAuthenticated ? (
+                <div className="flex items-center gap-2">
+                  {isAdmin ? <span aria-hidden className="h-3 w-px bg-[#4a92c9]" /> : null}
+                  <button
+                    type="button"
+                    onClick={() => { void signOut(); }}
+                    className="font-normal transition-colors hover:text-foreground"
+                    title={user?.email ?? undefined}
+                  >
+                    Sign Out
+                  </button>
+                </div>
               ) : null}
             </div>
           ) : null}
