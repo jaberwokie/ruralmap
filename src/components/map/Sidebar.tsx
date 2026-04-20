@@ -1004,27 +1004,6 @@ const Sidebar = ({
                           </div>
                         );
                       })}
-
-                      {/* CHW Coverage Model — static legend (no toggle, no logic) */}
-                      <div className="mt-2 pt-2 border-t border-border/40">
-                        <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80 mb-1 text-left">
-                          CHW Coverage Model
-                        </div>
-                        <div className="space-y-1.5 text-left">
-                          <div>
-                            <div className="text-[11px] font-medium text-foreground/90">Primary CHW Coverage</div>
-                            <p className="text-[10px] leading-snug text-muted-foreground/80">
-                              Local CHW responsible. In-person and telehealth engagement available.
-                            </p>
-                          </div>
-                          <div>
-                            <div className="text-[11px] font-medium text-foreground/90">Remote CHW Coverage</div>
-                            <p className="text-[10px] leading-snug text-muted-foreground/80">
-                              Assigned CHW responsible via telehealth. No in-person engagement. Remote CHWs may support but do not replace assigned coverage.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   )}
                 </div>
@@ -1033,7 +1012,6 @@ const Sidebar = ({
                   {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
                   {operationsOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {/* section intro removed for cleanup */}
                       {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         return (
@@ -1078,7 +1056,6 @@ const Sidebar = ({
                                       </div>
                                     </div>
                                   </div>
-
                                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                                     <div className="mb-1 flex items-center justify-between">
                                       <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70">Field Response Radius</span>
@@ -1129,6 +1106,20 @@ const Sidebar = ({
 
                             {key === 'fteCapacity' && layers.fteCapacity && (
                               <div className="space-y-2 px-2 pb-2 pt-1.5">
+                                {/* CHW Coverage Model — inline contextual guidance for the FTE cards below. No toggles, no logic. */}
+                                <div className="rounded-md border border-border/50 bg-secondary/30 px-2 py-1.5">
+                                  <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/80">
+                                    CHW Coverage Model
+                                  </div>
+                                  <div className="mt-1 space-y-1 text-[10px] leading-snug text-muted-foreground">
+                                    <div>
+                                      <span className="font-medium text-foreground/90">Primary (Field)</span> — In-person + telehealth engagement
+                                    </div>
+                                    <div>
+                                      <span className="font-medium text-foreground/90">Remote</span> — Telephonic/virtual only. Supports coverage but does not replace field presence
+                                    </div>
+                                  </div>
+                                </div>
                                 {fteCapacityData.filter((fte) => fte.hubLocation !== null).map((fte) => {
                                   const role = FTE_ROLE_COLORS[fte.id];
                                   const isActive = activeFteCoverageIds.includes(fte.id);
