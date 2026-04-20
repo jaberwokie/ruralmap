@@ -1,60 +1,50 @@
 
 
-## Add Real Map Screenshots to Walkthrough PDF
+## Convert Rural Map Walkthrough to Editable DOCX
 
-Replace the labeled placeholder boxes in `/mnt/documents/rural-map-walkthrough.pdf` with real screenshots of the live map, captured from the running preview.
+Produce an editable Word version of `rural-map-walkthrough_v2.pdf` so you can add, remove, or reword any text directly. The PDF stays in place; the DOCX is the new editable artifact.
 
-### Capture set (14 screenshots)
+### Approach
 
-**10 base section screenshots** — one per demo step, captured at viewport 1302×843:
+Generate `/mnt/documents/rural-map-walkthrough_v2.docx` from scratch using `docx-js`, mirroring the existing PDF's structure 1:1. This produces clean, fully editable Word content (real paragraphs, headings, tables, lists) rather than a converted PDF — which would be locked into text boxes and broken layout.
 
-| # | Section | Map state to set up |
-|---|---|---|
-| 1 | Orientation | Full map, no filters, no selection, default zoom |
-| 2 | Listed Resources ≠ Usable Options | Core Map layers visible (Providers + Behavioral Health + Services on) |
-| 3 | Geography Drives Constraints | Rural county selected (Eureka), tribal layer on |
-| 4 | Member-Level Reality | Member address entered in Pahrump, pin + access tiers visible |
-| 5 | Distance ≠ Access | Same member view, Coverage Detail panel open showing tiered list |
-| 6 | CHW Ownership Model | County panel open showing Engagement Ownership block |
-| 7 | Verified vs Assumed Access | Detail panel showing verification chips |
-| 8 | Connectivity Defines Feasibility | Broadband + Cellular layers active over rural county |
-| 9 | This Informs Decisions, It Doesn't Make Them | County detail with NBH Routing + Transportation Coordination visible |
-| 10 | Known Limits | Map Explainer modal open on the Limits content |
+Screenshots already captured in `/tmp/walkthrough/` are reused and embedded inline.
 
-**4 comparison pairs** (8 screenshots) — captured as matched pairs at the same zoom and layer state:
+### Document structure (matches v2 PDF)
 
-| Pair | Left | Right |
-|---|---|---|
-| Member presence | Map, no member placed | Same map, member pin + access tiers |
-| Verification trust | Detail panel — unverified provider | Detail panel — verified provider |
-| CHW ownership | County panel — Primary CHW (Carson City) | County panel — Remote CHW (Eureka) |
-| County access contrast | High-access county (Washoe) | Low-access county (Esmeralda) |
+1. Cover page — title, subtitle, audience line
+2. Table of contents
+3. **10 walkthrough sections**, each with:
+   - Heading 1 title
+   - 2–4 sentence narrative paragraph
+   - Embedded screenshot (sized to fit content width, preserves aspect)
+   - "Operational meaning" bullet list
+   - "Plan/contract meaning" bullet list
+   - Plain-language summary line (italic)
+4. **4 comparison pair pages** (Member presence, Verification trust, CHW ownership, County access) — two screenshots side-by-side in a 2-column table, shared caption row underneath
+5. **Q&A appendix** — 10 categories, 47 questions; each as Heading 2 (question) + body paragraph (answer)
 
-### Capture process
+### Formatting
 
-1. `browser--navigate_to_sandbox` at 1302×843.
-2. For each capture: drive UI via `browser--act` (toggle layers, click county, enter member address, open panel), then `browser--screenshot`.
-3. Save raw screenshots to `/tmp/walkthrough/<id>.png`.
-4. Light annotation pass with Pillow (numbered circle callouts + arrows where the existing PDF references specific UI regions). No heavy overlays.
+- US Letter, 1" margins
+- Arial throughout (default), black headings
+- H1 24pt bold, H2 16pt bold, body 11pt
+- Bullets via `LevelFormat.BULLET` (no unicode bullets)
+- Tables use `WidthType.DXA` with matched `columnWidths` and cell widths
+- Page breaks between sections via `PageBreak` inside a paragraph
+- Comparison images sized to ~4.3" wide each so a pair fits one row
 
-### PDF rebuild
+### QA (mandatory)
 
-- Reuse the existing ReportLab generator script for the walkthrough.
-- Replace each placeholder block with `Image(path, width=..., preserveAspectRatio=True)`.
-- Comparison pairs render as a 2-column row with shared caption underneath.
-- Output to `/mnt/documents/rural-map-walkthrough_v2.pdf` (keeps v1 intact for comparison).
-
-### Mandatory QA
-
-- `pdftoppm -jpeg -r 150 /mnt/documents/rural-map-walkthrough_v2.pdf /tmp/qa/page` then inspect every page via `code--view`.
-- Check for: clipped screenshots, wrong screenshot in wrong section, illegible scale, broken pair alignment, overflow into Q&A pages.
-- Fix and re-render until clean. Report what was checked and any issues found.
+1. Convert DOCX → PDF via LibreOffice
+2. `pdftoppm -jpeg -r 150` → inspect every page with `code--view`
+3. Check for: clipped images, broken pair alignment, wrong screenshot under wrong caption, overflow into Q&A pages, font fallback boxes
+4. Fix and re-render until clean. Report what was checked and any issues found.
 
 ### Out of scope
-- No changes to overlay code, callout text, or Q&A content.
-- No new sections or pages — same structure as v1.
-- v1 PDF left in place; v2 is the deliverable.
 
-### Note on browser usage
-This step requires the browser tool to capture real preview screenshots. Browser tools are gated to explicit user requests — your message authorizes this use for the screenshot capture only.
+- No content changes (same titles, narratives, bullets, Q&A as v2 PDF)
+- No new screenshots — reuses `/tmp/walkthrough/*.png`
+- v2 PDF left in place; DOCX is additive (`rural-map-walkthrough_v2.docx`)
+- No changes to app code or Presentation Mode
 
