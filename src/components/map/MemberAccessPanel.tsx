@@ -12,6 +12,8 @@ import {
   LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS,
   type LocalTransitSupportLevel,
 } from '@/data/local-transit-providers';
+import { getCountyForLocation } from '@/utils/countyLookup';
+import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -400,6 +402,18 @@ const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: Memb
           </div>
         </div>
       )}
+
+      {/* Transportation Coordination — Mobility Manager for member's county. */}
+      {(() => {
+        const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
+        if (!memberCounty) return null;
+        return (
+          <TransportationCoordinationSection
+            county={memberCounty}
+            title="Transportation Coordination Available"
+          />
+        );
+      })()}
 
       {/* Recommendation */}
       <div className="mt-3 pt-2 border-t border-border rounded-md px-2 py-2" style={{ background: `${recStyle.color}10` }}>
