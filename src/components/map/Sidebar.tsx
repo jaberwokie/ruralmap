@@ -70,6 +70,8 @@ export interface SidebarFacilityProps {
 
 export interface SidebarSelectionProps {
   selectedFteId?: string | null;
+  /** All FTE coverage overlays currently visible on the map (multi-select). */
+  activeFteCoverageIds?: string[];
   onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
   onTransitProviderClick?: (providerId: string) => void;
