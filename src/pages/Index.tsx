@@ -9,6 +9,7 @@ import { useMapFilters } from '@/hooks/useMapFilters';
 import { useFacilityData } from '@/hooks/useFacilityData';
 import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
+import { useStaffingValidation } from '@/hooks/useStaffingValidation';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
@@ -27,6 +28,14 @@ const Index = () => {
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
   const presentation = usePresentationMode();
+
+  // Dev-only invariant + transition logging for Staffing Capacity & Load.
+  // Stripped from production builds via import.meta.env.DEV check inside.
+  useStaffingValidation({
+    masterEnabled: layers.layers.fteCapacity,
+    activeFteCoverageIds: selection.activeFteCoverageIds,
+    selectedFteId: selection.activeFteId,
+  });
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setShowInitialMapCover(false), THUMBNAIL_PLACEHOLDER_DURATION_MS);
