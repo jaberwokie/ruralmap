@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import novumLogo from '@/assets/novumhealth-logo.svg';
 import MapExplainerModal from './MapExplainerModal';
-import { Search, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, type LucideIcon } from 'lucide-react';
+import { Search, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, Star, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
@@ -1005,6 +1005,32 @@ const Sidebar = ({
                                 </button>
                               ) : undefined,
                             })}
+                            {/*
+                              Tier 1 Providers — additive HIGHLIGHT on existing
+                              clinic pins. Strict source: facility.tier === 'tier1'
+                              from facilities.ts (no inference, no recompute).
+                              Indented under Provider Locations to signal the
+                              dependency: highlight has no visible effect when
+                              Provider Locations is OFF.
+                            */}
+                            {key === 'serviceLocations' && (() => {
+                              const tier1Count = allFacilities.filter(f => f.tier === 'tier1').length;
+                              const dependencyOff = !layers.serviceLocations;
+                              return (
+                                <div className="ml-5 mt-0.5">
+                                  {renderLayerToggleRow({
+                                    label: 'Tier 1 Providers',
+                                    icon: Star,
+                                    iconClassName: 'text-tier1',
+                                    checked: layers.tier1Highlight,
+                                    onCheckedChange: () => onToggleLayer('tier1Highlight'),
+                                    subtitle: dependencyOff
+                                      ? `${tier1Count} Tier 1 · enable Provider Locations to view`
+                                      : `${tier1Count} Tier 1 · highlight on clinic pins`,
+                                  })}
+                                </div>
+                              );
+                            })()}
                           </div>
                         );
                       })}

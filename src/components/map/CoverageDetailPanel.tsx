@@ -2045,11 +2045,20 @@ const FacilityContent = ({
 
   return (
     <>
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 mb-1 flex-wrap">
         <div className={`w-2.5 h-2.5 rounded-full ${typeColor}`} />
         <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
           {typeLabel}
         </span>
+        {isHighUtilClinic && (
+          <span
+            className="inline-flex items-center gap-1 rounded-sm border border-tier1/40 bg-tier1/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-tier1"
+            title="Tier 1 Provider — high-utilization clinic / community provider"
+          >
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-tier1" />
+            Tier 1 Provider
+          </span>
+        )}
       </div>
       <h3 className="text-sm font-semibold text-foreground leading-tight mb-2" style={{ wordBreak: 'break-word' }}>
         {facility.name}

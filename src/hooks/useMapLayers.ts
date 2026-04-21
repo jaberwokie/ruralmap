@@ -17,6 +17,7 @@ const DEFAULT_LAYERS: LayerState = {
   tribalNations: false,
   railCorridor: false,
   localTransitZones: false,
+  tier1Highlight: false,
   // Demand & Utilization — additive, all default OFF
   memberDemandZip: false,
   countyUtilization: false,

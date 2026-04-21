@@ -63,6 +63,8 @@ interface MapViewProps {
     railCorridor?: boolean;
     /** Additive access-support overlay — defaults to false. */
     localTransitZones?: boolean;
+    /** Tier 1 Providers highlight on existing clinic pins — defaults to false. */
+    tier1Highlight?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -1946,10 +1948,21 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           : MAP_PIN_VISUALS.providerLocations.size;
         const hitSize = Math.max(scaledSize, 28);
         const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
-        const markerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
+        const baseMarkerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
           color: facility.type === 'hospital' ? 'hsl(var(--hospital))' : 'hsl(var(--clinic))',
           opacity: markerOpacity,
         });
+
+        // Tier 1 highlight is an additive visual ring on existing clinic pins.
+        // Strict source of truth: facility.tier === 'tier1' (set in facilities.ts).
+        // Only applies when both the Provider Locations layer and the Tier 1
+        // Highlight toggle are on. Never adds a new marker, never replaces the
+        // pin color, never affects hospitals.
+        const isTier1Clinic = facility.type === 'clinic' && facility.tier === 'tier1';
+        const showTier1Ring = isTier1Clinic && layers.tier1Highlight;
+        const markerHtml = showTier1Ring
+          ? `<div class="tier1-ring" aria-label="Tier 1 Provider">${baseMarkerHtml}</div>`
+          : baseMarkerHtml;
 
         const icon = L.divIcon({
           className: '',
@@ -2058,7 +2071,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         renderedProviderNames: visibleFacilities.map((facility) => facility.name),
       });
     }
-  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, logMapSelectionDebug, mapZoom, onFacilityClick, providerVisibleFacilities, selectMarkerEntity, serviceValidation, topProvidersOnly]);
+  }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, layers.tier1Highlight, logMapSelectionDebug, mapZoom, onFacilityClick, providerVisibleFacilities, selectMarkerEntity, serviceValidation, topProvidersOnly]);
 
   // Draw coverage radii
   useEffect(() => {
