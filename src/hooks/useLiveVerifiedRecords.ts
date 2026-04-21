@@ -24,8 +24,7 @@ import { listVerifiedServices, listVerifiedBh } from '@/utils/mappingPipelineSto
 import { subscribeVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { RuralService, RuralServiceCategory } from '@/data/rural-services';
 
-// Re-export for backward compatibility with existing import sites.
-export { VERIFIED_RECORDS_CHANGED_EVENT, notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
+
 
 const mapServiceCategory = (raw: string | null): RuralServiceCategory => {
   if (!raw) return 'Family Services';
