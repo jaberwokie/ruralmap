@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => ({
     },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  define: {
+    __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? ''),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

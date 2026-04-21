@@ -30,6 +30,7 @@ import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisu
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
 import { usePermissions } from '@/contexts/AuthContext';
+import AdminVersionBadge from '@/components/AdminVersionBadge';
 import { Link } from 'react-router-dom';
 
 // LayerState imported from @/types/layers
@@ -677,6 +678,7 @@ const Sidebar = ({
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Search by facility, city, county, or enter a member address.
         </p>
+        <AdminVersionBadge className="mt-1 block text-center" />
 
         {/* Auth + admin row */}
         <div className="mt-2 flex w-full flex-col items-start gap-y-1 text-[10.5px] leading-none">

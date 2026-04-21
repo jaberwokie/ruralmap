@@ -15,6 +15,7 @@ import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
+import AdminVersionBadge from '@/components/AdminVersionBadge';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
@@ -103,9 +104,10 @@ const Index = () => {
         never visually buried after auth resolves and the layout reflows.
       */}
       <div className="md:hidden relative z-50 flex shrink-0 items-center justify-between p-3 bg-card border-b border-border">
-        <div>
+        <div className="min-w-0 flex-1 pr-2">
           <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
           <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
+          <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
         </div>
         <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium">
           {mobileSidebarOpen ? 'Map' : 'Filters'}
