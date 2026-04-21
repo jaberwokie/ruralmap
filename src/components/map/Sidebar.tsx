@@ -30,6 +30,7 @@ import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisu
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
 import { usePermissions } from '@/contexts/AuthContext';
+import AdminVersionBadge from '@/components/AdminVersionBadge';
 import { Link } from 'react-router-dom';
 
 // LayerState imported from @/types/layers
