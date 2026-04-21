@@ -1,6 +1,8 @@
 /**
  * Cloud-backed store for Service + BH mapping pipelines.
- * Provides upload, list, promote, reject, and audit logging operations.
+ * Provides upload, list, promote, reject, edit, deactivate, and audit logging
+ * operations. All mutating ops broadcast `verified-records-changed` so the
+ * live map refreshes without a reload.
  */
 
 import { supabase } from '@/integrations/supabase/client';
@@ -9,6 +11,7 @@ import type {
   AuditLogRow, AuditAction, PipelineKey, ValidationMessage,
 } from '@/types/mappingPipeline';
 import { summarizeSeverity, validateServiceRow, validateBhRow } from './mappingPipelineValidation';
+import { notifyVerifiedRecordsChanged } from '@/hooks/useLiveVerifiedRecords';
 
 type Json = Record<string, unknown>;
 
@@ -147,6 +150,7 @@ export const promoteStagingService = async (id: string): Promise<void> => {
     target_table: 'verified_services', target_row_id: ins.id,
     details: { name: stg.name, source_row_number: stg.source_row_number },
   });
+  notifyVerifiedRecordsChanged();
 };
 
 export const rejectStagingService = async (id: string, reason?: string): Promise<void> => {
@@ -172,6 +176,31 @@ export const deactivateVerifiedService = async (id: string): Promise<void> => {
     target_table: 'verified_services', target_row_id: id,
     details: { active_status: false },
   });
+  notifyVerifiedRecordsChanged();
+};
+
+/**
+ * Update an arbitrary set of fields on a staging or verified Services row.
+ * Writes a `record_edited` audit entry with the changed field names + new
+ * values (truncated to keep the log compact).
+ */
+export const editServiceRecord = async (
+  scope: 'staging_services' | 'verified_services',
+  id: string,
+  changes: Partial<StagingServiceRow & VerifiedServiceRow>,
+): Promise<void> => {
+  if (Object.keys(changes).length === 0) return;
+  const { error } = await (supabase.from(scope as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
+  }).update({ ...changes, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
+
+  await writeAudit({
+    pipeline: 'services', action: 'record_edited',
+    target_table: scope, target_row_id: id,
+    details: { changed_fields: Object.keys(changes), changes },
+  });
+  if (scope === 'verified_services') notifyVerifiedRecordsChanged();
 };
 
 // ── behavioral health ─────────────────────────────────────────────────
@@ -268,6 +297,7 @@ export const promoteStagingBh = async (id: string): Promise<void> => {
     target_table: 'verified_bh', target_row_id: ins.id,
     details: { name: stg.name, source_row_number: stg.source_row_number },
   });
+  notifyVerifiedRecordsChanged();
 };
 
 export const rejectStagingBh = async (id: string, reason?: string): Promise<void> => {
@@ -293,4 +323,29 @@ export const deactivateVerifiedBh = async (id: string): Promise<void> => {
     target_table: 'verified_bh', target_row_id: id,
     details: { active_status: false },
   });
+  notifyVerifiedRecordsChanged();
+};
+
+/**
+ * Update an arbitrary set of fields on a staging or verified BH row.
+ * Writes a `record_edited` audit entry with the changed field names + new
+ * values.
+ */
+export const editBhRecord = async (
+  scope: 'staging_bh' | 'verified_bh',
+  id: string,
+  changes: Partial<StagingBhRow & VerifiedBhRow>,
+): Promise<void> => {
+  if (Object.keys(changes).length === 0) return;
+  const { error } = await (supabase.from(scope as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
+  }).update({ ...changes, updated_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
+
+  await writeAudit({
+    pipeline: 'behavioral_health', action: 'record_edited',
+    target_table: scope, target_row_id: id,
+    details: { changed_fields: Object.keys(changes), changes },
+  });
+  if (scope === 'verified_bh') notifyVerifiedRecordsChanged();
 };
