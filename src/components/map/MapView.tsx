@@ -63,6 +63,8 @@ interface MapViewProps {
     railCorridor?: boolean;
     /** Additive access-support overlay — defaults to false. */
     localTransitZones?: boolean;
+    /** Tier 1 Providers highlight on existing clinic pins — defaults to false. */
+    tier1Highlight?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
