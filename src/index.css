@@ -306,19 +306,20 @@
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  overflow: visible;
 }
 
 .tier1-ring::before {
   content: "";
   position: absolute;
+  top: 0;
   left: 50%;
-  bottom: 4px;
-  width: 28px;
-  height: 28px;
-  transform: translateX(-50%);
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -1px);
   border-radius: 9999px;
-  border: 2px solid hsl(var(--tier1));
-  box-shadow: 0 0 0 1px hsla(0, 0%, 100%, 0.9), 0 0 6px hsla(45, 93%, 47%, 0.45);
+  border: 2.5px solid hsl(var(--tier1));
+  box-shadow: 0 0 0 1.5px hsl(var(--background)), 0 0 8px hsl(var(--tier1) / 0.55);
   pointer-events: none;
   z-index: 0;
 }
