@@ -41,6 +41,7 @@ import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
+import { getProviderForZoneId } from '@/data/local-transit-providers';
 import type { PresentationPhase } from '@/hooks/usePresentationMode';
 
 interface MapViewProps {
@@ -78,6 +79,8 @@ interface MapViewProps {
   selectedCounty?: string | null;
   onFteHubClick?: (fteId: string) => void;
   selectedFteId?: string | null;
+  /** Currently selected local transit provider id (drives zone selection styling). */
+  selectedTransitProviderId?: string | null;
   /** Multi-select: every FTE id whose coverage overlay should be drawn. */
   activeFteCoverageIds?: string[];
   coverageRadiusKm?: number;
