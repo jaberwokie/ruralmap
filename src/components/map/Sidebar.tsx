@@ -1021,7 +1021,7 @@ const Sidebar = ({
                                   {renderLayerToggleRow({
                                     label: 'Tier 1 Providers',
                                     icon: Star,
-                                    iconClassName: 'text-tier1',
+                                    iconClassName: 'text-tier1 translate-x-[3px]',
                                     checked: layers.tier1Highlight,
                                     onCheckedChange: () => onToggleLayer('tier1Highlight'),
                                     subtitle: dependencyOff
