@@ -677,6 +677,7 @@ const Sidebar = ({
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Search by facility, city, county, or enter a member address.
         </p>
+        <AdminVersionBadge className="mt-1 block text-center" />
 
         {/* Auth + admin row */}
         <div className="mt-2 flex w-full flex-col items-start gap-y-1 text-[10.5px] leading-none">
