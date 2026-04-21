@@ -105,6 +105,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
     title, purpose, status, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
     loading, uploading, onUpload, onPromote, onReject, onDeactivate, onRefresh,
+    onEditStaging, onEditVerified,
   } = props;
 
   const fileRef = useRef<HTMLInputElement>(null);
