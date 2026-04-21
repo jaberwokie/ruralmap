@@ -16,6 +16,11 @@ export default defineConfig(({ mode }) => ({
   define: {
     __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? ''),
+    // No-op unique build id — guarantees each build produces a distinct artifact
+    // so the publish dialog always detects a deployable change.
+    __APP_BUILD_ID__: JSON.stringify(
+      `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`
+    ),
   },
   resolve: {
     alias: {
