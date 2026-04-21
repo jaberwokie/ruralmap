@@ -2854,21 +2854,49 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     localTransitZones.forEach((zone) => {
       if (!zone.active) return;
+      const provider = getProviderForZoneId(zone.id);
+      const isSelected = !!provider && provider.id === selectedTransitProviderId;
       const polygon = L.polygon(zone.geometry, {
-        pane: PANE_CONFIG.coverage.id,
+        // Use the markers pane (z650) so polygons are interactive but sit
+        // BELOW providerMarkers (z660). Pin clicks always win at overlap.
+        pane: PANE_CONFIG.markers.id,
         color: 'hsl(210, 70%, 50%)',
-        weight: 1.2,
-        opacity: 0.7,
-        dashArray: '4 4',
+        weight: isSelected ? 2.4 : 1.2,
+        opacity: isSelected ? 1 : 0.7,
+        dashArray: isSelected ? undefined : '4 4',
         fillColor: 'hsl(205, 85%, 70%)',
-        fillOpacity: 0.1,
-        interactive: false,
-        className: 'local-transit-zone',
+        fillOpacity: isSelected ? 0.22 : 0.1,
+        interactive: true,
+        bubblingMouseEvents: false,
+        className: isSelected ? 'local-transit-zone selected' : 'local-transit-zone',
       });
-      polygon.bindTooltip(`${zone.name} · approximate footprint`, {
+      const tooltipLabel = provider
+        ? `${zone.name} · ${provider.name}`
+        : `${zone.name} · approximate footprint`;
+      polygon.bindTooltip(tooltipLabel, {
         sticky: true,
         opacity: 0.9,
         className: 'rail-corridor-tooltip',
+      });
+      polygon.on('click', (e: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e);
+        // Strict explicit mapping: zone.id → provider via getProviderForZoneId.
+        // No proximity, no fallback. If a zone has no provider, do nothing.
+        const matched = getProviderForZoneId(zone.id);
+        if (!matched) {
+          if (import.meta.env.DEV) {
+            console.warn('[LocalTransit] click on zone with no mapped provider', { zoneId: zone.id });
+          }
+          return;
+        }
+        if (import.meta.env.DEV) {
+          console.info('[LocalTransit] zone click → provider', {
+            zoneId: zone.id,
+            providerId: matched.id,
+            providerName: matched.name,
+          });
+        }
+        onEntityClickRef.current?.({ type: 'localTransitProvider', provider: matched });
       });
       localTransitLayerRef.current!.addLayer(polygon);
     });
@@ -2878,9 +2906,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       console.info('[LocalTransit] overlay loaded', {
         toggle: 'ON',
         zones: activeCount,
+        selectedProviderId: selectedTransitProviderId,
       });
     }
-  }, [mapReady, layers.localTransitZones]);
+  }, [mapReady, layers.localTransitZones, selectedTransitProviderId]);
 
   // Additive: fit map to externally requested bounds (e.g., transit provider click).
   useEffect(() => {
