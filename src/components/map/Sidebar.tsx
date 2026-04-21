@@ -1438,7 +1438,7 @@ const Sidebar = ({
                         iconClassName: 'text-muted-foreground',
                         checked: layers.localTransitZones,
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
-                        subtitle: 'Silver Rider · JAC · approximate',
+                        subtitle: 'NDOT operators · approximate footprints',
                       })}
 
                       {/* Transit Providers — additive utility list (not a facility/provider/service) */}
