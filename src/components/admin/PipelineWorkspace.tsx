@@ -351,14 +351,26 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                     <td key={c.key} className={cn('px-2 py-1.5', c.className)}>{r.cells[c.key] ?? ''}</td>
                   ))}
                   <td className="px-2 py-1.5 whitespace-nowrap text-right">
-                    <Button
-                      size="sm" variant="ghost"
-                      disabled={actingId === r.id}
-                      onClick={() => wrap(r.id, () => onDeactivate(r.id))}
-                      className="h-6 px-2 text-[10px]"
-                    >
-                      Deactivate
-                    </Button>
+                    <div className="inline-flex items-center gap-1">
+                      {onEditVerified ? (
+                        <Button
+                          size="sm" variant="ghost"
+                          disabled={actingId === r.id}
+                          onClick={() => onEditVerified(r.id)}
+                          className="h-6 px-2 text-[10px]"
+                        >
+                          Edit
+                        </Button>
+                      ) : null}
+                      <Button
+                        size="sm" variant="ghost"
+                        disabled={actingId === r.id}
+                        onClick={() => wrap(r.id, () => onDeactivate(r.id))}
+                        className="h-6 px-2 text-[10px]"
+                      >
+                        Deactivate
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
