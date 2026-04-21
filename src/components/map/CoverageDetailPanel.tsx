@@ -2052,10 +2052,10 @@ const FacilityContent = ({
         </span>
         {isHighUtilClinic && (
           <span
-            className="inline-flex items-center gap-1 rounded-sm border border-[hsl(var(--tier1))]/40 bg-[hsl(var(--tier1))]/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-[hsl(var(--tier1))]"
+            className="inline-flex items-center gap-1 rounded-sm border border-tier1/40 bg-tier1/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-tier1"
             title="Tier 1 Provider — high-utilization clinic / community provider"
           >
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-[hsl(var(--tier1))]" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-tier1" />
             Tier 1 Provider
           </span>
         )}
