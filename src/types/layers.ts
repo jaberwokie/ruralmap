@@ -16,6 +16,12 @@ export interface LayerState {
   railCorridor: boolean;
   /** Additive access-support overlay — local public transit zones. Default OFF. */
   localTransitZones: boolean;
+  /**
+   * Tier 1 Providers highlight — additive ring/badge on existing clinic pins
+   * for facilities tagged `tier: 'tier1'`. Visible only when `serviceLocations`
+   * (Provider Locations) is also ON. Does NOT add new markers. Default OFF.
+   */
+  tier1Highlight: boolean;
   // ── Demand & Utilization (additive, display-only). All default OFF. ──
   /** ZIP-level member demand visualization (choropleth or fallback list). */
   memberDemandZip: boolean;
