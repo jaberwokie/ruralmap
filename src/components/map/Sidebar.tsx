@@ -1438,7 +1438,7 @@ const Sidebar = ({
                         iconClassName: 'text-muted-foreground',
                         checked: layers.localTransitZones,
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
-                        subtitle: 'NDOT operators · approximate footprints',
+                        subtitle: 'Local transit operators · approximate service footprints',
                       })}
 
                       {/* Transit Providers — additive utility list (not a facility/provider/service) */}
