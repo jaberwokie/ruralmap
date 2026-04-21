@@ -9,10 +9,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace, { type StagingTableColumn } from '@/components/admin/PipelineWorkspace';
+import EditRecordDialog, { type EditableField } from '@/components/admin/EditRecordDialog';
 import { SERVICE_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
   promoteStagingService, rejectStagingService, deactivateVerifiedService,
+  editServiceRecord,
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingService } from '@/utils/mappingPipelineCsv';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
@@ -79,12 +81,34 @@ const VERIFIED_COLS: StagingTableColumn[] = [
   { key: 'promoted', label: 'Promoted' },
 ];
 
+const EDITABLE_FIELDS: EditableField[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'service_category', label: 'Service category' },
+  { key: 'organization_name', label: 'Organization' },
+  { key: 'street_address', label: 'Street address' },
+  { key: 'city', label: 'City' },
+  { key: 'state', label: 'State' },
+  { key: 'zip', label: 'ZIP' },
+  { key: 'county', label: 'County' },
+  { key: 'latitude', label: 'Latitude', type: 'number' },
+  { key: 'longitude', label: 'Longitude', type: 'number' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'website', label: 'Website' },
+  { key: 'access_notes', label: 'Access notes', type: 'textarea' },
+];
+
+type EditTarget =
+  | { scope: 'staging_services'; row: StagingServiceRow }
+  | { scope: 'verified_services'; row: VerifiedServiceRow }
+  | null;
+
 export default function AdminMappingServices() {
   const [staging, setStaging] = useState<StagingServiceRow[]>([]);
   const [verified, setVerified] = useState<VerifiedServiceRow[]>([]);
   const [audit, setAudit] = useState<AuditLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditTarget>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -175,6 +199,28 @@ export default function AdminMappingServices() {
         onReject={async (id) => { await rejectStagingService(id); toast.success('Rejected.'); await refresh(); }}
         onDeactivate={async (id) => { await deactivateVerifiedService(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
         onRefresh={() => void refresh()}
+        onEditStaging={(id) => {
+          const row = staging.find((r) => r.id === id);
+          if (row) setEditTarget({ scope: 'staging_services', row });
+        }}
+        onEditVerified={(id) => {
+          const row = verified.find((r) => r.id === id);
+          if (row) setEditTarget({ scope: 'verified_services', row });
+        }}
+      />
+      <EditRecordDialog
+        open={editTarget !== null}
+        onOpenChange={(o) => { if (!o) setEditTarget(null); }}
+        title={`Edit Service — ${editTarget?.row.name ?? ''}`}
+        scopeLabel={editTarget?.scope === 'verified_services' ? 'verified record (live on map)' : 'staging record'}
+        fields={EDITABLE_FIELDS}
+        initial={(editTarget?.row ?? {}) as unknown as Record<string, unknown>}
+        onSave={async (changes) => {
+          if (!editTarget) return;
+          await editServiceRecord(editTarget.scope, editTarget.row.id, changes);
+          toast.success('Edit saved.');
+          await refresh();
+        }}
       />
     </AdminMappingLayout>
   );
