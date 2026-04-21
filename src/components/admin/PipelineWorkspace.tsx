@@ -96,6 +96,8 @@ interface PipelineWorkspaceProps {
   onReject: (id: string) => Promise<void>;
   onDeactivate: (verifiedId: string) => Promise<void>;
   onRefresh: () => void;
+  onEditStaging?: (id: string) => void;
+  onEditVerified?: (id: string) => void;
 }
 
 export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
