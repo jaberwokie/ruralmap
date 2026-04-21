@@ -10,10 +10,12 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace, { type StagingTableColumn } from '@/components/admin/PipelineWorkspace';
+import EditRecordDialog, { type EditableField } from '@/components/admin/EditRecordDialog';
 import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingBh, listStagingBh, listVerifiedBh, listAudit,
   promoteStagingBh, rejectStagingBh, deactivateVerifiedBh,
+  editBhRecord,
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
@@ -94,6 +96,24 @@ const VERIFIED_COLS: StagingTableColumn[] = [
   { key: 'promoted', label: 'Promoted' },
 ];
 
+const EDITABLE_FIELDS: EditableField[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'bh_entity_type', label: 'BH entity type' },
+  { key: 'bh_service_type', label: 'BH service type' },
+  { key: 'npi', label: 'NPI' },
+  { key: 'organization_name', label: 'Organization' },
+  { key: 'street_address', label: 'Street address' },
+  { key: 'city', label: 'City' },
+  { key: 'state', label: 'State' },
+  { key: 'zip', label: 'ZIP' },
+  { key: 'county', label: 'County' },
+  { key: 'latitude', label: 'Latitude', type: 'number' },
+  { key: 'longitude', label: 'Longitude', type: 'number' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'website', label: 'Website' },
+  { key: 'access_notes', label: 'Access notes', type: 'textarea' },
+];
+
 const formatCaps = (r: StagingBhRow): string => {
   const out: string[] = [];
   if (r.crisis_capable) out.push('crisis');
@@ -105,12 +125,18 @@ const formatCaps = (r: StagingBhRow): string => {
   return out.length === 0 ? '—' : out.join(' · ');
 };
 
+type EditTarget =
+  | { scope: 'staging_bh'; row: StagingBhRow }
+  | { scope: 'verified_bh'; row: VerifiedBhRow }
+  | null;
+
 export default function AdminMappingBehavioralHealth() {
   const [staging, setStaging] = useState<StagingBhRow[]>([]);
   const [verified, setVerified] = useState<VerifiedBhRow[]>([]);
   const [audit, setAudit] = useState<AuditLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [editTarget, setEditTarget] = useState<EditTarget>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -201,6 +227,28 @@ export default function AdminMappingBehavioralHealth() {
         onReject={async (id) => { await rejectStagingBh(id); toast.success('Rejected.'); await refresh(); }}
         onDeactivate={async (id) => { await deactivateVerifiedBh(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
         onRefresh={() => void refresh()}
+        onEditStaging={(id) => {
+          const row = staging.find((r) => r.id === id);
+          if (row) setEditTarget({ scope: 'staging_bh', row });
+        }}
+        onEditVerified={(id) => {
+          const row = verified.find((r) => r.id === id);
+          if (row) setEditTarget({ scope: 'verified_bh', row });
+        }}
+      />
+      <EditRecordDialog
+        open={editTarget !== null}
+        onOpenChange={(o) => { if (!o) setEditTarget(null); }}
+        title={`Edit BH — ${editTarget?.row.name ?? ''}`}
+        scopeLabel={editTarget?.scope === 'verified_bh' ? 'verified BH record (live on map)' : 'staging BH record'}
+        fields={EDITABLE_FIELDS}
+        initial={(editTarget?.row ?? {}) as unknown as Record<string, unknown>}
+        onSave={async (changes) => {
+          if (!editTarget) return;
+          await editBhRecord(editTarget.scope, editTarget.row.id, changes);
+          toast.success('Edit saved.');
+          await refresh();
+        }}
       />
     </AdminMappingLayout>
   );
