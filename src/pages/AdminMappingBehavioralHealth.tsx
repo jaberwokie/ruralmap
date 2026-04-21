@@ -1,49 +1,206 @@
 /**
- * Admin > Mapping > Behavioral Health Mapping.
+ * Admin > Mapping > Behavioral Health Mapping
  *
- * Pipeline pending. Full schema/upload UI rendered with the upload disabled.
- * No writes occur. BH ingestion will route into the existing BH layer
- * pipeline once enabled — it does not merge into the provider pipeline.
+ * Operational pipeline for behavioral health-specific providers, facilities,
+ * and service locations. Marked Draft until admin sign-off; functionality is
+ * complete. Promoted records appear on the Behavioral Health map layer.
  */
 
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
-import MappingImportShell from '@/components/admin/MappingImportShell';
+import PipelineWorkspace, { type StagingTableColumn } from '@/components/admin/PipelineWorkspace';
 import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
+import {
+  insertStagingBh, listStagingBh, listVerifiedBh, listAudit,
+  promoteStagingBh, rejectStagingBh, deactivateVerifiedBh,
+} from '@/utils/mappingPipelineStore';
+import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
+import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
+
+const SCHEMA_SECTIONS = [
+  {
+    heading: 'Identity',
+    fields: [
+      { name: 'name', required: true }, { name: 'bh_entity_type' }, { name: 'bh_service_type' },
+      { name: 'organization_name' }, { name: 'facility_type' }, { name: 'description' },
+    ],
+  },
+  {
+    heading: 'Provider / credentials',
+    fields: [
+      { name: 'npi' }, { name: 'license_type' }, { name: 'specialties' },
+      { name: 'age_groups_served' }, { name: 'populations_served' },
+    ],
+  },
+  {
+    heading: 'Location',
+    fields: [
+      { name: 'street_address' }, { name: 'city' }, { name: 'state' }, { name: 'zip' },
+      { name: 'county' }, { name: 'latitude' }, { name: 'longitude' },
+    ],
+  },
+  {
+    heading: 'Contact / access',
+    fields: [
+      { name: 'phone' }, { name: 'website' }, { name: 'fax' },
+      { name: 'referral_required' }, { name: 'walk_in_allowed' }, { name: 'appointment_required' },
+      { name: 'accepts_new_patients' }, { name: 'telehealth_available' },
+      { name: 'hours_of_operation' }, { name: 'languages_supported' },
+    ],
+  },
+  {
+    heading: 'Coverage / programs',
+    fields: [
+      { name: 'medicaid_participation_status' }, { name: 'payer_notes' },
+      { name: 'crisis_capable' }, { name: 'detox_capable' }, { name: 'residential_capable' },
+      { name: 'outpatient_capable' }, { name: 'mat_capable' },
+    ],
+  },
+  {
+    heading: 'Operational',
+    fields: [
+      { name: 'active_status' }, { name: 'access_notes' }, { name: 'verification_source' },
+    ],
+  },
+];
+
+const VALIDATION_RULES = [
+  'Name is required.',
+  'Latitude and longitude must be a valid pair (both or neither).',
+  'NPI, when provided, must be exactly 10 digits.',
+  'Records without coordinates AND without a street address will not place on the map.',
+  'BH entity type should match a known type — non-standard values are flagged as warnings.',
+  'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
+  'Records remain in staging until manually promoted by an admin.',
+];
+
+const STAGING_COLS: StagingTableColumn[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'npi', label: 'NPI' },
+  { key: 'org', label: 'Organization' },
+  { key: 'city', label: 'City' },
+  { key: 'county', label: 'County' },
+  { key: 'caps', label: 'Capabilities' },
+];
+
+const VERIFIED_COLS: StagingTableColumn[] = [
+  { key: 'name', label: 'Name' },
+  { key: 'type', label: 'Type' },
+  { key: 'city', label: 'City' },
+  { key: 'county', label: 'County' },
+  { key: 'verified', label: 'Verification' },
+  { key: 'promoted', label: 'Promoted' },
+];
+
+const formatCaps = (r: StagingBhRow): string => {
+  const out: string[] = [];
+  if (r.crisis_capable) out.push('crisis');
+  if (r.detox_capable) out.push('detox');
+  if (r.residential_capable) out.push('res');
+  if (r.outpatient_capable) out.push('outp');
+  if (r.mat_capable) out.push('MAT');
+  if (r.telehealth_available) out.push('tele');
+  return out.length === 0 ? '—' : out.join(' · ');
+};
 
 export default function AdminMappingBehavioralHealth() {
+  const [staging, setStaging] = useState<StagingBhRow[]>([]);
+  const [verified, setVerified] = useState<VerifiedBhRow[]>([]);
+  const [audit, setAudit] = useState<AuditLogRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const [s, v, a] = await Promise.all([
+        listStagingBh(), listVerifiedBh(), listAudit('behavioral_health', 200),
+      ]);
+      setStaging(s); setVerified(v); setAudit(a);
+    } catch (e) {
+      toast.error(`Failed to load: ${(e as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { void refresh(); }, []);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const text = await file.text();
+      const { rows } = parseCsvText(text);
+      if (rows.length === 0) { toast.error('CSV had no data rows.'); return; }
+      const importBatchId = crypto.randomUUID();
+      const prepared = rows.map((r, idx) => csvToStagingBh(r, {
+        source_file_name: file.name, source_row_number: idx + 2, import_batch_id: importBatchId,
+      }));
+      const res = await insertStagingBh(prepared, { fileName: file.name, importBatchId });
+      toast.success(`Inserted ${res.inserted} (${res.errors} errors, ${res.warnings} warnings)`);
+      await refresh();
+    } catch (e) {
+      toast.error(`Upload failed: ${(e as Error).message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const stagingRows = useMemo(() => staging.map((r) => ({
+    id: r.id,
+    review_status: r.review_status,
+    validation_severity: r.validation_severity,
+    validation_messages: r.validation_messages,
+    cells: {
+      name: r.name,
+      type: r.bh_entity_type ?? r.bh_service_type ?? '—',
+      npi: r.npi ?? '—',
+      org: r.organization_name ?? '—',
+      city: r.city ?? '—',
+      county: r.county ?? '—',
+      caps: formatCaps(r),
+    },
+  })), [staging]);
+
+  const verifiedRows = useMemo(() => verified.map((r) => ({
+    id: r.id,
+    active_status: r.active_status,
+    cells: {
+      name: r.name,
+      type: r.bh_entity_type ?? r.bh_service_type ?? '—',
+      city: r.city ?? '—',
+      county: r.county ?? '—',
+      verified: `${r.verification_status}${r.verification_confidence ? ` · ${r.verification_confidence}` : ''}`,
+      promoted: new Date(r.promoted_at).toLocaleDateString(),
+    },
+  })), [verified]);
+
   return (
     <AdminMappingLayout
       title="Behavioral Health Mapping"
-      description="Behavioral health locations and resources for the BH map layer."
+      description="Operational pipeline for behavioral health providers, facilities, and service locations. Promoted records appear on the Behavioral Health map layer."
     >
-      <MappingImportShell
-        title="Behavioral health location ingestion"
-        purpose="Upload behavioral health resources. Entries render as purple BH pins, with counts, icons, and filters preserved."
-        required={[
-          { name: 'name', description: 'BH facility or resource name' },
-          { name: 'latitude', description: '-90 to 90' },
-          { name: 'longitude', description: '-180 to 180' },
-        ]}
-        optional={[
-          { name: 'bh_type' }, { name: 'city' }, { name: 'county' }, { name: 'state' },
-          { name: 'zip' }, { name: 'address' }, { name: 'phone' }, { name: 'website' },
-          { name: 'organization' }, { name: 'medicaid_participation' },
-          { name: 'psychiatric_flag' }, { name: 'outpatient_flag' }, { name: 'crisis_flag' },
-          { name: 'notes' }, { name: 'source' }, { name: 'active' },
-        ]}
-        validationRules={[
-          'Rows without name or coordinates will be rejected.',
-          'Coordinates must be valid finite numbers within range.',
-          'BH imports do not merge into the provider pipeline.',
-          'Existing BH layer behavior, counts, icons, and filters are preserved.',
-        ]}
-        sampleColumns={['name', 'latitude', 'longitude', 'bh_type', 'city', 'county']}
-        sampleRows={[
-          { name: 'Rural Clinics Community Mental Health — Elko', latitude: '40.82613', longitude: '-115.76359', bh_type: 'Outpatient', city: 'Elko', county: 'Elko' },
-          { name: 'Bridges to Recovery — Fallon', latitude: '39.47368', longitude: '-118.77745', bh_type: 'SUD Outpatient', city: 'Fallon', county: 'Churchill' },
-        ]}
-        pipelinePending
+      <PipelineWorkspace
+        title="Behavioral health pipeline"
+        purpose="Therapists, psychiatrists, BH clinics, IOP/PHP, crisis stabilization, mobile crisis, detox, residential, SUD, MAT-capable locations. Marked Draft until admin sign-off — functionality is complete."
+        status="draft"
+        schemaSections={SCHEMA_SECTIONS}
+        validationRules={VALIDATION_RULES}
         template={BEHAVIORAL_HEALTH_TEMPLATE}
+        stagingColumns={STAGING_COLS}
+        stagingRows={stagingRows}
+        verifiedColumns={VERIFIED_COLS}
+        verifiedRows={verifiedRows}
+        auditEntries={audit}
+        loading={loading}
+        uploading={uploading}
+        onUpload={handleUpload}
+        onPromote={async (id) => { await promoteStagingBh(id); toast.success('Promoted to verified.'); await refresh(); }}
+        onReject={async (id) => { await rejectStagingBh(id); toast.success('Rejected.'); await refresh(); }}
+        onDeactivate={async (id) => { await deactivateVerifiedBh(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
+        onRefresh={() => void refresh()}
       />
     </AdminMappingLayout>
   );

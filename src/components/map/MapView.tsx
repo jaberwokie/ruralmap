@@ -10,7 +10,8 @@ import { Info } from 'lucide-react';
 import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
+import { enrichedRuralServices as _baseRuralServices } from '@/data/enriched-rural-services';
+import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
@@ -921,8 +922,20 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     [providerFilteredFacilities, topProvidersOnly, topProvidersVisible],
   );
 
+  // Live-merge promoted verified Service + BH records on top of the static dataset.
+  // Verified rows take precedence on (name + 4-decimal coord) collisions.
+  const { records: liveVerifiedRecords } = useLiveVerifiedRecords();
+  const ruralServices = useMemo(() => {
+    if (liveVerifiedRecords.length === 0) return _baseRuralServices;
+    const dedupKey = (n: string, lat: number, lng: number) =>
+      `${n.trim().toLowerCase()}|${lat.toFixed(4)}|${lng.toFixed(4)}`;
+    const liveKeys = new Set(liveVerifiedRecords.map(r => dedupKey(r.name, r.lat, r.lng)));
+    const baseFiltered = _baseRuralServices.filter(s => !liveKeys.has(dedupKey(s.name, s.lat, s.lng)));
+    return [...baseFiltered, ...liveVerifiedRecords];
+  }, [liveVerifiedRecords]);
+
   const facilityValidation = useMemo(() => buildFacilityValidationIndex(providerFacilities), [providerFacilities]);
-  const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), []);
+  const serviceValidation = useMemo(() => buildServiceValidationIndex(ruralServices), [ruralServices]);
 
 
   const filteredRuralServices = useMemo(() => {
