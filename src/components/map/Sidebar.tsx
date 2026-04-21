@@ -1020,7 +1020,7 @@ const Sidebar = ({
                                 <div className="ml-5 mt-0.5">
                                   {renderLayerToggleRow({
                                     label: 'Tier 1 Providers',
-                                    icon: Star,
+                                    icon: Circle,
                                     iconClassName: 'text-tier1 translate-x-[5px]',
                                     checked: layers.tier1Highlight,
                                     onCheckedChange: () => onToggleLayer('tier1Highlight'),
