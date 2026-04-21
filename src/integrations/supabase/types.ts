@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      mapping_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          import_batch_id: string | null
+          pipeline: string
+          target_row_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          import_batch_id?: string | null
+          pipeline: string
+          target_row_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          import_batch_id?: string | null
+          pipeline?: string
+          target_row_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
+      }
       pending_admin_emails: {
         Row: {
           created_at: string
@@ -26,6 +65,297 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+        }
+        Relationships: []
+      }
+      staging_bh: {
+        Row: {
+          accepts_new_patients: boolean | null
+          access_notes: string | null
+          active_status: boolean
+          age_groups_served: string | null
+          appointment_required: boolean | null
+          bh_entity_type: string | null
+          bh_service_type: string | null
+          city: string | null
+          county: string | null
+          created_at: string
+          crisis_capable: boolean | null
+          description: string | null
+          detox_capable: boolean | null
+          facility_type: string | null
+          fax: string | null
+          hours_of_operation: string | null
+          id: string
+          import_batch_id: string | null
+          languages_supported: string | null
+          last_reviewed_at: string | null
+          latitude: number | null
+          license_type: string | null
+          longitude: number | null
+          mat_capable: boolean | null
+          medicaid_participation_status: string | null
+          name: string
+          npi: string | null
+          organization_name: string | null
+          outpatient_capable: boolean | null
+          payer_notes: string | null
+          phone: string | null
+          populations_served: string | null
+          referral_required: boolean | null
+          residential_capable: boolean | null
+          review_status: string
+          source_file_name: string | null
+          source_row_number: number | null
+          specialties: string | null
+          state: string | null
+          street_address: string | null
+          telehealth_available: boolean | null
+          updated_at: string
+          validation_messages: Json
+          validation_severity: string | null
+          verification_confidence: string | null
+          verification_date: string | null
+          verification_source: string | null
+          verification_status: string
+          walk_in_allowed: boolean | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          accepts_new_patients?: boolean | null
+          access_notes?: string | null
+          active_status?: boolean
+          age_groups_served?: string | null
+          appointment_required?: boolean | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          crisis_capable?: boolean | null
+          description?: string | null
+          detox_capable?: boolean | null
+          facility_type?: string | null
+          fax?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          license_type?: string | null
+          longitude?: number | null
+          mat_capable?: boolean | null
+          medicaid_participation_status?: string | null
+          name: string
+          npi?: string | null
+          organization_name?: string | null
+          outpatient_capable?: boolean | null
+          payer_notes?: string | null
+          phone?: string | null
+          populations_served?: string | null
+          referral_required?: boolean | null
+          residential_capable?: boolean | null
+          review_status?: string
+          source_file_name?: string | null
+          source_row_number?: number | null
+          specialties?: string | null
+          state?: string | null
+          street_address?: string | null
+          telehealth_available?: boolean | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          accepts_new_patients?: boolean | null
+          access_notes?: string | null
+          active_status?: boolean
+          age_groups_served?: string | null
+          appointment_required?: boolean | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          crisis_capable?: boolean | null
+          description?: string | null
+          detox_capable?: boolean | null
+          facility_type?: string | null
+          fax?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          license_type?: string | null
+          longitude?: number | null
+          mat_capable?: boolean | null
+          medicaid_participation_status?: string | null
+          name?: string
+          npi?: string | null
+          organization_name?: string | null
+          outpatient_capable?: boolean | null
+          payer_notes?: string | null
+          phone?: string | null
+          populations_served?: string | null
+          referral_required?: boolean | null
+          residential_capable?: boolean | null
+          review_status?: string
+          source_file_name?: string | null
+          source_row_number?: number | null
+          specialties?: string | null
+          state?: string | null
+          street_address?: string | null
+          telehealth_available?: boolean | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      staging_services: {
+        Row: {
+          access_notes: string | null
+          active_status: boolean
+          appointment_required: boolean | null
+          city: string | null
+          county: string | null
+          created_at: string
+          description: string | null
+          eligibility_notes: string | null
+          email: string | null
+          hours_of_operation: string | null
+          id: string
+          import_batch_id: string | null
+          languages_supported: string | null
+          last_reviewed_at: string | null
+          latitude: number | null
+          longitude: number | null
+          medicaid_relevance: string | null
+          name: string
+          organization_name: string | null
+          phone: string | null
+          referral_required: boolean | null
+          review_status: string
+          service_category: string | null
+          service_subcategory: string | null
+          source_file_name: string | null
+          source_row_number: number | null
+          state: string | null
+          street_address: string | null
+          target_population: string | null
+          transportation_notes: string | null
+          updated_at: string
+          validation_messages: Json
+          validation_severity: string | null
+          verification_confidence: string | null
+          verification_date: string | null
+          verification_source: string | null
+          verification_status: string
+          walk_in_allowed: boolean | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          active_status?: boolean
+          appointment_required?: boolean | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          eligibility_notes?: string | null
+          email?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          medicaid_relevance?: string | null
+          name: string
+          organization_name?: string | null
+          phone?: string | null
+          referral_required?: boolean | null
+          review_status?: string
+          service_category?: string | null
+          service_subcategory?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          target_population?: string | null
+          transportation_notes?: string | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          active_status?: boolean
+          appointment_required?: boolean | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          eligibility_notes?: string | null
+          email?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          medicaid_relevance?: string | null
+          name?: string
+          organization_name?: string | null
+          phone?: string | null
+          referral_required?: boolean | null
+          review_status?: string
+          service_category?: string | null
+          service_subcategory?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          target_population?: string | null
+          transportation_notes?: string | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
@@ -56,6 +386,297 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      verified_bh: {
+        Row: {
+          accepts_new_patients: boolean | null
+          access_notes: string | null
+          active_status: boolean
+          age_groups_served: string | null
+          appointment_required: boolean | null
+          bh_entity_type: string | null
+          bh_service_type: string | null
+          city: string | null
+          county: string | null
+          created_at: string
+          crisis_capable: boolean | null
+          description: string | null
+          detox_capable: boolean | null
+          facility_type: string | null
+          fax: string | null
+          hours_of_operation: string | null
+          id: string
+          import_batch_id: string | null
+          languages_supported: string | null
+          last_reviewed_at: string | null
+          latitude: number | null
+          license_type: string | null
+          longitude: number | null
+          mat_capable: boolean | null
+          medicaid_participation_status: string | null
+          name: string
+          npi: string | null
+          organization_name: string | null
+          outpatient_capable: boolean | null
+          payer_notes: string | null
+          phone: string | null
+          populations_served: string | null
+          promoted_at: string
+          promoted_by: string | null
+          referral_required: boolean | null
+          residential_capable: boolean | null
+          source_file_name: string | null
+          source_row_number: number | null
+          specialties: string | null
+          staging_id: string | null
+          state: string | null
+          street_address: string | null
+          telehealth_available: boolean | null
+          updated_at: string
+          verification_confidence: string | null
+          verification_date: string | null
+          verification_source: string | null
+          verification_status: string
+          walk_in_allowed: boolean | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          accepts_new_patients?: boolean | null
+          access_notes?: string | null
+          active_status?: boolean
+          age_groups_served?: string | null
+          appointment_required?: boolean | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          crisis_capable?: boolean | null
+          description?: string | null
+          detox_capable?: boolean | null
+          facility_type?: string | null
+          fax?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          license_type?: string | null
+          longitude?: number | null
+          mat_capable?: boolean | null
+          medicaid_participation_status?: string | null
+          name: string
+          npi?: string | null
+          organization_name?: string | null
+          outpatient_capable?: boolean | null
+          payer_notes?: string | null
+          phone?: string | null
+          populations_served?: string | null
+          promoted_at?: string
+          promoted_by?: string | null
+          referral_required?: boolean | null
+          residential_capable?: boolean | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          specialties?: string | null
+          staging_id?: string | null
+          state?: string | null
+          street_address?: string | null
+          telehealth_available?: boolean | null
+          updated_at?: string
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          accepts_new_patients?: boolean | null
+          access_notes?: string | null
+          active_status?: boolean
+          age_groups_served?: string | null
+          appointment_required?: boolean | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          crisis_capable?: boolean | null
+          description?: string | null
+          detox_capable?: boolean | null
+          facility_type?: string | null
+          fax?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          license_type?: string | null
+          longitude?: number | null
+          mat_capable?: boolean | null
+          medicaid_participation_status?: string | null
+          name?: string
+          npi?: string | null
+          organization_name?: string | null
+          outpatient_capable?: boolean | null
+          payer_notes?: string | null
+          phone?: string | null
+          populations_served?: string | null
+          promoted_at?: string
+          promoted_by?: string | null
+          referral_required?: boolean | null
+          residential_capable?: boolean | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          specialties?: string | null
+          staging_id?: string | null
+          state?: string | null
+          street_address?: string | null
+          telehealth_available?: boolean | null
+          updated_at?: string
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      verified_services: {
+        Row: {
+          access_notes: string | null
+          active_status: boolean
+          appointment_required: boolean | null
+          city: string | null
+          county: string | null
+          created_at: string
+          description: string | null
+          eligibility_notes: string | null
+          email: string | null
+          hours_of_operation: string | null
+          id: string
+          import_batch_id: string | null
+          languages_supported: string | null
+          last_reviewed_at: string | null
+          latitude: number | null
+          longitude: number | null
+          medicaid_relevance: string | null
+          name: string
+          organization_name: string | null
+          phone: string | null
+          promoted_at: string
+          promoted_by: string | null
+          referral_required: boolean | null
+          service_category: string | null
+          service_subcategory: string | null
+          source_file_name: string | null
+          source_row_number: number | null
+          staging_id: string | null
+          state: string | null
+          street_address: string | null
+          target_population: string | null
+          transportation_notes: string | null
+          updated_at: string
+          verification_confidence: string | null
+          verification_date: string | null
+          verification_source: string | null
+          verification_status: string
+          walk_in_allowed: boolean | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          active_status?: boolean
+          appointment_required?: boolean | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          eligibility_notes?: string | null
+          email?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          medicaid_relevance?: string | null
+          name: string
+          organization_name?: string | null
+          phone?: string | null
+          promoted_at?: string
+          promoted_by?: string | null
+          referral_required?: boolean | null
+          service_category?: string | null
+          service_subcategory?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          staging_id?: string | null
+          state?: string | null
+          street_address?: string | null
+          target_population?: string | null
+          transportation_notes?: string | null
+          updated_at?: string
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          active_status?: boolean
+          appointment_required?: boolean | null
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          description?: string | null
+          eligibility_notes?: string | null
+          email?: string | null
+          hours_of_operation?: string | null
+          id?: string
+          import_batch_id?: string | null
+          languages_supported?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          medicaid_relevance?: string | null
+          name?: string
+          organization_name?: string | null
+          phone?: string | null
+          promoted_at?: string
+          promoted_by?: string | null
+          referral_required?: boolean | null
+          service_category?: string | null
+          service_subcategory?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          staging_id?: string | null
+          state?: string | null
+          street_address?: string | null
+          target_population?: string | null
+          transportation_notes?: string | null
+          updated_at?: string
+          verification_confidence?: string | null
+          verification_date?: string | null
+          verification_source?: string | null
+          verification_status?: string
+          walk_in_allowed?: boolean | null
+          website?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
