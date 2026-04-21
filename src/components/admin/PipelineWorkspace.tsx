@@ -1,0 +1,432 @@
+/**
+ * Shared workspace shell for Service + BH pipelines.
+ *
+ * Renders the deterministic page structure required by both pipelines:
+ *   1. Header + status chip
+ *   2. Schema definition panel
+ *   3. Upload intake
+ *   4. Validation results summary
+ *   5. Staging records table
+ *   6. Promotion actions
+ *   7. Audit / history section
+ *
+ * All write operations go through the parent's callbacks so this shell stays
+ * pipeline-agnostic.
+ */
+
+import { type ReactNode, useRef, useState, useMemo } from 'react';
+import { Upload, Download, CheckCircle2, XCircle, AlertTriangle, Loader2, Info } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
+import type { ValidationSeverity, ReviewStatus, AuditLogRow } from '@/types/mappingPipeline';
+import { cn } from '@/lib/utils';
+
+export type PipelineStatus = 'active' | 'draft' | 'admin_only' | 'not_configured';
+
+const STATUS_LABEL: Record<PipelineStatus, string> = {
+  active: 'Active',
+  draft: 'Draft',
+  admin_only: 'Admin Only',
+  not_configured: 'Not Configured',
+};
+
+const STATUS_CLASS: Record<PipelineStatus, string> = {
+  active: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700',
+  draft: 'border-amber-500/50 bg-amber-500/10 text-amber-700',
+  admin_only: 'border-sky-500/50 bg-sky-500/10 text-sky-700',
+  not_configured: 'border-muted-foreground/40 bg-muted/40 text-muted-foreground',
+};
+
+export const PipelineStatusChip = ({ status }: { status: PipelineStatus }) => (
+  <span
+    className={cn(
+      'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wider',
+      STATUS_CLASS[status],
+    )}
+  >
+    {STATUS_LABEL[status]}
+  </span>
+);
+
+export interface SchemaField {
+  name: string;
+  required?: boolean;
+  description?: string;
+}
+
+export interface StagingTableColumn {
+  key: string;
+  label: string;
+  className?: string;
+}
+
+export interface StagingTableRow {
+  id: string;
+  cells: Record<string, ReactNode>;
+  validation_severity: ValidationSeverity | null;
+  review_status: ReviewStatus;
+  validation_messages: { message: string; severity: ValidationSeverity }[];
+}
+
+export interface VerifiedTableRow {
+  id: string;
+  cells: Record<string, ReactNode>;
+  active_status: boolean;
+}
+
+interface PipelineWorkspaceProps {
+  title: string;
+  purpose: string;
+  status: PipelineStatus;
+
+  schemaSections: { heading: string; fields: SchemaField[] }[];
+  validationRules: string[];
+  template: CsvTemplate;
+
+  stagingColumns: StagingTableColumn[];
+  stagingRows: StagingTableRow[];
+  verifiedColumns: StagingTableColumn[];
+  verifiedRows: VerifiedTableRow[];
+  auditEntries: AuditLogRow[];
+
+  loading: boolean;
+  uploading: boolean;
+  onUpload: (file: File) => Promise<void>;
+  onPromote: (id: string) => Promise<void>;
+  onReject: (id: string) => Promise<void>;
+  onDeactivate: (verifiedId: string) => Promise<void>;
+  onRefresh: () => void;
+}
+
+export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
+  const {
+    title, purpose, status, schemaSections, validationRules, template,
+    stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
+    loading, uploading, onUpload, onPromote, onReject, onDeactivate, onRefresh,
+  } = props;
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [reviewFilter, setReviewFilter] = useState<'all' | ReviewStatus>('pending');
+  const [severityFilter, setSeverityFilter] = useState<'all' | ValidationSeverity>('all');
+  const [actingId, setActingId] = useState<string | null>(null);
+
+  const filteredStaging = useMemo(() => {
+    return stagingRows.filter((r) => {
+      if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
+      if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
+      return true;
+    });
+  }, [stagingRows, reviewFilter, severityFilter]);
+
+  const validationSummary = useMemo(() => {
+    const out = { valid: 0, warning: 0, error: 0 };
+    stagingRows.filter((r) => r.review_status === 'pending').forEach((r) => {
+      out[r.validation_severity ?? 'valid'] += 1;
+    });
+    return out;
+  }, [stagingRows]);
+
+  const handlePick = () => fileRef.current?.click();
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    try { await onUpload(f); } finally {
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const wrap = async (id: string, fn: () => Promise<void>) => {
+    setActingId(id);
+    try { await fn(); } finally { setActingId(null); }
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* 1. Header */}
+      <header className="rounded border border-border bg-card p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h2 className="text-sm font-semibold" style={{ color: '#064f88' }}>{title}</h2>
+              <PipelineStatusChip status={status} />
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">{purpose}</p>
+          </div>
+          <Button variant="outline" size="sm" onClick={onRefresh} disabled={loading}>
+            {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Refresh'}
+          </Button>
+        </div>
+      </header>
+
+      {/* 2. Schema definition */}
+      <section className="rounded border border-border bg-card p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Schema definition
+          </h3>
+          <button
+            type="button"
+            onClick={() => downloadCsvTemplate(template)}
+            className="inline-flex items-center gap-1 rounded border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground hover:border-foreground/40"
+          >
+            <Download className="h-3 w-3" /> CSV template
+          </button>
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {schemaSections.map((sec) => (
+            <div key={sec.heading}>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {sec.heading}
+              </p>
+              <ul className="mt-1.5 space-y-0.5">
+                {sec.fields.map((f) => (
+                  <li key={f.name} className="text-[11px]">
+                    <code className="font-mono text-foreground">{f.name}</code>
+                    {f.required ? <span className="ml-1 text-[9px] uppercase text-rose-600">req</span> : null}
+                    {f.description ? <span className="ml-1 text-muted-foreground">— {f.description}</span> : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <details className="mt-3">
+          <summary className="cursor-pointer text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Validation rules
+          </summary>
+          <ul className="mt-2 list-disc space-y-1 pl-4 text-[11px] text-muted-foreground">
+            {validationRules.map((r, i) => <li key={i}>{r}</li>)}
+          </ul>
+        </details>
+      </section>
+
+      {/* 3. Upload intake */}
+      <section className="rounded border border-border bg-card p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Upload intake
+            </h3>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Records land in staging only — they do not appear on the map until promoted.
+            </p>
+          </div>
+          <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
+          <Button onClick={handlePick} disabled={uploading} size="sm">
+            {uploading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
+            {uploading ? 'Uploading…' : 'Upload CSV'}
+          </Button>
+        </div>
+      </section>
+
+      {/* 4. Validation results */}
+      <section className="rounded border border-border bg-card p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Validation results (pending records)
+        </h3>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          <ValidationStat label="Valid" count={validationSummary.valid} tone="emerald" icon={<CheckCircle2 className="h-3.5 w-3.5" />} />
+          <ValidationStat label="Warning" count={validationSummary.warning} tone="amber" icon={<AlertTriangle className="h-3.5 w-3.5" />} />
+          <ValidationStat label="Error" count={validationSummary.error} tone="rose" icon={<XCircle className="h-3.5 w-3.5" />} />
+        </div>
+      </section>
+
+      {/* 5. Staging records */}
+      <section className="rounded border border-border bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Staging records
+          </h3>
+          <div className="flex items-center gap-1.5">
+            <FilterChip active={reviewFilter === 'pending'} onClick={() => setReviewFilter('pending')}>Pending</FilterChip>
+            <FilterChip active={reviewFilter === 'approved'} onClick={() => setReviewFilter('approved')}>Approved</FilterChip>
+            <FilterChip active={reviewFilter === 'rejected'} onClick={() => setReviewFilter('rejected')}>Rejected</FilterChip>
+            <FilterChip active={reviewFilter === 'all'} onClick={() => setReviewFilter('all')}>All</FilterChip>
+            <span className="mx-1 h-3 w-px bg-border" />
+            <FilterChip active={severityFilter === 'all'} onClick={() => setSeverityFilter('all')}>Any severity</FilterChip>
+            <FilterChip active={severityFilter === 'error'} onClick={() => setSeverityFilter('error')}>Errors</FilterChip>
+            <FilterChip active={severityFilter === 'warning'} onClick={() => setSeverityFilter('warning')}>Warnings</FilterChip>
+          </div>
+        </div>
+        <div className="mt-2 overflow-auto rounded border border-border max-h-[420px]">
+          <table className="w-full text-[11px]">
+            <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+              <tr>
+                <th className="text-left px-2 py-1.5 whitespace-nowrap">Status</th>
+                {stagingColumns.map((c) => (
+                  <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
+                ))}
+                <th className="text-right px-2 py-1.5 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredStaging.length === 0 ? (
+                <tr><td colSpan={stagingColumns.length + 2} className="px-2 py-6 text-center text-muted-foreground">
+                  {loading ? 'Loading…' : 'No records match the current filters.'}
+                </td></tr>
+              ) : filteredStaging.map((r) => (
+                <tr key={r.id} className="border-t border-border align-top">
+                  <td className="px-2 py-1.5 whitespace-nowrap">
+                    <SeverityBadge severity={r.validation_severity ?? 'valid'} />
+                    <ReviewBadge status={r.review_status} />
+                    {r.validation_messages.length > 0 && (
+                      <div className="mt-1 max-w-[180px] text-[10px] text-muted-foreground" title={r.validation_messages.map((m) => m.message).join('\n')}>
+                        <Info className="inline h-3 w-3 mr-0.5" />
+                        {r.validation_messages.length} msg
+                      </div>
+                    )}
+                  </td>
+                  {stagingColumns.map((c) => (
+                    <td key={c.key} className={cn('px-2 py-1.5', c.className)}>{r.cells[c.key] ?? ''}</td>
+                  ))}
+                  <td className="px-2 py-1.5 whitespace-nowrap text-right">
+                    {r.review_status === 'pending' && (
+                      <div className="inline-flex items-center gap-1">
+                        <Button
+                          size="sm" variant="outline"
+                          disabled={actingId === r.id || r.validation_severity === 'error'}
+                          onClick={() => wrap(r.id, () => onPromote(r.id))}
+                          title={r.validation_severity === 'error' ? 'Cannot promote a record with errors' : 'Promote to verified'}
+                          className="h-6 px-2 text-[10px]"
+                        >
+                          {actingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Promote'}
+                        </Button>
+                        <Button
+                          size="sm" variant="ghost"
+                          disabled={actingId === r.id}
+                          onClick={() => wrap(r.id, () => onReject(r.id))}
+                          className="h-6 px-2 text-[10px]"
+                        >
+                          Reject
+                        </Button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* 6. Promotion / Verified records */}
+      <section className="rounded border border-border bg-card p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Verified dataset (live on map)
+        </h3>
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          Only active rows below render on the live map layer. Deactivating removes the pin immediately.
+        </p>
+        <div className="mt-2 overflow-auto rounded border border-border max-h-[320px]">
+          <table className="w-full text-[11px]">
+            <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+              <tr>
+                {verifiedColumns.map((c) => (
+                  <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
+                ))}
+                <th className="text-right px-2 py-1.5 whitespace-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {verifiedRows.length === 0 ? (
+                <tr><td colSpan={verifiedColumns.length + 1} className="px-2 py-6 text-center text-muted-foreground">
+                  No verified records yet.
+                </td></tr>
+              ) : verifiedRows.map((r) => (
+                <tr key={r.id} className="border-t border-border">
+                  {verifiedColumns.map((c) => (
+                    <td key={c.key} className={cn('px-2 py-1.5', c.className)}>{r.cells[c.key] ?? ''}</td>
+                  ))}
+                  <td className="px-2 py-1.5 whitespace-nowrap text-right">
+                    <Button
+                      size="sm" variant="ghost"
+                      disabled={actingId === r.id}
+                      onClick={() => wrap(r.id, () => onDeactivate(r.id))}
+                      className="h-6 px-2 text-[10px]"
+                    >
+                      Deactivate
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* 7. Audit / history */}
+      <section className="rounded border border-border bg-card p-4">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Audit history
+        </h3>
+        <div className="mt-2 overflow-auto rounded border border-border max-h-[280px]">
+          <table className="w-full text-[11px]">
+            <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+              <tr>
+                <th className="text-left px-2 py-1.5 whitespace-nowrap">When</th>
+                <th className="text-left px-2 py-1.5 whitespace-nowrap">Action</th>
+                <th className="text-left px-2 py-1.5 whitespace-nowrap">Actor</th>
+                <th className="text-left px-2 py-1.5">Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              {auditEntries.length === 0 ? (
+                <tr><td colSpan={4} className="px-2 py-6 text-center text-muted-foreground">No audit events yet.</td></tr>
+              ) : auditEntries.map((a) => (
+                <tr key={a.id} className="border-t border-border align-top">
+                  <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{new Date(a.created_at).toLocaleString()}</td>
+                  <td className="px-2 py-1.5 whitespace-nowrap font-mono">{a.action}</td>
+                  <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">{a.actor_email ?? '—'}</td>
+                  <td className="px-2 py-1.5 text-muted-foreground">
+                    <code className="font-mono text-[10px]">{JSON.stringify(a.details)}</code>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const ValidationStat = ({ label, count, tone, icon }: { label: string; count: number; tone: 'emerald' | 'amber' | 'rose'; icon: ReactNode }) => {
+  const cls = tone === 'emerald'
+    ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700'
+    : tone === 'amber'
+      ? 'border-amber-500/40 bg-amber-500/10 text-amber-700'
+      : 'border-rose-500/40 bg-rose-500/10 text-rose-700';
+  return (
+    <div className={cn('flex items-center justify-between gap-2 rounded border px-2 py-1.5', cls)}>
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium">{icon}{label}</span>
+      <span className="text-sm font-semibold tabular-nums">{count}</span>
+    </div>
+  );
+};
+
+const SeverityBadge = ({ severity }: { severity: ValidationSeverity }) => {
+  const cls = severity === 'error' ? 'bg-rose-500/10 text-rose-700 border-rose-500/40'
+    : severity === 'warning' ? 'bg-amber-500/10 text-amber-700 border-amber-500/40'
+    : 'bg-emerald-500/10 text-emerald-700 border-emerald-500/40';
+  return <span className={cn('inline-block rounded border px-1 py-px text-[9px] font-medium uppercase tracking-wider', cls)}>{severity}</span>;
+};
+
+const ReviewBadge = ({ status }: { status: ReviewStatus }) => {
+  const cls = status === 'approved' ? 'text-emerald-700' : status === 'rejected' ? 'text-rose-700' : 'text-muted-foreground';
+  return <div className={cn('mt-0.5 text-[10px]', cls)}>{status}</div>;
+};
+
+const FilterChip = ({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    className={cn(
+      'rounded border px-1.5 py-0.5 text-[10px] font-medium transition-colors',
+      active
+        ? 'border-[hsl(var(--brand-health))] bg-[hsl(var(--brand-health)/0.08)] text-[hsl(var(--brand-health))]'
+        : 'border-border text-muted-foreground hover:text-foreground',
+    )}
+  >
+    {children}
+  </button>
+);
