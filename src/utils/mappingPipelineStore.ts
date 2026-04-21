@@ -11,7 +11,7 @@ import type {
   AuditLogRow, AuditAction, PipelineKey, ValidationMessage,
 } from '@/types/mappingPipeline';
 import { summarizeSeverity, validateServiceRow, validateBhRow } from './mappingPipelineValidation';
-import { notifyVerifiedRecordsChanged } from '@/hooks/useLiveVerifiedRecords';
+import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 
 type Json = Record<string, unknown>;
 
