@@ -1,50 +1,59 @@
 
 
-## Convert Rural Map Walkthrough to Editable DOCX
+## Admin-only build/version label — final plan
 
-Produce an editable Word version of `rural-map-walkthrough_v2.pdf` so you can add, remove, or reword any text directly. The PDF stays in place; the DOCX is the new editable artifact.
+Approved as previously scoped, with the mobile refinement below.
 
-### Approach
+### Files
 
-Generate `/mnt/documents/rural-map-walkthrough_v2.docx` from scratch using `docx-js`, mirroring the existing PDF's structure 1:1. This produces clean, fully editable Word content (real paragraphs, headings, tables, lists) rather than a converted PDF — which would be locked into text boxes and broken layout.
+**1. `vite.config.ts`** — bake build metadata at build time:
+```ts
+define: {
+  __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? ''),
+}
+```
 
-Screenshots already captured in `/tmp/walkthrough/` are reused and embedded inline.
+**2. `src/vite-env.d.ts`** — declare globals:
+```ts
+declare const __APP_BUILD_TIME__: string;
+declare const __APP_VERSION__: string;
+```
 
-### Document structure (matches v2 PDF)
+**3. `src/components/AdminVersionBadge.tsx`** (new)
+- `usePermissions()` → if `!isAdmin` return `null` (no DOM node).
+- Format: `v{version} • {YYYY-MM-DD}` if version set, else `build {YYYY-MM-DD}`.
+- Styling: `text-[10px] text-muted-foreground tabular-nums leading-none`.
+- Accept optional `className` prop so each placement controls its own layout.
 
-1. Cover page — title, subtitle, audience line
-2. Table of contents
-3. **10 walkthrough sections**, each with:
-   - Heading 1 title
-   - 2–4 sentence narrative paragraph
-   - Embedded screenshot (sized to fit content width, preserves aspect)
-   - "Operational meaning" bullet list
-   - "Plan/contract meaning" bullet list
-   - Plain-language summary line (italic)
-4. **4 comparison pair pages** (Member presence, Verification trust, CHW ownership, County access) — two screenshots side-by-side in a 2-column table, shared caption row underneath
-5. **Q&A appendix** — 10 categories, 47 questions; each as Heading 2 (question) + body paragraph (answer)
+**4. `src/components/map/Sidebar.tsx`** (desktop)
+- Insert `<AdminVersionBadge className="mt-1 block text-center" />` directly under the title/description in the existing logo header block. Single line of 10px text inside an already-centered flex column — no layout shift.
 
-### Formatting
+**5. `src/pages/Index.tsx`** (mobile header refinement)
+- Mobile bar today: left = title block, right = Filters/Map button.
+- Place the badge **inside the left title block**, on its own line under the "Nevada Behavioral Health" subtitle — NOT in the right-side cluster next to the button.
+- Class: `hidden xs:block` is not needed; instead use `truncate max-w-[55vw]` on the wrapper and `text-[9px]` on mobile to guarantee it cannot push the Filters/Map button.
+- Filters/Map button keeps its current `p-2` tap target and right-edge alignment. Badge wraps/truncates within the title column if space is tight; it never sits on the same row as the button.
+- For non-admins the component returns `null`, so zero footprint.
 
-- US Letter, 1" margins
-- Arial throughout (default), black headings
-- H1 24pt bold, H2 16pt bold, body 11pt
-- Bullets via `LevelFormat.BULLET` (no unicode bullets)
-- Tables use `WidthType.DXA` with matched `columnWidths` and cell widths
-- Page breaks between sections via `PageBreak` inside a paragraph
-- Comparison images sized to ~4.3" wide each so a pair fits one row
+### Gating guarantees
 
-### QA (mandatory)
+- `isAdmin` from `usePermissions()` (server-derived via `current_user_role()` against `user_roles`).
+- Component early-returns `null` before rendering any element — not hidden via CSS, not in DOM.
+- During auth-loading window, `isAdmin === false`, so no flash for non-admins.
 
-1. Convert DOCX → PDF via LibreOffice
-2. `pdftoppm -jpeg -r 150` → inspect every page with `code--view`
-3. Check for: clipped images, broken pair alignment, wrong screenshot under wrong caption, overflow into Q&A pages, font fallback boxes
-4. Fix and re-render until clean. Report what was checked and any issues found.
+### Validation after build
+
+1. Admin desktop → badge visible in sidebar title block, centered, subtle.
+2. Admin mobile (≤768px) → badge appears under "Nevada Behavioral Health" subtitle in the left column; Filters/Map button position and tap area unchanged.
+3. Staff/viewer/logged-out → inspect DOM, confirm no version node anywhere.
+4. Resize sweep (320, 375, 414, 768, 1024, 1302) → Filters/Map button stays right-aligned and fully tappable at every width.
+5. `VITE_APP_VERSION` unset → renders `build YYYY-MM-DD`; set → renders `v{x} • YYYY-MM-DD`.
 
 ### Out of scope
 
-- No content changes (same titles, narratives, bullets, Q&A as v2 PDF)
-- No new screenshots — reuses `/tmp/walkthrough/*.png`
-- v2 PDF left in place; DOCX is additive (`rural-map-walkthrough_v2.docx`)
-- No changes to app code or Presentation Mode
+- No new dependencies.
+- No git hash injection.
+- No tooltip, no interaction.
+- No changes to map, sidebar logic, or auth.
 
