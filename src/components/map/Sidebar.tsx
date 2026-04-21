@@ -678,18 +678,20 @@ const Sidebar = ({
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Search by facility, city, county, or enter a member address.
         </p>
-        <AdminVersionBadge className="mt-1 block text-center" />
 
         {/* Auth + admin row */}
-        <div className="mt-2 flex w-full flex-col items-start gap-y-1 text-[10.5px] leading-none">
+        <div className="mt-2 flex w-full flex-col items-center gap-y-1 text-[10.5px] leading-none">
           {!authReady ? null : isAdmin ? (
-            <span
-              className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary"
-              title={user?.email ?? 'Admin'}
-            >
-              <span className="h-1 w-1 rounded-full bg-primary" />
-              Admin
-            </span>
+            <div className="flex items-center justify-center gap-2">
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary"
+                title={user?.email ?? 'Admin'}
+              >
+                <span className="h-1 w-1 rounded-full bg-primary" />
+                Admin
+              </span>
+              <AdminVersionBadge />
+            </div>
           ) : null}
       {authReady && (isAdmin || isAuthenticated) ? (
             <div className="mt-1.5 flex w-full items-center justify-center gap-2 whitespace-nowrap text-muted-foreground/70">
