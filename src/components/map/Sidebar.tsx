@@ -649,7 +649,7 @@ const Sidebar = ({
         >
           {renderLayerIcon(icon, iconClassName, !checked)}
           <span className="min-w-0 flex-1">
-            <span className={`block text-[11.5px] leading-snug ${checked ? 'text-foreground/85 font-medium' : 'text-foreground/55'}`}>{label}</span>
+            <span className={`block text-[11.5px] leading-snug font-medium ${checked ? 'text-foreground/85' : 'text-foreground/55'}`}>{label}</span>
             {subtitle && <span className="block text-[10px] leading-tight text-muted-foreground mt-0.5">{subtitle}</span>}
           </span>
         </button>
