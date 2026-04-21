@@ -36,11 +36,11 @@ interface ToolCardProps {
 const ToolCard = ({ to, title, description, icon, status }: ToolCardProps) => (
   <Link
     to={to}
-    className="group relative flex items-start gap-3 rounded border border-border bg-card p-4 pr-20 transition-colors hover:border-[hsl(var(--brand-health)/0.5)]"
+    className="group relative flex items-start gap-3 rounded border border-border bg-card p-4 pr-24 transition-colors hover:border-[hsl(var(--brand-health)/0.5)]"
   >
     {status ? (
       <span
-        className={`absolute top-2 right-2 rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider ${STATUS_CLASS[status]}`}
+        className={`absolute top-3 right-3 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${STATUS_CLASS[status]}`}
       >
         {STATUS_LABEL[status]}
       </span>
