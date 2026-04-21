@@ -285,6 +285,16 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                   <td className="px-2 py-1.5 whitespace-nowrap text-right">
                     {r.review_status === 'pending' && (
                       <div className="inline-flex items-center gap-1">
+                        {onEditStaging ? (
+                          <Button
+                            size="sm" variant="ghost"
+                            disabled={actingId === r.id}
+                            onClick={() => onEditStaging(r.id)}
+                            className="h-6 px-2 text-[10px]"
+                          >
+                            Edit
+                          </Button>
+                        ) : null}
                         <Button
                           size="sm" variant="outline"
                           disabled={actingId === r.id || r.validation_severity === 'error'}
