@@ -9,51 +9,24 @@
  *
  * Refresh model:
  *   - Initial fetch on mount.
- *   - Same-tab: subscribed to `verified-records-changed` window event so
- *     promote/reject/deactivate/edit actions trigger an immediate refetch.
- *   - Cross-tab (same browser/profile): subscribed to a BroadcastChannel
- *     of the same name so admin actions in another tab also refresh this
- *     tab's map without a reload. Cross-browser / cross-user / cross-device
- *     sync is NOT supported — that requires a Realtime subscription.
+ *   - Same-tab + cross-tab via verifiedRecordsBus.
  *
- * Failure surface:
- *   - Fetch errors no longer fail silently. The hook exposes `error` and
- *     fires a single sonner toast per failure. The map keeps rendering
- *     the static dataset.
+ * Failure surface: throttled sonner toast + `error` state. Existing records
+ * are preserved on failure so the static dataset keeps rendering.
+ *
+ * Notify/subscribe helpers live in `@/utils/verifiedRecordsBus` so this file
+ * exports only the hook (Fast Refresh boundary stays clean).
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { listVerifiedServices, listVerifiedBh } from '@/utils/mappingPipelineStore';
+import { subscribeVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { RuralService, RuralServiceCategory } from '@/data/rural-services';
 
-export const VERIFIED_RECORDS_CHANGED_EVENT = 'verified-records-changed';
-const BROADCAST_CHANNEL_NAME = 'verified-records-changed';
+// Re-export for backward compatibility with existing import sites.
+export { VERIFIED_RECORDS_CHANGED_EVENT, notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 
-/** Lazy-singleton BroadcastChannel so multiple hook instances share one channel. */
-let sharedChannel: BroadcastChannel | null = null;
-const getChannel = (): BroadcastChannel | null => {
-  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return null;
-  if (!sharedChannel) sharedChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-  return sharedChannel;
-};
-
-/**
- * Notify all live-map consumers to refetch from Cloud.
- * - Dispatches a same-tab window event (legacy listeners).
- * - Posts to a BroadcastChannel for cross-tab consumers in the same browser.
- */
-export const notifyVerifiedRecordsChanged = (): void => {
-  if (typeof window === 'undefined') return;
-  window.dispatchEvent(new CustomEvent(VERIFIED_RECORDS_CHANGED_EVENT));
-  try { getChannel()?.postMessage({ type: 'changed', at: Date.now() }); } catch { /* noop */ }
-};
-
-/**
- * Service category mapping. `'Mental Health'` and `'Substance Use'` are the
- * two categories recognized by `isBehavioralHealthService` — verified BH rows
- * are forced into one of these so they render with BH (purple) styling.
- */
 const mapServiceCategory = (raw: string | null): RuralServiceCategory => {
   if (!raw) return 'Family Services';
   const lc = raw.toLowerCase();
@@ -73,10 +46,6 @@ const mapServiceCategory = (raw: string | null): RuralServiceCategory => {
   return 'Family Services';
 };
 
-/**
- * BH-specific category derivation. Always returns 'Mental Health' or
- * 'Substance Use', both of which classify as Behavioral Health entities.
- */
 const mapBhCategory = (entityType: string | null, serviceType: string | null): RuralServiceCategory => {
   const t = `${entityType ?? ''} ${serviceType ?? ''}`.toLowerCase();
   if (t.includes('sud') || t.includes('substance') || t.includes('detox') || t.includes('mat')) return 'Substance Use';
@@ -142,17 +111,13 @@ export const useLiveVerifiedRecords = (): {
         setRecords(out);
         setError(null);
       } catch (e) {
-        // Surface — keep static dataset intact (records left as-is) but flag failure.
+        if (cancelled) return;
         const msg = (e as Error)?.message ?? 'Unknown error';
         setError(`Live verified records unavailable: ${msg}`);
-        // Throttle toast to once per 30s to avoid spam from repeated refetch storms.
         const now = Date.now();
         if (now - lastToastAtRef.current > 30_000) {
           lastToastAtRef.current = now;
-          toast.error('Live verified records unavailable', {
-            description: msg,
-            duration: 6000,
-          });
+          toast.error('Live verified records unavailable', { description: msg, duration: 6000 });
         }
       } finally {
         if (!cancelled) setReady(true);
@@ -161,22 +126,8 @@ export const useLiveVerifiedRecords = (): {
     return () => { cancelled = true; };
   }, [tick]);
 
-  // Same-tab refresh signal.
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const handler = () => refetch();
-    window.addEventListener(VERIFIED_RECORDS_CHANGED_EVENT, handler);
-    return () => window.removeEventListener(VERIFIED_RECORDS_CHANGED_EVENT, handler);
-  }, [refetch]);
-
-  // Cross-tab refresh signal (same browser/profile) via BroadcastChannel.
-  useEffect(() => {
-    const ch = getChannel();
-    if (!ch) return;
-    const handler = (_ev: MessageEvent) => refetch();
-    ch.addEventListener('message', handler);
-    return () => ch.removeEventListener('message', handler);
-  }, [refetch]);
+  // Same-tab + cross-tab refresh signal (single subscription).
+  useEffect(() => subscribeVerifiedRecordsChanged(refetch), [refetch]);
 
   return { records, ready, error, refetch };
 };
