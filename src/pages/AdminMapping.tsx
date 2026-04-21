@@ -36,17 +36,19 @@ interface ToolCardProps {
 const ToolCard = ({ to, title, description, icon, status }: ToolCardProps) => (
   <Link
     to={to}
-    className="group flex items-start gap-3 rounded border border-border bg-card p-4 transition-colors hover:border-[hsl(var(--brand-health)/0.5)]"
+    className="group relative flex items-start gap-3 rounded border border-border bg-card p-4 pr-20 transition-colors hover:border-[hsl(var(--brand-health)/0.5)]"
   >
+    {status ? (
+      <span
+        className={`absolute top-2 right-2 rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider ${STATUS_CLASS[status]}`}
+      >
+        {STATUS_LABEL[status]}
+      </span>
+    ) : null}
     <div className="mt-0.5 text-muted-foreground group-hover:text-[hsl(var(--brand-health))]">{icon}</div>
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1.5 font-medium text-sm">
         <span>{title}</span>
-        {status ? (
-          <span className={`rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider ${STATUS_CLASS[status]}`}>
-            {STATUS_LABEL[status]}
-          </span>
-        ) : null}
         <ArrowRight className="h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
       </div>
       <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
