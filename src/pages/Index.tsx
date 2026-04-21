@@ -149,6 +149,7 @@ const Index = () => {
           selectedCounty={selection.selectedCounty}
           onFteHubClick={selection.actions.handleFteHubClick}
           selectedFteId={selection.activeFteId}
+          selectedTransitProviderId={selection.lockedEntity?.type === 'localTransitProvider' ? selection.lockedEntity.provider.id : null}
           activeFteCoverageIds={selection.activeFteCoverageIds}
           coverageRadiusKm={layers.coverageRadiusKm}
           topProvidersOnly={filters.topProvidersOnly}
