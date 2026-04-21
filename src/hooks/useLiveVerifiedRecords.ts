@@ -9,21 +9,44 @@
  *
  * Refresh model:
  *   - Initial fetch on mount.
- *   - Subscribed to `verified-records-changed` window event so promote/reject/
- *     deactivate/edit actions trigger an immediate refetch with no full reload.
+ *   - Same-tab: subscribed to `verified-records-changed` window event so
+ *     promote/reject/deactivate/edit actions trigger an immediate refetch.
+ *   - Cross-tab (same browser/profile): subscribed to a BroadcastChannel
+ *     of the same name so admin actions in another tab also refresh this
+ *     tab's map without a reload. Cross-browser / cross-user / cross-device
+ *     sync is NOT supported — that requires a Realtime subscription.
+ *
+ * Failure surface:
+ *   - Fetch errors no longer fail silently. The hook exposes `error` and
+ *     fires a single sonner toast per failure. The map keeps rendering
+ *     the static dataset.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { listVerifiedServices, listVerifiedBh } from '@/utils/mappingPipelineStore';
 import type { RuralService, RuralServiceCategory } from '@/data/rural-services';
 
 export const VERIFIED_RECORDS_CHANGED_EVENT = 'verified-records-changed';
+const BROADCAST_CHANNEL_NAME = 'verified-records-changed';
 
-/** Notify all live-map consumers to refetch from Cloud. */
+/** Lazy-singleton BroadcastChannel so multiple hook instances share one channel. */
+let sharedChannel: BroadcastChannel | null = null;
+const getChannel = (): BroadcastChannel | null => {
+  if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return null;
+  if (!sharedChannel) sharedChannel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+  return sharedChannel;
+};
+
+/**
+ * Notify all live-map consumers to refetch from Cloud.
+ * - Dispatches a same-tab window event (legacy listeners).
+ * - Posts to a BroadcastChannel for cross-tab consumers in the same browser.
+ */
 export const notifyVerifiedRecordsChanged = (): void => {
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(new CustomEvent(VERIFIED_RECORDS_CHANGED_EVENT));
-  }
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(VERIFIED_RECORDS_CHANGED_EVENT));
+  try { getChannel()?.postMessage({ type: 'changed', at: Date.now() }); } catch { /* noop */ }
 };
 
 /**
@@ -63,10 +86,17 @@ const mapBhCategory = (entityType: string | null, serviceType: string | null): R
 const isPlaceable = (lat: number | null, lng: number | null): boolean =>
   lat != null && lng != null && Number.isFinite(lat) && Number.isFinite(lng);
 
-export const useLiveVerifiedRecords = (): { records: RuralService[]; ready: boolean; refetch: () => void } => {
+export const useLiveVerifiedRecords = (): {
+  records: RuralService[];
+  ready: boolean;
+  error: string | null;
+  refetch: () => void;
+} => {
   const [records, setRecords] = useState<RuralService[]>([]);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const lastToastAtRef = useRef<number>(0);
 
   const refetch = useCallback(() => setTick((n) => n + 1), []);
 
@@ -110,8 +140,20 @@ export const useLiveVerifiedRecords = (): { records: RuralService[]; ready: bool
           });
         });
         setRecords(out);
-      } catch {
-        // silent — static dataset still renders
+        setError(null);
+      } catch (e) {
+        // Surface — keep static dataset intact (records left as-is) but flag failure.
+        const msg = (e as Error)?.message ?? 'Unknown error';
+        setError(`Live verified records unavailable: ${msg}`);
+        // Throttle toast to once per 30s to avoid spam from repeated refetch storms.
+        const now = Date.now();
+        if (now - lastToastAtRef.current > 30_000) {
+          lastToastAtRef.current = now;
+          toast.error('Live verified records unavailable', {
+            description: msg,
+            duration: 6000,
+          });
+        }
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -119,7 +161,7 @@ export const useLiveVerifiedRecords = (): { records: RuralService[]; ready: bool
     return () => { cancelled = true; };
   }, [tick]);
 
-  // Subscribe to global change events so promote/edit/deactivate refresh the map.
+  // Same-tab refresh signal.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = () => refetch();
@@ -127,5 +169,14 @@ export const useLiveVerifiedRecords = (): { records: RuralService[]; ready: bool
     return () => window.removeEventListener(VERIFIED_RECORDS_CHANGED_EVENT, handler);
   }, [refetch]);
 
-  return { records, ready, refetch };
+  // Cross-tab refresh signal (same browser/profile) via BroadcastChannel.
+  useEffect(() => {
+    const ch = getChannel();
+    if (!ch) return;
+    const handler = (_ev: MessageEvent) => refetch();
+    ch.addEventListener('message', handler);
+    return () => ch.removeEventListener('message', handler);
+  }, [refetch]);
+
+  return { records, ready, error, refetch };
 };
