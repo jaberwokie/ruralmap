@@ -33,6 +33,7 @@ import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
 import CHWNotesSection from '@/components/map/CHWNotesSection';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
+import { getMobilityManagersForCounty } from '@/data/mobility-managers';
 import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
@@ -1438,7 +1439,6 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void }) => {
   const t = useUtilizationToggles();
-  const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
@@ -1450,6 +1450,19 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
   const hasFte = serving.length > 0;
   const hasLocalResources = (COUNTY_SERVICE_COUNT.get(county) ?? 0) > 0;
+
+  // Auto-expand Transportation Coordination when transportation is a likely
+  // limiting factor: strained / remote-only response, OR sparse local resources.
+  // Reuses existing classification + service counts — no new logic system.
+  const transportationAutoExpand =
+    responseClass.level === 'strained' ||
+    responseClass.level === 'noSameDay' ||
+    responseClass.level === 'singleThreaded' ||
+    countyServiceCount < 5;
+
+  const defaultOpen = ['memberVolume'];
+  if (transportationAutoExpand) defaultOpen.push('transportation');
+  const { isOpen, toggle } = useAccordion(defaultOpen);
 
   return (
     <>
@@ -1842,7 +1855,20 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       })()}
       <CountyUtilizationSection county={county} enabled={t.countyUtilization} />
       <TribalUtilizationSection county={county} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
-      <TransportationCoordinationSection county={county} />
+      {getMobilityManagersForCounty(county).length > 0 && (
+        <DetailSection
+          title="Transportation Coordination"
+          isOpen={isOpen('transportation')}
+          onToggle={() => toggle('transportation')}
+        >
+          {transportationAutoExpand && (
+            <p className="mb-1.5 text-[10px] text-muted-foreground italic leading-snug">
+              Transportation coordination active for this region.
+            </p>
+          )}
+          <TransportationCoordinationSection county={county} />
+        </DetailSection>
+      )}
     </>
   );
 };
@@ -1872,8 +1898,10 @@ const DetailSection = ({ title, isOpen, onToggle, children, count }: { title: st
 };
 
 /** Hook for independent multi-open section state */
-const useAccordion = (defaultSection: string) => {
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set([defaultSection]));
+const useAccordion = (defaultSection: string | string[]) => {
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(Array.isArray(defaultSection) ? defaultSection : [defaultSection])
+  );
   const toggle = useCallback((section: string) => {
     setOpenSections(prev => {
       const next = new Set(prev);
