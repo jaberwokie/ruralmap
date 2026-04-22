@@ -1,9 +1,22 @@
 /**
- * CSV intake utilities for Service + BH pipelines.
- * Lightweight RFC-4180 parser (handles quoted cells, embedded commas, CRLF).
+ * CSV + XLSX intake utilities for Service + BH pipelines.
+ *
+ * For services: row mapping is driven by the resolver output
+ * (`HeaderResolutionResult`) — the resolver is the single source of truth for
+ * which source columns map to which canonical fields.
+ *
+ * BH path remains alias-driven (legacy default Services upload still works
+ * because `csvToStagingService` falls back to a built-in alias map when no
+ * resolver result is supplied).
  */
 
-import type { StagingServiceRow, StagingBhRow } from '@/types/mappingPipeline';
+import * as XLSX from 'xlsx';
+import type { StagingServiceRow, StagingBhRow, ValidationMessage } from '@/types/mappingPipeline';
+import type { HeaderResolutionResult, CanonicalField } from './serviceHeaderResolver';
+import { resolveHeaders } from './serviceHeaderResolver';
+import {
+  normalizeTags, normalizeCategory, controlledAppend, isNoisePhrase,
+} from './serviceNormalize';
 
 export interface ParsedCsv {
   headers: string[];
@@ -45,6 +58,27 @@ const parseCsvText = (text: string): ParsedCsv => {
   return { headers, rows: dataRows };
 };
 
+/** Parse an .xlsx file (first sheet) into the same shape as `parseCsvText`. */
+export const parseXlsxBuffer = (buffer: ArrayBuffer): ParsedCsv => {
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const sheetName = wb.SheetNames[0];
+  if (!sheetName) return { headers: [], rows: [] };
+  const ws = wb.Sheets[sheetName];
+  const aoa = XLSX.utils.sheet_to_json<unknown[]>(ws, { header: 1, raw: false, defval: '' });
+  if (aoa.length === 0) return { headers: [], rows: [] };
+  const headers = (aoa[0] as unknown[]).map((h) => String(h ?? '').trim());
+  const dataRows = aoa.slice(1)
+    .filter((r) => (r as unknown[]).some((c) => String(c ?? '').trim().length > 0))
+    .map((r) => {
+      const obj: Record<string, string> = {};
+      headers.forEach((h, idx) => {
+        obj[h] = String((r as unknown[])[idx] ?? '').trim();
+      });
+      return obj;
+    });
+  return { headers, rows: dataRows };
+};
+
 const toNum = (v: string | undefined): number | null => {
   if (v == null || v === '') return null;
   const n = Number(v);
@@ -62,11 +96,13 @@ const toBool = (v: string | undefined): boolean | null => {
 const nullable = (v: string | undefined): string | null => {
   if (v == null) return null;
   const t = v.trim();
-  return t.length === 0 ? null : t;
+  if (t.length === 0 || isNoisePhrase(t)) return null;
+  return t;
 };
 
-// ── service mapping ────────────────────────────────────────────
-export const csvToStagingService = (
+// ── service mapping (legacy default path — no resolver provided) ──────
+// Used by the existing default Services CSV upload flow.
+const csvToStagingServiceLegacy = (
   raw: Record<string, string>,
   meta: { source_file_name: string; source_row_number: number; import_batch_id: string },
 ): Partial<StagingServiceRow> => ({
@@ -100,7 +136,164 @@ export const csvToStagingService = (
   source_file_name: meta.source_file_name,
   source_row_number: meta.source_row_number,
   import_batch_id: meta.import_batch_id,
+  resource_class: 'service',
+  mappable: true,
+  match_conflict: false,
 });
+
+/**
+ * Read a single canonical field from a raw row using the resolver's
+ * inverse map (`primarySources`).
+ */
+const readField = (
+  raw: Record<string, string>,
+  primary: Partial<Record<CanonicalField, string>>,
+  field: CanonicalField,
+): string | undefined => {
+  const src = primary[field];
+  if (!src) return undefined;
+  return raw[src];
+};
+
+/**
+ * Read all source values for a canonical field — primary first, then any
+ * append-only secondary sources defined in the resolver.
+ */
+const readFieldAll = (
+  raw: Record<string, string>,
+  resolver: HeaderResolutionResult,
+  field: CanonicalField,
+): string[] => {
+  const out: string[] = [];
+  const p = resolver.primarySources[field];
+  if (p && raw[p] != null) out.push(raw[p]);
+  const secs = resolver.duplicateAppendSources[field] ?? [];
+  for (const s of secs) {
+    if (raw[s] != null) out.push(raw[s]);
+  }
+  return out.filter((v) => v != null && String(v).trim().length > 0);
+};
+
+/**
+ * Resolver-driven service row mapper (Nye ingestion v5 path).
+ */
+const csvToStagingServiceResolved = (
+  raw: Record<string, string>,
+  meta: { source_file_name: string; source_row_number: number; import_batch_id: string },
+  resolver: HeaderResolutionResult,
+): Partial<StagingServiceRow> => {
+  const primary = resolver.primarySources;
+
+  // Identity / location / contact (single primary only)
+  const name = nullable(readField(raw, primary, 'name')) ?? '';
+  const street_address = nullable(readField(raw, primary, 'address'));
+  const city = nullable(readField(raw, primary, 'city'));
+  const state = nullable(readField(raw, primary, 'state'));
+  const zip = nullable(readField(raw, primary, 'zip'));
+  const county = nullable(readField(raw, primary, 'county'));
+  const phone = nullable(readField(raw, primary, 'phone'));
+  const email = nullable(readField(raw, primary, 'email'));
+  const website = nullable(readField(raw, primary, 'website'));
+  const latitude = toNum(readField(raw, primary, 'latitude'));
+  const longitude = toNum(readField(raw, primary, 'longitude'));
+
+  // Safe-duplicate fields: primary is base, secondaries are appended
+  const descSources = readFieldAll(raw, resolver, 'services_offered');
+  let description: string | null = nullable(descSources[0]) ?? null;
+  for (let i = 1; i < descSources.length; i++) {
+    description = controlledAppend(description, descSources[i]);
+  }
+
+  const notesSources = readFieldAll(raw, resolver, 'access_notes');
+  let access_notes: string | null = nullable(notesSources[0]) ?? null;
+  for (let i = 1; i < notesSources.length; i++) {
+    access_notes = controlledAppend(access_notes, notesSources[i]);
+  }
+
+  const tagSources = readFieldAll(raw, resolver, 'service_tags');
+  let service_tags: string | null = normalizeTags(tagSources[0] ?? null);
+  for (let i = 1; i < tagSources.length; i++) {
+    const next = normalizeTags(tagSources[i]);
+    service_tags = controlledAppend(service_tags, next);
+    service_tags = normalizeTags(service_tags); // re-dedupe
+  }
+
+  // Category resolution: explicit category → subcategory → tags hint
+  const rawCategory =
+    nullable(readField(raw, primary, 'category')) ??
+    nullable(readField(raw, primary, 'subcategory'));
+  let service_category = normalizeCategory(rawCategory) ?? rawCategory ?? null;
+
+  // Resource class + government default
+  const resource_class_raw = nullable(readField(raw, primary, 'resource_class'));
+  const resource_class = (resource_class_raw ?? 'service').toLowerCase();
+  if (resource_class === 'government') {
+    if (!service_category || service_category === 'unknown' || service_category === 'other') {
+      service_category = 'public_service';
+      service_tags = controlledAppend(service_tags, 'public_service');
+      service_tags = normalizeTags(service_tags);
+    }
+  }
+
+  // Mappable flag — explicit value, default true
+  const mappableRaw = readField(raw, primary, 'mappable');
+  let mappable = toBool(mappableRaw) ?? true;
+
+  // Minimum usability rule
+  const validation_messages: ValidationMessage[] = [];
+  const hasLocation = !!(county || city || street_address);
+  const hasContact = !!(phone || website);
+  if (!hasLocation && !hasContact) {
+    mappable = false;
+    validation_messages.push({
+      severity: 'warning',
+      field: 'name',
+      message: 'Insufficient operational data — no usable location or contact information.',
+    });
+  }
+
+  return {
+    name,
+    service_category,
+    service_subcategory: nullable(readField(raw, primary, 'subcategory')),
+    description,
+    street_address,
+    city,
+    state,
+    zip,
+    county,
+    latitude,
+    longitude,
+    phone,
+    email,
+    website,
+    access_notes,
+    service_tags,
+    resource_class,
+    mappable,
+    match_conflict: false,
+    active_status: true,
+    source_file_name: meta.source_file_name,
+    source_row_number: meta.source_row_number,
+    import_batch_id: meta.import_batch_id,
+    // Carry per-row warnings through the validator (it merges, not replaces)
+    validation_messages,
+  };
+};
+
+/**
+ * Public entry. If a resolver result is supplied (Nye v5 path), use it;
+ * otherwise fall back to the legacy alias-based mapping for the default
+ * Services CSV flow.
+ */
+export const csvToStagingService = (
+  raw: Record<string, string>,
+  meta: { source_file_name: string; source_row_number: number; import_batch_id: string },
+  resolver?: HeaderResolutionResult,
+): Partial<StagingServiceRow> => {
+  if (resolver) return csvToStagingServiceResolved(raw, meta, resolver);
+  return csvToStagingServiceLegacy(raw, meta);
+};
 
 // ── behavioral health ──────────────────────────────────────────
 export const csvToStagingBh = (
@@ -150,4 +343,4 @@ export const csvToStagingBh = (
   import_batch_id: meta.import_batch_id,
 });
 
-export { parseCsvText };
+export { parseCsvText, resolveHeaders };

@@ -40,7 +40,11 @@ export const summarizeSeverity = (messages: ValidationMessage[]): ValidationSeve
 };
 
 export const validateServiceRow = (row: Partial<StagingServiceRow>): ValidationMessage[] => {
-  const out: ValidationMessage[] = [];
+  // Preserve any pre-attached row-level warnings (e.g. minimum-usability flag
+  // emitted by csvToStagingServiceResolved) so they survive the validator.
+  const out: ValidationMessage[] = Array.isArray(row.validation_messages)
+    ? [...row.validation_messages]
+    : [];
 
   if (!row.name || row.name.trim().length === 0) {
     out.push({ field: 'name', severity: 'error', message: 'Name is required.' });

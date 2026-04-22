@@ -53,11 +53,16 @@ export interface StagingServiceRow {
   source_file_name: string | null;
   source_row_number: number | null;
   import_batch_id: string | null;
+  // Nye ingestion v5 additions
+  service_tags: string | null;
+  resource_class: string;
+  mappable: boolean;
+  match_conflict: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export interface VerifiedServiceRow extends Omit<StagingServiceRow, 'review_status' | 'validation_severity' | 'validation_messages'> {
+export interface VerifiedServiceRow extends Omit<StagingServiceRow, 'review_status' | 'validation_severity' | 'validation_messages' | 'match_conflict'> {
   staging_id: string | null;
   promoted_at: string;
   promoted_by: string | null;
@@ -127,6 +132,7 @@ export type AuditAction =
   | 'upload_started'
   | 'upload_completed'
   | 'validation_completed'
+  | 'header_resolution'
   | 'record_promoted'
   | 'record_rejected'
   | 'record_edited'

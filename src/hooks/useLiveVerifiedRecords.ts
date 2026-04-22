@@ -77,6 +77,8 @@ export const useLiveVerifiedRecords = (): {
         const out: RuralService[] = [];
         services.forEach((s) => {
           if (!s.active_status || !isPlaceable(s.latitude, s.longitude)) return;
+          // Nye v5: respect explicit mappable=false (list-only references)
+          if ((s as { mappable?: boolean }).mappable === false) return;
           out.push({
             id: `verified-svc-${s.id}`,
             name: s.name,

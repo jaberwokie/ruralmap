@@ -2,21 +2,29 @@
  * Admin > Mapping > Service Mapping
  *
  * Active operational pipeline for non-clinical / community resource locations.
- * Upload → staging → validation → review → promote → live on Services map layer.
+ * Two upload modes:
+ *   - Default (CSV): legacy alias-driven mapper; one row → one staging insert.
+ *   - Nye Mode (CSV or XLSX): pre-stage header resolution gate, then
+ *     controlled upsert into staging with conflict flagging.
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace, { type StagingTableColumn } from '@/components/admin/PipelineWorkspace';
 import EditRecordDialog, { type EditableField } from '@/components/admin/EditRecordDialog';
+import { Button } from '@/components/ui/button';
 import { SERVICE_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
   promoteStagingService, rejectStagingService, deactivateVerifiedService,
-  editServiceRecord,
+  editServiceRecord, upsertStagingServicesControlled, writeHeaderResolutionAudit,
 } from '@/utils/mappingPipelineStore';
-import { parseCsvText, csvToStagingService } from '@/utils/mappingPipelineCsv';
+import {
+  parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
+} from '@/utils/mappingPipelineCsv';
+import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 
 const SCHEMA_SECTIONS = [
@@ -25,14 +33,14 @@ const SCHEMA_SECTIONS = [
     fields: [
       { name: 'name', required: true }, { name: 'service_category' }, { name: 'service_subcategory' },
       { name: 'organization_name' }, { name: 'description' }, { name: 'target_population' },
-      { name: 'eligibility_notes' },
+      { name: 'eligibility_notes' }, { name: 'service_tags' }, { name: 'resource_class' },
     ],
   },
   {
     heading: 'Location',
     fields: [
       { name: 'street_address' }, { name: 'city' }, { name: 'state' }, { name: 'zip' },
-      { name: 'county' }, { name: 'latitude' }, { name: 'longitude' },
+      { name: 'county' }, { name: 'latitude' }, { name: 'longitude' }, { name: 'mappable' },
     ],
   },
   {
@@ -60,6 +68,8 @@ const VALIDATION_RULES = [
   'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
   'ZIP must be 5 digits or ZIP+4.',
   'Records remain in staging until manually promoted by an admin.',
+  'Nye Mode: headers resolved via alias map; identity duplicates abort import.',
+  'Nye Mode: rows without location AND contact data are kept but marked non-mappable.',
 ];
 
 const STAGING_COLS: StagingTableColumn[] = [
@@ -69,6 +79,7 @@ const STAGING_COLS: StagingTableColumn[] = [
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
   { key: 'coords', label: 'Coords' },
+  { key: 'flags', label: 'Flags' },
   { key: 'source', label: 'Source' },
 ];
 
@@ -95,12 +106,21 @@ const EDITABLE_FIELDS: EditableField[] = [
   { key: 'phone', label: 'Phone' },
   { key: 'website', label: 'Website' },
   { key: 'access_notes', label: 'Access notes', type: 'textarea' },
+  { key: 'service_tags', label: 'Service tags' },
+  { key: 'resource_class', label: 'Resource class' },
 ];
 
 type EditTarget =
   | { scope: 'staging_services'; row: StagingServiceRow }
   | { scope: 'verified_services'; row: VerifiedServiceRow }
   | null;
+
+interface PendingNyeImport {
+  fileName: string;
+  importBatchId: string;
+  resolver: HeaderResolutionResult;
+  rows: Record<string, string>[];
+}
 
 export default function AdminMappingServices() {
   const [staging, setStaging] = useState<StagingServiceRow[]>([]);
@@ -109,6 +129,8 @@ export default function AdminMappingServices() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget>(null);
+  const [nyeMode, setNyeMode] = useState(true);
+  const [pendingNye, setPendingNye] = useState<PendingNyeImport | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -129,15 +151,54 @@ export default function AdminMappingServices() {
   const handleUpload = async (file: File) => {
     setUploading(true);
     try {
-      const text = await file.text();
-      const { rows } = parseCsvText(text);
-      if (rows.length === 0) { toast.error('CSV had no data rows.'); return; }
+      const isXlsx = /\.xlsx?$/i.test(file.name);
+      let headers: string[] = [];
+      let rows: Record<string, string>[] = [];
+
+      if (isXlsx) {
+        const buf = await file.arrayBuffer();
+        const parsed = parseXlsxBuffer(buf);
+        headers = parsed.headers; rows = parsed.rows;
+      } else {
+        const text = await file.text();
+        const parsed = parseCsvText(text);
+        headers = parsed.headers; rows = parsed.rows;
+      }
+
+      if (rows.length === 0) { toast.error('File had no data rows.'); return; }
       const importBatchId = crypto.randomUUID();
+
+      if (!nyeMode) {
+        // Legacy default path
+        const prepared = rows.map((r, idx) => csvToStagingService(r, {
+          source_file_name: file.name, source_row_number: idx + 2, import_batch_id: importBatchId,
+        }));
+        const res = await insertStagingServices(prepared, { fileName: file.name, importBatchId });
+        toast.success(`Inserted ${res.inserted} (${res.errors} errors, ${res.warnings} warnings)`);
+        await refresh();
+        return;
+      }
+
+      // Nye v5 path: resolve headers, audit, then either block or stage.
+      const resolver = resolveHeaders(headers);
+      await writeHeaderResolutionAudit(importBatchId, file.name, resolver);
+
+      if (resolver.status === 'blocked') {
+        setPendingNye({ fileName: file.name, importBatchId, resolver, rows });
+        toast.error('Import blocked — see header resolution report.');
+        await refresh();
+        return;
+      }
+      // Allowed: surface report, then run controlled upsert
+      setPendingNye({ fileName: file.name, importBatchId, resolver, rows });
       const prepared = rows.map((r, idx) => csvToStagingService(r, {
         source_file_name: file.name, source_row_number: idx + 2, import_batch_id: importBatchId,
-      }));
-      const res = await insertStagingServices(prepared, { fileName: file.name, importBatchId });
-      toast.success(`Inserted ${res.inserted} (${res.errors} errors, ${res.warnings} warnings)`);
+      }, resolver));
+      const res = await upsertStagingServicesControlled(prepared, { fileName: file.name, importBatchId });
+      toast.success(
+        `Nye import: ${res.inserted} new, ${res.merged} merged, ${res.conflicts} conflicts ` +
+        `(${res.errors} errors, ${res.warnings} warnings)`,
+      );
       await refresh();
     } catch (e) {
       toast.error(`Upload failed: ${(e as Error).message}`);
@@ -158,6 +219,25 @@ export default function AdminMappingServices() {
       city: r.city ?? '—',
       county: r.county ?? '—',
       coords: r.latitude != null && r.longitude != null ? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}` : '—',
+      flags: (
+        <span className="inline-flex flex-wrap gap-1">
+          {r.match_conflict ? (
+            <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">
+              Match conflict
+            </span>
+          ) : null}
+          {r.mappable === false ? (
+            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+              List-only
+            </span>
+          ) : null}
+          {r.resource_class && r.resource_class !== 'service' ? (
+            <span className="rounded border border-sky-500/40 bg-sky-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-sky-700">
+              {r.resource_class}
+            </span>
+          ) : null}
+        </span>
+      ),
       source: r.source_file_name ?? '—',
     },
   })), [staging]);
@@ -180,6 +260,94 @@ export default function AdminMappingServices() {
       title="Service Mapping"
       description="Operational pipeline for non-clinical and community resource locations. Promoted records appear on the Services map layer."
     >
+      {/* Mode toggle + Nye-mode resolution report */}
+      <div className="mb-3 rounded border border-border bg-card p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upload mode</p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Nye Mode: header resolution gate, controlled upsert, normalization. Default: legacy CSV mapper.
+            </p>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button size="sm" variant={nyeMode ? 'default' : 'outline'}
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setNyeMode(true)}>
+              Nye Mode (CSV / XLSX)
+            </Button>
+            <Button size="sm" variant={!nyeMode ? 'default' : 'outline'}
+              className="h-7 px-2 text-[11px]"
+              onClick={() => setNyeMode(false)}>
+              Default (CSV)
+            </Button>
+          </div>
+        </div>
+
+        {pendingNye ? (
+          <div className="mt-3 rounded border border-border bg-muted/30 p-3 text-[11px]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                {pendingNye.resolver.status === 'allowed' ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                ) : (
+                  <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
+                )}
+                <span className="font-semibold">
+                  Header Resolution Report — {pendingNye.fileName}
+                </span>
+              </div>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]"
+                onClick={() => setPendingNye(null)}>Dismiss</Button>
+            </div>
+            <div className="mt-2 grid gap-1.5">
+              <ReportLine label="Matched (exact)" items={pendingNye.resolver.matchedExact.map((m) => m.source)} />
+              <ReportLine label="Matched (via alias)"
+                items={pendingNye.resolver.matchedViaAlias.map((m) => `${m.source} → ${m.canonical}`)} />
+              {pendingNye.resolver.non_blocking_duplicates.length > 0 ? (
+                <div>
+                  <span className="text-muted-foreground">Non-blocking duplicates:</span>
+                  <ul className="mt-0.5 list-disc pl-4 text-amber-700">
+                    {pendingNye.resolver.non_blocking_duplicates.map((d) => (
+                      <li key={d.canonical}>
+                        <code>{d.canonical}</code> — primary=<code>{d.primary}</code>, append={d.secondaries.map((s) => <code key={s} className="mx-0.5">{s}</code>)}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <ReportLine label="Unmapped (ignored)" items={pendingNye.resolver.unmapped} />
+              {pendingNye.resolver.missingRequired.length > 0 ? (
+                <ReportLine label="Missing required"
+                  items={pendingNye.resolver.missingRequired} tone="rose" />
+              ) : null}
+              {pendingNye.resolver.blocking_conflicts.length > 0 ? (
+                <div>
+                  <span className="text-muted-foreground">Blocking conflicts:</span>
+                  <ul className="mt-0.5 list-disc pl-4 text-rose-700">
+                    {pendingNye.resolver.blocking_conflicts.map((c) => (
+                      <li key={c.canonical}>
+                        <code>{c.canonical}</code> ← {c.sources.join(', ')}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+              <div className="mt-1.5 flex items-center gap-1">
+                {pendingNye.resolver.status === 'allowed' ? (
+                  <span className="inline-flex items-center gap-1 text-emerald-700">
+                    <CheckCircle2 className="h-3 w-3" /> Import allowed
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1 text-rose-700">
+                    <AlertTriangle className="h-3 w-3" /> Import blocked — fix headers and re-upload
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </div>
+
       <PipelineWorkspace
         title="Service location pipeline"
         purpose="Food, shelter, transportation, employment, recovery, peer support, case management, outreach, hygiene, and benefits navigation locations. Clinical providers belong in Provider Mapping."
@@ -225,3 +393,18 @@ export default function AdminMappingServices() {
     </AdminMappingLayout>
   );
 }
+
+const ReportLine = ({ label, items, tone }: { label: string; items: string[]; tone?: 'rose' }) => (
+  <div>
+    <span className="text-muted-foreground">{label}:</span>{' '}
+    {items.length === 0 ? (
+      <span className="text-muted-foreground">(none)</span>
+    ) : (
+      <span className={tone === 'rose' ? 'text-rose-700' : ''}>
+        {items.map((s, i) => (
+          <code key={i} className="mx-0.5 rounded bg-background px-1 py-0.5 text-[10px] border border-border">{s}</code>
+        ))}
+      </span>
+    )}
+  </div>
+);
