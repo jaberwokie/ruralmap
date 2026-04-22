@@ -97,6 +97,13 @@ interface CoverageDetailPanelProps {
   onFacilitySelect?: (facility: Facility) => void;
   /** Direct rural service selection (for Member Access list clicks). */
   onServiceSelect?: (service: RuralService) => void;
+  /**
+   * Live-merged services (static enriched dataset + live verified Cloud rows,
+   * deduped). When omitted, falls back to the static dataset only — used by
+   * the Local Resource Network section so newly imported records (e.g. Nye)
+   * appear in the county detail panel.
+   */
+  liveServices?: RuralService[];
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -116,7 +123,11 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Mental Health': 'bg-violet-100 text-violet-700',
 };
 
-const COUNTY_SERVICE_COUNT = ruralServices.reduce((map, service) => {
+// Static structural baseline for GAP_COUNTIES alerts. Uses the static
+// enriched dataset only — does NOT include live verified imports. The
+// dynamic per-county count rendered in the panel header is computed from
+// the live-merged source in LocalResourcesSection below.
+const COUNTY_SERVICE_COUNT = staticRuralServices.reduce((map, service) => {
   map.set(service.county, (map.get(service.county) ?? 0) + 1);
   return map;
 }, new Map<string, number>());
@@ -339,7 +350,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect, onServiceSelect }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect, onServiceSelect, liveServices }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
