@@ -1,47 +1,28 @@
 
-1. Verify what is actually deployed
-- Compare the currently published `.lovable.app` domain and custom domain responses again after approval, including asset bundle references and any exposed build metadata.
-- Add a non-admin, parse-safe build fingerprint so preview, published, and custom-domain builds can be compared directly without relying on hidden admin UI.
-- Check whether the live domain is pointing at the latest published deployment or serving older cached assets.
 
-2. Reconcile code vs observed behavior
-- Inspect the current marker pipeline end to end for Services:
-  - merged live/static services source
-  - county filtering inputs
-  - community-service split
-  - clustering input
-- Confirm whether “county-scoped Services markers” is actually implemented in the current codebase. Current read-only inspection shows `selectedCounty` triggers `fitBounds`, but Services filtering still depends on `countyFilters`, not `selectedCounty`.
+## Fix: Hope Floats Animal Foundation row collapses to vertical letters
 
-3. Fix the real mismatch in app behavior
-- If county-scoped Services is intended, apply the filter in the Services render path so county selection and Local Resource Network use the same scoped dataset.
-- Keep Provider and Behavioral Health behavior unchanged unless explicitly required.
-- Preserve clustering behavior so identical coordinates still produce one marker per service record and correct cluster counts.
+**Root cause**
+In the Local Resource Network drill-down list (`CoverageDetailPanel.tsx` lines 1303–1327), each row is a flex container with two columns:
+- Left: name + city (`min-w-0 flex-1`, `overflowWrap: 'anywhere'`)
+- Right: `ContactPhoneAction variant="inline"` with `whitespace-nowrap`
 
-4. Add deployment-visible diagnostics
-- Surface a lightweight build/version marker in a public, low-noise place so anyone can confirm whether preview and live are on the same build.
-- Optionally add a dev-only diagnostic log for Services marker counts by county to make future parity checks exact.
+For Hope Floats Animal Foundation the `phone` field contains a **multi-number string** (`"775-482-4678 / 775-482-4699 / 775-2…"`). The inline phone link is `whitespace-nowrap` and `flex-shrink-0`, so the right column claims nearly all row width. The left column shrinks to ~1 character wide, and `overflowWrap: 'anywhere'` then wraps the name one letter per line.
 
-5. Republish and validate parity
-- Publish the updated frontend build.
-- Validate on:
-  - preview
-  - published `.lovable.app`
-  - custom domain
-- For Nye County, confirm all three match on:
-  - Services marker input count
-  - county scoping behavior
-  - major cluster counts for shared-coordinate stacks
-  - visible rendered result after county click
+This affects any resource whose `phone` field holds multiple numbers, not just Hope Floats.
 
-Technical details
-- Relevant files already identified:
-  - `src/components/map/MapView.tsx` — Services filtering, marker creation, clustering
-  - `src/pages/Index.tsx` — county selection passed into `MapView`, merged services passed into detail panel
-  - `src/hooks/useMapSelection.ts` — `selectedCounty` state
-  - `src/hooks/useMapLayers.ts` — default layer state
-  - `src/main.tsx` — current hidden build id injection
-- Current read-only findings:
-  - published visibility is already public
-  - published and custom-domain HTML snapshots currently match each other
-  - preview could not be compared directly because it is auth-gated in this mode
-  - current repo does not show explicit `selectedCounty` filtering in the Services pin dataset
+**Fix scope** — `src/components/map/CoverageDetailPanel.tsx`, drill-down row only (~lines 1308–1324). No data changes, no map changes, no panel layout changes elsewhere.
+
+**Changes**
+1. Constrain the phone column so it cannot starve the name column:
+   - Remove `flex-shrink-0` from the right wrapper; add `max-w-[45%]` and `min-w-0`.
+2. Normalize multi-phone strings before passing to `ContactPhoneAction`:
+   - If `service.phone` contains a separator (`/`, `;`, or `,`), use the first number as the call target and show a small `+N` indicator (e.g. `775-482-4678 +2`). The full original string remains in the `title` tooltip.
+3. Floor the name column width so wrapping behaves normally:
+   - Add `basis-0` and keep `min-w-0 flex-1`; soften `overflowWrap: 'anywhere'` to `'break-word'` so it only breaks truly unbreakable tokens, not normal names.
+
+**Validation**
+- Nye County → Family Services → Hope Floats Animal Foundation row: name renders on 1–2 normal lines, first phone number shown with `+2` indicator, tap-to-call still works.
+- Other Family Services rows with single phone numbers render unchanged.
+- No regression to category-list view, map pins, or county scoping.
+
