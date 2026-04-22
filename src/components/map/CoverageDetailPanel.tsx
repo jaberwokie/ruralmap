@@ -91,6 +91,8 @@ interface CoverageDetailPanelProps {
   onBack?: () => void;
   /** Whether a previous entity exists for back-navigation. */
   canGoBack?: boolean;
+  /** The previous entity (used to label the back control contextually). */
+  previousEntity?: MapEntity | null;
   /** Full facility set for backup-options lookup. */
   allFacilities?: Facility[];
   /** Direct facility selection (for backup-options jumping and Member Access list clicks). */
