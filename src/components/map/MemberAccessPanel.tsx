@@ -1,5 +1,5 @@
 import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront, Bus } from 'lucide-react';
-import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel } from '@/utils/fieldResponseStrain';
 import { FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
@@ -410,6 +410,9 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
           <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
           <div className={`text-[11px] font-semibold ${STRAIN_TONE[strain.coverage]} pt-1 border-t border-border/60`}>
             {getStrainRecommendation(strain)}
+          </div>
+          <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]} opacity-90`}>
+            {getCapacityBoundaryLabel(strain)}
           </div>
 
           <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
