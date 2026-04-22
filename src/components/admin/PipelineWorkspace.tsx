@@ -163,11 +163,6 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
     }
     return { total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords, wouldRenderPin, listOnlyContext };
   }, [stagingRows]);
-      if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
-      if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
-      return true;
-    });
-  }, [stagingRows, reviewFilter, severityFilter]);
 
   const validationSummary = useMemo(() => {
     const out = { valid: 0, warning: 0, error: 0 };
