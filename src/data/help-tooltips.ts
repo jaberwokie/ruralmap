@@ -131,4 +131,8 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
     explanation:
       'Tier 1 represents telehealth, remote, or non-field-based support resources that may extend access but do not function as in-person geographic coverage in the same way as hospitals or clinics.',
   },
+  tier1Providers: {
+    label: 'Tier 1 Providers',
+    explanation: 'Top providers by Medicaid member visit volume.',
+  },
 };
