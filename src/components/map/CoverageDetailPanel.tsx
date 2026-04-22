@@ -1872,8 +1872,10 @@ const DetailSection = ({ title, isOpen, onToggle, children, count }: { title: st
 };
 
 /** Hook for independent multi-open section state */
-const useAccordion = (defaultSection: string) => {
-  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set([defaultSection]));
+const useAccordion = (defaultSection: string | string[]) => {
+  const [openSections, setOpenSections] = useState<Set<string>>(
+    () => new Set(Array.isArray(defaultSection) ? defaultSection : [defaultSection])
+  );
   const toggle = useCallback((section: string) => {
     setOpenSections(prev => {
       const next = new Set(prev);
