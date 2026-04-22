@@ -111,7 +111,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const {
     title, purpose, status, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
-    loading, uploading, onUpload, onPromote, onReject, onDeactivate, onRefresh,
+    loading, uploading, onUpload, onPromote, onPromoteBulk, onReject, onDeactivate, onRefresh,
     onEditStaging, onEditVerified,
   } = props;
 
@@ -119,9 +119,50 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const [reviewFilter, setReviewFilter] = useState<'all' | ReviewStatus>('pending');
   const [severityFilter, setSeverityFilter] = useState<'all' | ValidationSeverity>('all');
   const [actingId, setActingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   const filteredStaging = useMemo(() => {
     return stagingRows.filter((r) => {
+      if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
+      if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
+      return true;
+    });
+  }, [stagingRows, reviewFilter, severityFilter]);
+
+  // Drop selection ids that are no longer visible after filter changes.
+  const visibleIds = useMemo(() => new Set(filteredStaging.map((r) => r.id)), [filteredStaging]);
+  const effectiveSelected = useMemo(
+    () => new Set([...selectedIds].filter((id) => visibleIds.has(id))),
+    [selectedIds, visibleIds],
+  );
+
+  const promotableVisible = useMemo(
+    () => filteredStaging.filter((r) =>
+      r.review_status === 'pending' && r.validation_severity !== 'error',
+    ),
+    [filteredStaging],
+  );
+
+  const pipelineCounts = useMemo(() => {
+    let total = 0, pending = 0, approved = 0, rejected = 0;
+    let promotable = 0, listOnly = 0, mappable = 0, missingCoords = 0, withCoords = 0;
+    let wouldRenderPin = 0, listOnlyContext = 0;
+    for (const r of stagingRows) {
+      total += 1;
+      if (r.review_status === 'pending') pending += 1;
+      if (r.review_status === 'approved') approved += 1;
+      if (r.review_status === 'rejected') rejected += 1;
+      if (r.review_status === 'pending' && r.validation_severity !== 'error') promotable += 1;
+      const isMappable = r.mappable !== false;
+      const hasCoords = r.has_coords === true;
+      if (isMappable) mappable += 1; else listOnly += 1;
+      if (hasCoords) withCoords += 1; else missingCoords += 1;
+      if (isMappable && hasCoords) wouldRenderPin += 1;
+      else listOnlyContext += 1;
+    }
+    return { total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords, wouldRenderPin, listOnlyContext };
+  }, [stagingRows]);
       if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
       if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
       return true;
