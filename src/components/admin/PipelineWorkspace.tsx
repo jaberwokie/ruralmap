@@ -66,12 +66,17 @@ export interface StagingTableRow {
   validation_severity: ValidationSeverity | null;
   review_status: ReviewStatus;
   validation_messages: { message: string; severity: ValidationSeverity }[];
+  /** Whether this row will render as a map pin if promoted (mappable + coords). */
+  mappable?: boolean;
+  has_coords?: boolean;
 }
 
 export interface VerifiedTableRow {
   id: string;
   cells: Record<string, ReactNode>;
   active_status: boolean;
+  mappable?: boolean;
+  has_coords?: boolean;
 }
 
 interface PipelineWorkspaceProps {
@@ -93,6 +98,8 @@ interface PipelineWorkspaceProps {
   uploading: boolean;
   onUpload: (file: File) => Promise<void>;
   onPromote: (id: string) => Promise<void>;
+  /** Optional bulk promote. When omitted, bulk action bar is hidden. */
+  onPromoteBulk?: (ids: string[]) => Promise<void>;
   onReject: (id: string) => Promise<void>;
   onDeactivate: (verifiedId: string) => Promise<void>;
   onRefresh: () => void;
