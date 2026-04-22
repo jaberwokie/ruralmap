@@ -1279,12 +1279,14 @@ const LocalResourcesSection = ({ county, services: providedServices }: { county:
             </div>
             <div className="space-y-0.5 pl-1">
               {items.map(service => (
-                <div key={service.id} className="flex items-start justify-between gap-1">
-                  <div className="min-w-0">
-                    <div className="text-[10px] font-medium text-foreground leading-snug" style={{ wordBreak: 'break-word' }}>{service.name}</div>
-                    {service.city && <div className="text-[9px] text-muted-foreground">{service.city}</div>}
+                <div key={service.id} className="flex items-start justify-between gap-1 w-full min-w-0">
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <div className="text-[10px] font-medium text-foreground leading-snug" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.name}</div>
+                    {service.city && <div className="text-[9px] text-muted-foreground" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.city}</div>}
                   </div>
-                  <ContactPhoneAction phone={service.phone} variant="inline" />
+                  <div className="flex-shrink-0">
+                    <ContactPhoneAction phone={service.phone} variant="inline" />
+                  </div>
                 </div>
               ))}
             </div>
