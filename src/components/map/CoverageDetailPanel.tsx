@@ -12,9 +12,9 @@ import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal
 import type { RailStation } from '@/data/rail-corridors';
 import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
-import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
+import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
-import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getCountyResponseClassification } from '@/utils/fieldResponseStrain';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
@@ -1444,13 +1444,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
 
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
-  const hasField = serving.some(f => f.hubLocation !== null);
-  const isRemoteOnly = serving.length === 0 || !hasField;
-  const responseLabel = isRemoteOnly
-    ? PRIMARY_RESPONSE_LABELS.remote
-    : hasField
-    ? PRIMARY_RESPONSE_LABELS.active
-    : PRIMARY_RESPONSE_LABELS.scheduled;
+  const responseClass = getCountyResponseClassification(county, coverageRadiusKm);
 
   const util = getCountyUtilization(county);
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
@@ -1460,7 +1454,16 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   return (
     <>
       <p className="text-sm font-semibold text-foreground mb-1">{county} County</p>
-      <p className="text-[11px] font-bold text-foreground mb-1.5">Primary Response: {responseLabel}</p>
+      <div className="mb-1.5">
+        <p className={`text-[11px] font-bold ${responseClass.tone}`}>
+          Primary Response: {responseClass.label}
+        </p>
+        {responseClass.sub && (
+          <p className="text-[10px] text-muted-foreground italic leading-snug mt-0.5">
+            {responseClass.sub}
+          </p>
+        )}
+      </div>
       <GapContextAlerts county={county} serviceCount={countyServiceCount} />
       {hasNoLocalTransit(county) && (
         <p
