@@ -572,6 +572,17 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
       return;
     }
 
+    // For large stacks (e.g. shared geocode centroids with 10+ records),
+    // do NOT pre-spread on a tiny circle — that breaks MarkerClusterGroup's
+    // ability to count and spiderfy them. Keep them on the true coordinate
+    // and let the cluster layer handle expansion via its native spiderfy.
+    if (group.length > 6) {
+      group.forEach((point) => {
+        coordinates.set(point.id, [point.lat, point.lng]);
+      });
+      return;
+    }
+
     const centerLat = group.reduce((sum, point) => sum + point.lat, 0) / group.length;
     const centerLng = group.reduce((sum, point) => sum + point.lng, 0) / group.length;
     const radius = Math.min(OVERLAP_OFFSET_RADIUS + Math.max(group.length - 2, 0) * 0.00002, 0.00032);
