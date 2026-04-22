@@ -1027,6 +1027,7 @@ const Sidebar = ({
                                     subtitle: dependencyOff
                                       ? `${tier1Count} Tier 1 · enable Provider Locations to view`
                                       : `${tier1Count} Tier 1 · highlight on clinic pins`,
+                                    helpKey: 'tier1Providers',
                                   })}
                                 </div>
                               );
