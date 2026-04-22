@@ -110,27 +110,42 @@ const scoreConfidence = (
   return 'low';
 };
 
-/** Build the access_notes value with a geocode tag appended (replaces any prior tag). */
+/**
+ * Build the access_notes value with a geocode tag appended.
+ * Replaces any prior `[geocode:...]` tag and places the new tag on its
+ * own line so it never visually collides with human-written notes.
+ *
+ * Public confidence values written into the tag are strictly 'high' | 'low'.
+ * (Failed lookups use `stampGeocodeFailure` and write a separate marker.)
+ */
 export const stampGeocodeTag = (
   notes: string | null | undefined,
   strategy: GeocodeStrategy,
-  confidence: GeocodeConfidence,
+  confidence: 'high' | 'low',
 ): string => {
-  const base = (notes ?? '').replace(/\s*\[geocode:[^\]]+\]\s*$/i, '').trim();
+  // Strip any existing geocode tag (success or failure) wherever it sits.
+  const base = (notes ?? '')
+    .replace(/\[geocode:[^\]]+\]/gi, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim();
   const tag = `${GEOCODE_TAG_PREFIX}${strategy}|${confidence}|${new Date().toISOString().slice(0, 10)}]`;
-  return base.length > 0 ? `${base} ${tag}` : tag;
+  return base.length > 0 ? `${base}\n${tag}` : tag;
 };
 
 /** Parse a stored geocode tag back, if present. */
 export const parseGeocodeTag = (
   notes: string | null | undefined,
-): { strategy: GeocodeStrategy; confidence: GeocodeConfidence; date: string } | null => {
+): { strategy: GeocodeStrategy; confidence: 'high' | 'low'; date: string } | null => {
   if (!notes) return null;
   const m = notes.match(/\[geocode:([^|]+)\|([^|]+)\|([^\]]+)\]/i);
   if (!m) return null;
+  const conf = m[2].toLowerCase();
+  // Collapse any legacy 'medium' tags to 'high' so the operator-facing
+  // model stays strictly high|low|none.
+  const normalizedConf: 'high' | 'low' = conf === 'low' ? 'low' : 'high';
   return {
     strategy: m[1] as GeocodeStrategy,
-    confidence: m[2] as GeocodeConfidence,
+    confidence: normalizedConf,
     date: m[3],
   };
 };
@@ -138,8 +153,11 @@ export const parseGeocodeTag = (
 const FAILED_TAG = '[geocode:failed]';
 
 export const stampGeocodeFailure = (notes: string | null | undefined): string => {
-  const base = (notes ?? '').replace(/\s*\[geocode:[^\]]+\]\s*$/i, '').trim();
-  return base.length > 0 ? `${base} ${FAILED_TAG}` : FAILED_TAG;
+  const base = (notes ?? '')
+    .replace(/\[geocode:[^\]]+\]/gi, '')
+    .replace(/[ \t]+\n/g, '\n')
+    .trim();
+  return base.length > 0 ? `${base}\n${FAILED_TAG}` : FAILED_TAG;
 };
 
 export const isGeocodeFailed = (notes: string | null | undefined): boolean =>
