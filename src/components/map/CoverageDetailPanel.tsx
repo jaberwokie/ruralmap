@@ -209,57 +209,42 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
 };
 
 /**
- * Field Response Strain — additive operational visibility for a county.
- * Reuses anchored FTE hubLocation + getCountyCoverageBreakdown.anchoringFtes.
- * Surfaces: likely responder, one-way + round-trip travel burden, single-thread/no-same-day flags.
+ * Field Response Strain — additive operational visibility.
+ * Reuses the shared computeFieldResponseStrain helper so member-level and
+ * county-level surfaces share one truth.
  */
-const FieldResponseStrainSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
-  const countyData = nevadaCounties.find(c => c.name === county);
-  if (!countyData) return null;
-  const [lat, lng] = countyData.center;
+const FieldResponseStrainSection = ({
+  county,
+  coverageRadiusKm,
+  target,
+  caption,
+}: {
+  county?: string;
+  coverageRadiusKm: number;
+  target?: { lat: number; lng: number };
+  caption?: string;
+}) => {
+  let point = target;
+  if (!point && county) {
+    const cd = nevadaCounties.find(c => c.name === county);
+    if (cd) point = { lat: cd.center[0], lng: cd.center[1] };
+  }
+  if (!point) return null;
 
-  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
-  const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
+  const strain = computeFieldResponseStrain(point, coverageRadiusKm, county ? { county } : undefined);
+  if (!strain) return null;
 
-  // Likely responder = nearest anchored field FTE (matches drive-time intent).
-  const ranked = fieldFtes
-    .map(f => ({ fte: f, km: haversineKmLocal(lat, lng, f.hubLocation!.lat, f.hubLocation!.lng) }))
-    .sort((a, b) => a.km - b.km);
-  const primary = ranked[0];
-  if (!primary) return null;
-
-  const oneWayMi = Math.round(kmToMiles(primary.km));
-  const roundTripMi = oneWayMi * 2;
-  const oneWayMin = kmToDriveMinutes(primary.km);
-  const roundTripMin = oneWayMin * 2;
-
-  // Classification — conservative, derived from existing radius.
-  const withinActive = primary.km <= coverageRadiusKm;
-  const beyondSameDay = primary.km > coverageRadiusKm * 1.5;
-  const sameDayLabel = withinActive
+  const sameDayLabel = strain.withinActive
     ? 'Within same-day field reach'
-    : beyondSameDay
+    : strain.coverage === 'noSameDay'
       ? 'Outside realistic same-day field response'
       : 'Strained — beyond active radius, scheduled outreach';
-  const sameDayTone = withinActive ? 'text-emerald-700' : beyondSameDay ? 'text-red-600' : 'text-amber-700';
+  const sameDayTone = strain.withinActive
+    ? 'text-emerald-700'
+    : strain.coverage === 'noSameDay' ? 'text-red-600' : 'text-amber-700';
 
-  // Single-threaded vs shared (reuse anchoringFtes from coverage breakdown).
-  const anchoring = breakdown.anchoringFtes;
-  let coverageLabel: string;
-  let coverageTone: string;
-  if (anchoring.length === 0) {
-    coverageLabel = 'No field FTE drive-time overlap';
-    coverageTone = 'text-red-600';
-  } else if (anchoring.length === 1) {
-    coverageLabel = `Single FTE coverage — ${anchoring[0]}`;
-    coverageTone = 'text-amber-700';
-  } else {
-    coverageLabel = `Shared field coverage — ${anchoring.join(', ')}`;
-    coverageTone = 'text-emerald-700';
-  }
-
-  const role = FTE_ROLE_COLORS[primary.fte.id];
-  const anchorName = primary.fte.anchorSite?.name ?? primary.fte.label;
+  const role = FTE_ROLE_COLORS[strain.responder.id];
+  const anchorName = strain.responder.anchorSite?.name ?? strain.responder.label;
 
   return (
     <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
@@ -271,8 +256,8 @@ const FieldResponseStrainSection = ({ county, coverageRadiusKm }: { county: stri
       <div className="flex items-start gap-1.5">
         <div className="w-2 h-2 mt-1 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
         <div className="text-[11px] text-foreground leading-tight">
-          <span className="font-medium">Likely responder:</span> {primary.fte.label}
-          {primary.fte.anchorSite && (
+          <span className="font-medium">Likely responder:</span> {strain.responder.label}
+          {strain.responder.anchorSite && (
             <span className="text-muted-foreground"> · from {anchorName}</span>
           )}
         </div>
@@ -280,16 +265,16 @@ const FieldResponseStrainSection = ({ county, coverageRadiusKm }: { county: stri
 
       <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
         <span className="text-muted-foreground">One-way</span>
-        <span className="text-right font-medium text-foreground">~{oneWayMi} mi · ~{oneWayMin} min</span>
+        <span className="text-right font-medium text-foreground">~{strain.oneWayMi} mi · ~{strain.oneWayMin} min</span>
         <span className="text-muted-foreground">Round-trip</span>
-        <span className="text-right font-semibold text-foreground">~{roundTripMi} mi · ~{roundTripMin} min</span>
+        <span className="text-right font-semibold text-foreground">~{strain.roundTripMi} mi · ~{strain.roundTripMin} min</span>
       </div>
 
       <div className={`text-[10px] font-medium ${sameDayTone}`}>{sameDayLabel}</div>
-      <div className={`text-[10px] ${coverageTone}`}>{coverageLabel}</div>
+      <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
 
       <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
-        Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed.
+        {caption ?? 'Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed.'}
       </div>
     </div>
   );
