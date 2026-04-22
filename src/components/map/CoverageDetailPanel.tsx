@@ -1854,7 +1854,18 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       })()}
       <CountyUtilizationSection county={county} enabled={t.countyUtilization} />
       <TribalUtilizationSection county={county} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
-      <TransportationCoordinationSection county={county} />
+      <DetailSection
+        title="Transportation Coordination"
+        isOpen={isOpen('transportation')}
+        onToggle={() => toggle('transportation')}
+      >
+        {transportationAutoExpand && (
+          <p className="mb-1.5 text-[10px] text-muted-foreground italic leading-snug">
+            Transportation coordination active for this region.
+          </p>
+        )}
+        <TransportationCoordinationSection county={county} />
+      </DetailSection>
     </>
   );
 };
