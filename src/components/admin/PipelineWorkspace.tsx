@@ -317,10 +317,70 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             <FilterChip active={severityFilter === 'warning'} onClick={() => setSeverityFilter('warning')}>Warnings</FilterChip>
           </div>
         </div>
+
+        {/* Bulk action bar */}
+        {onPromoteBulk ? (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-muted/30 px-2 py-1.5 text-[11px]">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span>
+                <strong className="text-foreground">{effectiveSelected.size}</strong> selected
+                {' · '}
+                <strong className="text-foreground">{promotableVisible.length}</strong> promotable in current view
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm" variant="outline" className="h-6 px-2 text-[10px]"
+                disabled={bulkRunning || effectiveSelected.size === 0}
+                onClick={async () => {
+                  const ids = [...effectiveSelected].filter((id) => {
+                    const r = stagingRows.find((x) => x.id === id);
+                    return r && r.review_status === 'pending' && r.validation_severity !== 'error';
+                  });
+                  if (ids.length === 0) return;
+                  setBulkRunning(true);
+                  try { await onPromoteBulk(ids); setSelectedIds(new Set()); }
+                  finally { setBulkRunning(false); }
+                }}
+              >
+                {bulkRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Promote Selected'}
+              </Button>
+              <Button
+                size="sm" className="h-6 px-2 text-[10px]"
+                disabled={bulkRunning || promotableVisible.length === 0}
+                onClick={async () => {
+                  const ids = promotableVisible.map((r) => r.id);
+                  if (ids.length === 0) return;
+                  setBulkRunning(true);
+                  try { await onPromoteBulk(ids); setSelectedIds(new Set()); }
+                  finally { setBulkRunning(false); }
+                }}
+                title="Promote every promotable row in the current filter view (skips errors and rejected)"
+              >
+                {bulkRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : `Promote All Valid (${promotableVisible.length})`}
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-2 overflow-auto rounded border border-border max-h-[420px]">
           <table className="w-full text-[11px]">
             <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
               <tr>
+                {onPromoteBulk ? (
+                  <th className="px-2 py-1.5 w-6">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all promotable in view"
+                      checked={promotableVisible.length > 0 && promotableVisible.every((r) => effectiveSelected.has(r.id))}
+                      onChange={(e) => {
+                        const next = new Set(effectiveSelected);
+                        if (e.target.checked) promotableVisible.forEach((r) => next.add(r.id));
+                        else promotableVisible.forEach((r) => next.delete(r.id));
+                        setSelectedIds(next);
+                      }}
+                    />
+                  </th>
+                ) : null}
                 <th className="text-left px-2 py-1.5 whitespace-nowrap">Status</th>
                 {stagingColumns.map((c) => (
                   <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
@@ -333,11 +393,39 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                 <tr><td colSpan={stagingColumns.length + 2} className="px-2 py-6 text-center text-muted-foreground">
                   {loading ? 'Loading…' : 'No records match the current filters.'}
                 </td></tr>
-              ) : filteredStaging.map((r) => (
+              ) : filteredStaging.map((r) => {
+                const promotable = r.review_status === 'pending' && r.validation_severity !== 'error';
+                return (
                 <tr key={r.id} className="border-t border-border align-top">
+                  {onPromoteBulk ? (
+                    <td className="px-2 py-1.5 align-top">
+                      <input
+                        type="checkbox"
+                        aria-label="Select row"
+                        disabled={!promotable}
+                        checked={effectiveSelected.has(r.id)}
+                        onChange={(e) => {
+                          const next = new Set(effectiveSelected);
+                          if (e.target.checked) next.add(r.id);
+                          else next.delete(r.id);
+                          setSelectedIds(next);
+                        }}
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-2 py-1.5 whitespace-nowrap">
                     <SeverityBadge severity={r.validation_severity ?? 'valid'} />
                     <ReviewBadge status={r.review_status} />
+                    {(r.mappable === false || r.has_coords === false) ? (
+                      <div className="mt-1 inline-flex flex-col gap-0.5">
+                        {r.mappable === false ? (
+                          <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">List-only</span>
+                        ) : null}
+                        {r.has_coords === false ? (
+                          <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">No coords</span>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {r.validation_messages.length > 0 && (
                       <div className="mt-1 max-w-[180px] text-[10px] text-muted-foreground" title={r.validation_messages.map((m) => m.message).join('\n')}>
                         <Info className="inline h-3 w-3 mr-0.5" />
@@ -382,7 +470,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -484,6 +573,32 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
 const ValidationStat = ({ label, count, tone, icon }: { label: string; count: number; tone: 'emerald' | 'amber' | 'rose'; icon: ReactNode }) => {
   const cls = tone === 'emerald'
     ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700'
+    : tone === 'amber'
+      ? 'border-amber-500/40 bg-amber-500/10 text-amber-700'
+      : 'border-rose-500/40 bg-rose-500/10 text-rose-700';
+  return (
+    <div className={cn('flex items-center justify-between gap-2 rounded border px-2 py-1.5', cls)}>
+      <span className="inline-flex items-center gap-1 text-[11px] font-medium">{icon}{label}</span>
+      <span className="text-sm font-semibold tabular-nums">{count}</span>
+    </div>
+  );
+};
+
+const CountStat = ({ label, value, tone }: { label: string; value: number; tone?: 'emerald' | 'amber' | 'rose' }) => {
+  const cls = tone === 'emerald'
+    ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700'
+    : tone === 'amber'
+      ? 'border-amber-500/30 bg-amber-500/5 text-amber-700'
+      : tone === 'rose'
+        ? 'border-rose-500/30 bg-rose-500/5 text-rose-700'
+        : 'border-border bg-background text-foreground';
+  return (
+    <div className={cn('flex flex-col gap-0.5 rounded border px-2 py-1.5', cls)}>
+      <span className="text-[9px] font-medium uppercase tracking-wider opacity-70">{label}</span>
+      <span className="text-sm font-semibold tabular-nums">{value}</span>
+    </div>
+  );
+};
     : tone === 'amber'
       ? 'border-amber-500/40 bg-amber-500/10 text-amber-700'
       : 'border-rose-500/40 bg-rose-500/10 text-rose-700';
