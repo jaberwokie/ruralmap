@@ -19,6 +19,7 @@ import AdminMappingVerificationQueue from "./pages/AdminMappingVerificationQueue
 import AdminMappingAuditHistory from "./pages/AdminMappingAuditHistory.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import BuildFingerprint from "./components/BuildFingerprint";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => {
         <ErrorBoundary>
           <Toaster />
           <Sonner />
+          <BuildFingerprint />
           <BrowserRouter>
             <AuthProvider>
               <Routes>
