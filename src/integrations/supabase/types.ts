@@ -248,14 +248,18 @@ export type Database = {
           last_reviewed_at: string | null
           latitude: number | null
           longitude: number | null
+          mappable: boolean
+          match_conflict: boolean
           medicaid_relevance: string | null
           name: string
           organization_name: string | null
           phone: string | null
           referral_required: boolean | null
+          resource_class: string
           review_status: string
           service_category: string | null
           service_subcategory: string | null
+          service_tags: string | null
           source_file_name: string | null
           source_row_number: number | null
           state: string | null
@@ -290,14 +294,18 @@ export type Database = {
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          mappable?: boolean
+          match_conflict?: boolean
           medicaid_relevance?: string | null
           name: string
           organization_name?: string | null
           phone?: string | null
           referral_required?: boolean | null
+          resource_class?: string
           review_status?: string
           service_category?: string | null
           service_subcategory?: string | null
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           state?: string | null
@@ -332,14 +340,18 @@ export type Database = {
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          mappable?: boolean
+          match_conflict?: boolean
           medicaid_relevance?: string | null
           name?: string
           organization_name?: string | null
           phone?: string | null
           referral_required?: boolean | null
+          resource_class?: string
           review_status?: string
           service_category?: string | null
           service_subcategory?: string | null
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           state?: string | null
@@ -569,6 +581,7 @@ export type Database = {
           last_reviewed_at: string | null
           latitude: number | null
           longitude: number | null
+          mappable: boolean
           medicaid_relevance: string | null
           name: string
           organization_name: string | null
@@ -576,8 +589,10 @@ export type Database = {
           promoted_at: string
           promoted_by: string | null
           referral_required: boolean | null
+          resource_class: string
           service_category: string | null
           service_subcategory: string | null
+          service_tags: string | null
           source_file_name: string | null
           source_row_number: number | null
           staging_id: string | null
@@ -611,6 +626,7 @@ export type Database = {
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          mappable?: boolean
           medicaid_relevance?: string | null
           name: string
           organization_name?: string | null
@@ -618,8 +634,10 @@ export type Database = {
           promoted_at?: string
           promoted_by?: string | null
           referral_required?: boolean | null
+          resource_class?: string
           service_category?: string | null
           service_subcategory?: string | null
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           staging_id?: string | null
@@ -653,6 +671,7 @@ export type Database = {
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          mappable?: boolean
           medicaid_relevance?: string | null
           name?: string
           organization_name?: string | null
@@ -660,8 +679,10 @@ export type Database = {
           promoted_at?: string
           promoted_by?: string | null
           referral_required?: boolean | null
+          resource_class?: string
           service_category?: string | null
           service_subcategory?: string | null
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           staging_id?: string | null
