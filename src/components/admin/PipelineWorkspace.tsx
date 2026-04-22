@@ -257,10 +257,10 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
               Records land in staging only — they do not appear on the map until promoted.
             </p>
           </div>
-          <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
+          <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,text/csv" onChange={handleFile} className="hidden" />
           <Button onClick={handlePick} disabled={uploading} size="sm">
             {uploading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-            {uploading ? 'Uploading…' : 'Upload CSV'}
+            {uploading ? 'Uploading…' : 'Upload CSV / XLSX'}
           </Button>
         </div>
       </section>
