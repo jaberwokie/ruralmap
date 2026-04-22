@@ -440,6 +440,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
               allFacilities={allFacilities}
               onFacilitySelect={onFacilitySelect}
               onServiceSelect={onServiceSelect}
+              liveServices={liveServices}
             />
           </div>
         </div>
@@ -457,6 +458,7 @@ const EntityContent = ({
   allFacilities,
   onFacilitySelect,
   onServiceSelect,
+  liveServices,
 }: {
   entity: MapEntity;
   coverageRadiusKm: number;
@@ -464,10 +466,11 @@ const EntityContent = ({
   allFacilities?: Facility[];
   onFacilitySelect?: (f: Facility) => void;
   onServiceSelect?: (s: RuralService) => void;
+  liveServices?: RuralService[];
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} liveServices={liveServices} />;
     case 'facility': return (
       <FacilityContent
         facility={entity.facility}
@@ -1349,7 +1352,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+const CountyContent = ({ county, coverageRadiusKm, liveServices }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[] }) => {
   const t = useUtilizationToggles();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
