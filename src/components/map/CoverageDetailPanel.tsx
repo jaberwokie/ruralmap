@@ -1520,10 +1520,6 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       {/* Engagement Priority surfaces first — drives outreach decisions */}
       <EngagementPriorityCard county={county} />
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
-
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
         <div className="space-y-1 text-xs text-foreground/80">
@@ -1535,6 +1531,10 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
             </div>
           )}
         </div>
+      </DetailSection>
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
       </DetailSection>
 
       {hasFte && (
