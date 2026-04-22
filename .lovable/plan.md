@@ -1,59 +1,130 @@
 
+# Nye Rural Dataset Integration — Final Plan (v5)
 
-## Admin-only build/version label — final plan
+Final addendum to the previously approved plan. Adds duplicate-field resolution, a minimum-usability rule, and schema version tagging. Everything else from v4 stands unchanged.
 
-Approved as previously scoped, with the mobile refinement below.
+## Delta from v4
 
-### Files
+### 1. Duplicate field resolution (graduated, not all-abort)
 
-**1. `vite.config.ts`** — bake build metadata at build time:
+`resolveHeaders()` returns two separate buckets instead of one `conflicts` list:
+
 ```ts
-define: {
-  __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-  __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? ''),
+HeaderResolutionResult {
+  status: 'allowed' | 'blocked'
+  matchedExact: Array<{ source, canonical }>
+  matchedViaAlias: Array<{ source, canonical }>
+  unmapped: string[]
+  missingRequired: string[]
+  blocking_conflicts: Array<{ canonical, sources: string[] }>
+  non_blocking_duplicates: Array<{
+    canonical, primary: string, secondaries: string[]
+  }>
 }
 ```
 
-**2. `src/vite-env.d.ts`** — declare globals:
+**Identity-critical canonicals — hard abort on duplicate**
+- `name`
+- `address`
+- `phone`
+
+Two source headers resolving to any of these → `blocking_conflicts` entry, `status: 'blocked'`, import refused.
+
+**Safe canonicals — non-blocking duplicate, append-only merge**
+- `services_offered` (e.g. `description` + `services_offered`)
+- `access_notes` (e.g. `notes` + `review_notes` + `access_notes`)
+- `service_tags`
+
+Resolution rule for safe duplicates:
+- First encountered header wins as **primary source** (used as the field's base value)
+- Additional headers become **secondary append-only sources**
+- Per-row, secondaries flow through the existing controlled append helper (noise filter + dedupe + max-length cap from prior plans)
+- Recorded once per file in the resolution report and once in the audit `details.duplicate_field_sources`
+
+All other canonicals (city, state, zip, county, email, website, latitude, longitude, resource_class, mappable) remain hard-conflict if duplicated, since merge order would change record identity or geometry.
+
+### 2. Minimum usability rule (per-row, non-blocking)
+
+Inside `csvToStagingService`, after field mapping:
+
 ```ts
-declare const __APP_BUILD_TIME__: string;
-declare const __APP_VERSION__: string;
+const hasLocation = !!(row.county || row.city || row.street_address);
+const hasContact  = !!(row.phone || row.website);
+
+if (!hasLocation && !hasContact) {
+  row.mappable = false;
+  row.validation_messages.push({
+    severity: 'warning',
+    field: 'name',
+    message: 'Insufficient operational data — no usable location or contact information',
+  });
+}
 ```
 
-**3. `src/components/AdminVersionBadge.tsx`** (new)
-- `usePermissions()` → if `!isAdmin` return `null` (no DOM node).
-- Format: `v{version} • {YYYY-MM-DD}` if version set, else `build {YYYY-MM-DD}`.
-- Styling: `text-[10px] text-muted-foreground tabular-nums leading-none`.
-- Accept optional `className` prop so each placement controls its own layout.
+Row is still ingested (list-only reference). `mappable=false` already excludes it from the map per the `useLiveVerifiedRecords` filter from prior plans. No new branch.
 
-**4. `src/components/map/Sidebar.tsx`** (desktop)
-- Insert `<AdminVersionBadge className="mt-1 block text-center" />` directly under the title/description in the existing logo header block. Single line of 10px text inside an already-centered flex column — no layout shift.
+This rule runs **after** the government-default and category-normalization steps, so it cannot interfere with them.
 
-**5. `src/pages/Index.tsx`** (mobile header refinement)
-- Mobile bar today: left = title block, right = Filters/Map button.
-- Place the badge **inside the left title block**, on its own line under the "Nevada Behavioral Health" subtitle — NOT in the right-side cluster next to the button.
-- Class: `hidden xs:block` is not needed; instead use `truncate max-w-[55vw]` on the wrapper and `text-[9px]` on mobile to guarantee it cannot push the Filters/Map button.
-- Filters/Map button keeps its current `p-2` tap target and right-edge alignment. Badge wraps/truncates within the title column if space is tight; it never sits on the same row as the button.
-- For non-admins the component returns `null`, so zero footprint.
+### 3. Schema version tagging (audit-only)
 
-### Gating guarantees
+Every audit entry written through this ingestion path includes:
 
-- `isAdmin` from `usePermissions()` (server-derived via `current_user_role()` against `user_roles`).
-- Component early-returns `null` before rendering any element — not hidden via CSS, not in DOM.
-- During auth-loading window, `isAdmin === false`, so no flash for non-admins.
+```json
+{ "schema_version": "nye_ingestion_v5" }
+```
 
-### Validation after build
+Applied in `mapping_audit_log.details` for:
+- `header_resolution`
+- `upload_started` / `upload_completed` (staging insert / import batch)
+- `record_edited` written by the controlled upsert
+- `record_edited` written for match-conflict flagging
 
-1. Admin desktop → badge visible in sidebar title block, centered, subtle.
-2. Admin mobile (≤768px) → badge appears under "Nevada Behavioral Health" subtitle in the left column; Filters/Map button position and tap area unchanged.
-3. Staff/viewer/logged-out → inspect DOM, confirm no version node anywhere.
-4. Resize sweep (320, 375, 414, 768, 1024, 1302) → Filters/Map button stays right-aligned and fully tappable at every width.
-5. `VITE_APP_VERSION` unset → renders `build YYYY-MM-DD`; set → renders `v{x} • YYYY-MM-DD`.
+No schema column. No table change. Filterable via JSONB query when needed.
 
-### Out of scope
+### Updated header report example
 
-- No new dependencies.
-- No git hash injection.
-- No tooltip, no interaction.
-- No changes to map, sidebar logic, or auth.
+```
+Header Resolution Report
+  Matched (exact):       name, city, state, zip, phone
+  Matched (via alias):   address (← address_1)
+  Non-blocking duplicates:
+    services_offered  primary=description, append=services_offered
+    access_notes      primary=notes, append=review_notes
+  Unmapped (ignored):    internal_id
+  Missing required:      (none)
+  Blocking conflicts:    (none)
+  → Import allowed: YES
+```
 
+If `blocking_conflicts.length > 0`:
+```
+  Blocking conflicts: name (source: name, provider_name)
+  → Import allowed: NO    [Stage rows disabled]
+```
+
+## Files (delta from v4)
+
+**Edited**
+- `src/utils/serviceHeaderResolver.ts` — split `conflicts` into `blocking_conflicts` + `non_blocking_duplicates`; classify canonicals into identity-critical vs safe-append sets
+- `src/utils/mappingPipelineCsv.ts` — accept `resolvedMap` with secondary sources, append safe duplicates per row, add minimum-usability check
+- `src/utils/mappingPipelineStore.ts` — inject `schema_version: 'nye_ingestion_v5'` in all audit payloads on this path
+- `src/types/mappingPipeline.ts` — updated `HeaderResolutionResult`; small `DuplicateFieldMapping` type
+- `src/pages/AdminMappingServices.tsx` — render non-blocking duplicates as warnings; keep "Stage rows" enabled unless `blocking_conflicts.length > 0`
+
+## Schema additions across the full plan (final, locked)
+
+Only four columns total — all on `staging_services`, three mirrored on `verified_services`:
+- `service_tags text`
+- `resource_class text` (default `service`)
+- `mappable boolean default true`
+- `match_conflict boolean default false` *(staging only)*
+
+No further schema changes.
+
+## Constraints honored
+- Identity-critical duplicates still hard-abort (no silent guessing on `name`/`address`/`phone`)
+- Append-only merges already use noise filter, dedupe, and max-length caps from prior plans
+- Minimum-usability rows are kept (list-only) rather than dropped — no data loss
+- Audit version tag is metadata-only; no schema creep
+- Provider/BH/verification/presentation logic untouched
+- Existing default Services upload flow unchanged; v5 logic gated behind Nye mode flag
