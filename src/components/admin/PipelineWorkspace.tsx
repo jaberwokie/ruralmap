@@ -15,7 +15,7 @@
  */
 
 import { type ReactNode, useRef, useState, useMemo } from 'react';
-import { Upload, Download, CheckCircle2, XCircle, AlertTriangle, Loader2, Info } from 'lucide-react';
+import { Upload, Download, CheckCircle2, XCircle, AlertTriangle, Loader2, Info, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
 import type { ValidationSeverity, ReviewStatus, AuditLogRow } from '@/types/mappingPipeline';
@@ -69,6 +69,9 @@ export interface StagingTableRow {
   /** Whether this row will render as a map pin if promoted (mappable + coords). */
   mappable?: boolean;
   has_coords?: boolean;
+  /** Most recent geocode outcome stamped into access_notes. */
+  geocode_status?: 'geocoded' | 'failed' | null;
+  geocode_confidence?: 'high' | 'medium' | 'low' | null;
 }
 
 export interface VerifiedTableRow {
@@ -100,6 +103,11 @@ interface PipelineWorkspaceProps {
   onPromote: (id: string) => Promise<void>;
   /** Optional bulk promote. When omitted, bulk action bar is hidden. */
   onPromoteBulk?: (ids: string[]) => Promise<void>;
+  /**
+   * Optional bulk geocode. When provided, "Geocode All Mappable Missing Coords"
+   * and "Geocode Selected" buttons appear. Receives staging row ids only.
+   */
+  onGeocodeBulk?: (ids: string[]) => Promise<void>;
   onReject: (id: string) => Promise<void>;
   onDeactivate: (verifiedId: string) => Promise<void>;
   onRefresh: () => void;
@@ -111,8 +119,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const {
     title, purpose, status, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
-    loading, uploading, onUpload, onPromote, onPromoteBulk, onReject, onDeactivate, onRefresh,
-    onEditStaging, onEditVerified,
+    loading, uploading, onUpload, onPromote, onPromoteBulk, onGeocodeBulk,
+    onReject, onDeactivate, onRefresh, onEditStaging, onEditVerified,
   } = props;
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -121,6 +129,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
+  const [geocodeRunning, setGeocodeRunning] = useState(false);
+  const [geocodeProgress, setGeocodeProgress] = useState<{ done: number; total: number } | null>(null);
 
   const filteredStaging = useMemo(() => {
     return stagingRows.filter((r) => {
@@ -148,6 +158,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
     let total = 0, pending = 0, approved = 0, rejected = 0;
     let promotable = 0, listOnly = 0, mappable = 0, missingCoords = 0, withCoords = 0;
     let wouldRenderPin = 0, listOnlyContext = 0;
+    let mappableMissingCoords = 0, geocodedSuccess = 0, geocodedFailed = 0, geocodedLowConf = 0;
     for (const r of stagingRows) {
       total += 1;
       if (r.review_status === 'pending') pending += 1;
@@ -160,9 +171,30 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
       if (hasCoords) withCoords += 1; else missingCoords += 1;
       if (isMappable && hasCoords) wouldRenderPin += 1;
       else listOnlyContext += 1;
+      if (isMappable && !hasCoords) mappableMissingCoords += 1;
+      if (r.geocode_status === 'geocoded') geocodedSuccess += 1;
+      if (r.geocode_status === 'failed') geocodedFailed += 1;
+      if (r.geocode_confidence === 'low') geocodedLowConf += 1;
     }
-    return { total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords, wouldRenderPin, listOnlyContext };
+    return {
+      total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords,
+      wouldRenderPin, listOnlyContext, mappableMissingCoords, geocodedSuccess, geocodedFailed, geocodedLowConf,
+    };
   }, [stagingRows]);
+
+  // Rows eligible for geocoding: mappable + no coords + not rejected.
+  const geocodableAll = useMemo(
+    () => stagingRows.filter((r) =>
+      r.mappable !== false && r.has_coords !== true && r.review_status !== 'rejected',
+    ),
+    [stagingRows],
+  );
+  const geocodableVisible = useMemo(
+    () => filteredStaging.filter((r) =>
+      r.mappable !== false && r.has_coords !== true && r.review_status !== 'rejected',
+    ),
+    [filteredStaging],
+  );
 
   const validationSummary = useMemo(() => {
     const out = { valid: 0, warning: 0, error: 0 };
@@ -293,6 +325,19 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             <CountStat label="Approved" value={pipelineCounts.approved} />
             <CountStat label="Rejected" value={pipelineCounts.rejected} />
           </div>
+          {onGeocodeBulk ? (
+            <div className="mt-3 border-t border-border pt-3">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Geocoding status
+              </h4>
+              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                <CountStat label="Mappable missing coords" value={pipelineCounts.mappableMissingCoords} tone="rose" />
+                <CountStat label="Geocoded" value={pipelineCounts.geocodedSuccess} tone="emerald" />
+                <CountStat label="Failed geocode" value={pipelineCounts.geocodedFailed} tone="rose" />
+                <CountStat label="Low confidence" value={pipelineCounts.geocodedLowConf} tone="amber" />
+              </div>
+            </div>
+          ) : null}
           <p className="mt-2 text-[10px] text-muted-foreground">
             “Would render as pin” = mappable AND has coordinates AND promoted. Other rows still appear in the
             county Local Resource Network list when promoted.
@@ -362,6 +407,61 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             </div>
           </div>
         ) : null}
+
+        {/* Geocode bulk bar */}
+        {onGeocodeBulk ? (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-muted/30 px-2 py-1.5 text-[11px]">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span>
+                <strong className="text-foreground">{geocodableAll.length}</strong> mappable rows missing coords
+                {geocodableVisible.length !== geocodableAll.length ? (
+                  <> · <strong className="text-foreground">{geocodableVisible.length}</strong> in current view</>
+                ) : null}
+                {geocodeProgress ? (
+                  <> · running {geocodeProgress.done}/{geocodeProgress.total}</>
+                ) : null}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm" variant="outline" className="h-6 px-2 text-[10px]"
+                disabled={geocodeRunning || effectiveSelected.size === 0}
+                onClick={async () => {
+                  const ids = [...effectiveSelected].filter((id) => {
+                    const r = stagingRows.find((x) => x.id === id);
+                    return r && r.mappable !== false && r.has_coords !== true && r.review_status !== 'rejected';
+                  });
+                  if (ids.length === 0) return;
+                  setGeocodeRunning(true);
+                  setGeocodeProgress({ done: 0, total: ids.length });
+                  try { await onGeocodeBulk(ids); }
+                  finally { setGeocodeRunning(false); setGeocodeProgress(null); }
+                }}
+                title="Geocode only checked rows (mappable + missing coords)"
+              >
+                {geocodeRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Geocode Selected'}
+              </Button>
+              <Button
+                size="sm" className="h-6 px-2 text-[10px]"
+                disabled={geocodeRunning || geocodableAll.length === 0}
+                onClick={async () => {
+                  const ids = geocodableAll.map((r) => r.id);
+                  if (ids.length === 0) return;
+                  setGeocodeRunning(true);
+                  setGeocodeProgress({ done: 0, total: ids.length });
+                  try { await onGeocodeBulk(ids); }
+                  finally { setGeocodeRunning(false); setGeocodeProgress(null); }
+                }}
+                title="Geocode every staging row that is mappable and missing coordinates (~1.1s/row)"
+              >
+                {geocodeRunning
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : `Geocode All Mappable Missing Coords (${geocodableAll.length})`}
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-2 overflow-auto rounded border border-border max-h-[420px]">
           <table className="w-full text-[11px]">
             <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
@@ -416,13 +516,24 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                   <td className="px-2 py-1.5 whitespace-nowrap">
                     <SeverityBadge severity={r.validation_severity ?? 'valid'} />
                     <ReviewBadge status={r.review_status} />
-                    {(r.mappable === false || r.has_coords === false) ? (
+                    {(r.mappable === false || r.has_coords === false || r.geocode_status) ? (
                       <div className="mt-1 inline-flex flex-col gap-0.5">
                         {r.mappable === false ? (
                           <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">List-only</span>
                         ) : null}
                         {r.has_coords === false ? (
                           <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">No coords</span>
+                        ) : null}
+                        {r.geocode_status === 'geocoded' ? (
+                          <span className={cn(
+                            'rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider',
+                            r.geocode_confidence === 'high' && 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700',
+                            r.geocode_confidence === 'medium' && 'border-sky-500/40 bg-sky-500/10 text-sky-700',
+                            r.geocode_confidence === 'low' && 'border-amber-500/40 bg-amber-500/10 text-amber-700',
+                          )}>Geocoded · {r.geocode_confidence ?? '—'}</span>
+                        ) : null}
+                        {r.geocode_status === 'failed' ? (
+                          <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">Geocode failed</span>
                         ) : null}
                       </div>
                     ) : null}

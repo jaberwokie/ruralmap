@@ -20,10 +20,12 @@ import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
   promoteStagingService, promoteStagingServicesBulk, rejectStagingService, deactivateVerifiedService,
   editServiceRecord, upsertStagingServicesControlled, writeHeaderResolutionAudit,
+  geocodeStagingServicesBulk,
 } from '@/utils/mappingPipelineStore';
 import {
   parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
 } from '@/utils/mappingPipelineCsv';
+import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 
@@ -207,13 +209,18 @@ export default function AdminMappingServices() {
     }
   };
 
-  const stagingRows = useMemo(() => staging.map((r) => ({
+  const stagingRows = useMemo(() => staging.map((r) => {
+    const tag = parseGeocodeTag(r.access_notes);
+    const failed = isGeocodeFailed(r.access_notes);
+    return {
     id: r.id,
     review_status: r.review_status,
     validation_severity: r.validation_severity,
     validation_messages: r.validation_messages,
     mappable: r.mappable !== false,
     has_coords: r.latitude != null && r.longitude != null,
+    geocode_status: (tag ? 'geocoded' : failed ? 'failed' : null) as 'geocoded' | 'failed' | null,
+    geocode_confidence: tag?.confidence ?? null,
     cells: {
       name: r.name,
       category: r.service_category ?? '—',
@@ -242,7 +249,8 @@ export default function AdminMappingServices() {
       ),
       source: r.source_file_name ?? '—',
     },
-  })), [staging]);
+    };
+  }), [staging]);
 
   const verifiedRows = useMemo(() => verified.map((r) => ({
     id: r.id,
@@ -377,6 +385,19 @@ export default function AdminMappingServices() {
           if (res.failures.length > 0) {
             toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
           }
+          await refresh();
+        }}
+        onGeocodeBulk={async (ids) => {
+          const res = await geocodeStagingServicesBulk(ids);
+          const parts = [
+            `${res.geocoded} geocoded`,
+            `${res.failed} failed`,
+            `${res.skipped} skipped`,
+          ];
+          if (res.geocoded > 0) {
+            parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
+          }
+          toast.success(`Geocode: ${parts.join(', ')}`);
           await refresh();
         }}
         onReject={async (id) => { await rejectStagingService(id); toast.success('Rejected.'); await refresh(); }}

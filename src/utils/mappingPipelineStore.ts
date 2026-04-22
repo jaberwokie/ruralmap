@@ -20,6 +20,10 @@ import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
 import { controlledAppend, normalizeTags } from './serviceNormalize';
+import {
+  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
+  type GeocodeOutcome, type GeocodeRunSummary,
+} from './serviceGeocode';
 
 type Json = Record<string, unknown>;
 
@@ -230,6 +234,97 @@ export const promoteStagingServicesBulk = async (
   // Single broadcast at the end (each promote already broadcasts; this is belt-and-suspenders)
   notifyVerifiedRecordsChanged();
   return { promoted, skipped, failed, failures };
+};
+
+/**
+ * Bulk-geocode staging service rows (and/or verified rows). Targets only
+ * records where mappable=true and lat/lng are blank. Uses Nominatim with
+ * a 1.1s delay between calls to honor public usage policy.
+ *
+ * Persists lat/lng to the matching row, stamps `access_notes` with a
+ * geocode tag (`[geocode:strategy|confidence|YYYY-MM-DD]`), writes audit,
+ * and broadcasts the verified-records bus once at the end.
+ *
+ * - Skips list-only rows (mappable=false)
+ * - Skips rows that already have coordinates (no overwrite)
+ * - On failure, stamps `[geocode:failed]` so the UI can badge it
+ */
+export const geocodeStagingServicesBulk = async (
+  ids: string[],
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
+): Promise<GeocodeRunSummary> => {
+  // Pull current rows for all requested ids from staging AND verified.
+  const [stagingAll, verifiedAll] = await Promise.all([
+    listStagingServices(),
+    listVerifiedServices(),
+  ]);
+  const stgById = new Map(stagingAll.map((r) => [r.id, r] as const));
+  const verById = new Map(verifiedAll.map((r) => [r.id, r] as const));
+
+  type Target =
+    | { scope: 'staging_services'; row: StagingServiceRow }
+    | { scope: 'verified_services'; row: VerifiedServiceRow };
+  const targets: Target[] = ids
+    .map((id): Target | null => {
+      const stg = stgById.get(id);
+      if (stg) return { scope: 'staging_services', row: stg };
+      const ver = verById.get(id);
+      if (ver) return { scope: 'verified_services', row: ver };
+      return null;
+    })
+    .filter((x): x is Target => x !== null);
+
+  const outcomes = await geocodeMany(
+    targets.map((t) => t.row),
+    options?.onProgress,
+  );
+
+  let touched = 0;
+  for (let i = 0; i < outcomes.length; i++) {
+    const oc = outcomes[i];
+    const target = targets[i];
+    if (!target) continue;
+
+    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
+      const stampedNotes = stampGeocodeTag(target.row.access_notes, oc.strategy!, oc.confidence!);
+      await editServiceRecord(target.scope, target.row.id, {
+        latitude: oc.latitude,
+        longitude: oc.longitude,
+        access_notes: stampedNotes,
+      } as Partial<StagingServiceRow & VerifiedServiceRow>);
+      await writeAudit({
+        pipeline: 'services',
+        action: 'record_edited',
+        target_table: target.scope,
+        target_row_id: target.row.id,
+        details: {
+          geocode: true,
+          strategy: oc.strategy,
+          confidence: oc.confidence,
+          latitude: oc.latitude,
+          longitude: oc.longitude,
+        },
+      });
+      touched += 1;
+    } else if (oc.status === 'failed') {
+      const stampedNotes = stampGeocodeFailure(target.row.access_notes);
+      await editServiceRecord(target.scope, target.row.id, {
+        access_notes: stampedNotes,
+      } as Partial<StagingServiceRow & VerifiedServiceRow>);
+      await writeAudit({
+        pipeline: 'services',
+        action: 'record_edited',
+        target_table: target.scope,
+        target_row_id: target.row.id,
+        details: { geocode: true, status: 'failed', reason: oc.reason },
+      });
+    }
+  }
+
+  if (touched > 0) notifyVerifiedRecordsChanged();
+  return summarizeGeocodeRun(outcomes);
 };
 
 export const rejectStagingService = async (id: string, reason?: string): Promise<void> => {
