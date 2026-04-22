@@ -12,6 +12,116 @@
 import { fteCapacityData, type FTECapacity } from '@/data/fte-capacity';
 import { kmToMiles, kmToDriveMinutes, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 
+// ── County-level response classification ──────────────────────────────────
+// Reuses the same anchored-FTE coverage breakdown the rest of the app uses.
+// Reflects worst-case / dominant coverage reality, not best-case edge.
+
+export type CountyResponseLevel =
+  | 'feasible'        // active majority + 2+ anchoring FTEs
+  | 'singleThreaded'  // active majority but only 1 anchoring FTE
+  | 'possible'        // partial active coverage (~40–75%)
+  | 'strained'        // some active overlap but dominant area outside
+  | 'noSameDay';      // no anchoring FTE / no active overlap
+
+export interface CountyResponseClassification {
+  level: CountyResponseLevel;
+  label: string;
+  sub: string | null;
+  tone: string;
+  anchoringFtes: string[];
+}
+
+const LEVEL_TONE: Record<CountyResponseLevel, string> = {
+  feasible: 'text-emerald-700',
+  singleThreaded: 'text-amber-700',
+  possible: 'text-amber-700',
+  strained: 'text-amber-700',
+  noSameDay: 'text-red-600',
+};
+
+export function getCountyResponseClassification(
+  county: string,
+  coverageRadiusKm: number,
+): CountyResponseClassification {
+  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
+  const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const fieldServing = serving.filter(f => f.hubLocation);
+  const anchors = breakdown.anchoringFtes;
+
+  // Build "anchored from {anchor sites}" subline using real anchor sites
+  const anchorSiteNames = anchors
+    .map(label => fteCapacityData.find(f => f.label === label)?.anchorSite?.name)
+    .filter((n): n is string => Boolean(n));
+  const anchoredFrom = anchorSiteNames.length
+    ? `Coverage anchored from ${anchorSiteNames.join(', ')}`
+    : null;
+
+  // No field FTE in service list, or no anchoring zone touches the county
+  if (fieldServing.length === 0 || anchors.length === 0) {
+    return {
+      level: 'noSameDay',
+      label: 'No realistic same-day field response — remote coordination required',
+      sub: serving.length > 0 ? 'Remote-only coverage assignment' : null,
+      tone: LEVEL_TONE.noSameDay,
+      anchoringFtes: anchors,
+    };
+  }
+
+  const active = breakdown.activePercent;
+
+  if (active >= 75 && anchors.length >= 2) {
+    return {
+      level: 'feasible',
+      label: 'Field response feasible (local same-day)',
+      sub: anchoredFrom,
+      tone: LEVEL_TONE.feasible,
+      anchoringFtes: anchors,
+    };
+  }
+
+  if (active >= 75) {
+    return {
+      level: 'singleThreaded',
+      label: 'Field response feasible (single-threaded)',
+      sub: anchoredFrom ?? 'Single-threaded field coverage',
+      tone: LEVEL_TONE.singleThreaded,
+      anchoringFtes: anchors,
+    };
+  }
+
+  if (active >= 40) {
+    return {
+      level: 'possible',
+      label: 'Field response possible (scheduled / limited same-day)',
+      sub: anchoredFrom
+        ? `${anchoredFrom} — ${active}% within same-day reach`
+        : `${active}% of county within same-day reach`,
+      tone: LEVEL_TONE.possible,
+      anchoringFtes: anchors,
+    };
+  }
+
+  if (active > 0) {
+    return {
+      level: 'strained',
+      label: 'Field response strained (not reliably same-day)',
+      sub: anchoredFrom
+        ? `${anchoredFrom} — only ${active}% within same-day reach`
+        : `Only ${active}% of county within same-day reach`,
+      tone: LEVEL_TONE.strained,
+      anchoringFtes: anchors,
+    };
+  }
+
+  return {
+    level: 'noSameDay',
+    label: 'No realistic same-day field response — remote coordination required',
+    sub: anchoredFrom,
+    tone: LEVEL_TONE.noSameDay,
+    anchoringFtes: anchors,
+  };
+}
+
 export type StrainCoverageState =
   | 'shared'        // 2+ field FTEs cover this point
   | 'single'        // exactly 1 field FTE covers
