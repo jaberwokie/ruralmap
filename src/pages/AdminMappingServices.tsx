@@ -20,10 +20,12 @@ import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
   promoteStagingService, promoteStagingServicesBulk, rejectStagingService, deactivateVerifiedService,
   editServiceRecord, upsertStagingServicesControlled, writeHeaderResolutionAudit,
+  geocodeStagingServicesBulk,
 } from '@/utils/mappingPipelineStore';
 import {
   parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
 } from '@/utils/mappingPipelineCsv';
+import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 
