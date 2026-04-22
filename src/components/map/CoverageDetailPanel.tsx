@@ -409,23 +409,34 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
             )}
           </div>
 
-          {canGoBack && onBack && (
-            <div className="px-3 pb-1.5 flex-shrink-0">
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  onBack();
-                }}
-                className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                title="Return to previous selection"
-              >
-                <span aria-hidden="true">←</span>
-                <span>Back to County</span>
-              </button>
-            </div>
-          )}
+          {canGoBack && onBack && (() => {
+            // Label the back control based on the entity we are returning TO,
+            // and the entity we are currently viewing. Drilling from a county
+            // into one of its services should return to "Services" (the
+            // county-scoped Local Resource Network list); other back paths
+            // remain "Back to County".
+            const returningToCounty =
+              previousEntity?.type === 'county' || previousEntity?.type === 'memberVolume';
+            const fromService = entity?.type === 'ruralService';
+            const label = returningToCounty && fromService ? 'Back to Services' : 'Back to County';
+            return (
+              <div className="px-3 pb-1.5 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    onBack();
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md border border-border bg-secondary/60 px-2 py-1 text-[10px] font-medium text-foreground transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  title="Return to previous selection"
+                >
+                  <span aria-hidden="true">←</span>
+                  <span>{label}</span>
+                </button>
+              </div>
+            );
+          })()}
 
           {/* Body */}
           <div className="overflow-y-auto flex-1 px-3 pb-3">
