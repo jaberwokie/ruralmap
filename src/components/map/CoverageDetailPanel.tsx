@@ -13,6 +13,7 @@ import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
+import { computeFieldResponseStrain, STRAIN_TONE } from '@/utils/fieldResponseStrain';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
@@ -468,6 +469,7 @@ const EntityContent = ({
     case 'memberAccess': return (
       <MemberAccessPanelLazy
         analysis={entity.analysis}
+        coverageRadiusKm={coverageRadiusKm}
         onFacilitySelect={onFacilitySelect}
         onServiceSelect={onServiceSelect}
       />

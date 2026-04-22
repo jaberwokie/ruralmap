@@ -1,4 +1,6 @@
 import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront, Bus } from 'lucide-react';
+import { computeFieldResponseStrain, STRAIN_TONE } from '@/utils/fieldResponseStrain';
+import { FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
@@ -255,13 +257,15 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services, onSelec
 
 interface MemberAccessPanelProps {
   analysis: MemberAccessAnalysis;
+  /** Active drive-time radius from sidebar slider — feeds Field Response Strain. */
+  coverageRadiusKm?: number;
   /** Open a facility's detail view, preserving member context. */
   onFacilitySelect?: (facility: Facility) => void;
   /** Open a rural service's detail view, preserving member context. */
   onServiceSelect?: (service: RuralService) => void;
 }
 
-const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
+const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
   const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
     color: 'hsl(0, 0%, 55%)',
