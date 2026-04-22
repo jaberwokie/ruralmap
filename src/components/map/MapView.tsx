@@ -13,6 +13,7 @@ import { memberVolumeData } from '@/data/member-volume';
 import { enrichedRuralServices as _baseRuralServices } from '@/data/enriched-rural-services';
 import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
+import { sameCounty } from '@/utils/countyNormalize';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { MapEntity } from '@/types/entities';
@@ -958,7 +959,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     if (countyFilters && countyFilters.size > 0) {
-      result = result.filter((service) => countyFilters.has(service.county));
+      // Use canonical county comparison so live-imported rows whose stored
+      // county is e.g. "Nye County" still match the "Nye" filter key.
+      result = result.filter((service) =>
+        Array.from(countyFilters).some((c) => sameCounty(service.county, c)),
+      );
     }
 
     if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {

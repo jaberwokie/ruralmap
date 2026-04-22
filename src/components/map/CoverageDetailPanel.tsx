@@ -6,7 +6,8 @@ import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCoun
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember, countyHasHospital } from '@/data/facilities';
 import { RuralService } from '@/data/rural-services';
-import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
+import { enrichedRuralServices as staticRuralServices } from '@/data/enriched-rural-services';
+import { sameCounty } from '@/utils/countyNormalize';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import type { RailStation } from '@/data/rail-corridors';
 import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
@@ -96,6 +97,13 @@ interface CoverageDetailPanelProps {
   onFacilitySelect?: (facility: Facility) => void;
   /** Direct rural service selection (for Member Access list clicks). */
   onServiceSelect?: (service: RuralService) => void;
+  /**
+   * Live-merged services (static enriched dataset + live verified Cloud rows,
+   * deduped). When omitted, falls back to the static dataset only — used by
+   * the Local Resource Network section so newly imported records (e.g. Nye)
+   * appear in the county detail panel.
+   */
+  liveServices?: RuralService[];
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -115,7 +123,11 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Mental Health': 'bg-violet-100 text-violet-700',
 };
 
-const COUNTY_SERVICE_COUNT = ruralServices.reduce((map, service) => {
+// Static structural baseline for GAP_COUNTIES alerts. Uses the static
+// enriched dataset only — does NOT include live verified imports. The
+// dynamic per-county count rendered in the panel header is computed from
+// the live-merged source in LocalResourcesSection below.
+const COUNTY_SERVICE_COUNT = staticRuralServices.reduce((map, service) => {
   map.set(service.county, (map.get(service.county) ?? 0) + 1);
   return map;
 }, new Map<string, number>());
@@ -338,7 +350,7 @@ const MemberDistanceBadge = ({ memberLocation, targetLat, targetLng }: { memberL
   );
 };
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect, onServiceSelect }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, allFacilities, onFacilitySelect, onServiceSelect, liveServices }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
 
@@ -428,6 +440,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
               allFacilities={allFacilities}
               onFacilitySelect={onFacilitySelect}
               onServiceSelect={onServiceSelect}
+              liveServices={liveServices}
             />
           </div>
         </div>
@@ -445,6 +458,7 @@ const EntityContent = ({
   allFacilities,
   onFacilitySelect,
   onServiceSelect,
+  liveServices,
 }: {
   entity: MapEntity;
   coverageRadiusKm: number;
@@ -452,10 +466,11 @@ const EntityContent = ({
   allFacilities?: Facility[];
   onFacilitySelect?: (f: Facility) => void;
   onServiceSelect?: (s: RuralService) => void;
+  liveServices?: RuralService[];
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} liveServices={liveServices} />;
     case 'facility': return (
       <FacilityContent
         facility={entity.facility}
@@ -1190,8 +1205,12 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
 };
 
 /** Local Resource Network section — rural services for a county */
-const LocalResourcesSection = ({ county }: { county: string }) => {
-  const services = useMemo(() => ruralServices.filter(s => s.county === county), [county]);
+const LocalResourcesSection = ({ county, services: providedServices }: { county: string; services?: RuralService[] }) => {
+  const sourceServices = providedServices ?? staticRuralServices;
+  const services = useMemo(
+    () => sourceServices.filter(s => sameCounty(s.county, county)),
+    [sourceServices, county],
+  );
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
@@ -1333,7 +1352,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+const CountyContent = ({ county, coverageRadiusKm, liveServices }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[] }) => {
   const t = useUtilizationToggles();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
@@ -1405,11 +1424,17 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
         <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
       </DetailSection>
 
-      {hasLocalResources && (
-        <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={COUNTY_SERVICE_COUNT.get(county)}>
-          <LocalResourcesSection county={county} />
-        </DetailSection>
-      )}
+      {hasLocalResources && (() => {
+        // Live-merged count for this county (falls back to static baseline).
+        const liveCount = liveServices
+          ? liveServices.filter((s) => sameCounty(s.county, county)).length
+          : (COUNTY_SERVICE_COUNT.get(county) ?? 0);
+        return (
+          <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
+            <LocalResourcesSection county={county} services={liveServices} />
+          </DetailSection>
+        );
+      })()}
 
       {(() => {
         const bb = getCountyBroadband(county);
