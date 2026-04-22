@@ -977,12 +977,29 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       );
     }
 
+    // County review scoping: when a county is selected via the map/sidebar,
+    // narrow the Services pin set to that county so the map matches the
+    // Local Resource Network panel one-for-one. This applies on top of any
+    // explicit countyFilters chip selection.
+    if (selectedCounty) {
+      result = result.filter((service) => sameCounty(service.county, selectedCounty));
+    }
+
     if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
       result = result.filter((service) => serviceCategoryFilters.has(service.category));
     }
 
+    if (import.meta.env.DEV && selectedCounty) {
+      // Dev-only parity probe: compare this count against the Local Resource
+      // Network panel for the same county. They must match.
+      // eslint-disable-next-line no-console
+      console.info(
+        `[Services parity] selectedCounty=${selectedCounty} ruralServices=${ruralServices.length} filtered=${result.length}`,
+      );
+    }
+
     return result;
-  }, [countyFilters, hasServiceLineFilter, serviceCategoryFilters, typeFilters]);
+  }, [countyFilters, hasServiceLineFilter, ruralServices, selectedCounty, serviceCategoryFilters, typeFilters]);
 
   const filteredCommunityServices = useMemo(() => {
     if (hasServiceLineFilter) return [];
