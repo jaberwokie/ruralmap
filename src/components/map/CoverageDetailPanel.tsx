@@ -1433,7 +1433,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
           : (COUNTY_SERVICE_COUNT.get(county) ?? 0);
         return (
           <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
-            <LocalResourcesSection county={county} services={liveServices} />
+            <LocalResourcesSection county={county} services={liveServices} onServiceSelect={onServiceSelect} />
           </DetailSection>
         );
       })()}
