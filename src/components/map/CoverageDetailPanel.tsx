@@ -1045,6 +1045,33 @@ const FacilityUtilizationSection = ({ facility }: { facility: Facility }) => {
   );
 };
 
+// Decide whether the Member Volume section should be auto-expanded.
+// Auto-expand only when volume actually drives decisions:
+//   - High volume (intensity > 0.66 of statewide max), OR
+//   - High engagement-gap priority (top-5 unengaged or sub-20% engagement), OR
+//   - Statistical outlier vs median (≥2× or ≤0.25× the median)
+// Otherwise the section stays collapsed (still accessible).
+function shouldAutoExpandMemberVolume(county: string): boolean {
+  const memberCount = memberVolumeData.find(d => d.county === county)?.memberCount ?? 0;
+  if (memberCount <= 0) return false;
+  const counts = memberVolumeData.map(d => d.memberCount);
+  const maxCount = Math.max(...counts);
+  const sorted = [...counts].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const medianCount = sorted.length % 2
+    ? sorted[mid]
+    : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  const intensity = maxCount > 0 ? memberCount / maxCount : 0;
+  const isHighVolume = intensity > 0.66;
+  const isOutlier = medianCount > 0 && (memberCount >= medianCount * 2 || memberCount <= medianCount * 0.25);
+  let isHighGap = false;
+  try {
+    const m = getCountyEngagementMetrics(county);
+    isHighGap = m.totalMembers > 0 && (m.isTop5Unengaged || m.engagementRate < 0.2);
+  } catch { /* defensive */ }
+  return isHighVolume || isHighGap || isOutlier;
+}
+
 // ── Rich Member Volume Section (conditional on layer) ──
 const MemberVolumeSection = ({ county }: { county: string }) => {
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
