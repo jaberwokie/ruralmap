@@ -158,6 +158,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
     let total = 0, pending = 0, approved = 0, rejected = 0;
     let promotable = 0, listOnly = 0, mappable = 0, missingCoords = 0, withCoords = 0;
     let wouldRenderPin = 0, listOnlyContext = 0;
+    let mappableMissingCoords = 0, geocodedSuccess = 0, geocodedFailed = 0, geocodedLowConf = 0;
     for (const r of stagingRows) {
       total += 1;
       if (r.review_status === 'pending') pending += 1;
@@ -170,9 +171,30 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
       if (hasCoords) withCoords += 1; else missingCoords += 1;
       if (isMappable && hasCoords) wouldRenderPin += 1;
       else listOnlyContext += 1;
+      if (isMappable && !hasCoords) mappableMissingCoords += 1;
+      if (r.geocode_status === 'geocoded') geocodedSuccess += 1;
+      if (r.geocode_status === 'failed') geocodedFailed += 1;
+      if (r.geocode_confidence === 'low') geocodedLowConf += 1;
     }
-    return { total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords, wouldRenderPin, listOnlyContext };
+    return {
+      total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords,
+      wouldRenderPin, listOnlyContext, mappableMissingCoords, geocodedSuccess, geocodedFailed, geocodedLowConf,
+    };
   }, [stagingRows]);
+
+  // Rows eligible for geocoding: mappable + no coords + not rejected.
+  const geocodableAll = useMemo(
+    () => stagingRows.filter((r) =>
+      r.mappable !== false && r.has_coords !== true && r.review_status !== 'rejected',
+    ),
+    [stagingRows],
+  );
+  const geocodableVisible = useMemo(
+    () => filteredStaging.filter((r) =>
+      r.mappable !== false && r.has_coords !== true && r.review_status !== 'rejected',
+    ),
+    [filteredStaging],
+  );
 
   const validationSummary = useMemo(() => {
     const out = { valid: 0, warning: 0, error: 0 };
