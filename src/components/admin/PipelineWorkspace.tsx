@@ -516,13 +516,24 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                   <td className="px-2 py-1.5 whitespace-nowrap">
                     <SeverityBadge severity={r.validation_severity ?? 'valid'} />
                     <ReviewBadge status={r.review_status} />
-                    {(r.mappable === false || r.has_coords === false) ? (
+                    {(r.mappable === false || r.has_coords === false || r.geocode_status) ? (
                       <div className="mt-1 inline-flex flex-col gap-0.5">
                         {r.mappable === false ? (
                           <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">List-only</span>
                         ) : null}
                         {r.has_coords === false ? (
                           <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">No coords</span>
+                        ) : null}
+                        {r.geocode_status === 'geocoded' ? (
+                          <span className={cn(
+                            'rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider',
+                            r.geocode_confidence === 'high' && 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700',
+                            r.geocode_confidence === 'medium' && 'border-sky-500/40 bg-sky-500/10 text-sky-700',
+                            r.geocode_confidence === 'low' && 'border-amber-500/40 bg-amber-500/10 text-amber-700',
+                          )}>Geocoded · {r.geocode_confidence ?? '—'}</span>
+                        ) : null}
+                        {r.geocode_status === 'failed' ? (
+                          <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">Geocode failed</span>
                         ) : null}
                       </div>
                     ) : null}
