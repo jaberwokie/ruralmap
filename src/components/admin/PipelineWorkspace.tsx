@@ -325,6 +325,19 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             <CountStat label="Approved" value={pipelineCounts.approved} />
             <CountStat label="Rejected" value={pipelineCounts.rejected} />
           </div>
+          {onGeocodeBulk ? (
+            <div className="mt-3 border-t border-border pt-3">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Geocoding status
+              </h4>
+              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                <CountStat label="Mappable missing coords" value={pipelineCounts.mappableMissingCoords} tone="rose" />
+                <CountStat label="Geocoded" value={pipelineCounts.geocodedSuccess} tone="emerald" />
+                <CountStat label="Failed geocode" value={pipelineCounts.geocodedFailed} tone="rose" />
+                <CountStat label="Low confidence" value={pipelineCounts.geocodedLowConf} tone="amber" />
+              </div>
+            </div>
+          ) : null}
           <p className="mt-2 text-[10px] text-muted-foreground">
             “Would render as pin” = mappable AND has coordinates AND promoted. Other rows still appear in the
             county Local Resource Network list when promoted.
