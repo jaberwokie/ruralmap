@@ -2775,10 +2775,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-        <EngagementPriorityCard county={county} />
-      </DetailSection>
+      <EngagementPriorityCard county={county} />
 
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
@@ -2786,6 +2783,10 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         <div className="text-xs text-foreground/80 space-y-1">
           <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         </div>
+      </DetailSection>
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
       </DetailSection>
 
       {hasUtilization && (
