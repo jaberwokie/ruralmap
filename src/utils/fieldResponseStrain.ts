@@ -115,8 +115,8 @@ export function getCountyResponseClassification(
 
   return {
     level: 'noSameDay',
-    label: 'No realistic same-day field response — remote coordination required',
-    sub: anchoredFrom,
+    label: 'Remote coordination',
+    sub: 'Field response not available same-day',
     tone: LEVEL_TONE.noSameDay,
     anchoringFtes: anchors,
   };
