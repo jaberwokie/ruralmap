@@ -121,3 +121,23 @@ export const STRAIN_TONE: Record<StrainCoverageState, string> = {
   strained: 'text-amber-700',
   noSameDay: 'text-red-600',
 };
+
+/**
+ * Plain-language operational recommendation derived from a strain result.
+ * No new logic — purely a string view of the existing classification.
+ * Remote FTEs are never assigned as a geographic responder; "no same-day"
+ * surfaces remote coordination as the realistic path instead.
+ */
+export function getStrainRecommendation(strain: FieldResponseStrain): string {
+  const anchor = strain.responder.anchorSite?.name ?? strain.responder.label;
+  switch (strain.coverage) {
+    case 'shared':
+      return `Field response feasible from ${anchor}`;
+    case 'single':
+      return `Single-threaded field response from ${anchor}`;
+    case 'strained':
+      return `Strained field response from ${anchor}`;
+    case 'noSameDay':
+      return 'No realistic same-day field response — remote coordination support likely required';
+  }
+}
