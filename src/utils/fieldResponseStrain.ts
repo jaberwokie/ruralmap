@@ -141,3 +141,22 @@ export function getStrainRecommendation(strain: FieldResponseStrain): string {
       return 'No realistic same-day field response — remote coordination support likely required';
   }
 }
+
+/**
+ * Plain-language capacity boundary derived from the same shared strain
+ * classification. Tells the user whether the current staffing model can
+ * reliably support field response in this context. No new logic — purely
+ * a conservative string view of the existing classification.
+ */
+export function getCapacityBoundaryLabel(strain: FieldResponseStrain): string {
+  switch (strain.coverage) {
+    case 'shared':
+      return 'Field response supported under current model';
+    case 'single':
+      return 'Field response possible but capacity-fragile';
+    case 'strained':
+      return 'Field response limited, remote coordination likely needed';
+    case 'noSameDay':
+      return 'Current model does not support reliable same-day field response';
+  }
+}
