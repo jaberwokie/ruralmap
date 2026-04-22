@@ -2871,17 +2871,16 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
         ))}
       </DetailSection>
 
+      <EngagementPriorityCard county={county} />
+
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
         <GapContextAlerts county={county} serviceCount={services.length} />
       </DetailSection>
 
-      {(
-        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-          <MemberVolumeSection county={county} />
-          <EngagementPriorityCard county={county} />
-        </DetailSection>
-      )}
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
+      </DetailSection>
 
       {hasUtilization && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
