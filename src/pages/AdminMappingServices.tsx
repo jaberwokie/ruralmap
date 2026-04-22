@@ -387,6 +387,19 @@ export default function AdminMappingServices() {
           }
           await refresh();
         }}
+        onGeocodeBulk={async (ids) => {
+          const res = await geocodeStagingServicesBulk(ids);
+          const parts = [
+            `${res.geocoded} geocoded`,
+            `${res.failed} failed`,
+            `${res.skipped} skipped`,
+          ];
+          if (res.geocoded > 0) {
+            parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
+          }
+          toast.success(`Geocode: ${parts.join(', ')}`);
+          await refresh();
+        }}
         onReject={async (id) => { await rejectStagingService(id); toast.success('Rejected.'); await refresh(); }}
         onDeactivate={async (id) => { await deactivateVerifiedService(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
         onRefresh={() => void refresh()}
