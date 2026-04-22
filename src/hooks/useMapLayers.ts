@@ -5,7 +5,7 @@ import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 const DEFAULT_LAYERS: LayerState = {
   counties: true,
-  services: false,
+  services: true,
   behavioralHealth: false,
   serviceLocations: true,
   operationalCoverage: false,
