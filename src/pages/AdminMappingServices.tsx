@@ -209,13 +209,18 @@ export default function AdminMappingServices() {
     }
   };
 
-  const stagingRows = useMemo(() => staging.map((r) => ({
+  const stagingRows = useMemo(() => staging.map((r) => {
+    const tag = parseGeocodeTag(r.access_notes);
+    const failed = isGeocodeFailed(r.access_notes);
+    return {
     id: r.id,
     review_status: r.review_status,
     validation_severity: r.validation_severity,
     validation_messages: r.validation_messages,
     mappable: r.mappable !== false,
     has_coords: r.latitude != null && r.longitude != null,
+    geocode_status: (tag ? 'geocoded' : failed ? 'failed' : null) as 'geocoded' | 'failed' | null,
+    geocode_confidence: tag?.confidence ?? null,
     cells: {
       name: r.name,
       category: r.service_category ?? '—',
