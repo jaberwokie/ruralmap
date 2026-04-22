@@ -1457,12 +1457,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
       showCoverageOnHover: false,
       zoomToBoundsOnClick: true,
-      spiderfyOnMaxZoom: false,
-      disableClusteringAtZoom: 12,
+      // Spiderfy any cluster the user clicks once it can't zoom any further —
+      // critical for shared-coordinate stacks (e.g. city-centroid geocodes
+      // where 10+ records land on the same lat/lng).
+      spiderfyOnMaxZoom: true,
+      // Do NOT disable clustering by zoom — coincident markers must remain
+      // grouped and spiderfiable at any zoom level.
       removeOutsideVisibleBounds: false,
       animate: true,
       animateAddingMarkers: false,
-      spiderfyDistanceMultiplier: 0.85,
+      spiderfyDistanceMultiplier: 1.4,
       clusterPane: MAP_PANES.groupedMarkers,
       spiderLegPolylineOptions: {
         color: 'hsl(var(--border))',
