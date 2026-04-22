@@ -178,6 +178,10 @@ const PANE_CONFIG = {
   memberRings:     { id: 'member-rings-pane',      zIndex: 710, interactive: false },
   // Member pin — absolute top interactive layer
   memberPin:       { id: 'member-pin-pane',        zIndex: 720, interactive: true },
+  // FTE labels — conditionally populated only when Staffing Capacity & Load is ON.
+  // Sits above member pin so anchored field labels are never clipped by overlays,
+  // coverage polygons, dashed county boundaries, or cluster markers.
+  fteLabels:       { id: 'fte-label-pane',         zIndex: 730, interactive: true },
 } as const;
 
 // Backward-compat mapping — maps OLD semantic names to NEW pane IDs
@@ -2350,7 +2354,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         iconAnchor: [0, 14],
       });
 
-      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], { icon, interactive: true, zIndexOffset: 1000, pane: PANE_CONFIG.markers.id });
+      const marker = L.marker([fte.hubLocation.lat, fte.hubLocation.lng], {
+        icon,
+        interactive: true,
+        // Selected FTE rides above other FTE labels in the same top pane.
+        zIndexOffset: isSelected ? 2000 : 1000,
+        // Top-priority pane is populated ONLY while the FTE toggle is on
+        // (this whole effect early-returns when the toggle is off, so the
+        // pane stays visually empty and reserves no marker space).
+        pane: PANE_CONFIG.fteLabels.id,
+      });
       marker.on('click', (e: L.LeafletEvent) => {
         stopInteractionEvent(e);
         armInteractionGuard('overlay');
