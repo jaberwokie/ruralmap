@@ -265,7 +265,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
         </div>
       </section>
 
-      {/* 4. Validation results */}
+      {/* 4. Validation results + pipeline counts */}
       <section className="rounded border border-border bg-card p-4">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Validation results (pending records)
@@ -274,6 +274,29 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
           <ValidationStat label="Valid" count={validationSummary.valid} tone="emerald" icon={<CheckCircle2 className="h-3.5 w-3.5" />} />
           <ValidationStat label="Warning" count={validationSummary.warning} tone="amber" icon={<AlertTriangle className="h-3.5 w-3.5" />} />
           <ValidationStat label="Error" count={validationSummary.error} tone="rose" icon={<XCircle className="h-3.5 w-3.5" />} />
+        </div>
+
+        <div className="mt-3 border-t border-border pt-3">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Pipeline counts (all staging)
+          </h4>
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
+            <CountStat label="Total staged" value={pipelineCounts.total} />
+            <CountStat label="Promotable" value={pipelineCounts.promotable} tone="emerald" />
+            <CountStat label="Mappable" value={pipelineCounts.mappable} />
+            <CountStat label="List-only" value={pipelineCounts.listOnly} tone="amber" />
+            <CountStat label="With coords" value={pipelineCounts.withCoords} />
+            <CountStat label="Missing coords" value={pipelineCounts.missingCoords} tone="rose" />
+            <CountStat label="Would render as pin" value={pipelineCounts.wouldRenderPin} tone="emerald" />
+            <CountStat label="List/county only" value={pipelineCounts.listOnlyContext} tone="amber" />
+            <CountStat label="Pending" value={pipelineCounts.pending} />
+            <CountStat label="Approved" value={pipelineCounts.approved} />
+            <CountStat label="Rejected" value={pipelineCounts.rejected} />
+          </div>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            “Would render as pin” = mappable AND has coordinates AND promoted. Other rows still appear in the
+            county Local Resource Network list when promoted.
+          </p>
         </div>
       </section>
 
