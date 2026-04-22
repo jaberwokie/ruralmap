@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button';
 import { SERVICE_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
-  promoteStagingService, rejectStagingService, deactivateVerifiedService,
+  promoteStagingService, promoteStagingServicesBulk, rejectStagingService, deactivateVerifiedService,
   editServiceRecord, upsertStagingServicesControlled, writeHeaderResolutionAudit,
 } from '@/utils/mappingPipelineStore';
 import {
@@ -212,6 +212,8 @@ export default function AdminMappingServices() {
     review_status: r.review_status,
     validation_severity: r.validation_severity,
     validation_messages: r.validation_messages,
+    mappable: r.mappable !== false,
+    has_coords: r.latitude != null && r.longitude != null,
     cells: {
       name: r.name,
       category: r.service_category ?? '—',
@@ -245,6 +247,8 @@ export default function AdminMappingServices() {
   const verifiedRows = useMemo(() => verified.map((r) => ({
     id: r.id,
     active_status: r.active_status,
+    mappable: r.mappable !== false,
+    has_coords: r.latitude != null && r.longitude != null,
     cells: {
       name: r.name,
       category: r.service_category ?? '—',
@@ -364,6 +368,17 @@ export default function AdminMappingServices() {
         uploading={uploading}
         onUpload={handleUpload}
         onPromote={async (id) => { await promoteStagingService(id); toast.success('Promoted to verified.'); await refresh(); }}
+        onPromoteBulk={async (ids) => {
+          const res = await promoteStagingServicesBulk(ids);
+          const parts: string[] = [`${res.promoted} promoted`];
+          if (res.skipped) parts.push(`${res.skipped} skipped (errors)`);
+          if (res.failed) parts.push(`${res.failed} failed`);
+          toast.success(`Bulk promote: ${parts.join(', ')}`);
+          if (res.failures.length > 0) {
+            toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
+          }
+          await refresh();
+        }}
         onReject={async (id) => { await rejectStagingService(id); toast.success('Rejected.'); await refresh(); }}
         onDeactivate={async (id) => { await deactivateVerifiedService(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
         onRefresh={() => void refresh()}
