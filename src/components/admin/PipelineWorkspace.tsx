@@ -330,11 +330,20 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
               <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Geocoding status
               </h4>
-              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-5">
                 <CountStat label="Mappable missing coords" value={pipelineCounts.mappableMissingCoords} tone="rose" />
                 <CountStat label="Geocoded" value={pipelineCounts.geocodedSuccess} tone="emerald" />
-                <CountStat label="Failed geocode" value={pipelineCounts.geocodedFailed} tone="rose" />
                 <CountStat label="Low confidence" value={pipelineCounts.geocodedLowConf} tone="amber" />
+                <CountStat label="Failed geocode" value={pipelineCounts.geocodedFailed} tone="rose" />
+                <CountStat label="Ready to render as pins" value={pipelineCounts.wouldRenderPin} tone="emerald" />
+              </div>
+              <div className="mt-3 rounded border border-border bg-background/60 px-2 py-1.5 text-[10px] text-muted-foreground">
+                <span className="font-semibold text-foreground">Recommended operator flow:</span>
+                {' '}1) Geocode mappable missing-coords rows
+                {' · '}2) Review low-confidence matches
+                {' · '}3) Promote valid rows
+                {' · '}4) Leave failed geocodes as county/list-only.
+                {' '}Geocoding never overwrites existing coordinates and never runs on list-only rows.
               </div>
             </div>
           ) : null}
