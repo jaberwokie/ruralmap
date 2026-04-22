@@ -1438,7 +1438,6 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void }) => {
   const t = useUtilizationToggles();
-  const { isOpen, toggle } = useAccordion('memberVolume');
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
@@ -1450,6 +1449,19 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
   const hasFte = serving.length > 0;
   const hasLocalResources = (COUNTY_SERVICE_COUNT.get(county) ?? 0) > 0;
+
+  // Auto-expand Transportation Coordination when transportation is a likely
+  // limiting factor: strained / remote-only response, OR sparse local resources.
+  // Reuses existing classification + service counts — no new logic system.
+  const transportationAutoExpand =
+    responseClass.level === 'strained' ||
+    responseClass.level === 'noSameDay' ||
+    responseClass.level === 'singleThreaded' ||
+    countyServiceCount < 5;
+
+  const defaultOpen = ['memberVolume'];
+  if (transportationAutoExpand) defaultOpen.push('transportation');
+  const { isOpen, toggle } = useAccordion(defaultOpen);
 
   return (
     <>
