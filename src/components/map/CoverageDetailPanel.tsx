@@ -442,12 +442,30 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
       <div className="flex items-center gap-1.5">
         <Icon className="w-4 h-4" style={{ color: roleColors?.primary }} />
         <span className="text-sm font-bold text-foreground">{fte.label}</span>
+        <span className={`ml-auto text-[9px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded ${isRemote ? 'bg-muted text-muted-foreground' : 'bg-teal-100 text-teal-800'}`}>
+          {isRemote ? 'Remote' : 'Field · Anchored'}
+        </span>
       </div>
 
       <div className={`rounded-md border px-2 py-1.5 ${roleColors?.light ?? 'bg-secondary'} ${roleColors?.border ?? 'border-border'}`}>
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Coverage Type</div>
         <div className="text-[11px] font-medium text-foreground">{meta.coverageType}</div>
       </div>
+
+      {/* Anchor Site — only for field FTEs */}
+      {!isRemote && fte.anchorSite && (
+        <div className="rounded-md border border-teal-200 bg-teal-50 px-2 py-1.5">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-teal-800 mb-0.5">Anchor Site</div>
+          <div className="text-[11px] font-semibold text-foreground">
+            {fte.anchorSite.name}
+            {fte.anchorSite.fullName ? <span className="font-normal text-foreground/70"> — {fte.anchorSite.fullName}</span> : null}
+          </div>
+          <div className="text-[10px] text-foreground/70 mt-0.5">{fte.anchorSite.type}</div>
+          {fte.anchorSite.address && (
+            <div className="text-[10px] text-muted-foreground mt-0.5">{fte.anchorSite.address}</div>
+          )}
+        </div>
+      )}
 
       <p className="text-[11px] text-muted-foreground leading-relaxed">
         {meta.description}
@@ -457,7 +475,9 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
       <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Geographic Footprint</div>
         <p className="text-[11px] text-foreground leading-relaxed">
-          {isRemote ? 'None – remote coordination only.' : `Field-based coverage from ${fte.label.replace(' FTE', '')} hub.`}
+          {isRemote
+            ? 'None – remote coordination only.'
+            : `Field-based coverage anchored at ${fte.anchorSite?.name ?? fte.label.replace(' FTE', '')}.`}
         </p>
       </div>
 
