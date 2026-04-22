@@ -1,4 +1,6 @@
 import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront, Bus } from 'lucide-react';
+import { computeFieldResponseStrain, STRAIN_TONE } from '@/utils/fieldResponseStrain';
+import { FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
@@ -255,13 +257,15 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services, onSelec
 
 interface MemberAccessPanelProps {
   analysis: MemberAccessAnalysis;
+  /** Active drive-time radius from sidebar slider — feeds Field Response Strain. */
+  coverageRadiusKm?: number;
   /** Open a facility's detail view, preserving member context. */
   onFacilitySelect?: (facility: Facility) => void;
   /** Open a rural service's detail view, preserving member context. */
   onServiceSelect?: (service: RuralService) => void;
 }
 
-const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
+const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
   const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
     color: 'hsl(0, 0%, 55%)',
@@ -346,6 +350,26 @@ const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: Memb
     });
   }
 
+  // ── Field Response Strain (member-level) ──
+  // Reuses the same helper that powers the county detail panel's strain block.
+  const strain = computeFieldResponseStrain(
+    { lat: analysis.location.lat, lng: analysis.location.lng },
+    coverageRadiusKm,
+  );
+  const strainSameDayLabel = strain
+    ? strain.withinActive
+      ? 'Within same-day field reach'
+      : strain.coverage === 'noSameDay'
+        ? 'Outside realistic same-day field response'
+        : 'Strained — beyond active radius, scheduled outreach'
+    : null;
+  const strainSameDayTone = strain
+    ? strain.withinActive
+      ? 'text-emerald-700'
+      : strain.coverage === 'noSameDay' ? 'text-red-600' : 'text-amber-700'
+    : 'text-muted-foreground';
+  const responderRole = strain ? FTE_ROLE_COLORS[strain.responder.id] : null;
+
   return (
     <>
       <div className="flex items-center gap-1.5 mb-2">
@@ -357,6 +381,39 @@ const MemberAccessPanel = ({ analysis, onFacilitySelect, onServiceSelect }: Memb
           )}
         </div>
       </div>
+
+      {strain && (
+        <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
+          <div className="flex items-center gap-1.5">
+            <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+          </div>
+
+          <div className="flex items-start gap-1.5">
+            <div className="w-2 h-2 mt-1 rounded-full flex-shrink-0" style={{ backgroundColor: responderRole?.primary }} />
+            <div className="text-[11px] text-foreground leading-tight">
+              <span className="font-medium">Likely responder:</span> {strain.responder.label}
+              {strain.responder.anchorSite && (
+                <span className="text-muted-foreground"> · from {strain.responder.anchorSite.name}</span>
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+            <span className="text-muted-foreground">One-way</span>
+            <span className="text-right font-medium text-foreground">~{strain.oneWayMi} mi · ~{strain.oneWayMin} min</span>
+            <span className="text-muted-foreground">Round-trip</span>
+            <span className="text-right font-semibold text-foreground">~{strain.roundTripMi} mi · ~{strain.roundTripMin} min</span>
+          </div>
+
+          <div className={`text-[10px] font-medium ${strainSameDayTone}`}>{strainSameDayLabel}</div>
+          <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
+
+          <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
+            Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed. Remote support remains available regardless of field response reach.
+          </div>
+        </div>
+      )}
 
       <div className="divide-y divide-border/50">
         {analysis.tiers.map(tier => (
