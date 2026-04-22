@@ -1205,7 +1205,15 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
 };
 
 /** Local Resource Network section — rural services for a county */
-const LocalResourcesSection = ({ county, services: providedServices }: { county: string; services?: RuralService[] }) => {
+const LocalResourcesSection = ({
+  county,
+  services: providedServices,
+  onServiceSelect,
+}: {
+  county: string;
+  services?: RuralService[];
+  onServiceSelect?: (s: RuralService) => void;
+}) => {
   const sourceServices = providedServices ?? staticRuralServices;
   const services = useMemo(
     () => sourceServices.filter(s => sameCounty(s.county, county)),
@@ -1222,6 +1230,11 @@ const LocalResourcesSection = ({ county, services: providedServices }: { county:
       .sort((a, b) => b[1].length - a[1].length)
       .map(([cat, items]) => [cat, [...items].sort(compareEntitiesByOperationalPriority)] as [string, RuralService[]]);
   }, [services]);
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Reset drill-down when county changes
+  useEffect(() => { setSelectedCategory(null); }, [county]);
 
   if (services.length === 0) {
     return (
@@ -1250,6 +1263,10 @@ const LocalResourcesSection = ({ county, services: providedServices }: { county:
     ? 'Core services are present with some local stabilization capability.'
     : 'Basic services exist but are limited in capacity, access, and redundancy.';
 
+  const drillItems = selectedCategory
+    ? (grouped.find(([cat]) => cat === selectedCategory)?.[1] ?? [])
+    : [];
+
   return (
     <div className="rounded-md border border-border bg-secondary/30 px-2 py-1.5 mb-2">
       {/* Header with counts */}
@@ -1267,32 +1284,69 @@ const LocalResourcesSection = ({ county, services: providedServices }: { county:
         <p className={`text-[10px] mt-0.5 leading-relaxed ${strengthColor} opacity-80`}>{strengthDesc}</p>
       </div>
 
-      {/* Category groups */}
-      <div className="space-y-1.5 max-h-48 overflow-y-auto">
-        {grouped.map(([category, items]) => (
-          <div key={category}>
-            <div className="flex items-center justify-between mb-0.5">
-              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
-                {category}
-              </span>
-              <span className="text-[10px] font-semibold tabular-nums text-foreground">{items.length}</span>
-            </div>
-            <div className="space-y-0.5 pl-1">
-              {items.map(service => (
-                <div key={service.id} className="flex items-start justify-between gap-1 w-full min-w-0">
+      {selectedCategory ? (
+        /* Drill-down view */
+        <div className="space-y-1">
+          <button
+            type="button"
+            onClick={() => setSelectedCategory(null)}
+            className="text-[10px] font-medium text-primary hover:underline flex items-center gap-0.5 mb-1"
+          >
+            ← Back to categories
+          </button>
+          <div className="flex items-center justify-between mb-1">
+            <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${CATEGORY_COLORS[selectedCategory] ?? 'bg-secondary text-foreground'}`}>
+              {selectedCategory}
+            </span>
+            <span className="text-[10px] font-semibold tabular-nums text-foreground">{drillItems.length}</span>
+          </div>
+          <div className="space-y-1 max-h-64 overflow-y-auto pl-1">
+            {drillItems.map(service => {
+              const isMappable = Number.isFinite(service.lat) && Number.isFinite(service.lng);
+              const clickable = isMappable && !!onServiceSelect;
+              return (
+                <div
+                  key={service.id}
+                  className={`flex items-start justify-between gap-1 w-full min-w-0 rounded px-1 py-1 ${clickable ? 'cursor-pointer hover:bg-secondary/70' : ''}`}
+                  onClick={clickable ? () => onServiceSelect!(service) : undefined}
+                  role={clickable ? 'button' : undefined}
+                  tabIndex={clickable ? 0 : undefined}
+                  onKeyDown={clickable ? (e) => { if (e.key === 'Enter') onServiceSelect!(service); } : undefined}
+                >
                   <div className="flex flex-col min-w-0 flex-1">
-                    <div className="text-[10px] font-medium text-foreground leading-snug" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.name}</div>
-                    {service.city && <div className="text-[9px] text-muted-foreground" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.city}</div>}
+                    <div className="text-[11px] font-medium text-foreground leading-snug" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.name}</div>
+                    {service.city && <div className="text-[10px] text-muted-foreground" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.city}</div>}
+                    {!isMappable && <div className="text-[9px] text-muted-foreground italic">List-only (no map pin)</div>}
                   </div>
-                  <div className="flex-shrink-0">
+                  <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
                     <ContactPhoneAction phone={service.phone} variant="inline" />
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
+        </div>
+      ) : (
+        /* Category groups (clickable) */
+        <div className="space-y-1 max-h-48 overflow-y-auto">
+          {grouped.map(([category, items]) => (
+            <button
+              key={category}
+              type="button"
+              onClick={() => setSelectedCategory(category)}
+              className="w-full flex items-center justify-between px-1 py-1 rounded hover:bg-secondary/70 transition-colors text-left"
+            >
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-medium ${CATEGORY_COLORS[category] ?? 'bg-secondary text-foreground'}`}>
+                {category}
+              </span>
+              <span className="text-[10px] font-semibold tabular-nums text-foreground flex items-center gap-1">
+                {items.length}
+                <span className="text-muted-foreground">›</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
