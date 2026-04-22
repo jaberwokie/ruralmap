@@ -1313,14 +1313,29 @@ const LocalResourcesSection = ({
                   tabIndex={clickable ? 0 : undefined}
                   onKeyDown={clickable ? (e) => { if (e.key === 'Enter') onServiceSelect!(service); } : undefined}
                 >
-                  <div className="flex flex-col min-w-0 flex-1">
-                    <div className="text-[11px] font-medium text-foreground leading-snug" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.name}</div>
-                    {service.city && <div className="text-[10px] text-muted-foreground" style={{ overflowWrap: 'anywhere', wordBreak: 'normal' }}>{service.city}</div>}
+                  <div className="flex flex-col min-w-0 flex-1 basis-0">
+                    <div className="text-[11px] font-medium text-foreground leading-snug" style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}>{service.name}</div>
+                    {service.city && <div className="text-[10px] text-muted-foreground" style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}>{service.city}</div>}
                     {!isMappable && <div className="text-[9px] text-muted-foreground italic">List-only (no map pin)</div>}
                   </div>
-                  <div className="flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <ContactPhoneAction phone={service.phone} variant="inline" />
-                  </div>
+                  {(() => {
+                    if (!service.phone) return null;
+                    const parts = service.phone.split(/[\/;,]/).map(s => s.trim()).filter(Boolean);
+                    const primary = parts[0] || service.phone;
+                    const extra = parts.length > 1 ? parts.length - 1 : 0;
+                    return (
+                      <div
+                        className="min-w-0 max-w-[45%] flex items-center gap-0.5"
+                        title={service.phone}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ContactPhoneAction phone={primary} variant="inline" />
+                        {extra > 0 && (
+                          <span className="text-[9px] text-muted-foreground tabular-nums">+{extra}</span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })}
