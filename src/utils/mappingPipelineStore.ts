@@ -237,17 +237,25 @@ export const promoteStagingServicesBulk = async (
 };
 
 /**
- * Bulk-geocode staging service rows (and/or verified rows). Targets only
- * records where mappable=true and lat/lng are blank. Uses Nominatim with
- * a 1.1s delay between calls to honor public usage policy.
+ * Bulk-geocode STAGING service rows only. Targets records where
+ * mappable=true and lat/lng are blank. Uses Nominatim with a 1.1s
+ * delay between calls to honor public usage policy.
  *
- * Persists lat/lng to the matching row, stamps `access_notes` with a
- * geocode tag (`[geocode:strategy|confidence|YYYY-MM-DD]`), writes audit,
- * and broadcasts the verified-records bus once at the end.
+ * Scope rules (enforced):
+ *  - Operates on `staging_services` only. Verified rows are never touched
+ *    by this workflow — promotion is the only path from staging to live.
+ *  - Skips list-only rows (mappable=false).
+ *  - Skips rows that already have coordinates (no overwrite).
+ *  - Does NOT broadcast `verified-records-changed` — no live data changes.
  *
- * - Skips list-only rows (mappable=false)
- * - Skips rows that already have coordinates (no overwrite)
- * - On failure, stamps `[geocode:failed]` so the UI can badge it
+ * Persistence:
+ *  - Writes lat/lng to the staging row.
+ *  - Appends a structured, parse-safe tag to `access_notes` on its own line:
+ *      [geocode:address_full|high|YYYY-MM-DD]
+ *      [geocode:city_county_fallback|low|YYYY-MM-DD]
+ *      [geocode:failed]
+ *    Public confidence model = high | low | none (none = failed).
+ *  - Writes one audit row per outcome.
  */
 export const geocodeStagingServicesBulk = async (
   ids: string[],
@@ -255,75 +263,65 @@ export const geocodeStagingServicesBulk = async (
     onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
   },
 ): Promise<GeocodeRunSummary> => {
-  // Pull current rows for all requested ids from staging AND verified.
-  const [stagingAll, verifiedAll] = await Promise.all([
-    listStagingServices(),
-    listVerifiedServices(),
-  ]);
+  // Pull staging rows only — verified is intentionally excluded.
+  const stagingAll = await listStagingServices();
   const stgById = new Map(stagingAll.map((r) => [r.id, r] as const));
-  const verById = new Map(verifiedAll.map((r) => [r.id, r] as const));
 
-  type Target =
-    | { scope: 'staging_services'; row: StagingServiceRow }
-    | { scope: 'verified_services'; row: VerifiedServiceRow };
-  const targets: Target[] = ids
-    .map((id): Target | null => {
-      const stg = stgById.get(id);
-      if (stg) return { scope: 'staging_services', row: stg };
-      const ver = verById.get(id);
-      if (ver) return { scope: 'verified_services', row: ver };
-      return null;
-    })
-    .filter((x): x is Target => x !== null);
+  const targets: StagingServiceRow[] = ids
+    .map((id) => stgById.get(id))
+    .filter((r): r is StagingServiceRow => !!r);
 
-  const outcomes = await geocodeMany(
-    targets.map((t) => t.row),
-    options?.onProgress,
-  );
+  const outcomes = await geocodeMany(targets, options?.onProgress);
 
-  let touched = 0;
   for (let i = 0; i < outcomes.length; i++) {
     const oc = outcomes[i];
-    const target = targets[i];
-    if (!target) continue;
+    const row = targets[i];
+    if (!row) continue;
 
     if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const stampedNotes = stampGeocodeTag(target.row.access_notes, oc.strategy!, oc.confidence!);
-      await editServiceRecord(target.scope, target.row.id, {
+      // Public confidence model = high | low | none.
+      // Street-level match → high. City/county fallback → low.
+      // (The scorer's internal "medium" is collapsed to "high" so the
+      // operator-facing model stays strictly 3-valued.)
+      const publicConfidence: 'high' | 'low' =
+        oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      await editServiceRecord('staging_services', row.id, {
         latitude: oc.latitude,
         longitude: oc.longitude,
         access_notes: stampedNotes,
-      } as Partial<StagingServiceRow & VerifiedServiceRow>);
+      } as Partial<StagingServiceRow>);
       await writeAudit({
         pipeline: 'services',
         action: 'record_edited',
-        target_table: target.scope,
-        target_row_id: target.row.id,
+        target_table: 'staging_services',
+        target_row_id: row.id,
         details: {
           geocode: true,
           strategy: oc.strategy,
-          confidence: oc.confidence,
+          confidence: publicConfidence,
           latitude: oc.latitude,
           longitude: oc.longitude,
         },
       });
-      touched += 1;
     } else if (oc.status === 'failed') {
-      const stampedNotes = stampGeocodeFailure(target.row.access_notes);
-      await editServiceRecord(target.scope, target.row.id, {
+      const stampedNotes = stampGeocodeFailure(row.access_notes);
+      await editServiceRecord('staging_services', row.id, {
         access_notes: stampedNotes,
-      } as Partial<StagingServiceRow & VerifiedServiceRow>);
+      } as Partial<StagingServiceRow>);
       await writeAudit({
         pipeline: 'services',
         action: 'record_edited',
-        target_table: target.scope,
-        target_row_id: target.row.id,
-        details: { geocode: true, status: 'failed', reason: oc.reason },
+        target_table: 'staging_services',
+        target_row_id: row.id,
+        details: { geocode: true, status: 'none', reason: oc.reason },
       });
     }
   }
 
-  if (touched > 0) notifyVerifiedRecordsChanged();
+  // Intentionally NOT calling notifyVerifiedRecordsChanged() — staging
+  // edits do not change live map data. The bus only fires when
+  // verified_services actually changes (promotion / deactivation / edit).
   return summarizeGeocodeRun(outcomes);
 };
 
