@@ -407,6 +407,61 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             </div>
           </div>
         ) : null}
+
+        {/* Geocode bulk bar */}
+        {onGeocodeBulk ? (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-muted/30 px-2 py-1.5 text-[11px]">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <MapPin className="h-3 w-3" />
+              <span>
+                <strong className="text-foreground">{geocodableAll.length}</strong> mappable rows missing coords
+                {geocodableVisible.length !== geocodableAll.length ? (
+                  <> · <strong className="text-foreground">{geocodableVisible.length}</strong> in current view</>
+                ) : null}
+                {geocodeProgress ? (
+                  <> · running {geocodeProgress.done}/{geocodeProgress.total}</>
+                ) : null}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm" variant="outline" className="h-6 px-2 text-[10px]"
+                disabled={geocodeRunning || effectiveSelected.size === 0}
+                onClick={async () => {
+                  const ids = [...effectiveSelected].filter((id) => {
+                    const r = stagingRows.find((x) => x.id === id);
+                    return r && r.mappable !== false && r.has_coords !== true && r.review_status !== 'rejected';
+                  });
+                  if (ids.length === 0) return;
+                  setGeocodeRunning(true);
+                  setGeocodeProgress({ done: 0, total: ids.length });
+                  try { await onGeocodeBulk(ids); }
+                  finally { setGeocodeRunning(false); setGeocodeProgress(null); }
+                }}
+                title="Geocode only checked rows (mappable + missing coords)"
+              >
+                {geocodeRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Geocode Selected'}
+              </Button>
+              <Button
+                size="sm" className="h-6 px-2 text-[10px]"
+                disabled={geocodeRunning || geocodableAll.length === 0}
+                onClick={async () => {
+                  const ids = geocodableAll.map((r) => r.id);
+                  if (ids.length === 0) return;
+                  setGeocodeRunning(true);
+                  setGeocodeProgress({ done: 0, total: ids.length });
+                  try { await onGeocodeBulk(ids); }
+                  finally { setGeocodeRunning(false); setGeocodeProgress(null); }
+                }}
+                title="Geocode every staging row that is mappable and missing coordinates (~1.1s/row)"
+              >
+                {geocodeRunning
+                  ? <Loader2 className="h-3 w-3 animate-spin" />
+                  : `Geocode All Mappable Missing Coords (${geocodableAll.length})`}
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-2 overflow-auto rounded border border-border max-h-[420px]">
           <table className="w-full text-[11px]">
             <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
