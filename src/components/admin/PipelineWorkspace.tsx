@@ -71,7 +71,7 @@ export interface StagingTableRow {
   has_coords?: boolean;
   /** Most recent geocode outcome stamped into access_notes. */
   geocode_status?: 'geocoded' | 'failed' | null;
-  geocode_confidence?: 'high' | 'medium' | 'low' | null;
+  geocode_confidence?: 'high' | 'low' | null;
 }
 
 export interface VerifiedTableRow {
@@ -537,9 +537,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                           <span className={cn(
                             'rounded border px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider',
                             r.geocode_confidence === 'high' && 'border-emerald-500/40 bg-emerald-500/10 text-emerald-700',
-                            r.geocode_confidence === 'medium' && 'border-sky-500/40 bg-sky-500/10 text-sky-700',
                             r.geocode_confidence === 'low' && 'border-amber-500/40 bg-amber-500/10 text-amber-700',
-                          )}>Geocoded · {r.geocode_confidence ?? '—'}</span>
+                          )}>Geocoded · {r.geocode_confidence ?? 'high'}</span>
                         ) : null}
                         {r.geocode_status === 'failed' ? (
                           <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">Geocode failed</span>
