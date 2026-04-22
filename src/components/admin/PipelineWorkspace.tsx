@@ -119,8 +119,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const {
     title, purpose, status, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
-    loading, uploading, onUpload, onPromote, onPromoteBulk, onReject, onDeactivate, onRefresh,
-    onEditStaging, onEditVerified,
+    loading, uploading, onUpload, onPromote, onPromoteBulk, onGeocodeBulk,
+    onReject, onDeactivate, onRefresh, onEditStaging, onEditVerified,
   } = props;
 
   const fileRef = useRef<HTMLInputElement>(null);
@@ -129,6 +129,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
+  const [geocodeRunning, setGeocodeRunning] = useState(false);
+  const [geocodeProgress, setGeocodeProgress] = useState<{ done: number; total: number } | null>(null);
 
   const filteredStaging = useMemo(() => {
     return stagingRows.filter((r) => {
