@@ -48,8 +48,13 @@ const Index = () => {
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
-  /** Open a rural service detail panel from list-driven contexts (e.g. Member Access list). */
-  const onService = useCallback((s: RuralService) => { selection.actions.selectEntity({ type: 'ruralService', service: s }); setMobileSidebarOpen(false); }, [selection.actions]);
+  /**
+   * Open a rural service detail panel from list-driven contexts (e.g. County
+   * Details → Local Resource Network, Member Access list). Uses
+   * `selectEntityWithBack` so the user can return to the prior county/member
+   * context via the panel's back control.
+   */
+  const onService = useCallback((s: RuralService) => { selection.actions.selectEntityWithBack({ type: 'ruralService', service: s }); setMobileSidebarOpen(false); }, [selection.actions]);
 
   /** Pre-built indexes for resolving provider names → facilities. */
   const facilityIndex = useMemo(() => {
