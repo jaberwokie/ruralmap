@@ -1421,11 +1421,17 @@ const CountyContent = ({ county, coverageRadiusKm }: { county: string; coverageR
         <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
       </DetailSection>
 
-      {hasLocalResources && (
-        <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={COUNTY_SERVICE_COUNT.get(county)}>
-          <LocalResourcesSection county={county} />
-        </DetailSection>
-      )}
+      {hasLocalResources && (() => {
+        // Live-merged count for this county (falls back to static baseline).
+        const liveCount = liveServices
+          ? liveServices.filter((s) => sameCounty(s.county, county)).length
+          : (COUNTY_SERVICE_COUNT.get(county) ?? 0);
+        return (
+          <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
+            <LocalResourcesSection county={county} services={liveServices} />
+          </DetailSection>
+        );
+      })()}
 
       {(() => {
         const bb = getCountyBroadband(county);
