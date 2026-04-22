@@ -599,16 +599,6 @@ const CountStat = ({ label, value, tone }: { label: string; value: number; tone?
     </div>
   );
 };
-    : tone === 'amber'
-      ? 'border-amber-500/40 bg-amber-500/10 text-amber-700'
-      : 'border-rose-500/40 bg-rose-500/10 text-rose-700';
-  return (
-    <div className={cn('flex items-center justify-between gap-2 rounded border px-2 py-1.5', cls)}>
-      <span className="inline-flex items-center gap-1 text-[11px] font-medium">{icon}{label}</span>
-      <span className="text-sm font-semibold tabular-nums">{count}</span>
-    </div>
-  );
-};
 
 const SeverityBadge = ({ severity }: { severity: ValidationSeverity }) => {
   const cls = severity === 'error' ? 'bg-rose-500/10 text-rose-700 border-rose-500/40'
