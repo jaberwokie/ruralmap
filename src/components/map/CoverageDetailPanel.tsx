@@ -1045,6 +1045,33 @@ const FacilityUtilizationSection = ({ facility }: { facility: Facility }) => {
   );
 };
 
+// Decide whether the Member Volume section should be auto-expanded.
+// Auto-expand only when volume actually drives decisions:
+//   - High volume (intensity > 0.66 of statewide max), OR
+//   - High engagement-gap priority (top-5 unengaged or sub-20% engagement), OR
+//   - Statistical outlier vs median (≥2× or ≤0.25× the median)
+// Otherwise the section stays collapsed (still accessible).
+function shouldAutoExpandMemberVolume(county: string): boolean {
+  const memberCount = memberVolumeData.find(d => d.county === county)?.memberCount ?? 0;
+  if (memberCount <= 0) return false;
+  const counts = memberVolumeData.map(d => d.memberCount);
+  const maxCount = Math.max(...counts);
+  const sorted = [...counts].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const medianCount = sorted.length % 2
+    ? sorted[mid]
+    : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+  const intensity = maxCount > 0 ? memberCount / maxCount : 0;
+  const isHighVolume = intensity > 0.66;
+  const isOutlier = medianCount > 0 && (memberCount >= medianCount * 2 || memberCount <= medianCount * 0.25);
+  let isHighGap = false;
+  try {
+    const m = getCountyEngagementMetrics(county);
+    isHighGap = m.totalMembers > 0 && (m.isTop5Unengaged || m.engagementRate < 0.2);
+  } catch { /* defensive */ }
+  return isHighVolume || isHighGap || isOutlier;
+}
+
 // ── Rich Member Volume Section (conditional on layer) ──
 const MemberVolumeSection = ({ county }: { county: string }) => {
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
@@ -1460,7 +1487,10 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
     responseClass.level === 'singleThreaded' ||
     countyServiceCount < 5;
 
-  const defaultOpen = ['memberVolume'];
+  const memberVolumeAutoExpand = shouldAutoExpandMemberVolume(county);
+
+  const defaultOpen: string[] = [];
+  if (memberVolumeAutoExpand) defaultOpen.push('memberVolume');
   if (transportationAutoExpand) defaultOpen.push('transportation');
   const { isOpen, toggle } = useAccordion(defaultOpen);
 
@@ -1487,10 +1517,8 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </p>
       )}
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-        <EngagementPriorityCard county={county} />
-      </DetailSection>
+      {/* Engagement Priority surfaces first — drives outreach decisions */}
+      <EngagementPriorityCard county={county} />
 
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
@@ -1503,6 +1531,10 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
             </div>
           )}
         </div>
+      </DetailSection>
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
       </DetailSection>
 
       {hasFte && (
@@ -2743,10 +2775,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
       </div>
       <p className="text-sm font-semibold text-foreground mb-2">{county} County</p>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-        <EngagementPriorityCard county={county} />
-      </DetailSection>
+      <EngagementPriorityCard county={county} />
 
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
@@ -2754,6 +2783,10 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         <div className="text-xs text-foreground/80 space-y-1">
           <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         </div>
+      </DetailSection>
+
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
       </DetailSection>
 
       {hasUtilization && (
@@ -2838,17 +2871,16 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
         ))}
       </DetailSection>
 
+      <EngagementPriorityCard county={county} />
+
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
         <GapContextAlerts county={county} serviceCount={services.length} />
       </DetailSection>
 
-      {(
-        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-          <MemberVolumeSection county={county} />
-          <EngagementPriorityCard county={county} />
-        </DetailSection>
-      )}
+      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+        <MemberVolumeSection county={county} />
+      </DetailSection>
 
       {hasUtilization && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
