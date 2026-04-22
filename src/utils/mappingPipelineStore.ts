@@ -202,6 +202,36 @@ export const promoteStagingService = async (id: string): Promise<void> => {
   notifyVerifiedRecordsChanged();
 };
 
+/**
+ * Bulk-promote multiple staging services. Skips rows with validation errors.
+ * Returns per-row outcomes so the UI can surface a summary.
+ */
+export const promoteStagingServicesBulk = async (
+  ids: string[],
+): Promise<{ promoted: number; skipped: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
+  let promoted = 0;
+  let skipped = 0;
+  let failed = 0;
+  const failures: Array<{ id: string; reason: string }> = [];
+  for (const id of ids) {
+    try {
+      await promoteStagingService(id);
+      promoted += 1;
+    } catch (e) {
+      const msg = (e as Error)?.message ?? 'unknown';
+      if (/validation errors/i.test(msg)) {
+        skipped += 1;
+      } else {
+        failed += 1;
+        failures.push({ id, reason: msg });
+      }
+    }
+  }
+  // Single broadcast at the end (each promote already broadcasts; this is belt-and-suspenders)
+  notifyVerifiedRecordsChanged();
+  return { promoted, skipped, failed, failures };
+};
+
 export const rejectStagingService = async (id: string, reason?: string): Promise<void> => {
   const { data: stg } = await (supabase.from('staging_services' as never) as never as {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingServiceRow | null }> } };

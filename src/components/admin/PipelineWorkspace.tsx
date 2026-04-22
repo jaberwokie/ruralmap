@@ -66,12 +66,17 @@ export interface StagingTableRow {
   validation_severity: ValidationSeverity | null;
   review_status: ReviewStatus;
   validation_messages: { message: string; severity: ValidationSeverity }[];
+  /** Whether this row will render as a map pin if promoted (mappable + coords). */
+  mappable?: boolean;
+  has_coords?: boolean;
 }
 
 export interface VerifiedTableRow {
   id: string;
   cells: Record<string, ReactNode>;
   active_status: boolean;
+  mappable?: boolean;
+  has_coords?: boolean;
 }
 
 interface PipelineWorkspaceProps {
@@ -93,6 +98,8 @@ interface PipelineWorkspaceProps {
   uploading: boolean;
   onUpload: (file: File) => Promise<void>;
   onPromote: (id: string) => Promise<void>;
+  /** Optional bulk promote. When omitted, bulk action bar is hidden. */
+  onPromoteBulk?: (ids: string[]) => Promise<void>;
   onReject: (id: string) => Promise<void>;
   onDeactivate: (verifiedId: string) => Promise<void>;
   onRefresh: () => void;
@@ -104,7 +111,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const {
     title, purpose, status, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
-    loading, uploading, onUpload, onPromote, onReject, onDeactivate, onRefresh,
+    loading, uploading, onUpload, onPromote, onPromoteBulk, onReject, onDeactivate, onRefresh,
     onEditStaging, onEditVerified,
   } = props;
 
@@ -112,6 +119,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const [reviewFilter, setReviewFilter] = useState<'all' | ReviewStatus>('pending');
   const [severityFilter, setSeverityFilter] = useState<'all' | ValidationSeverity>('all');
   const [actingId, setActingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkRunning, setBulkRunning] = useState(false);
 
   const filteredStaging = useMemo(() => {
     return stagingRows.filter((r) => {
@@ -120,6 +129,40 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
       return true;
     });
   }, [stagingRows, reviewFilter, severityFilter]);
+
+  // Drop selection ids that are no longer visible after filter changes.
+  const visibleIds = useMemo(() => new Set(filteredStaging.map((r) => r.id)), [filteredStaging]);
+  const effectiveSelected = useMemo(
+    () => new Set([...selectedIds].filter((id) => visibleIds.has(id))),
+    [selectedIds, visibleIds],
+  );
+
+  const promotableVisible = useMemo(
+    () => filteredStaging.filter((r) =>
+      r.review_status === 'pending' && r.validation_severity !== 'error',
+    ),
+    [filteredStaging],
+  );
+
+  const pipelineCounts = useMemo(() => {
+    let total = 0, pending = 0, approved = 0, rejected = 0;
+    let promotable = 0, listOnly = 0, mappable = 0, missingCoords = 0, withCoords = 0;
+    let wouldRenderPin = 0, listOnlyContext = 0;
+    for (const r of stagingRows) {
+      total += 1;
+      if (r.review_status === 'pending') pending += 1;
+      if (r.review_status === 'approved') approved += 1;
+      if (r.review_status === 'rejected') rejected += 1;
+      if (r.review_status === 'pending' && r.validation_severity !== 'error') promotable += 1;
+      const isMappable = r.mappable !== false;
+      const hasCoords = r.has_coords === true;
+      if (isMappable) mappable += 1; else listOnly += 1;
+      if (hasCoords) withCoords += 1; else missingCoords += 1;
+      if (isMappable && hasCoords) wouldRenderPin += 1;
+      else listOnlyContext += 1;
+    }
+    return { total, pending, approved, rejected, promotable, listOnly, mappable, missingCoords, withCoords, wouldRenderPin, listOnlyContext };
+  }, [stagingRows]);
 
   const validationSummary = useMemo(() => {
     const out = { valid: 0, warning: 0, error: 0 };
@@ -214,15 +257,15 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
               Records land in staging only — they do not appear on the map until promoted.
             </p>
           </div>
-          <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={handleFile} className="hidden" />
+          <input ref={fileRef} type="file" accept=".csv,.xlsx,.xls,text/csv" onChange={handleFile} className="hidden" />
           <Button onClick={handlePick} disabled={uploading} size="sm">
             {uploading ? <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1" />}
-            {uploading ? 'Uploading…' : 'Upload CSV'}
+            {uploading ? 'Uploading…' : 'Upload CSV / XLSX'}
           </Button>
         </div>
       </section>
 
-      {/* 4. Validation results */}
+      {/* 4. Validation results + pipeline counts */}
       <section className="rounded border border-border bg-card p-4">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Validation results (pending records)
@@ -231,6 +274,29 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
           <ValidationStat label="Valid" count={validationSummary.valid} tone="emerald" icon={<CheckCircle2 className="h-3.5 w-3.5" />} />
           <ValidationStat label="Warning" count={validationSummary.warning} tone="amber" icon={<AlertTriangle className="h-3.5 w-3.5" />} />
           <ValidationStat label="Error" count={validationSummary.error} tone="rose" icon={<XCircle className="h-3.5 w-3.5" />} />
+        </div>
+
+        <div className="mt-3 border-t border-border pt-3">
+          <h4 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Pipeline counts (all staging)
+          </h4>
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6">
+            <CountStat label="Total staged" value={pipelineCounts.total} />
+            <CountStat label="Promotable" value={pipelineCounts.promotable} tone="emerald" />
+            <CountStat label="Mappable" value={pipelineCounts.mappable} />
+            <CountStat label="List-only" value={pipelineCounts.listOnly} tone="amber" />
+            <CountStat label="With coords" value={pipelineCounts.withCoords} />
+            <CountStat label="Missing coords" value={pipelineCounts.missingCoords} tone="rose" />
+            <CountStat label="Would render as pin" value={pipelineCounts.wouldRenderPin} tone="emerald" />
+            <CountStat label="List/county only" value={pipelineCounts.listOnlyContext} tone="amber" />
+            <CountStat label="Pending" value={pipelineCounts.pending} />
+            <CountStat label="Approved" value={pipelineCounts.approved} />
+            <CountStat label="Rejected" value={pipelineCounts.rejected} />
+          </div>
+          <p className="mt-2 text-[10px] text-muted-foreground">
+            “Would render as pin” = mappable AND has coordinates AND promoted. Other rows still appear in the
+            county Local Resource Network list when promoted.
+          </p>
         </div>
       </section>
 
@@ -251,10 +317,70 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             <FilterChip active={severityFilter === 'warning'} onClick={() => setSeverityFilter('warning')}>Warnings</FilterChip>
           </div>
         </div>
+
+        {/* Bulk action bar */}
+        {onPromoteBulk ? (
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded border border-border bg-muted/30 px-2 py-1.5 text-[11px]">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <span>
+                <strong className="text-foreground">{effectiveSelected.size}</strong> selected
+                {' · '}
+                <strong className="text-foreground">{promotableVisible.length}</strong> promotable in current view
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm" variant="outline" className="h-6 px-2 text-[10px]"
+                disabled={bulkRunning || effectiveSelected.size === 0}
+                onClick={async () => {
+                  const ids = [...effectiveSelected].filter((id) => {
+                    const r = stagingRows.find((x) => x.id === id);
+                    return r && r.review_status === 'pending' && r.validation_severity !== 'error';
+                  });
+                  if (ids.length === 0) return;
+                  setBulkRunning(true);
+                  try { await onPromoteBulk(ids); setSelectedIds(new Set()); }
+                  finally { setBulkRunning(false); }
+                }}
+              >
+                {bulkRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Promote Selected'}
+              </Button>
+              <Button
+                size="sm" className="h-6 px-2 text-[10px]"
+                disabled={bulkRunning || promotableVisible.length === 0}
+                onClick={async () => {
+                  const ids = promotableVisible.map((r) => r.id);
+                  if (ids.length === 0) return;
+                  setBulkRunning(true);
+                  try { await onPromoteBulk(ids); setSelectedIds(new Set()); }
+                  finally { setBulkRunning(false); }
+                }}
+                title="Promote every promotable row in the current filter view (skips errors and rejected)"
+              >
+                {bulkRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : `Promote All Valid (${promotableVisible.length})`}
+              </Button>
+            </div>
+          </div>
+        ) : null}
         <div className="mt-2 overflow-auto rounded border border-border max-h-[420px]">
           <table className="w-full text-[11px]">
             <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
               <tr>
+                {onPromoteBulk ? (
+                  <th className="px-2 py-1.5 w-6">
+                    <input
+                      type="checkbox"
+                      aria-label="Select all promotable in view"
+                      checked={promotableVisible.length > 0 && promotableVisible.every((r) => effectiveSelected.has(r.id))}
+                      onChange={(e) => {
+                        const next = new Set(effectiveSelected);
+                        if (e.target.checked) promotableVisible.forEach((r) => next.add(r.id));
+                        else promotableVisible.forEach((r) => next.delete(r.id));
+                        setSelectedIds(next);
+                      }}
+                    />
+                  </th>
+                ) : null}
                 <th className="text-left px-2 py-1.5 whitespace-nowrap">Status</th>
                 {stagingColumns.map((c) => (
                   <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
@@ -267,11 +393,39 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                 <tr><td colSpan={stagingColumns.length + 2} className="px-2 py-6 text-center text-muted-foreground">
                   {loading ? 'Loading…' : 'No records match the current filters.'}
                 </td></tr>
-              ) : filteredStaging.map((r) => (
+              ) : filteredStaging.map((r) => {
+                const promotable = r.review_status === 'pending' && r.validation_severity !== 'error';
+                return (
                 <tr key={r.id} className="border-t border-border align-top">
+                  {onPromoteBulk ? (
+                    <td className="px-2 py-1.5 align-top">
+                      <input
+                        type="checkbox"
+                        aria-label="Select row"
+                        disabled={!promotable}
+                        checked={effectiveSelected.has(r.id)}
+                        onChange={(e) => {
+                          const next = new Set(effectiveSelected);
+                          if (e.target.checked) next.add(r.id);
+                          else next.delete(r.id);
+                          setSelectedIds(next);
+                        }}
+                      />
+                    </td>
+                  ) : null}
                   <td className="px-2 py-1.5 whitespace-nowrap">
                     <SeverityBadge severity={r.validation_severity ?? 'valid'} />
                     <ReviewBadge status={r.review_status} />
+                    {(r.mappable === false || r.has_coords === false) ? (
+                      <div className="mt-1 inline-flex flex-col gap-0.5">
+                        {r.mappable === false ? (
+                          <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">List-only</span>
+                        ) : null}
+                        {r.has_coords === false ? (
+                          <span className="rounded border border-rose-500/40 bg-rose-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-rose-700">No coords</span>
+                        ) : null}
+                      </div>
+                    ) : null}
                     {r.validation_messages.length > 0 && (
                       <div className="mt-1 max-w-[180px] text-[10px] text-muted-foreground" title={r.validation_messages.map((m) => m.message).join('\n')}>
                         <Info className="inline h-3 w-3 mr-0.5" />
@@ -316,7 +470,8 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                     )}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -425,6 +580,22 @@ const ValidationStat = ({ label, count, tone, icon }: { label: string; count: nu
     <div className={cn('flex items-center justify-between gap-2 rounded border px-2 py-1.5', cls)}>
       <span className="inline-flex items-center gap-1 text-[11px] font-medium">{icon}{label}</span>
       <span className="text-sm font-semibold tabular-nums">{count}</span>
+    </div>
+  );
+};
+
+const CountStat = ({ label, value, tone }: { label: string; value: number; tone?: 'emerald' | 'amber' | 'rose' }) => {
+  const cls = tone === 'emerald'
+    ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-700'
+    : tone === 'amber'
+      ? 'border-amber-500/30 bg-amber-500/5 text-amber-700'
+      : tone === 'rose'
+        ? 'border-rose-500/30 bg-rose-500/5 text-rose-700'
+        : 'border-border bg-background text-foreground';
+  return (
+    <div className={cn('flex flex-col gap-0.5 rounded border px-2 py-1.5', cls)}>
+      <span className="text-[9px] font-medium uppercase tracking-wider opacity-70">{label}</span>
+      <span className="text-sm font-semibold tabular-nums">{value}</span>
     </div>
   );
 };
