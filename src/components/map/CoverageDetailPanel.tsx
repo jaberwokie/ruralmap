@@ -13,7 +13,7 @@ import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
-import { computeFieldResponseStrain, STRAIN_TONE } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation } from '@/utils/fieldResponseStrain';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
@@ -273,6 +273,9 @@ const FieldResponseStrainSection = ({
 
       <div className={`text-[10px] font-medium ${sameDayTone}`}>{sameDayLabel}</div>
       <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
+      <div className={`text-[11px] font-semibold ${STRAIN_TONE[strain.coverage]} pt-1 border-t border-border/60`}>
+        {getStrainRecommendation(strain)}
+      </div>
 
       <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
         {caption ?? 'Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed.'}
