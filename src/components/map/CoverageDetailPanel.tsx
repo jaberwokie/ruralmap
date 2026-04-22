@@ -470,7 +470,7 @@ const EntityContent = ({
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} liveServices={liveServices} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} liveServices={liveServices} onServiceSelect={onServiceSelect} />;
     case 'facility': return (
       <FacilityContent
         facility={entity.facility}
