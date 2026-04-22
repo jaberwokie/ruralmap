@@ -1,5 +1,5 @@
 import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront, Bus } from 'lucide-react';
-import { computeFieldResponseStrain, STRAIN_TONE } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation } from '@/utils/fieldResponseStrain';
 import { FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
