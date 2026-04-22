@@ -10,6 +10,8 @@ import { useFacilityData } from '@/hooks/useFacilityData';
 import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useStaffingValidation } from '@/hooks/useStaffingValidation';
+import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
+import { enrichedRuralServices as _staticRuralServices } from '@/data/enriched-rural-services';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
@@ -94,6 +96,24 @@ const Index = () => {
   const activeEntity = (selection.lockedEntity && selection.lockedEntity.type !== 'memberAccess' as string)
     ? selection.lockedEntity
     : memberAnalysisEntity ?? selection.lockedEntity;
+
+  /**
+   * Live-merged rural services (static enriched dataset + live verified Cloud
+   * rows, deduped). Mirrors MapView's merge so the County detail panel and the
+   * Services pin layer always see the exact same set. Required for newly
+   * imported rows (e.g. Nye) to appear in the Local Resource Network section.
+   */
+  const { records: liveVerifiedRecords } = useLiveVerifiedRecords();
+  const mergedRuralServices = useMemo<RuralService[]>(() => {
+    if (liveVerifiedRecords.length === 0) return _staticRuralServices;
+    const dedupKey = (n: string, lat: number, lng: number) =>
+      `${n.trim().toLowerCase()}|${lat.toFixed(4)}|${lng.toFixed(4)}`;
+    const liveKeys = new Set(liveVerifiedRecords.map((r) => dedupKey(r.name, r.lat, r.lng)));
+    const baseFiltered = _staticRuralServices.filter(
+      (s) => !liveKeys.has(dedupKey(s.name, s.lat, s.lng)),
+    );
+    return [...baseFiltered, ...liveVerifiedRecords];
+  }, [liveVerifiedRecords]);
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
@@ -210,6 +230,7 @@ const Index = () => {
           allFacilities={facility.facilities}
           onFacilitySelect={onFacility}
           onServiceSelect={onService}
+          liveServices={mergedRuralServices}
         />
         <PresentationOverlay
           isPresenting={presentation.isPresenting}
