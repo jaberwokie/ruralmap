@@ -263,13 +263,18 @@ export const geocodeStagingServicesBulk = async (
   const stgById = new Map(stagingAll.map((r) => [r.id, r] as const));
   const verById = new Map(verifiedAll.map((r) => [r.id, r] as const));
 
-  const targets = ids
-    .map((id) => {
-      if (stgById.has(id)) return { scope: 'staging_services' as const, row: stgById.get(id)! };
-      if (verById.has(id)) return { scope: 'verified_services' as const, row: verById.get(id)! };
+  type Target =
+    | { scope: 'staging_services'; row: StagingServiceRow }
+    | { scope: 'verified_services'; row: VerifiedServiceRow };
+  const targets: Target[] = ids
+    .map((id): Target | null => {
+      const stg = stgById.get(id);
+      if (stg) return { scope: 'staging_services', row: stg };
+      const ver = verById.get(id);
+      if (ver) return { scope: 'verified_services', row: ver };
       return null;
     })
-    .filter((x): x is { scope: 'staging_services' | 'verified_services'; row: StagingServiceRow | VerifiedServiceRow } => !!x);
+    .filter((x): x is Target => x !== null);
 
   const outcomes = await geocodeMany(
     targets.map((t) => t.row),
