@@ -6,7 +6,8 @@ import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCoun
 import { memberVolumeData } from '@/data/member-volume';
 import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember, countyHasHospital } from '@/data/facilities';
 import { RuralService } from '@/data/rural-services';
-import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
+import { enrichedRuralServices as staticRuralServices } from '@/data/enriched-rural-services';
+import { sameCounty } from '@/utils/countyNormalize';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import type { RailStation } from '@/data/rail-corridors';
 import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
