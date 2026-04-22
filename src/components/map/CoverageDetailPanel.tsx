@@ -12,7 +12,7 @@ import type { RailStation } from '@/data/rail-corridors';
 import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
-import { getCountyCoverageBreakdown, kmToMiles } from '@/utils/coverageZones';
+import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
@@ -204,6 +204,93 @@ const CapacityStatusSection = ({ county }: { county: string }) => {
           </div>
         );
       })}
+    </div>
+  );
+};
+
+/**
+ * Field Response Strain — additive operational visibility for a county.
+ * Reuses anchored FTE hubLocation + getCountyCoverageBreakdown.anchoringFtes.
+ * Surfaces: likely responder, one-way + round-trip travel burden, single-thread/no-same-day flags.
+ */
+const FieldResponseStrainSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+  const countyData = nevadaCounties.find(c => c.name === county);
+  if (!countyData) return null;
+  const [lat, lng] = countyData.center;
+
+  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
+  const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
+
+  // Likely responder = nearest anchored field FTE (matches drive-time intent).
+  const ranked = fieldFtes
+    .map(f => ({ fte: f, km: haversineKmLocal(lat, lng, f.hubLocation!.lat, f.hubLocation!.lng) }))
+    .sort((a, b) => a.km - b.km);
+  const primary = ranked[0];
+  if (!primary) return null;
+
+  const oneWayMi = Math.round(kmToMiles(primary.km));
+  const roundTripMi = oneWayMi * 2;
+  const oneWayMin = kmToDriveMinutes(primary.km);
+  const roundTripMin = oneWayMin * 2;
+
+  // Classification — conservative, derived from existing radius.
+  const withinActive = primary.km <= coverageRadiusKm;
+  const beyondSameDay = primary.km > coverageRadiusKm * 1.5;
+  const sameDayLabel = withinActive
+    ? 'Within same-day field reach'
+    : beyondSameDay
+      ? 'Outside realistic same-day field response'
+      : 'Strained — beyond active radius, scheduled outreach';
+  const sameDayTone = withinActive ? 'text-emerald-700' : beyondSameDay ? 'text-red-600' : 'text-amber-700';
+
+  // Single-threaded vs shared (reuse anchoringFtes from coverage breakdown).
+  const anchoring = breakdown.anchoringFtes;
+  let coverageLabel: string;
+  let coverageTone: string;
+  if (anchoring.length === 0) {
+    coverageLabel = 'No field FTE drive-time overlap';
+    coverageTone = 'text-red-600';
+  } else if (anchoring.length === 1) {
+    coverageLabel = `Single FTE coverage — ${anchoring[0]}`;
+    coverageTone = 'text-amber-700';
+  } else {
+    coverageLabel = `Shared field coverage — ${anchoring.join(', ')}`;
+    coverageTone = 'text-emerald-700';
+  }
+
+  const role = FTE_ROLE_COLORS[primary.fte.id];
+  const anchorName = primary.fte.anchorSite?.name ?? primary.fte.label;
+
+  return (
+    <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
+      <div className="flex items-center gap-1.5">
+        <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+      </div>
+
+      <div className="flex items-start gap-1.5">
+        <div className="w-2 h-2 mt-1 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
+        <div className="text-[11px] text-foreground leading-tight">
+          <span className="font-medium">Likely responder:</span> {primary.fte.label}
+          {primary.fte.anchorSite && (
+            <span className="text-muted-foreground"> · from {anchorName}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+        <span className="text-muted-foreground">One-way</span>
+        <span className="text-right font-medium text-foreground">~{oneWayMi} mi · ~{oneWayMin} min</span>
+        <span className="text-muted-foreground">Round-trip</span>
+        <span className="text-right font-semibold text-foreground">~{roundTripMi} mi · ~{roundTripMin} min</span>
+      </div>
+
+      <div className={`text-[10px] font-medium ${sameDayTone}`}>{sameDayLabel}</div>
+      <div className={`text-[10px] ${coverageTone}`}>{coverageLabel}</div>
+
+      <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
+        Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed.
+      </div>
     </div>
   );
 };
