@@ -7,6 +7,22 @@
 
 export type LoadStatus = 'available' | 'near' | 'over';
 
+/**
+ * Physical anchor site for a field FTE — the boots-on-the-ground host site
+ * where the CHW operates from. Used as the operational origin for coverage.
+ * Remote FTEs do not have an anchor site.
+ */
+export interface FTEAnchorSite {
+  /** Host organization / site name (e.g., "FISH", "NYECC") */
+  name: string;
+  /** Long-form description for detail panels */
+  fullName?: string;
+  /** Site classification (community partner, clinic, coalition, etc.) */
+  type: string;
+  /** Street address for verification / display */
+  address?: string;
+}
+
 export interface FTECapacity {
   id: string;
   label: string;
@@ -14,8 +30,18 @@ export interface FTECapacity {
   capacity: number;
   /** Current load (mock) */
   currentLoad: number;
-  /** Hub location for map indicator (null = sidebar only) */
+  /**
+   * Hub location for map indicator. For field FTEs this is the physical
+   * anchor-site coordinate (see `anchorSite`). Null = remote FTE (sidebar only).
+   */
   hubLocation: { lat: number; lng: number } | null;
+  /**
+   * Physical anchor site for field FTEs. Present iff `hubLocation` is set.
+   * Remote FTEs leave this undefined — no fake site is assigned.
+   */
+  anchorSite?: FTEAnchorSite;
+  /** Field vs remote classification (derived but stored for clarity) */
+  deployment: 'field' | 'remote';
   /** Counties served by this FTE */
   counties: string[];
 }
@@ -33,7 +59,15 @@ export const fteCapacityData: FTECapacity[] = [
     label: 'Carson City FTE',
     capacity: FTE_CAPACITY_CONFIG.carsonFieldPerDay,
     currentLoad: 3,
-    hubLocation: { lat: 39.1638, lng: -119.7674 },
+    // Anchored at FISH (Friends In Service Helping), Carson City
+    hubLocation: { lat: 39.16204, lng: -119.75747 },
+    anchorSite: {
+      name: 'FISH',
+      fullName: 'Friends In Service Helping',
+      type: 'Community partner site',
+      address: '138 E Long St, Carson City, NV',
+    },
+    deployment: 'field',
     counties: ['Carson City', 'Douglas', 'Lyon', 'Washoe', 'Churchill', 'Storey'],
   },
   {
@@ -41,7 +75,15 @@ export const fteCapacityData: FTECapacity[] = [
     label: 'Pahrump FTE',
     capacity: FTE_CAPACITY_CONFIG.pahrumpFieldPerDay,
     currentLoad: 4,
-    hubLocation: { lat: 36.2083, lng: -115.9839 },
+    // Anchored at NYECC (Nye Communities Coalition), Pahrump
+    hubLocation: { lat: 36.21290, lng: -115.96974 },
+    anchorSite: {
+      name: 'NYECC',
+      fullName: 'Nye Communities Coalition',
+      type: 'Community coalition site',
+      address: '1845 E Calvada Blvd, Pahrump, NV',
+    },
+    deployment: 'field',
     counties: ['Nye', 'Clark', 'Esmeralda'],
   },
   {
@@ -49,7 +91,8 @@ export const fteCapacityData: FTECapacity[] = [
     label: 'Remote FTE',
     capacity: FTE_CAPACITY_CONFIG.remoteCoordinationPerDay,
     currentLoad: 6,
-    hubLocation: null, // sidebar only
+    hubLocation: null, // remote — no physical anchor by design
+    deployment: 'remote',
     counties: ['Humboldt', 'Pershing', 'Lander', 'Eureka', 'Elko', 'White Pine', 'Mineral', 'Lincoln'],
   },
 ];

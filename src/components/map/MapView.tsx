@@ -2324,7 +2324,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
       const isSelected = selectedFteId === fte.id;
-      const coverageLabel = fte.hubLocation ? 'Field' : 'Remote';
+      const anchorName = fte.anchorSite?.name;
+      const coverageLabel = anchorName ? `Field · ${anchorName}` : 'Field';
 
       const icon = L.divIcon({
         className: '',
@@ -2338,11 +2339,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           position:relative;
           ${isSelected ? 'animation: fte-pulse 1.5s ease-in-out infinite;' : ''}
         ">
-          <div style="width:10px;height:10px;border-radius:50%;background:${roleColor};flex-shrink:0;border:1.5px solid white;box-shadow:0 0 0 1px ${roleColor};"></div>
+          <div style="position:relative;width:10px;height:10px;flex-shrink:0;">
+            <div style="width:10px;height:10px;border-radius:50%;background:${roleColor};border:1.5px solid white;box-shadow:0 0 0 1px ${roleColor};"></div>
+            ${anchorName ? `<div title="Anchored site" style="position:absolute;top:-3px;right:-3px;width:6px;height:6px;border-radius:50%;background:white;border:1.5px solid ${roleColor};"></div>` : ''}
+          </div>
           <span style="font-size:10px;font-weight:600;color:${roleColor};">${fte.label}</span>
           <span style="font-size:9px;color:hsl(0,0%,50%);">${coverageLabel}</span>
         </div>`,
-        iconSize: [150, 28],
+        iconSize: [170, 28],
         iconAnchor: [0, 14],
       });
 
