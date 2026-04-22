@@ -15,7 +15,7 @@
  */
 
 import { type ReactNode, useRef, useState, useMemo } from 'react';
-import { Upload, Download, CheckCircle2, XCircle, AlertTriangle, Loader2, Info } from 'lucide-react';
+import { Upload, Download, CheckCircle2, XCircle, AlertTriangle, Loader2, Info, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
 import type { ValidationSeverity, ReviewStatus, AuditLogRow } from '@/types/mappingPipeline';
@@ -69,6 +69,9 @@ export interface StagingTableRow {
   /** Whether this row will render as a map pin if promoted (mappable + coords). */
   mappable?: boolean;
   has_coords?: boolean;
+  /** Most recent geocode outcome stamped into access_notes. */
+  geocode_status?: 'geocoded' | 'failed' | null;
+  geocode_confidence?: 'high' | 'medium' | 'low' | null;
 }
 
 export interface VerifiedTableRow {
@@ -100,6 +103,11 @@ interface PipelineWorkspaceProps {
   onPromote: (id: string) => Promise<void>;
   /** Optional bulk promote. When omitted, bulk action bar is hidden. */
   onPromoteBulk?: (ids: string[]) => Promise<void>;
+  /**
+   * Optional bulk geocode. When provided, "Geocode All Mappable Missing Coords"
+   * and "Geocode Selected" buttons appear. Receives staging row ids only.
+   */
+  onGeocodeBulk?: (ids: string[]) => Promise<void>;
   onReject: (id: string) => Promise<void>;
   onDeactivate: (verifiedId: string) => Promise<void>;
   onRefresh: () => void;
