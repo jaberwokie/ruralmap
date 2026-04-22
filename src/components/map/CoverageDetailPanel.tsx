@@ -1202,8 +1202,12 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
 };
 
 /** Local Resource Network section — rural services for a county */
-const LocalResourcesSection = ({ county }: { county: string }) => {
-  const services = useMemo(() => ruralServices.filter(s => s.county === county), [county]);
+const LocalResourcesSection = ({ county, services: providedServices }: { county: string; services?: RuralService[] }) => {
+  const sourceServices = providedServices ?? staticRuralServices;
+  const services = useMemo(
+    () => sourceServices.filter(s => sameCounty(s.county, county)),
+    [sourceServices, county],
+  );
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
     services.forEach(s => {
