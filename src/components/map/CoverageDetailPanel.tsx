@@ -12,7 +12,7 @@ import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal
 import type { RailStation } from '@/data/rail-corridors';
 import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE_LABELS } from '@/data/local-transit-providers';
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
-import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS, PRIMARY_RESPONSE_LABELS } from '@/data/operational-coverage';
+import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
 import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getCountyResponseClassification } from '@/utils/fieldResponseStrain';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
