@@ -1460,7 +1460,10 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
     responseClass.level === 'singleThreaded' ||
     countyServiceCount < 5;
 
-  const defaultOpen = ['memberVolume'];
+  const memberVolumeAutoExpand = shouldAutoExpandMemberVolume(county);
+
+  const defaultOpen: string[] = [];
+  if (memberVolumeAutoExpand) defaultOpen.push('memberVolume');
   if (transportationAutoExpand) defaultOpen.push('transportation');
   const { isOpen, toggle } = useAccordion(defaultOpen);
 
@@ -1487,9 +1490,11 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </p>
       )}
 
+      {/* Engagement Priority surfaces first — drives outreach decisions */}
+      <EngagementPriorityCard county={county} />
+
       <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
         <MemberVolumeSection county={county} />
-        <EngagementPriorityCard county={county} />
       </DetailSection>
 
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
