@@ -232,6 +232,7 @@ const Index = () => {
           onProviderClick={onProviderClickFromUtilization}
           onBack={selection.actions.goBack}
           canGoBack={!!selection.previousEntity}
+          previousEntity={selection.previousEntity}
           allFacilities={facility.facilities}
           onFacilitySelect={onFacility}
           onServiceSelect={onService}
