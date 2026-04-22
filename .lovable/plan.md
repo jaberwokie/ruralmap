@@ -1,130 +1,47 @@
 
-# Nye Rural Dataset Integration — Final Plan (v5)
+1. Verify what is actually deployed
+- Compare the currently published `.lovable.app` domain and custom domain responses again after approval, including asset bundle references and any exposed build metadata.
+- Add a non-admin, parse-safe build fingerprint so preview, published, and custom-domain builds can be compared directly without relying on hidden admin UI.
+- Check whether the live domain is pointing at the latest published deployment or serving older cached assets.
 
-Final addendum to the previously approved plan. Adds duplicate-field resolution, a minimum-usability rule, and schema version tagging. Everything else from v4 stands unchanged.
+2. Reconcile code vs observed behavior
+- Inspect the current marker pipeline end to end for Services:
+  - merged live/static services source
+  - county filtering inputs
+  - community-service split
+  - clustering input
+- Confirm whether “county-scoped Services markers” is actually implemented in the current codebase. Current read-only inspection shows `selectedCounty` triggers `fitBounds`, but Services filtering still depends on `countyFilters`, not `selectedCounty`.
 
-## Delta from v4
+3. Fix the real mismatch in app behavior
+- If county-scoped Services is intended, apply the filter in the Services render path so county selection and Local Resource Network use the same scoped dataset.
+- Keep Provider and Behavioral Health behavior unchanged unless explicitly required.
+- Preserve clustering behavior so identical coordinates still produce one marker per service record and correct cluster counts.
 
-### 1. Duplicate field resolution (graduated, not all-abort)
+4. Add deployment-visible diagnostics
+- Surface a lightweight build/version marker in a public, low-noise place so anyone can confirm whether preview and live are on the same build.
+- Optionally add a dev-only diagnostic log for Services marker counts by county to make future parity checks exact.
 
-`resolveHeaders()` returns two separate buckets instead of one `conflicts` list:
+5. Republish and validate parity
+- Publish the updated frontend build.
+- Validate on:
+  - preview
+  - published `.lovable.app`
+  - custom domain
+- For Nye County, confirm all three match on:
+  - Services marker input count
+  - county scoping behavior
+  - major cluster counts for shared-coordinate stacks
+  - visible rendered result after county click
 
-```ts
-HeaderResolutionResult {
-  status: 'allowed' | 'blocked'
-  matchedExact: Array<{ source, canonical }>
-  matchedViaAlias: Array<{ source, canonical }>
-  unmapped: string[]
-  missingRequired: string[]
-  blocking_conflicts: Array<{ canonical, sources: string[] }>
-  non_blocking_duplicates: Array<{
-    canonical, primary: string, secondaries: string[]
-  }>
-}
-```
-
-**Identity-critical canonicals — hard abort on duplicate**
-- `name`
-- `address`
-- `phone`
-
-Two source headers resolving to any of these → `blocking_conflicts` entry, `status: 'blocked'`, import refused.
-
-**Safe canonicals — non-blocking duplicate, append-only merge**
-- `services_offered` (e.g. `description` + `services_offered`)
-- `access_notes` (e.g. `notes` + `review_notes` + `access_notes`)
-- `service_tags`
-
-Resolution rule for safe duplicates:
-- First encountered header wins as **primary source** (used as the field's base value)
-- Additional headers become **secondary append-only sources**
-- Per-row, secondaries flow through the existing controlled append helper (noise filter + dedupe + max-length cap from prior plans)
-- Recorded once per file in the resolution report and once in the audit `details.duplicate_field_sources`
-
-All other canonicals (city, state, zip, county, email, website, latitude, longitude, resource_class, mappable) remain hard-conflict if duplicated, since merge order would change record identity or geometry.
-
-### 2. Minimum usability rule (per-row, non-blocking)
-
-Inside `csvToStagingService`, after field mapping:
-
-```ts
-const hasLocation = !!(row.county || row.city || row.street_address);
-const hasContact  = !!(row.phone || row.website);
-
-if (!hasLocation && !hasContact) {
-  row.mappable = false;
-  row.validation_messages.push({
-    severity: 'warning',
-    field: 'name',
-    message: 'Insufficient operational data — no usable location or contact information',
-  });
-}
-```
-
-Row is still ingested (list-only reference). `mappable=false` already excludes it from the map per the `useLiveVerifiedRecords` filter from prior plans. No new branch.
-
-This rule runs **after** the government-default and category-normalization steps, so it cannot interfere with them.
-
-### 3. Schema version tagging (audit-only)
-
-Every audit entry written through this ingestion path includes:
-
-```json
-{ "schema_version": "nye_ingestion_v5" }
-```
-
-Applied in `mapping_audit_log.details` for:
-- `header_resolution`
-- `upload_started` / `upload_completed` (staging insert / import batch)
-- `record_edited` written by the controlled upsert
-- `record_edited` written for match-conflict flagging
-
-No schema column. No table change. Filterable via JSONB query when needed.
-
-### Updated header report example
-
-```
-Header Resolution Report
-  Matched (exact):       name, city, state, zip, phone
-  Matched (via alias):   address (← address_1)
-  Non-blocking duplicates:
-    services_offered  primary=description, append=services_offered
-    access_notes      primary=notes, append=review_notes
-  Unmapped (ignored):    internal_id
-  Missing required:      (none)
-  Blocking conflicts:    (none)
-  → Import allowed: YES
-```
-
-If `blocking_conflicts.length > 0`:
-```
-  Blocking conflicts: name (source: name, provider_name)
-  → Import allowed: NO    [Stage rows disabled]
-```
-
-## Files (delta from v4)
-
-**Edited**
-- `src/utils/serviceHeaderResolver.ts` — split `conflicts` into `blocking_conflicts` + `non_blocking_duplicates`; classify canonicals into identity-critical vs safe-append sets
-- `src/utils/mappingPipelineCsv.ts` — accept `resolvedMap` with secondary sources, append safe duplicates per row, add minimum-usability check
-- `src/utils/mappingPipelineStore.ts` — inject `schema_version: 'nye_ingestion_v5'` in all audit payloads on this path
-- `src/types/mappingPipeline.ts` — updated `HeaderResolutionResult`; small `DuplicateFieldMapping` type
-- `src/pages/AdminMappingServices.tsx` — render non-blocking duplicates as warnings; keep "Stage rows" enabled unless `blocking_conflicts.length > 0`
-
-## Schema additions across the full plan (final, locked)
-
-Only four columns total — all on `staging_services`, three mirrored on `verified_services`:
-- `service_tags text`
-- `resource_class text` (default `service`)
-- `mappable boolean default true`
-- `match_conflict boolean default false` *(staging only)*
-
-No further schema changes.
-
-## Constraints honored
-- Identity-critical duplicates still hard-abort (no silent guessing on `name`/`address`/`phone`)
-- Append-only merges already use noise filter, dedupe, and max-length caps from prior plans
-- Minimum-usability rows are kept (list-only) rather than dropped — no data loss
-- Audit version tag is metadata-only; no schema creep
-- Provider/BH/verification/presentation logic untouched
-- Existing default Services upload flow unchanged; v5 logic gated behind Nye mode flag
+Technical details
+- Relevant files already identified:
+  - `src/components/map/MapView.tsx` — Services filtering, marker creation, clustering
+  - `src/pages/Index.tsx` — county selection passed into `MapView`, merged services passed into detail panel
+  - `src/hooks/useMapSelection.ts` — `selectedCounty` state
+  - `src/hooks/useMapLayers.ts` — default layer state
+  - `src/main.tsx` — current hidden build id injection
+- Current read-only findings:
+  - published visibility is already public
+  - published and custom-domain HTML snapshots currently match each other
+  - preview could not be compared directly because it is auth-gated in this mode
+  - current repo does not show explicit `selectedCounty` filtering in the Services pin dataset
