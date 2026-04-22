@@ -292,10 +292,10 @@ export const upsertStagingServicesControlled = async (
       // Build a controlled-update payload. Only fill missing fields and
       // append-merge text fields; never overwrite populated values.
       const updates: Partial<StagingServiceRow & VerifiedServiceRow> = {};
+      const candAsRec = cand as unknown as Record<string, unknown>;
       const fillIfEmpty = <K extends keyof typeof updates>(key: K, value: unknown) => {
         if (value == null || value === '') return;
-        if ((cand as Record<string, unknown>)[key as string] == null
-          || (cand as Record<string, unknown>)[key as string] === '') {
+        if (candAsRec[key as string] == null || candAsRec[key as string] === '') {
           (updates as Record<string, unknown>)[key as string] = value;
         }
       };
