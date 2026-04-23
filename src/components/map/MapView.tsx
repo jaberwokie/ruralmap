@@ -2327,24 +2327,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!coverageGaps) return;
 
-    // Access Gap eligibility: any active provider that can satisfy access.
-    // Includes hospitals, clinics, and behavioral health locations (gated by
-    // the BH layer toggle). Distance/radius math is unchanged — we only
-    // expand the set of points whose radii subtract from the gap geometry.
-    const hospitalAndClinicPoints = facilities.filter(
-      (f) => (f.type === 'hospital' || f.type === 'clinic')
-        && Number.isFinite(f.lat) && Number.isFinite(f.lng),
+    // Access Gap eligibility uses the SAME shared active provider list as
+    // the radius renderer. This guarantees the white "holes" punched out of
+    // the red gap polygon always match the visible radii — no stale
+    // hospital/clinic subtraction when Provider Locations is off.
+    const eligibleProviders: Array<{ lat: number; lng: number }> = activeCoverageProviders.map(
+      (p) => ({ lat: p.lat, lng: p.lng }),
     );
-    const behavioralHealthPoints = layers.behavioralHealth
-      ? ruralServices.filter(
-          (s) => isBehavioralHealthService(s)
-            && Number.isFinite(s.lat) && Number.isFinite(s.lng),
-        )
-      : [];
-    const eligibleProviders: Array<{ lat: number; lng: number }> = [
-      ...hospitalAndClinicPoints,
-      ...behavioralHealthPoints,
-    ];
 
     const analysisFeature: Feature<Polygon | MultiPolygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
 
