@@ -36,6 +36,7 @@ import { buildServiceValidationIndex } from '@/utils/serviceValidation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
+import { getRemoteSupportMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 import MemberAccessSearch from '@/components/map/MemberAccessSearch';
 import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
@@ -2461,7 +2462,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         tooltipAnchor: [0, -(markerSize + 4)],
       });
 
-      const marker = L.marker(county.center, {
+      // Remote-only counties anchor the pin just outside the nearest active
+      // FTE coverage radius (in the bearing of the county centroid) so the
+      // marker reads as "support originates here", not "support sits inside
+      // an unreachable county". Active/scheduled counties keep the centroid
+      // placement — the field reach genuinely covers them.
+      const markerLatLng: [number, number] =
+        category === 'remote'
+          ? getRemoteSupportMarkerLatLng(county.center, coverageRadiusKm)
+          : county.center;
+
+      const marker = L.marker(markerLatLng, {
         icon: buildIcon(selectedCounty === county.name),
         interactive: true,
         pane: MAP_PANES.responseCapabilityMarkers,
