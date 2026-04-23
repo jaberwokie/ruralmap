@@ -1,34 +1,16 @@
 
 
-## Update OG image: replace abstract square with Nevada outline
+## Lighten the Nevada silhouette fill in the OG image
 
-Swap the generic geometric shape currently sitting on the right side of `public/og-image.jpg` for a clean Nevada state silhouette, keeping all other branding (NovumHealth logo, title, subtitle, OpsFrame.io footer) exactly as approved.
+Reduce the opacity of the Nevada silhouette in `public/og-image.jpg` so it reads as a softer background element rather than a competing block of color.
 
-### Approach
+### Change
 
-1. Use the real Nevada boundary geometry already in the project (`src/data/nevada-boundary.ts`) so the silhouette is geographically accurate — not a fake polygon.
-2. Render it as a filled shape in NovumHealth blue (`#064f88`) at ~30–50% opacity, sized to occupy roughly the same visual zone as the current square (right third of the canvas).
-3. Keep it minimal: solid silhouette only, no county lines, no pins, no labels. It must read instantly at small preview sizes.
-4. Regenerate `public/og-preview.jpg` first for review, then promote to `public/og-image.jpg` once approved.
+- Drop the silhouette fill opacity from ~40% to ~20% (NovumHealth blue `#064f88`).
+- Keep everything else identical: position (right side), shape (real Nevada geometry), logo, title, subtitle, OpsFrame.io footer.
+- Regenerate `public/og-preview.jpg` first for review, then promote to `public/og-image.jpg` once you confirm.
 
-### Layout (unchanged except for the shape)
+### Open question
 
-```text
-┌─────────────────────────────────────────────┐
-│ [NovumHealth logo]                          │
-│                                             │
-│  Rural Operations Map           ⬢ Nevada    │
-│  Nevada Rural BH Coverage…      silhouette  │
-│                                             │
-│              BUILT ON                       │
-│             OpsFrame.io                     │
-└─────────────────────────────────────────────┘
-```
-
-### Open questions
-
-- **Style**: filled silhouette (solid NovumHealth blue, ~40% opacity) or outlined only (stroke, no fill)?
-- **Position**: keep it on the right side where the square is now, or center it behind the title as a faint watermark?
-
-I'll default to **filled silhouette, right side, ~40% opacity** unless you say otherwise. Want me to generate the preview now?
+If 20% feels too faint at preview size, I'll bump to 25%. Say the word if you'd rather go even lighter (~15%) or skip the preview step and ship directly.
 
