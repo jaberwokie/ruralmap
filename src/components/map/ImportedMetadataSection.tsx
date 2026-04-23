@@ -50,6 +50,7 @@ interface Props {
 }
 
 export const ImportedMetadataSection = ({ providerId, facility }: Props) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const [record, setRecord] = useState<ProviderEnrichmentRecord | undefined>(() =>
     getEnrichmentForProvider(providerId),
   );
