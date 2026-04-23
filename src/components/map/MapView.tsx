@@ -2203,17 +2203,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // the visual radii and the gap subtraction can never drift out of sync.
   // Includes only providers from currently-active source layers.
   const activeCoverageProviders = useMemo(() => {
-    const providerFacilitySource = topProvidersOnly ? providerVisibleFacilities : filteredFacilities;
+    // Hospitals + clinics are gated SOLELY by the Provider Locations toggle
+    // (`layers.serviceLocations`). `topProvidersOnly` only narrows WHICH
+    // providers are shown when Provider Locations is on — it cannot revive
+    // radii when Provider Locations is off.
+    const providerFacilitySource = layers.serviceLocations
+      ? (topProvidersOnly ? providerVisibleFacilities : filteredFacilities)
+      : [];
     const providerFacilities = providerFacilitySource
       .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng))
-      .filter((f) => {
-        if (f.type === 'hospital' || f.type === 'clinic') {
-          return layers.serviceLocations || topProvidersOnly;
-        }
-        // Non hospital/clinic facility records are not BH (BH lives in
-        // ruralServices) — exclude here to keep the contract clean.
-        return false;
-      });
+      .filter((f) => f.type === 'hospital' || f.type === 'clinic');
 
     const behavioralHealthProviders = layers.behavioralHealth
       ? ruralServices.filter(
