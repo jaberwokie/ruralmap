@@ -1076,6 +1076,7 @@ function shouldAutoExpandMemberVolume(county: string): boolean {
 
 // ── Rich Member Volume Section (conditional on layer) ──
 const MemberVolumeSection = ({ county }: { county: string }) => {
+  const { isPublicSafe, displayCount, isSuppressed } = usePublicSafeMode();
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
   const memberCount = volumeMap.get(county) ?? 0;
   const totalMembers = memberVolumeData.reduce((s, d) => s + d.memberCount, 0);
@@ -1118,7 +1119,7 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
       <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 space-y-0.5">
         <div className="flex justify-between text-[11px]">
           <span className="text-teal-700">Total Members</span>
-          <span className="font-bold text-teal-800 tabular-nums">{memberCount.toLocaleString()}</span>
+          <span className="font-bold text-teal-800 tabular-nums">{displayCount(memberCount)}</span>
         </div>
         <div className="flex justify-between text-[11px]">
           <span className="text-teal-700">Volume Level</span>

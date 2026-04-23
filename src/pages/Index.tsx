@@ -18,6 +18,7 @@ import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
 import AdminVersionBadge from '@/components/AdminVersionBadge';
+import PublicSafeDisclaimer from '@/components/map/PublicSafeDisclaimer';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
@@ -256,6 +257,7 @@ const Index = () => {
           phase={presentation.phase}
           hasDetailPanel={!!activeEntity}
         />
+        <PublicSafeDisclaimer />
       </div>
     </div>
   );
