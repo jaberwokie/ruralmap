@@ -391,6 +391,14 @@ const Sidebar = ({
     onTransitProviderClick,
   },
 }: SidebarProps) => {
+  // Access Gaps requires at least one source layer that can produce coverage.
+  const hasAccessGapSources = layers.serviceLocations || layers.behavioralHealth || layers.services;
+  useEffect(() => {
+    if (!hasAccessGapSources && coverageGaps) {
+      onCoverageGapsChange(false);
+    }
+  }, [hasAccessGapSources, coverageGaps, onCoverageGapsChange]);
+
   const usePersistToggle = (key: string, defaultOpen = false) => {
     const [open, setOpen] = useState(() => {
       try { const v = localStorage.getItem(key); return v === null ? defaultOpen : v === 'true'; } catch { return defaultOpen; }
