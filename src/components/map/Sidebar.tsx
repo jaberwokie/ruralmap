@@ -1455,8 +1455,12 @@ const Sidebar = ({
                         checked: coverageGaps,
                         onCheckedChange: onCoverageGapsChange,
                         helpKey: 'coverageGaps',
+                        disabled: !hasAccessGapSources,
+                        disabledHint: !hasAccessGapSources
+                          ? 'Enable Provider Locations, Behavioral Health, or Services to use Access Gaps.'
+                          : undefined,
                       })}
-                      {coverageGaps && (
+                      {coverageGaps && hasAccessGapSources && (
                         <p className="px-2 pb-1 pt-0.5 text-[10px] leading-relaxed text-muted-foreground">
                           Counties highlighted in red fall outside the current distance-to-provider scenario of <span className="font-medium text-foreground">{kmToMiles(radiusKm)} mi</span>.
                         </p>
