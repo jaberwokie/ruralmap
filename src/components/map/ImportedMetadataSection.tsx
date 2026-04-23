@@ -60,6 +60,10 @@ export const ImportedMetadataSection = ({ providerId, facility }: Props) => {
     return subscribeToEnrichment(() => setRecord(getEnrichmentForProvider(providerId)));
   }, [providerId]);
 
+  // PUBLIC_SAFE_MODE: hide "Imported / Unverified Metadata" block entirely —
+  // exposes internal enrichment workflow terminology in public screenshots.
+  if (isPublicSafe) return null;
+
   if (!record) return null;
 
   const populated = FIELD_LABELS.filter(({ key }) => {
