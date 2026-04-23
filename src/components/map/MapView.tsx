@@ -2473,7 +2473,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       const markerLatLng: [number, number] =
         category === 'remote'
           ? getRemoteSupportMarkerLatLng(county.center, coverageRadiusKm)
-          : county.center;
+          : category === 'active'
+            ? getActiveFieldMarkerLatLng(county.center, coverageRadiusKm)
+            : county.center;
 
       const marker = L.marker(markerLatLng, {
         icon: buildIcon(selectedCounty === county.name),
