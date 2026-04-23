@@ -6,10 +6,12 @@
  * not ruralmap.lovable.app. We assert the canonical that actually ships.
  */
 import { describe, it, expect } from "vitest";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { readFileSync } from "fs";
+import { resolve, dirname } from "path";
+import { fileURLToPath } from "url";
 
-const html = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
+const here = dirname(fileURLToPath(import.meta.url));
+const html = readFileSync(resolve(here, "../../index.html"), "utf8");
 
 const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/";
 
