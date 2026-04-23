@@ -1072,20 +1072,21 @@ const Sidebar = ({
                                 <div className="space-y-2.5 px-2 pb-2 pt-1.5">
                                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                                     <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Field Coverage Status</div>
-                                    <div className="space-y-0.5 text-[10px] text-muted-foreground">
-                                      <div className="flex items-center gap-1.5">
-                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-active" />
-                                        <span><span className="font-semibold text-foreground">{counts.active}</span> counties with same-day field response</span>
+                                    <div className="space-y-1 text-[10px] text-muted-foreground">
+                                      <div className="flex items-start gap-1.5">
+                                        <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-active" />
+                                        <span><span className="font-semibold text-foreground">{counts.active}</span> Active Field Coverage — meaningful in-person coverage area exists from a current FTE base.</span>
                                       </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-scheduled" />
-                                        <span><span className="font-semibold text-foreground">{counts.scheduled}</span> counties with scheduled outreach only</span>
+                                      <div className="flex items-start gap-1.5">
+                                        <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-scheduled" />
+                                        <span><span className="font-semibold text-foreground">{counts.scheduled}</span> Scheduled Outreach Only — limited in-person reach exists, but not for routine rapid response.</span>
                                       </div>
-                                      <div className="flex items-center gap-1.5">
-                                        <div className="h-2 w-2 flex-shrink-0 rounded-full bg-response-remote" />
-                                        <span><span className="font-semibold text-foreground">{counts.remote}</span> counties with remote-only support</span>
+                                      <div className="flex items-start gap-1.5">
+                                        <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-remote" />
+                                        <span><span className="font-semibold text-foreground">{counts.remote}</span> Remote Support Only — no meaningful field coverage area exists under current FTE placement.</span>
                                       </div>
                                     </div>
+                                    <p className="mt-1.5 text-[9px] italic leading-snug text-muted-foreground/70">Coverage is based on real travel-time reach from current FTE base locations, not full county boundaries.</p>
                                   </div>
                                   <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                                     <div className="mb-1 flex items-center justify-between">
@@ -1130,7 +1131,7 @@ const Sidebar = ({
                                     ))}
                                   </div>
 
-                                  <p className="text-[9px] italic leading-relaxed text-muted-foreground/60">Coverage is based on real travel time, not straight-line distance.</p>
+                                  <p className="text-[9px] italic leading-relaxed text-muted-foreground/60">Reflects real travel-time reach from current FTE base locations, not full county boundaries.</p>
                                 </div>
                               );
                             })()}
