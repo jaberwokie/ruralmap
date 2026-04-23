@@ -168,6 +168,9 @@ const PANE_CONFIG = {
   countyInteractive: { id: 'county-interactive-pane', zIndex: 350, interactive: true },
   // Tribal Nation polygons — interactive, ABOVE county layer
   tribalNations:   { id: 'tribal-nations-pane',    zIndex: 450, interactive: true },
+  // Provider radius circles — above gap overlays and tribal polygons,
+  // below state mask and all marker panes. Non-interactive.
+  driveRadiiAbove: { id: 'drive-radii-above-pane', zIndex: 500, interactive: false },
   // State boundary mask — covers outside Nevada, below markers so border-adjacent pins stay visible
   stateMask:       { id: 'state-mask-pane',        zIndex: 640, interactive: false },
   // All clickable non-provider markers
