@@ -2025,6 +2025,7 @@ const resolveVerificationSignal = (entityId?: string): VerificationSignalResult 
 
 // ── Operational Indicators ──
 const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { meta?: Partial<ServiceOperationalMeta> | null; alwaysShowMedicaid?: boolean; entityId?: string }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const resolved = resolveOperationalMeta(meta);
 
   const showMedicaid = alwaysShowMedicaid || resolved.medicaidParticipationStatus !== 'unknown';
@@ -2035,17 +2036,24 @@ const OperationalBadges = ({ meta, alwaysShowMedicaid = false, entityId }: { met
   const routingTier = showRoutingTier ? resolveRoutingTierDisplay(entityId, meta) : undefined;
   const verificationSignal = resolveVerificationSignal(entityId);
 
+  // PUBLIC_SAFE_MODE: neutralize internal verification wording for public view.
+  const publicRoutingLabel = routingTier === 'available_unverified'
+    ? 'Participation Status Not Confirmed'
+    : routingTier
+      ? ROUTING_TIER_DISPLAY_LABELS[routingTier]
+      : '';
+
   return (
     <div className="rounded-md border border-border bg-secondary/40 px-2 py-1.5 mb-2 space-y-1">
       {routingTier && (
         <div className="text-[10px]">
-          <span className="text-muted-foreground block leading-tight">Routing Tier</span>
+          <span className="text-muted-foreground block leading-tight">{isPublicSafe ? 'Status' : 'Routing Tier'}</span>
           <span className={`font-medium leading-tight ${ROUTING_TIER_DISPLAY_COLORS[routingTier]}`}>
-            {ROUTING_TIER_DISPLAY_LABELS[routingTier]}
+            {isPublicSafe ? publicRoutingLabel : ROUTING_TIER_DISPLAY_LABELS[routingTier]}
           </span>
         </div>
       )}
-      {verificationSignal && (
+      {verificationSignal && !isPublicSafe && (
         <div className="text-[10px]">
           <span className="text-muted-foreground block leading-tight">Verification Signal</span>
           <span className={`font-medium leading-tight flex items-center gap-1 ${verificationSignal.colorClass}`}>
