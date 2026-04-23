@@ -114,3 +114,50 @@ export function getRemoteSupportMarkerLatLng(
 
   return projectPoint(hub, offsetKm, bearing);
 }
+
+/**
+ * Compute the marker location for an Active (field-response) county.
+ *
+ * If the county centroid sits inside the nearest field FTE's coverage radius,
+ * use the centroid as-is — the field reach genuinely covers it.
+ *
+ * If the centroid sits *outside* the coverage radius (e.g. Churchill: an
+ * eastern slice of the county is reached from Carson, but the centroid is
+ * further east than the radius), snap the pin inward along the bearing from
+ * the FTE hub so it lands just inside the coverage boundary. This keeps the
+ * "active" pin visually consistent with the rendered coverage circle.
+ *
+ * Pure geometry — does NOT change classification, FTE placement, or radius math.
+ */
+export function getActiveFieldMarkerLatLng(
+  countyCenter: [number, number],
+  coverageRadiusKm: number,
+): [number, number] {
+  const fieldFtes = fteCapacityData.filter(
+    (f) => f.deployment === 'field' && f.hubLocation,
+  );
+  if (fieldFtes.length === 0) return countyCenter;
+
+  let nearest = fieldFtes[0];
+  let nearestDistance = Infinity;
+  fieldFtes.forEach((f) => {
+    const hub: [number, number] = [f.hubLocation!.lat, f.hubLocation!.lng];
+    const d = haversineKm(hub, countyCenter);
+    if (d < nearestDistance) {
+      nearestDistance = d;
+      nearest = f;
+    }
+  });
+
+  // Centroid already inside coverage — leave it.
+  if (nearestDistance <= coverageRadiusKm) return countyCenter;
+
+  const hub: [number, number] = [
+    nearest.hubLocation!.lat,
+    nearest.hubLocation!.lng,
+  ];
+  const bearing = bearingRad(hub, countyCenter);
+  // Place just inside the boundary (small inward buffer so it reads as "in").
+  const insetKm = Math.max(0, coverageRadiusKm - 6); // ~3.7 mi inset
+  return projectPoint(hub, insetKm, bearing);
+}
