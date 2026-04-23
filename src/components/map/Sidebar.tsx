@@ -31,6 +31,7 @@ import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type Respons
 import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
 import { usePermissions } from '@/contexts/AuthContext';
 import AdminVersionBadge from '@/components/AdminVersionBadge';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 import { Link } from 'react-router-dom';
 
 // LayerState imported from @/types/layers
@@ -402,6 +403,7 @@ const Sidebar = ({
   };
 
   const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut } = usePermissions();
+  const { isPublicSafe } = usePublicSafeMode();
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   // Removed: csvOpen, verifQueueOpen, auditHistoryOpen, csvDragActive,
   // csvImportState, csvParsed — moved to Admin > Mapping.
