@@ -2393,7 +2393,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [coverageGaps, facilities, ruralServices, layers.behavioralHealth, radiusKm, selectOverlayEntity]);
+  }, [coverageGaps, activeCoverageProviders, radiusKm, selectOverlayEntity]);
 
   // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
   useEffect(() => {
