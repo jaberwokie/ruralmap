@@ -25,7 +25,22 @@ import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
 
 const queryClient = new QueryClient();
 
+const APP_VERSION = 'public-safe-v1';
+
 const App = () => {
+  useEffect(() => {
+    if (!isPublicSafeModeActive()) return;
+    try {
+      const storedVersion = sessionStorage.getItem('app_version');
+      if (storedVersion !== APP_VERSION) {
+        sessionStorage.setItem('app_version', APP_VERSION);
+        window.location.reload();
+      }
+    } catch {
+      // sessionStorage unavailable (private mode, etc.) — skip silently
+    }
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
