@@ -391,8 +391,8 @@ const Sidebar = ({
     onTransitProviderClick,
   },
 }: SidebarProps) => {
-  // Access Gaps requires at least one source layer that can produce coverage.
-  const hasAccessGapSources = layers.serviceLocations || layers.behavioralHealth || layers.services;
+  // Access Gaps requires at least one source layer that contributes to gap geometry.
+  const hasAccessGapSources = layers.serviceLocations || layers.behavioralHealth;
   useEffect(() => {
     if (!hasAccessGapSources && coverageGaps) {
       onCoverageGapsChange(false);
