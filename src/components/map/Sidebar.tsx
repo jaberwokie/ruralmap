@@ -1465,7 +1465,7 @@ const Sidebar = ({
                         helpKey: 'coverageGaps',
                         disabled: !hasAccessGapSources,
                         disabledHint: !hasAccessGapSources
-                          ? 'Enable Provider Locations, Behavioral Health, or Services to use Access Gaps.'
+                          ? 'Enable Provider Locations or Behavioral Health to use Access Gaps.'
                           : undefined,
                       })}
                       {coverageGaps && hasAccessGapSources && (
