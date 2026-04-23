@@ -2898,11 +2898,13 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
         <GapContextAlerts county={county} serviceCount={services.length} />
       </DetailSection>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
+      {!isPublicSafe && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+        </DetailSection>
+      )}
 
-      {hasUtilization && (
+      {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} />
           <UtilizationMetricsCard county={county} />
