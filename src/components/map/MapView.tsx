@@ -45,6 +45,7 @@ import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
 import { getProviderForZoneId } from '@/data/local-transit-providers';
 import type { PresentationPhase } from '@/hooks/usePresentationMode';
+import { usePublicSafeMode, isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 
 interface MapViewProps {
   facilities: Facility[];
@@ -694,6 +695,7 @@ const CoverageGapInfoButton = () => {
 
 const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
+  const { isPublicSafe } = usePublicSafeMode();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pointClusterRef = useRef<MarkerClusterGroupLike | null>(null);
@@ -2084,7 +2086,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           : getFacilityTypeLabel(facility);
 
         const claimsMetrics = getProviderClaimsMetrics(facility);
-         const claimsDetail = claimsMetrics
+         // PUBLIC_SAFE_MODE: hide claims-derived metrics (members attributed,
+         // penetration) from hover tooltips.
+         const publicMode = isPublicSafeModeActive();
+         const claimsDetail = (!publicMode && claimsMetrics)
            ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
            : undefined;
 
@@ -2097,7 +2102,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             detail: typeLabel,
             extraHtml: [
               `Data Confidence: ${dataConfidence}`,
-              showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
+              !publicMode && showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
               claimsDetail,
             ].filter(Boolean).join('\n'),
             ...distInfo,
@@ -3060,7 +3065,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
               <>
                 <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
                 <div className="mt-1.5 space-y-1">
-                  {typeof countyHoverPreview.unengagedMembers === 'number' && (
+                  {typeof countyHoverPreview.unengagedMembers === 'number' && !isPublicSafe && (
                     <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
                   )}
                   {typeof countyHoverPreview.providerCount === 'number' && (

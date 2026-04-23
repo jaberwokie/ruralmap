@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from 'react';
 import { Tag, AlertTriangle } from 'lucide-react';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 import {
   getEnrichmentForProvider,
   subscribeToEnrichment,
@@ -49,6 +50,7 @@ interface Props {
 }
 
 export const ImportedMetadataSection = ({ providerId, facility }: Props) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const [record, setRecord] = useState<ProviderEnrichmentRecord | undefined>(() =>
     getEnrichmentForProvider(providerId),
   );
@@ -57,6 +59,10 @@ export const ImportedMetadataSection = ({ providerId, facility }: Props) => {
     setRecord(getEnrichmentForProvider(providerId));
     return subscribeToEnrichment(() => setRecord(getEnrichmentForProvider(providerId)));
   }, [providerId]);
+
+  // PUBLIC_SAFE_MODE: hide "Imported / Unverified Metadata" block entirely —
+  // exposes internal enrichment workflow terminology in public screenshots.
+  if (isPublicSafe) return null;
 
   if (!record) return null;
 
