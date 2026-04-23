@@ -15,6 +15,12 @@ import { fteCapacityData } from '@/data/fte-capacity';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
+import {
+  hasViableScheduledCorridor,
+  distanceMi,
+  MAX_SCHEDULED_DISTANCE_MI,
+  MIN_SCHEDULED_AREA_PERCENT,
+} from '@/utils/scheduledCorridorViability';
 
 const nevadaFeature: Feature<Polygon> = {
   type: 'Feature',
