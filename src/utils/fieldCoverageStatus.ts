@@ -1,19 +1,30 @@
 /**
  * FTE Field Coverage Status — single source of truth for whether a county
- * has any assigned in-person field FTE.
+ * has any meaningful in-person field FTE reach.
  *
- * IMPORTANT: This is a *display-language gate only*. It does not change any
- * routing scores, access tiers, utilization logic, or map layers. It exists
- * so the UI can speak truthfully about whether in-person engagement is
- * actually possible in a given county, vs. only remote coordination.
+ * Derived from the same FTE drive-time geometry as Response Capability
+ * (see coverageZones.ts). A county is treated as having field coverage only
+ * when a non-trivial portion of its area falls inside an active FTE buffer —
+ * not merely because an FTE has it listed in `counties[]`. This prevents
+ * partial-county over-promising (e.g. far-NW Washoe, far-N/NE Nye).
+ *
+ * Display-language gate only. Does not change scoring, layers, filters,
+ * routing tiers, or assignment logic.
  */
 
 import { fteCapacityData } from '@/data/fte-capacity';
+import { getCountyCoverageBreakdown } from '@/utils/coverageZones';
+import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
+
+/** Minimum % of county area inside the active FTE drive-time zone for the
+ *  county to be treated as field-covered for display purposes. */
+const FIELD_COVERAGE_MIN_ACTIVE_PERCENT = 25;
 
 export interface FieldCoverageStatus {
-  /** At least one FTE with a physical hub (hubLocation !== null) serves this county. */
+  /** A meaningful portion of the county is within an active field FTE
+   *  drive-time zone (≥ FIELD_COVERAGE_MIN_ACTIVE_PERCENT). */
   hasFieldCoverage: boolean;
-  /** At least one remote-only FTE (hubLocation === null) serves this county. */
+  /** At least one remote-only FTE is assigned to this county. */
   hasRemoteCoverage: boolean;
 }
 
@@ -23,15 +34,16 @@ export function getFieldCoverageStatus(county: string): FieldCoverageStatus {
   const cached = _cache.get(county);
   if (cached) return cached;
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
+  const breakdown = getCountyCoverageBreakdown(county, ACTIVE_COVERAGE_RADIUS_KM);
   const status: FieldCoverageStatus = {
-    hasFieldCoverage: serving.some(f => f.hubLocation !== null),
+    hasFieldCoverage: breakdown.activePercent >= FIELD_COVERAGE_MIN_ACTIVE_PERCENT,
     hasRemoteCoverage: serving.some(f => f.hubLocation === null),
   };
   _cache.set(county, status);
   return status;
 }
 
-/** Convenience: does this county have any in-person FTE field coverage? */
+/** Convenience: does this county have any meaningful in-person FTE field coverage? */
 export function countyHasFieldCoverage(county: string | null | undefined): boolean {
   if (!county) return false;
   return getFieldCoverageStatus(county).hasFieldCoverage;
