@@ -22,18 +22,18 @@ const nevadaFeature: Feature<Polygon> = {
   geometry: nevadaBoundaryGeoJSON,
 };
 
-// ── Active coverage zone (merged FTE buffers, clipped to NV) ──
+// ── FTE drive-time zones (active + scheduled-outreach ring) ──
+// Active zone  = merged FTE buffers at the configured radius (~0–90 min).
+// Scheduled zone = merged FTE buffers at radius * SCHEDULED_RADIUS_MULT
+//                  (~90–150 min reachable with planning), minus the active zone.
+// Anything outside both → remote-only territory.
+
+const SCHEDULED_RADIUS_MULT = 1.5;
 
 const _activeZoneCache = new Map<number, Feature<Polygon | MultiPolygon> | null>();
+const _scheduledZoneCache = new Map<number, Feature<Polygon | MultiPolygon> | null>();
 
-export function getActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
-  if (_activeZoneCache.has(radiusKm)) return _activeZoneCache.get(radiusKm)!;
-  const result = computeActiveCoverageZone(radiusKm);
-  _activeZoneCache.set(radiusKm, result);
-  return result;
-}
-
-function computeActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
+function buildMergedBufferZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
   const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
   if (fieldFtes.length === 0) return null;
 
@@ -52,19 +52,38 @@ function computeActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPol
       },
     } as Feature<MultiPolygon>);
 
-  // Clip to Nevada
   const fc = featureCollection([merged, nevadaFeature]);
   const clipped = intersect(fc as any);
   return (clipped as Feature<Polygon | MultiPolygon>) ?? null;
 }
 
+export function getActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
+  if (_activeZoneCache.has(radiusKm)) return _activeZoneCache.get(radiusKm)!;
+  const result = buildMergedBufferZone(radiusKm);
+  _activeZoneCache.set(radiusKm, result);
+  return result;
+}
+
+/** Outer drive-time zone (~90–150 min). Includes active core; subtract active for ring. */
+export function getScheduledCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
+  if (_scheduledZoneCache.has(radiusKm)) return _scheduledZoneCache.get(radiusKm)!;
+  const result = buildMergedBufferZone(Math.round(radiusKm * SCHEDULED_RADIUS_MULT));
+  _scheduledZoneCache.set(radiusKm, result);
+  return result;
+}
+
 // ── Per-county coverage breakdown ──
 
 export interface CountyCoverageBreakdown {
+  /** % of county area within the active (~same-day) drive-time zone. */
   activePercent: number;
+  /** % of county area in the outer (~planned-outreach) ring, excluding active. */
   scheduledPercent: number;
+  /** % of county area outside any FTE drive-time reach. */
+  remotePercent: number;
+  /** Field FTEs whose active buffer touches this county. */
   anchoringFtes: string[];
-  primaryType: 'active' | 'scheduled';
+  primaryType: 'active' | 'scheduled' | 'remote';
 }
 
 const _breakdownCache = new Map<number, Map<string, CountyCoverageBreakdown>>();
