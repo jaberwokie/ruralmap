@@ -1,20 +1,17 @@
 
 
-## Fix Nevada silhouette aspect ratio in OG image
+## Shift Nevada silhouette left in OG image
 
-The current silhouette in `public/og-image.jpg` is distorted because width and height were scaled independently. Nevada has a real aspect ratio of roughly 0.62 (W/H) — taller than wide, with the angled southern "boot" on the bottom-right.
+The Nevada silhouette currently sits flush against the right edge of `public/og-image.jpg`. Lift it inward so it has visible breathing room on the right and reads as a deliberate background element instead of being clipped to the canvas edge.
 
 ### Change
 
-- Rebuild the silhouette using the authoritative coordinates in `src/data/nevada-boundary.ts`.
-- Compute scale as a single uniform factor (`scale = target_h / geo_height`) so width is derived from real geometry — never stretched to fit.
-- Use a Mercator-style latitude correction (`x *= cos(mean_lat)`) so the shape matches how Nevada actually appears on a map instead of looking squashed.
-- Target height ~520px; resulting width will land near ~310–330px (correct proportions).
-- Keep all current styling: ~9% blue fill, thin darker outline, anchored to the right edge with part of the shape off-frame, positioned to avoid the title/subtitle block.
-- Nothing else in the OG image changes (logo, title, subtitle, footer, background).
+- Shift the silhouette ~60px to the left so it no longer hugs the right edge.
+- Keep all other properties identical: shape geometry, ~520px height, uniform Mercator scaling, ~9% blue fill, thin darker outline, vertical position.
+- Title, subtitle, NovumHealth logo, and footer attribution remain untouched.
 
 ### Technical details
 
-- Update the Python generator script: replace the independent x/y scaling with `scale = target_h / (lat_max - lat_min)`, apply `cos(radians(mean_lat))` to longitudes before scaling, then translate so the bounding box sits flush against `right_anchor = W - 20`.
-- Regenerate `public/og-image.jpg` and QA by rendering the file to a preview image and visually confirming the recognizable Nevada outline (vertical western border, angled southern boot) before finishing.
+- In the Python generator script, change `right_anchor = W - 20` to `right_anchor = W - 80` (roughly 60px inward from the current position).
+- Regenerate `public/og-image.jpg` and QA by rendering the file to a preview image to confirm the silhouette has clear right-side margin and still does not overlap the title/subtitle block.
 
