@@ -2205,9 +2205,28 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!coverageRadius) return;
 
-    const visibleFacilities = topProvidersOnly
+    // Render gate: radii must only render when at least one source layer
+    // contributing to coverage is active. Provider Locations controls
+    // hospital/clinic radii; Behavioral Health controls BH radii. If both
+    // are off (and not in topProvidersOnly mode), no radii should render.
+    const hasActiveRadiusSources =
+      topProvidersOnly || layers.serviceLocations || layers.behavioralHealth;
+    if (!hasActiveRadiusSources) return;
+
+    const baseFacilities = topProvidersOnly
       ? providerVisibleFacilities
       : filteredFacilities;
+
+    // Gate each facility by its source layer toggle.
+    const visibleFacilities = topProvidersOnly
+      ? baseFacilities
+      : baseFacilities.filter((f) => {
+          if (f.type === 'hospital' || f.type === 'clinic') return layers.serviceLocations;
+          // Other facility types (e.g. BH-tagged) gated by BH toggle.
+          return layers.behavioralHealth;
+        });
+
+    if (visibleFacilities.length === 0) return;
 
       const accessTier = getProviderAccessTierByKm(radiusKm);
 
@@ -2263,7 +2282,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, coverageGaps, radiusKm, topProvidersOnly, providerVisibleFacilities]);
+  }, [filteredFacilities, coverageRadius, coverageGaps, radiusKm, topProvidersOnly, providerVisibleFacilities, layers.serviceLocations, layers.behavioralHealth]);
 
   // Draw coverage gap overlays
   useEffect(() => {
