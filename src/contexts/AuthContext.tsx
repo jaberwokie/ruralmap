@@ -78,12 +78,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    // Public mode: ?public=1 forces a logged-out, read-only experience for shared links.
+    // Clears any cached session and skips hydration entirely.
+    const isPublicMode = (() => {
+      if (typeof window === 'undefined') return false;
+      try {
+        return new URLSearchParams(window.location.search).get('public') === '1';
+      } catch {
+        return false;
+      }
+    })();
+
+    if (isPublicMode) {
+      // Hard reset: drop any persisted session and never subscribe to auth events.
+      supabase.auth.signOut().catch(() => {});
+      setSession(null);
+      setRole('viewer');
+      setReady(true);
+      return;
+    }
+
     // Set up listener BEFORE getSession to avoid missing the first event.
     const { data: sub } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      // Defer role fetch so we don't block the auth callback.
-      if (nextSession?.user) {
-        setTimeout(() => { refreshRole(nextSession.user.id); }, 0);
+      // Reject expired tokens instead of silently rehydrating.
+      const expired =
+        !!nextSession?.expires_at && nextSession.expires_at * 1000 < Date.now();
+      const safeSession = expired ? null : nextSession;
+
+      setSession(safeSession);
+      if (safeSession?.user) {
+        // Defer role fetch so we don't block the auth callback.
+        setTimeout(() => { refreshRole(safeSession.user.id); }, 0);
       } else {
         setRole('viewer');
       }
@@ -91,6 +116,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     supabase.auth.getSession().then(({ data: { session: existing } }) => {
+      const expired =
+        !!existing?.expires_at && existing.expires_at * 1000 < Date.now();
+      if (expired) {
+        // Stale token in storage — clear it so admin UI can't flash.
+        supabase.auth.signOut().catch(() => {});
+        setSession(null);
+        setRole('viewer');
+        setReady(true);
+        return;
+      }
       setSession(existing);
       if (existing?.user) {
         refreshRole(existing.user.id);
