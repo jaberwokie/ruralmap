@@ -1547,9 +1547,11 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </div>
       </DetailSection>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
+      {!isPublicSafe && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+        </DetailSection>
+      )}
 
       {hasFte && (
         <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
@@ -1559,7 +1561,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </DetailSection>
       )}
 
-      {hasUtilization && (
+      {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} />
           <UtilizationMetricsCard county={county} />
