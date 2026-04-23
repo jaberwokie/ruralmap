@@ -1120,17 +1120,23 @@ const Sidebar = ({
 
                                   <div className="space-y-2">
                                     <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
-                                    {(['active', 'scheduled', 'remote'] as const).map((category) => (
-                                      <div key={category} className="flex gap-2">
-                                        <div className="mt-0.5 flex-shrink-0">
-                                          {renderResponseCapabilityVisual(category)}
+                                    {(['active', 'scheduled', 'remote'] as const).map((category) => {
+                                      const meta = RESPONSE_CAPABILITY_META[category];
+                                      const publicLabel = category === 'active'
+                                        ? 'Same-Day Reach Zone (Operational Estimate)'
+                                        : meta.label;
+                                      return (
+                                        <div key={category} className="flex gap-2">
+                                          <div className="mt-0.5 flex-shrink-0">
+                                            {renderResponseCapabilityVisual(category)}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className={`text-[11px] font-medium leading-tight ${meta.titleClassName}`}>{isPublicSafe ? publicLabel : meta.label}</div>
+                                            <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{meta.description}</p>
+                                          </div>
                                         </div>
-                                        <div className="min-w-0">
-                                          <div className={`text-[11px] font-medium leading-tight ${RESPONSE_CAPABILITY_META[category].titleClassName}`}>{RESPONSE_CAPABILITY_META[category].label}</div>
-                                          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{RESPONSE_CAPABILITY_META[category].description}</p>
-                                        </div>
-                                      </div>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
 
                                   <p className="text-[9px] italic leading-relaxed text-muted-foreground/60">Reflects real travel-time reach from current FTE base locations, not full county boundaries.</p>
