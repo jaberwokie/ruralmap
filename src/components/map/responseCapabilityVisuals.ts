@@ -29,9 +29,9 @@ export const RESPONSE_CAPABILITY_META: Record<ResponseCapabilityCategory, {
 };
 
 export const getResponseCapabilityCategory = (breakdown: CountyCoverageBreakdown): ResponseCapabilityCategory => {
-  if (breakdown.activePercent >= 50) return 'active';
-  if (breakdown.activePercent > 0 || breakdown.anchoringFtes.length > 0) return 'scheduled';
-  return 'remote';
+  // Single source of truth: the geometric breakdown's own classification.
+  // Active = same-day field, Scheduled = planned outreach, Remote = no field.
+  return breakdown.primaryType;
 };
 
 export const getResponseCapabilityMarkerHtml = (
