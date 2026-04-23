@@ -36,7 +36,7 @@ import { buildServiceValidationIndex } from '@/utils/serviceValidation';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
-import { getRemoteSupportMarkerLatLng } from '@/utils/remoteSupportPlacement';
+import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 import MemberAccessSearch from '@/components/map/MemberAccessSearch';
