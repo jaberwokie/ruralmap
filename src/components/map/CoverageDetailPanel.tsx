@@ -2820,6 +2820,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 
 // ── Rural Service Group ──
 const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
