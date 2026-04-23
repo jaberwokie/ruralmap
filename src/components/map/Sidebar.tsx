@@ -391,8 +391,8 @@ const Sidebar = ({
     onTransitProviderClick,
   },
 }: SidebarProps) => {
-  // Access Gaps requires at least one source layer that can produce coverage.
-  const hasAccessGapSources = layers.serviceLocations || layers.behavioralHealth || layers.services;
+  // Access Gaps requires at least one source layer that contributes to gap geometry.
+  const hasAccessGapSources = layers.serviceLocations || layers.behavioralHealth;
   useEffect(() => {
     if (!hasAccessGapSources && coverageGaps) {
       onCoverageGapsChange(false);
@@ -1465,7 +1465,7 @@ const Sidebar = ({
                         helpKey: 'coverageGaps',
                         disabled: !hasAccessGapSources,
                         disabledHint: !hasAccessGapSources
-                          ? 'Enable Provider Locations, Behavioral Health, or Services to use Access Gaps.'
+                          ? 'Enable Provider Locations or Behavioral Health to use Access Gaps.'
                           : undefined,
                       })}
                       {coverageGaps && hasAccessGapSources && (
