@@ -2086,7 +2086,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           : getFacilityTypeLabel(facility);
 
         const claimsMetrics = getProviderClaimsMetrics(facility);
-         const claimsDetail = claimsMetrics
+         // PUBLIC_SAFE_MODE: hide claims-derived metrics (members attributed,
+         // penetration) from hover tooltips.
+         const publicMode = isPublicSafeModeActive();
+         const claimsDetail = (!publicMode && claimsMetrics)
            ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
            : undefined;
 
@@ -2099,7 +2102,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
             detail: typeLabel,
             extraHtml: [
               `Data Confidence: ${dataConfidence}`,
-              showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
+              !publicMode && showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
               claimsDetail,
             ].filter(Boolean).join('\n'),
             ...distInfo,
@@ -3062,7 +3065,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
               <>
                 <p className="text-[13px] font-semibold leading-4 text-foreground">{getCountyDisplayName(countyHoverPreview.county)}</p>
                 <div className="mt-1.5 space-y-1">
-                  {typeof countyHoverPreview.unengagedMembers === 'number' && (
+                  {typeof countyHoverPreview.unengagedMembers === 'number' && !isPublicSafe && (
                     <CountyHoverMetricRow label="Unengaged members" value={numberFormatter.format(countyHoverPreview.unengagedMembers)} emphasize />
                   )}
                   {typeof countyHoverPreview.providerCount === 'number' && (

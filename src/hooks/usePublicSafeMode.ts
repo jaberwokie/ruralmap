@@ -2,7 +2,8 @@
  * PUBLIC_SAFE_MODE — non-destructive presentation layer for public screenshots,
  * shareable URLs (LinkedIn, decks, etc.), and external demos.
  *
- * Activate by adding `?public=1` OR legacy `?publicSafe=1` to the URL.
+ * Activate by adding `?public=1` to the URL (legacy `?publicSafe=1` also
+ * accepted for backward compatibility with previously-shared links).
  * Session-only (no persistence).
  *
  * Intent:
