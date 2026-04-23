@@ -46,6 +46,19 @@ const Index = () => {
   }, []);
 
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
+  /**
+   * Map background tap handler. Clears every selection source so the detail
+   * panel cannot resurrect from a stale fallback (notably `memberAnalysis`,
+   * which would otherwise re-show the Member Access card after the user
+   * dismissed a provider/service card by tapping empty map). Mobile-critical:
+   * the panel covers a large share of the viewport, so any stale card reads
+   * as a bug. Desktop behavior is unchanged because the same clearing path
+   * runs in both layouts.
+   */
+  const onMapBackgroundClick = useCallback(() => {
+    selection.actions.handleMapClick();
+    if (member.memberLocation) member.clearMember();
+  }, [selection.actions, member]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
   /**
@@ -165,7 +178,7 @@ const Index = () => {
           serviceCategoryFilters={filters.filters.serviceCategories}
           filters={filters.filters}
           onFacilityClick={(f) => onEntity({ type: 'facility', facility: f })}
-          onMapClick={selection.actions.handleMapClick}
+          onMapClick={onMapBackgroundClick}
           searchQuery={filters.searchQuery}
           radiusKm={layers.radiusKm}
           coverageRadius={layers.coverageRadius}
