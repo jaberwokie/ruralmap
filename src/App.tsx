@@ -25,7 +25,7 @@ import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
 
 const queryClient = new QueryClient();
 
-const APP_VERSION = 'public-safe-v1';
+const APP_VERSION = 'public-sharing-v2';
 
 const App = () => {
   useEffect(() => {
