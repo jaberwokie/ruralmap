@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
 interface MapExplainerModalProps {
   open: boolean;
@@ -15,7 +16,7 @@ type TabKey =
   | 'transit'
   | 'limits';
 
-const TABS: { key: TabKey; label: string }[] = [
+const ALL_TABS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'how-to-use', label: 'How to Use' },
   { key: 'layers', label: 'Layers' },
@@ -44,8 +45,15 @@ const Term = ({ children }: { children: React.ReactNode }) => (
 );
 
 const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const backdropRef = useRef<HTMLDivElement>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('overview');
+  // PUBLIC_SAFE_MODE: hide the "Verification" tab — its body exposes
+  // internal terminology (Unverified, Fallback, Priority Queue, audit history).
+  const TABS = useMemo(
+    () => (isPublicSafe ? ALL_TABS.filter((t) => t.key !== 'verification') : ALL_TABS),
+    [isPublicSafe],
+  );
 
   useEffect(() => {
     if (!open) return;
@@ -117,6 +125,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
           </div>
         );
       case 'verification':
+        if (isPublicSafe) return null;
         return (
           <div className="space-y-3">
             <Lead>
