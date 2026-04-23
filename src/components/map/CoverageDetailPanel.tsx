@@ -1478,6 +1478,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const t = useUtilizationToggles();
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
