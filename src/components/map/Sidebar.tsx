@@ -1364,12 +1364,14 @@ const Sidebar = ({
                                   <span>Mod (10–18)</span>
                                   <span>High (&gt;18)</span>
                                 </div>
-                                <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="mt-1 flex w-full items-center gap-2 rounded px-1 py-1 text-[11px] transition-colors duration-200 hover:bg-secondary">
-                                  <div className={`relative h-3.5 w-6 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-primary' : 'bg-input'}`}>
-                                    <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
-                                  </div>
-                                  <span className={topProvidersOnly ? 'font-medium text-foreground' : 'text-muted-foreground'}>Top Providers Only (Top 20)</span>
-                                </button>
+                                {!isPublicSafe && (
+                                  <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="mt-1 flex w-full items-center gap-2 rounded px-1 py-1 text-[11px] transition-colors duration-200 hover:bg-secondary">
+                                    <div className={`relative h-3.5 w-6 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-primary' : 'bg-input'}`}>
+                                      <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
+                                    </div>
+                                    <span className={topProvidersOnly ? 'font-medium text-foreground' : 'text-muted-foreground'}>Top Providers Only (Top 20)</span>
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -1454,7 +1456,7 @@ const Sidebar = ({
                   )}
                 </div>
 
-                <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />
+                {!isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
 
                 <div data-tutorial="section-transit">
                   {renderSectionHeader('TRANSIT PROVIDERS', transitOpen, toggleTransit)}
