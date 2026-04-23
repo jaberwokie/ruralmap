@@ -146,7 +146,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Does not touch the underlying session / role state.
     const isPublicSafe =
       typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).get('publicSafe') === '1';
+      (() => {
+        const params = new URLSearchParams(window.location.search);
+        return params.get('public') === '1' || params.get('publicSafe') === '1';
+      })();
 
     const effectiveRole: AppRole = isPublicSafe ? 'viewer' : role;
     const isAdmin = effectiveRole === 'admin';

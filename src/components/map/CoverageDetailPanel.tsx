@@ -644,7 +644,9 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
           <div key={r.name}>
             <div className="flex justify-between text-xs text-foreground/80">
               <span>{r.name}</span>
-              <span className="font-medium tabular-nums">{displayCount(r.count)}</span>
+              {!isPublicSafe && (
+                <span className="font-medium tabular-nums">{displayCount(r.count)}</span>
+              )}
             </div>
             {r.secondaryZone && (
               <div className="text-[10px] text-muted-foreground italic ml-1">
@@ -654,10 +656,12 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
           </div>
         ))}
       </div>
-      <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs font-semibold text-foreground">
-        <span>Total</span>
-        <span className="tabular-nums">{total.toLocaleString()}</span>
-      </div>
+      {!isPublicSafe && (
+        <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs font-semibold text-foreground">
+          <span>Total</span>
+          <span className="tabular-nums">{total.toLocaleString()}</span>
+        </div>
+      )}
       <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs text-foreground/80">
         <span>Rural Access Dependence</span>
         <span className="font-semibold">{RURAL_ACCESS_DEPENDENCE[area]}</span>
@@ -1093,6 +1097,10 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
   const rank = ranked.findIndex(d => d.county === county) + 1;
   const diffFromMax = maxCount - memberCount;
 
+  // PUBLIC_SAFE_MODE: hide member-volume details entirely to avoid exposing
+  // member counts or ranking-derived insights in public screenshots.
+  if (isPublicSafe) return null;
+
   if (memberCount === 0) {
     return (
       <div className="mt-2 mb-2 rounded-md border border-border bg-secondary/50 px-2 py-1.5">
@@ -1152,8 +1160,10 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
 };
 
 const EngagementPriorityCard = ({ county }: { county: string }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const metrics = getCountyEngagementMetrics(county);
 
+  if (isPublicSafe) return null;
   if (metrics.totalMembers <= 0) return null;
 
   const engagementRatePercent = (metrics.engagementRate * 100).toFixed(1);
@@ -1468,6 +1478,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const t = useUtilizationToggles();
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
@@ -1536,9 +1547,11 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </div>
       </DetailSection>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
+      {!isPublicSafe && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+        </DetailSection>
+      )}
 
       {hasFte && (
         <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
@@ -1548,7 +1561,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </DetailSection>
       )}
 
-      {hasUtilization && (
+      {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} />
           <UtilizationMetricsCard county={county} />
@@ -2765,6 +2778,7 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
 
 // ── Member Volume (clicked from choropleth) ──
 const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
@@ -2788,11 +2802,13 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         </div>
       </DetailSection>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
+      {!isPublicSafe && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+        </DetailSection>
+      )}
 
-      {hasUtilization && (
+      {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} />
           <UtilizationMetricsCard county={county} />
@@ -2804,6 +2820,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 
 // ── Rural Service Group ──
 const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
     const map = new Map<string, RuralService[]>();
@@ -2881,11 +2898,13 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
         <GapContextAlerts county={county} serviceCount={services.length} />
       </DetailSection>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
+      {!isPublicSafe && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+        </DetailSection>
+      )}
 
-      {hasUtilization && (
+      {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} />
           <UtilizationMetricsCard county={county} />
