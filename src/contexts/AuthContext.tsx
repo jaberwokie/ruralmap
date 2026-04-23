@@ -90,8 +90,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     })();
 
     if (isPublicMode) {
-      // Hard reset: drop any persisted session and never subscribe to auth events.
-      supabase.auth.signOut().catch(() => {});
+      // Hard public-view flag for the lifetime of this page session.
+      // Do NOT call supabase.auth.signOut() — that would clear the shared
+      // localStorage session and log the user out in their other tabs / the
+      // normal app URL. Instead: never subscribe to auth events, never call
+      // getSession(), and lock state to logged-out / viewer until refresh
+      // or navigation away from this URL.
       setSession(null);
       setRole('viewer');
       setReady(true);
