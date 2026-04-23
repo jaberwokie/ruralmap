@@ -45,6 +45,7 @@ import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
 import { getProviderForZoneId } from '@/data/local-transit-providers';
 import type { PresentationPhase } from '@/hooks/usePresentationMode';
+import { usePublicSafeMode, isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 
 interface MapViewProps {
   facilities: Facility[];
