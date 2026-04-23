@@ -2198,6 +2198,55 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
   }, [behavioralHealthServicesByCounty, communityServicesByCounty, facilityValidation, facilityValidationMode, filteredBehavioralHealthServices, filteredCommunityServices, layers.behavioralHealth, layers.serviceLocations, layers.services, layers.utilizationIntensity, layers.tier1Highlight, logMapSelectionDebug, mapZoom, onFacilityClick, providerVisibleFacilities, selectMarkerEntity, serviceValidation, topProvidersOnly]);
 
+  // Single shared source-of-truth list of providers contributing to coverage.
+  // Used by BOTH the radius renderer and the Access Gaps geometry builder so
+  // the visual radii and the gap subtraction can never drift out of sync.
+  // Includes only providers from currently-active source layers.
+  const activeCoverageProviders = useMemo(() => {
+    const providerFacilitySource = topProvidersOnly ? providerVisibleFacilities : filteredFacilities;
+    const providerFacilities = providerFacilitySource
+      .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng))
+      .filter((f) => {
+        if (f.type === 'hospital' || f.type === 'clinic') {
+          return layers.serviceLocations || topProvidersOnly;
+        }
+        // Non hospital/clinic facility records are not BH (BH lives in
+        // ruralServices) — exclude here to keep the contract clean.
+        return false;
+      });
+
+    const behavioralHealthProviders = layers.behavioralHealth
+      ? ruralServices.filter(
+          (s) => isBehavioralHealthService(s)
+            && Number.isFinite(s.lat) && Number.isFinite(s.lng),
+        )
+      : [];
+
+    return [
+      ...providerFacilities.map((p) => ({
+        lat: p.lat,
+        lng: p.lng,
+        kind: 'provider' as const,
+        facilityType: p.type as 'hospital' | 'clinic',
+        source: p,
+      })),
+      ...behavioralHealthProviders.map((p) => ({
+        lat: p.lat,
+        lng: p.lng,
+        kind: 'behavioralHealth' as const,
+        facilityType: 'clinic' as const, // BH styled like clinic radii (blue palette)
+        source: p,
+      })),
+    ];
+  }, [
+    filteredFacilities,
+    providerVisibleFacilities,
+    topProvidersOnly,
+    layers.serviceLocations,
+    layers.behavioralHealth,
+    ruralServices,
+  ]);
+
   // Draw coverage radii
   useEffect(() => {
     if (!radiusRef.current) return;
@@ -2205,28 +2254,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!coverageRadius) return;
 
-    // Render gate: radii must only render when at least one source layer
-    // contributing to coverage is active. Provider Locations controls
-    // hospital/clinic radii; Behavioral Health controls BH radii. If both
-    // are off (and not in topProvidersOnly mode), no radii should render.
-    const hasActiveRadiusSources =
-      topProvidersOnly || layers.serviceLocations || layers.behavioralHealth;
-    if (!hasActiveRadiusSources) return;
+    // Render gate: only draw radii when there is at least one active source.
+    if (activeCoverageProviders.length === 0) return;
 
-    const baseFacilities = topProvidersOnly
-      ? providerVisibleFacilities
-      : filteredFacilities;
-
-    // Gate each facility by its source layer toggle.
-    const visibleFacilities = topProvidersOnly
-      ? baseFacilities
-      : baseFacilities.filter((f) => {
-          if (f.type === 'hospital' || f.type === 'clinic') return layers.serviceLocations;
-          // Other facility types (e.g. BH-tagged) gated by BH toggle.
-          return layers.behavioralHealth;
-        });
-
-    if (visibleFacilities.length === 0) return;
+    const visibleFacilities = activeCoverageProviders.map((p) => ({
+      id: `${p.kind}:${p.lat},${p.lng}`,
+      lat: p.lat,
+      lng: p.lng,
+      type: p.facilityType,
+    }));
 
       const accessTier = getProviderAccessTierByKm(radiusKm);
 
@@ -2282,7 +2318,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, coverageGaps, radiusKm, topProvidersOnly, providerVisibleFacilities, layers.serviceLocations, layers.behavioralHealth]);
+  }, [activeCoverageProviders, coverageRadius, coverageGaps, radiusKm]);
 
   // Draw coverage gap overlays
   useEffect(() => {
@@ -2291,24 +2327,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!coverageGaps) return;
 
-    // Access Gap eligibility: any active provider that can satisfy access.
-    // Includes hospitals, clinics, and behavioral health locations (gated by
-    // the BH layer toggle). Distance/radius math is unchanged — we only
-    // expand the set of points whose radii subtract from the gap geometry.
-    const hospitalAndClinicPoints = facilities.filter(
-      (f) => (f.type === 'hospital' || f.type === 'clinic')
-        && Number.isFinite(f.lat) && Number.isFinite(f.lng),
+    // Access Gap eligibility uses the SAME shared active provider list as
+    // the radius renderer. This guarantees the white "holes" punched out of
+    // the red gap polygon always match the visible radii — no stale
+    // hospital/clinic subtraction when Provider Locations is off.
+    const eligibleProviders: Array<{ lat: number; lng: number }> = activeCoverageProviders.map(
+      (p) => ({ lat: p.lat, lng: p.lng }),
     );
-    const behavioralHealthPoints = layers.behavioralHealth
-      ? ruralServices.filter(
-          (s) => isBehavioralHealthService(s)
-            && Number.isFinite(s.lat) && Number.isFinite(s.lng),
-        )
-      : [];
-    const eligibleProviders: Array<{ lat: number; lng: number }> = [
-      ...hospitalAndClinicPoints,
-      ...behavioralHealthPoints,
-    ];
 
     const analysisFeature: Feature<Polygon | MultiPolygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
 
@@ -2368,7 +2393,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     } catch (e) {
       console.error('Coverage gap calculation error:', e);
     }
-  }, [coverageGaps, facilities, ruralServices, layers.behavioralHealth, radiusKm, selectOverlayEntity]);
+  }, [coverageGaps, activeCoverageProviders, radiusKm, selectOverlayEntity]);
 
   // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
   useEffect(() => {
