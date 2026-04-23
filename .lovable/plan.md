@@ -1,13 +1,20 @@
 
 
-## Shrink OpsFrame.io logo in OG image
+## Fix Nevada silhouette aspect ratio in OG image
 
-Reduce the size of the "OpsFrame.io" footer text/logo in `public/og-image.jpg` so it sits more quietly at the bottom of the card.
+The current silhouette in `public/og-image.jpg` is distorted because width and height were scaled independently. Nevada has a real aspect ratio of roughly 0.62 (W/H) — taller than wide, with the angled southern "boot" on the bottom-right.
 
 ### Change
 
-- Decrease the OpsFrame.io footer font size by ~25% (and scale the "BUILT ON" label proportionally so the lockup stays balanced).
-- Keep position (bottom center), color, font, and spacing relationships otherwise identical.
-- Everything else untouched: NovumHealth logo, title, subtitle, Nevada silhouette (~20% opacity).
-- Regenerate and ship directly to `public/og-image.jpg` (no preview step).
+- Rebuild the silhouette using the authoritative coordinates in `src/data/nevada-boundary.ts`.
+- Compute scale as a single uniform factor (`scale = target_h / geo_height`) so width is derived from real geometry — never stretched to fit.
+- Use a Mercator-style latitude correction (`x *= cos(mean_lat)`) so the shape matches how Nevada actually appears on a map instead of looking squashed.
+- Target height ~520px; resulting width will land near ~310–330px (correct proportions).
+- Keep all current styling: ~9% blue fill, thin darker outline, anchored to the right edge with part of the shape off-frame, positioned to avoid the title/subtitle block.
+- Nothing else in the OG image changes (logo, title, subtitle, footer, background).
+
+### Technical details
+
+- Update the Python generator script: replace the independent x/y scaling with `scale = target_h / (lat_max - lat_min)`, apply `cos(radians(mean_lat))` to longitudes before scaling, then translate so the bounding box sits flush against `right_anchor = W - 20`.
+- Regenerate `public/og-image.jpg` and QA by rendering the file to a preview image and visually confirming the recognizable Nevada outline (vertical western border, angled southern boot) before finishing.
 
