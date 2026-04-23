@@ -1077,7 +1077,7 @@ const Sidebar = ({
                                     <div className="space-y-1 text-[10px] text-muted-foreground">
                                       <div className="flex items-start gap-1.5">
                                         <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-active" />
-                                        <span><span className="font-semibold text-foreground">{counts.active}</span> Active Field Coverage — meaningful in-person coverage area exists from a current FTE base.</span>
+                                        <span><span className="font-semibold text-foreground">{counts.active}</span> {isPublicSafe ? 'Same-Day Reach Zone (Operational Estimate)' : 'Active Field Coverage'} — meaningful in-person coverage area exists from a current FTE base.</span>
                                       </div>
                                       <div className="flex items-start gap-1.5">
                                         <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-scheduled" />
