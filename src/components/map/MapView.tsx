@@ -2282,7 +2282,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         });
         radiusRef.current!.addLayer(circle);
       });
-  }, [filteredFacilities, coverageRadius, coverageGaps, radiusKm, topProvidersOnly, providerVisibleFacilities]);
+  }, [filteredFacilities, coverageRadius, coverageGaps, radiusKm, topProvidersOnly, providerVisibleFacilities, layers.serviceLocations, layers.behavioralHealth]);
 
   // Draw coverage gap overlays
   useEffect(() => {
