@@ -6,7 +6,6 @@
  * not ruralmap.lovable.app. We assert the canonical that actually ships.
  */
 import { describe, it, expect } from "vitest";
-// @ts-expect-error - Vite raw import provides string content at test time
 import html from "../../index.html?raw";
 
 const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/";
