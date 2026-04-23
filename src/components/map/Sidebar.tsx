@@ -1205,7 +1205,7 @@ const Sidebar = ({
                               </div>
                             )}
 
-                            {key === 'engagementGap' && layers.engagementGap && (() => {
+                            {key === 'engagementGap' && layers.engagementGap && !isPublicSafe && (() => {
                               const results = getEngagementGapResults();
                               const rankedPriorityCounties = engagementRateBelow20Only
                                 ? getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).slice(0, 5)
