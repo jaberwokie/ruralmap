@@ -10,19 +10,19 @@ export const RESPONSE_CAPABILITY_META: Record<ResponseCapabilityCategory, {
 }> = {
   active: {
     label: 'Same-Day Field Response Available',
-    description: 'In-person response within ~75–90 minutes of FTE base.',
+    description: 'In-person response is feasible within current FTE drive-time reach.',
     markerSize: 18,
     titleClassName: 'text-foreground/85',
   },
   scheduled: {
     label: 'Field Response Available (Planned)',
-    description: 'In-person visits require scheduling. Not same-day.',
+    description: 'In-person response may be possible, but requires scheduling, batching, or extended travel.',
     markerSize: 16,
     titleClassName: 'text-foreground/72',
   },
   remote: {
     label: 'Remote Support Only',
-    description: 'No in-person response. Telephonic and virtual coordination only.',
+    description: 'No realistic in-person response under current FTE positioning and travel thresholds.',
     markerSize: 14,
     titleClassName: 'text-foreground/60',
   },
