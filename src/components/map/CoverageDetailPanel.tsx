@@ -1097,6 +1097,10 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
   const rank = ranked.findIndex(d => d.county === county) + 1;
   const diffFromMax = maxCount - memberCount;
 
+  // PUBLIC_SAFE_MODE: hide member-volume details entirely to avoid exposing
+  // member counts or ranking-derived insights in public screenshots.
+  if (isPublicSafe) return null;
+
   if (memberCount === 0) {
     return (
       <div className="mt-2 mb-2 rounded-md border border-border bg-secondary/50 px-2 py-1.5">
