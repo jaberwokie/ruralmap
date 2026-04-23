@@ -10,6 +10,7 @@
 
 import { useEffect, useState } from 'react';
 import { Tag, AlertTriangle } from 'lucide-react';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 import {
   getEnrichmentForProvider,
   subscribeToEnrichment,
