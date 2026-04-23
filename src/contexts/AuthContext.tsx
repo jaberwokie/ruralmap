@@ -141,14 +141,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value = useMemo<Permissions>(() => {
-    const isAdmin = role === 'admin';
-    const isStaff = role === 'staff';
+    // PUBLIC_SAFE_MODE: force a viewer-equivalent permission set regardless of
+    // actual role, so admin UI cannot appear in public-shared screenshots.
+    // Does not touch the underlying session / role state.
+    const isPublicSafe =
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('publicSafe') === '1';
+
+    const effectiveRole: AppRole = isPublicSafe ? 'viewer' : role;
+    const isAdmin = effectiveRole === 'admin';
+    const isStaff = effectiveRole === 'staff';
     return {
       ready,
-      session,
-      user: session?.user ?? null,
-      role,
-      isAuthenticated: !!session?.user,
+      session: isPublicSafe ? null : session,
+      user: isPublicSafe ? null : (session?.user ?? null),
+      role: effectiveRole,
+      isAuthenticated: !isPublicSafe && !!session?.user,
       isAdmin,
       isStaff,
       // Currently only admins get write access. Staff can be granted later.

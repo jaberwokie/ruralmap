@@ -31,6 +31,7 @@ import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type Respons
 import DemandUtilizationPanel from '@/components/map/utilization/DemandUtilizationPanel';
 import { usePermissions } from '@/contexts/AuthContext';
 import AdminVersionBadge from '@/components/AdminVersionBadge';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 import { Link } from 'react-router-dom';
 
 // LayerState imported from @/types/layers
@@ -402,6 +403,7 @@ const Sidebar = ({
   };
 
   const { isAdmin, isAuthenticated, ready: authReady, role, user, signOut } = usePermissions();
+  const { isPublicSafe } = usePublicSafeMode();
   const [facilitiesOpen, toggleFacilities] = usePersistToggle('sidebar_facilities');
   // Removed: csvOpen, verifQueueOpen, auditHistoryOpen, csvDragActive,
   // csvImportState, csvParsed — moved to Admin > Mapping.
@@ -1075,7 +1077,7 @@ const Sidebar = ({
                                     <div className="space-y-1 text-[10px] text-muted-foreground">
                                       <div className="flex items-start gap-1.5">
                                         <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-active" />
-                                        <span><span className="font-semibold text-foreground">{counts.active}</span> Active Field Coverage — meaningful in-person coverage area exists from a current FTE base.</span>
+                                        <span><span className="font-semibold text-foreground">{counts.active}</span> {isPublicSafe ? 'Same-Day Reach Zone (Operational Estimate)' : 'Active Field Coverage'} — meaningful in-person coverage area exists from a current FTE base.</span>
                                       </div>
                                       <div className="flex items-start gap-1.5">
                                         <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-response-scheduled" />
@@ -1118,17 +1120,23 @@ const Sidebar = ({
 
                                   <div className="space-y-2">
                                     <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
-                                    {(['active', 'scheduled', 'remote'] as const).map((category) => (
-                                      <div key={category} className="flex gap-2">
-                                        <div className="mt-0.5 flex-shrink-0">
-                                          {renderResponseCapabilityVisual(category)}
+                                    {(['active', 'scheduled', 'remote'] as const).map((category) => {
+                                      const meta = RESPONSE_CAPABILITY_META[category];
+                                      const publicLabel = category === 'active'
+                                        ? 'Same-Day Reach Zone (Operational Estimate)'
+                                        : meta.label;
+                                      return (
+                                        <div key={category} className="flex gap-2">
+                                          <div className="mt-0.5 flex-shrink-0">
+                                            {renderResponseCapabilityVisual(category)}
+                                          </div>
+                                          <div className="min-w-0">
+                                            <div className={`text-[11px] font-medium leading-tight ${meta.titleClassName}`}>{isPublicSafe ? publicLabel : meta.label}</div>
+                                            <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{meta.description}</p>
+                                          </div>
                                         </div>
-                                        <div className="min-w-0">
-                                          <div className={`text-[11px] font-medium leading-tight ${RESPONSE_CAPABILITY_META[category].titleClassName}`}>{RESPONSE_CAPABILITY_META[category].label}</div>
-                                          <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{RESPONSE_CAPABILITY_META[category].description}</p>
-                                        </div>
-                                      </div>
-                                    ))}
+                                      );
+                                    })}
                                   </div>
 
                                   <p className="text-[9px] italic leading-relaxed text-muted-foreground/60">Reflects real travel-time reach from current FTE base locations, not full county boundaries.</p>
@@ -1197,7 +1205,7 @@ const Sidebar = ({
                               </div>
                             )}
 
-                            {key === 'engagementGap' && layers.engagementGap && (() => {
+                            {key === 'engagementGap' && layers.engagementGap && !isPublicSafe && (() => {
                               const results = getEngagementGapResults();
                               const rankedPriorityCounties = engagementRateBelow20Only
                                 ? getFilteredEngagementPriorityCounties({ belowRateThreshold: 0.2 }).slice(0, 5)
@@ -1356,12 +1364,14 @@ const Sidebar = ({
                                   <span>Mod (10–18)</span>
                                   <span>High (&gt;18)</span>
                                 </div>
-                                <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="mt-1 flex w-full items-center gap-2 rounded px-1 py-1 text-[11px] transition-colors duration-200 hover:bg-secondary">
-                                  <div className={`relative h-3.5 w-6 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-primary' : 'bg-input'}`}>
-                                    <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
-                                  </div>
-                                  <span className={topProvidersOnly ? 'font-medium text-foreground' : 'text-muted-foreground'}>Top Providers Only (Top 20)</span>
-                                </button>
+                                {!isPublicSafe && (
+                                  <button onClick={() => onTopProvidersOnlyChange(!topProvidersOnly)} className="mt-1 flex w-full items-center gap-2 rounded px-1 py-1 text-[11px] transition-colors duration-200 hover:bg-secondary">
+                                    <div className={`relative h-3.5 w-6 rounded-full transition-colors duration-200 ${topProvidersOnly ? 'bg-primary' : 'bg-input'}`}>
+                                      <div className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-card shadow-sm transition-all duration-200 ${topProvidersOnly ? 'left-3' : 'left-0.5'}`} />
+                                    </div>
+                                    <span className={topProvidersOnly ? 'font-medium text-foreground' : 'text-muted-foreground'}>Top Providers Only (Top 20)</span>
+                                  </button>
+                                )}
                               </div>
                             )}
                           </div>
@@ -1446,7 +1456,7 @@ const Sidebar = ({
                   )}
                 </div>
 
-                <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />
+                {!isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
 
                 <div data-tutorial="section-transit">
                   {renderSectionHeader('TRANSIT PROVIDERS', transitOpen, toggleTransit)}

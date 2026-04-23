@@ -20,6 +20,7 @@ import AdminMappingAuditHistory from "./pages/AdminMappingAuditHistory.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
+import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
 
 const queryClient = new QueryClient();
 
@@ -29,9 +30,9 @@ const App = () => {
       <TooltipProvider>
         <ErrorBoundary>
           <Toaster />
-          <Sonner />
-          <BuildFingerprint />
-          <BrowserRouter>
+            <Sonner />
+            {!isPublicSafeModeActive() && <BuildFingerprint />}
+            <BrowserRouter>
             <AuthProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
