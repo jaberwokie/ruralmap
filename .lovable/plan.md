@@ -1,51 +1,86 @@
 
+Fix the real source of the white-circle bleed: it is not just the radius layer. The current `coverageGaps` geometry in `src/components/map/MapView.tsx` still subtracts hospital/clinic buffers even when `Provider Locations` is off, so the red gap polygon leaves white circular holes behind.
 
-## Fix: Clip provider radius circles to Nevada boundary
+## What to change
 
-### Root cause
-Radius circles render in the `driveRadiiAbove` pane (z-index 500). The state mask (white inverse polygon over everything outside Nevada, z-index 640) sits **above** the circles, so it visually hides spillover into CA/UT/AZ — but **only where the mask itself is opaque**. The mask uses `fillOpacity: 0.45`, so radius arcs bleed through it as faint colored shapes outside the state line.
+### 1) Build one shared active coverage source list in `src/components/map/MapView.tsx`
+Create a single memoized provider list used by both:
+- the Access View radius renderer
+- the Access Gaps geometry builder
 
-We don't want to make the mask fully opaque (that would hide the basemap context outside Nevada that's intentionally kept visible). Instead, **clip the radii layer itself to the Nevada polygon** using an SVG `clipPath` defined once and applied to the drive-radii pane.
+It should include only active sources:
+- `layers.serviceLocations` (or `topProvidersOnly`) → hospitals + clinics from the facility dataset
+- `layers.behavioralHealth` → behavioral health locations from `ruralServices`
 
-### Approach — SVG clipPath on the drive-radii pane
+Structure:
+```ts
+const activeCoverageProviders = useMemo(() => {
+  const providerFacilities = (topProvidersOnly ? providerVisibleFacilities : filteredFacilities)
+    .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng))
+    .filter((f) => {
+      if (f.type === 'hospital' || f.type === 'clinic') return layers.serviceLocations || topProvidersOnly;
+      return false;
+    });
 
-Leaflet renders each pane as its own `<svg>` element. We inject a `<clipPath id="nevada-clip">` containing the Nevada polygon (in the pane's SVG coordinate space) and set `clip-path: url(#nevada-clip)` on the pane's root `<g>`. The clip is reprojected on every `zoomend` / `moveend` so it stays aligned as the user pans/zooms.
+  const behavioralHealthProviders = layers.behavioralHealth
+    ? ruralServices.filter((s) => isBehavioralHealthService(s) && Number.isFinite(s.lat) && Number.isFinite(s.lng))
+    : [];
 
-This clips **only** the drive-radii pane. Pins, county polygons, gap overlays, tribal layers, and the state mask are untouched.
+  return [
+    ...providerFacilities.map((p) => ({ lat: p.lat, lng: p.lng, kind: 'provider' as const, source: p })),
+    ...behavioralHealthProviders.map((p) => ({ lat: p.lat, lng: p.lng, kind: 'behavioralHealth' as const, source: p })),
+  ];
+}, [...]);
+```
 
-### Changes (single file)
+### 2) Gate the radius render effect off that shared list
+In the coverage-radius effect:
+- keep `if (!coverageRadius) return`
+- replace the current local `hasActiveRadiusSources` / `visibleFacilities` logic with the shared list
+- if `activeCoverageProviders.length === 0`, return after clearing layers
+- render circles from `activeCoverageProviders`
 
-**File:** `src/components/map/MapView.tsx`
+This keeps the current radius math and styling, but removes stale or mismatched radii.
 
-1. **New effect** that runs once after the map is created: builds an SVG `<defs><clipPath id="nevada-clip"><path/></clipPath></defs>` inside the drive-radii pane's `<svg>` element and applies `clip-path="url(#nevada-clip)"` to that pane's overlay `<g>`.
+### 3) Gate the Access Gaps geometry off the same shared list
+In the `coverageGaps` effect:
+- remove the current ungated `hospitalAndClinicPoints = facilities.filter(...)`
+- use `activeCoverageProviders` as the only subtraction input
 
-2. **Reproject the clip path** on `map.on('zoomend moveend viewreset')` by converting `nevadaBoundaryGeoJSON` lat/lng coords to layer-point coords using `map.latLngToLayerPoint(...)`, then writing the resulting SVG `d` attribute to the clip's `<path>`.
+Behavior becomes:
+- no active sources → full Nevada gap polygon, no white holes
+- only Provider Locations active → only hospital/clinic coverage subtracts
+- only Behavioral Health active → only BH coverage subtracts
+- both active → both subtract
 
-3. **Cleanup** on unmount: remove listeners and the injected `<defs>` node.
+### 4) Leave everything else alone
+Do not touch:
+- radius distance math
+- gap morphology / `buffer` / `union` / `difference`
+- pane stacking
+- Nevada clipping
+- `coverage-radius--gap`
+- circle fill/stroke styling
+- clustering
+- marker rendering
+- county logic
 
-### Why this is the right fix
-- Reuses the **existing** Nevada boundary geometry (`nevadaBoundaryGeoJSON`) — no second outline.
-- Operates entirely at the SVG layer; **zero changes** to radius math, distance logic, gap detection, pane order, fill/stroke styling, or the recent `coverage-radius--gap` work.
-- Border-adjacent arcs are clipped cleanly along the actual state line (border counties still show partial arcs as expected).
-- Pins remain in the markers pane (z-index 650) — fully visible everywhere.
+## Why this fixes the screenshot
+The screenshot shows white circles even with source toggles off because the gap polygon is still being cut by hospital/clinic coverage from an ungated dataset. Reusing one active provider list removes that mismatch.
 
-### Not touched
-- Radius math / `radiusKm` / `coverageRadius`
-- `coverageGaps` boolean and `coverage-radius--gap` styling
-- Pane stacking (`driveRadiiAbove` stays at 500; `stateMask` at 640; `markers` at 650)
-- Provider pins, county polygons, tribal layers, gap overlays, state mask, state outline
-- Access tier classification and county logic
+## File to patch
+- `src/components/map/MapView.tsx`
 
-### QA after deploy
-- Carson/Douglas radii no longer spill into California.
-- Clark-area radii no longer spill into Arizona/Utah.
-- In-state portions of every circle render identically to today (same fill, stroke, halo, dash, gap white-fill behavior).
-- Pins remain fully visible, including border-adjacent ones.
-- Access Gaps toggle still produces white-centered circles inside Nevada.
-- Distance to Provider OFF → no visible change.
+## QA to run after implementation
+- Provider Locations OFF + Behavioral Health OFF + Access Gaps ON → no white circles/holes anywhere; Nevada fills as a full gap
+- Provider Locations ON + Behavioral Health OFF → only hospital/clinic coverage appears
+- Provider Locations OFF + Behavioral Health ON → only BH coverage appears
+- Both ON → combined behavior
+- Distance to Provider OFF → no radius circles render
+- Access Gaps ON still works, but only from active sources
+- Recent pane-stacking and Nevada clipping fixes remain unchanged
 
-### Post-deploy report will include
-- Clip shape: `nevadaBoundaryGeoJSON` (existing single source of truth)
-- Layers clipped: drive-radii pane only (covers both halo and main circle)
-- Confirmation: radius math, access logic, gap detection, and pane order untouched
-
+## Report back after implementation
+- where the shared active coverage provider list was constructed
+- that both the radius renderer and gap geometry now use it
+- confirmation that radius math, gap morphology, pane order, and styling were untouched
