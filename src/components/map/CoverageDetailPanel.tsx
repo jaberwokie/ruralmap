@@ -621,6 +621,7 @@ const FteDetailContent = ({ fteId }: { fteId: string }) => {
 
 // ── Coverage Area ──
 const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
+  const { isPublicSafe, displayCount } = usePublicSafeMode();
   const volumeMap = useMemo(() => new Map(memberVolumeData.map(d => [d.county, d.memberCount])), []);
   const counties = useMemo(() => nevadaCounties.filter(c => c.zone === area), [area]);
   const rows = useMemo(() => counties.map(c => ({
@@ -643,7 +644,7 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
           <div key={r.name}>
             <div className="flex justify-between text-xs text-foreground/80">
               <span>{r.name}</span>
-              <span className="font-medium tabular-nums">{r.count.toLocaleString()}</span>
+              <span className="font-medium tabular-nums">{displayCount(r.count)}</span>
             </div>
             {r.secondaryZone && (
               <div className="text-[10px] text-muted-foreground italic ml-1">
