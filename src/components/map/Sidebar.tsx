@@ -630,6 +630,8 @@ const Sidebar = ({
     inlineLegend,
     belowLegend,
     subtitle,
+    disabled = false,
+    disabledHint,
   }: {
     label: string;
     icon: LucideIcon;
@@ -641,13 +643,16 @@ const Sidebar = ({
     inlineLegend?: ReactNode;
     belowLegend?: ReactNode;
     subtitle?: string;
+    disabled?: boolean;
+    disabledHint?: string;
   }) => (
-    <div data-tutorial={dataTutorial}>
+    <div data-tutorial={dataTutorial} className={disabled ? 'opacity-50' : undefined} aria-disabled={disabled || undefined}>
       <div className={TOGGLE_ROW_CLASSNAME}>
         <button
           type="button"
-          onClick={() => onCheckedChange(!checked)}
-          className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
+          onClick={() => { if (!disabled) onCheckedChange(!checked); }}
+          disabled={disabled}
+          className={`flex min-w-0 flex-1 items-center gap-2.5 text-left ${disabled ? 'cursor-not-allowed' : ''}`}
         >
           {renderLayerIcon(icon, iconClassName, !checked)}
           <span className="min-w-0 flex-1">
@@ -658,12 +663,16 @@ const Sidebar = ({
         {inlineLegend ? <div className="ml-2 shrink-0">{inlineLegend}</div> : null}
         <div className="ml-2 flex shrink-0 items-center justify-end gap-0.5">
           {helpKey ? renderHelpIcon(helpKey) : null}
-          <Switch checked={checked} onCheckedChange={onCheckedChange} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
+          <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} aria-label={`${checked ? 'Hide' : 'Show'} ${label}`} />
         </div>
       </div>
       {belowLegend ? <div className="pl-[36px] pb-0.5">{belowLegend}</div> : null}
+      {disabled && disabledHint ? (
+        <p className="px-2 pb-1 pt-0.5 text-[10px] leading-relaxed text-muted-foreground">{disabledHint}</p>
+      ) : null}
     </div>
   );
+
 
   return (
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] md:w-80 border-r border-[hsl(var(--brand-health)/0.3)]">
