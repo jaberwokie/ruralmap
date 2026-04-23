@@ -1156,8 +1156,10 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
 };
 
 const EngagementPriorityCard = ({ county }: { county: string }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const metrics = getCountyEngagementMetrics(county);
 
+  if (isPublicSafe) return null;
   if (metrics.totalMembers <= 0) return null;
 
   const engagementRatePercent = (metrics.engagementRate * 100).toFixed(1);
