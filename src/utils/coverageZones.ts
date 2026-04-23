@@ -94,17 +94,19 @@ export function getCountyCoverageBreakdown(county: string, radiusKm: number): Co
   }
   return _breakdownCache.get(radiusKm)!.get(county) ?? {
     activePercent: 0,
-    scheduledPercent: 100,
+    scheduledPercent: 0,
+    remotePercent: 100,
     anchoringFtes: [],
-    primaryType: 'scheduled',
+    primaryType: 'remote',
   };
 }
 
 function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreakdown> {
   const result = new Map<string, CountyCoverageBreakdown>();
   const activeZone = getActiveCoverageZone(radiusKm);
+  const scheduledZone = getScheduledCoverageZone(radiusKm); // includes active core
 
-  // Per-FTE buffers for anchoring info
+  // Per-FTE active buffers for anchoring info
   const fteBuffers = fteCapacityData
     .filter(f => f.hubLocation)
     .map(f => ({
@@ -116,6 +118,15 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       ) as Feature<Polygon>,
     }));
 
+  const intersectArea = (a: any, b: any): number => {
+    try {
+      const ix = intersect(featureCollection([a, b]) as any);
+      return ix ? turfArea(ix) : 0;
+    } catch {
+      return 0;
+    }
+  };
+
   nevadaCounties.forEach(county => {
     try {
       const merged = mergePolygons([county.boundaries]);
@@ -126,32 +137,37 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       const countyArea = turfArea(clipped);
       if (countyArea === 0) return;
 
-      let activeArea = 0;
-      if (activeZone) {
-        try {
-          const fc = featureCollection([clipped, activeZone]);
-          const ix = intersect(fc as any);
-          if (ix) activeArea = turfArea(ix);
-        } catch { /* no intersection */ }
-      }
+      const activeArea = activeZone ? intersectArea(clipped, activeZone) : 0;
+      const scheduledOuterArea = scheduledZone ? intersectArea(clipped, scheduledZone) : 0;
 
       const activePercent = Math.min(100, Math.round((activeArea / countyArea) * 100));
-      const scheduledPercent = 100 - activePercent;
+      // Scheduled ring = outer reachable zone minus active core, clamped to [0,100]
+      const ringPercentRaw = Math.max(
+        0,
+        Math.round(((scheduledOuterArea - activeArea) / countyArea) * 100),
+      );
+      const scheduledPercent = Math.max(0, Math.min(100 - activePercent, ringPercentRaw));
+      const remotePercent = Math.max(0, 100 - activePercent - scheduledPercent);
 
       const anchoringFtes: string[] = [];
       fteBuffers.forEach(fb => {
-        try {
-          const fc = featureCollection([clipped, fb.zone]);
-          const ix = intersect(fc as any);
-          if (ix) anchoringFtes.push(fb.label);
-        } catch { /* no intersection */ }
+        if (intersectArea(clipped, fb.zone) > 0) anchoringFtes.push(fb.label);
       });
+
+      // Conservative classification — bias toward operational reality.
+      // Active requires a meaningful majority AND an anchoring FTE.
+      // Scheduled requires real reachable area within the outreach ring.
+      let primaryType: 'active' | 'scheduled' | 'remote';
+      if (activePercent >= 60 && anchoringFtes.length > 0) primaryType = 'active';
+      else if (activePercent + scheduledPercent >= 40) primaryType = 'scheduled';
+      else primaryType = 'remote';
 
       result.set(county.name, {
         activePercent,
         scheduledPercent,
+        remotePercent,
         anchoringFtes,
-        primaryType: activePercent >= 50 ? 'active' : 'scheduled',
+        primaryType,
       });
     } catch (e) {
       console.error(`Coverage breakdown error for ${county.name}:`, e);
