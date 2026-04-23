@@ -1,35 +1,50 @@
 
 
-## Make verified Nye services visible to public/logged-out users
+## Fix: Pane stacking for provider radius circles
 
-### Root cause
+**File:** `src/components/map/MapView.tsx` (two edits only)
 
-Nye services live in the Cloud `verified_services` and `verified_bh` tables. Their RLS policies (migration `20260421173530…`) only grant SELECT to `authenticated` users:
-
-```sql
-CREATE POLICY "auth read verified_services" ON public.verified_services
-  FOR SELECT TO authenticated USING (true);
+### Edit 1 — Add new pane to `PANE_CONFIG`
+Insert after `tribalNations`, before `stateMask`:
+```ts
+// Provider radius circles — above gap overlays and tribal polygons,
+// below state mask and all marker panes. Non-interactive.
+driveRadiiAbove: { id: 'drive-radii-above-pane', zIndex: 500, interactive: false },
 ```
 
-When the app runs logged-out (default first load, shared link, or `?public=1`), `useLiveVerifiedRecords` calls `listVerifiedServices()` / `listVerifiedBh()` with the anon key, RLS returns zero rows, and `mergedRuralServices` falls back to just the static `enriched-rural-services.ts` — which doesn't contain the Nye imports. Result: no Nye pins on the map, no Nye entries in the County detail panel's Local Resource Network.
+### Edit 2 — Repoint backward-compat alias in `MAP_PANES`
+Replace:
+```ts
+driveRadii: PANE_CONFIG.basePolygons.id,
+```
+with:
+```ts
+driveRadii: PANE_CONFIG.driveRadiiAbove.id,
+```
 
-This is not a mobile bug. It reproduces in any logged-out browser. It only "looks like" a mobile issue because desktop is where you stay signed in.
+### Resulting pane order
+| Pane | z-index |
+|---|---|
+| basePolygons | 200 |
+| coverage | 300 |
+| countyInteractive (gap overlays) | 350 |
+| tribalNations | 450 |
+| **driveRadiiAbove (NEW)** | **500** |
+| stateMask | 640 |
+| markers | 650 |
+| providerMarkers | 660 |
 
-### Change
+### Not touched
+- Gap detection logic / `coverageGaps` boolean
+- `coverage-radius--gap` class and CSS
+- Circle fill, stroke, halo styling
+- Marker panes, clustering, pin rendering
+- Any other layer or filter logic
 
-Open read access on the verified (promoted) tables so the public map renders the same dataset everyone else sees. Staging tables stay locked down — only promoted/active rows become public.
+Both existing call sites that use `MAP_PANES.driveRadii` (halo + main circle) automatically pick up the new pane.
 
-Add a migration that:
-
-1. Adds a `SELECT` policy on `public.verified_services` for the `anon` role, scoped to `active_status = true`.
-2. Adds the equivalent `SELECT` policy on `public.verified_bh`, scoped to `active_status = true`.
-3. Leaves all admin INSERT/UPDATE/DELETE policies and all `staging_*` policies untouched.
-
-No application code changes required — `useLiveVerifiedRecords` already filters on `active_status` and handles the merge. Once anon SELECT is allowed, Nye records flow through to both the Services pin layer and the County detail panel on every device, signed-in or not.
-
-### Verification after deploy
-
-- Open the app in a private window (logged-out): Nye services appear on the map and inside Nye County → Local Resource Network.
-- Open with `?public=1`: same result.
-- Admin pages still require auth and still gate writes behind the `admin` role.
+### Post-deploy report
+- New pane z-index: **500** (`drive-radii-above-pane`)
+- `MAP_PANES.driveRadii` now → `PANE_CONFIG.driveRadiiAbove.id`
+- Gap detection and `coverage-radius--gap` styling untouched
 
