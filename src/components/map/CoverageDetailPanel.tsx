@@ -644,7 +644,9 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
           <div key={r.name}>
             <div className="flex justify-between text-xs text-foreground/80">
               <span>{r.name}</span>
-              <span className="font-medium tabular-nums">{displayCount(r.count)}</span>
+              {!isPublicSafe && (
+                <span className="font-medium tabular-nums">{displayCount(r.count)}</span>
+              )}
             </div>
             {r.secondaryZone && (
               <div className="text-[10px] text-muted-foreground italic ml-1">
@@ -654,10 +656,12 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
           </div>
         ))}
       </div>
-      <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs font-semibold text-foreground">
-        <span>Total</span>
-        <span className="tabular-nums">{total.toLocaleString()}</span>
-      </div>
+      {!isPublicSafe && (
+        <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs font-semibold text-foreground">
+          <span>Total</span>
+          <span className="tabular-nums">{total.toLocaleString()}</span>
+        </div>
+      )}
       <div className="mt-1.5 pt-1.5 border-t border-border flex justify-between text-xs text-foreground/80">
         <span>Rural Access Dependence</span>
         <span className="font-semibold">{RURAL_ACCESS_DEPENDENCE[area]}</span>
