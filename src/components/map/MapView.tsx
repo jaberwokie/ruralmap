@@ -197,7 +197,7 @@ const MAP_PANES = {
   cellularOverlay:           PANE_CONFIG.coverage.id,
   countyBorders:             PANE_CONFIG.basePolygons.id,
   operationalAreas:          PANE_CONFIG.basePolygons.id,
-  driveRadii:                PANE_CONFIG.basePolygons.id,
+  driveRadii:                PANE_CONFIG.driveRadiiAbove.id,
   gapOverlays:               PANE_CONFIG.countyInteractive.id,
   groupedMarkers:            PANE_CONFIG.markers.id,
   servicePresence:           PANE_CONFIG.markers.id,
