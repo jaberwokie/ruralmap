@@ -37,6 +37,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng } from '@/utils/remoteSupportPlacement';
+import { getDriveEstimate } from '@/utils/driveEstimate';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 import MemberAccessSearch from '@/components/map/MemberAccessSearch';
 import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
@@ -140,6 +141,8 @@ interface MarkerHoverPreview {
   extraHtml?: string;
   memberDistanceMi?: number;
   memberTierLabel?: string;
+  /** Drive distance + time line for Field Response county markers. */
+  driveEstimate?: string;
 }
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
@@ -2482,10 +2485,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       marker.on('mouseover', () => {
         marker.setIcon(buildIcon(true));
         updateCountyHoverPreview(county.name);
+        const drive = getDriveEstimate(county.center, category);
         markerHoverPreviewRef.current({
           name: county.name,
           subtitle: RESPONSE_CAPABILITY_META[category].label,
           detail: RESPONSE_CAPABILITY_META[category].description,
+          driveEstimate: drive?.line,
         });
       });
       marker.on('mouseout', () => {
@@ -3189,6 +3194,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
                 {markerHoverPreview.subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{markerHoverPreview.subtitle}</p>}
                 {markerHoverPreview.address && <p className="text-[10px] text-muted-foreground/80 mt-0.5">{markerHoverPreview.address}</p>}
                 {markerHoverPreview.detail && <p className="text-[10px] text-muted-foreground mt-0.5">{markerHoverPreview.detail}</p>}
+                {markerHoverPreview.driveEstimate && (
+                  <p className="text-[10px] font-medium text-foreground mt-1">{markerHoverPreview.driveEstimate}</p>
+                )}
                 {typeof markerHoverPreview.memberDistanceMi === 'number' && markerHoverPreview.memberTierLabel && (
                   <div className="border-t border-border/70 mt-1 pt-1 flex items-center gap-1.5 text-[10px]">
                     <span className="font-medium text-foreground">{markerHoverPreview.memberDistanceMi.toFixed(1)} mi</span>
