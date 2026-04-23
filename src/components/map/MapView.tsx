@@ -3023,7 +3023,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         {(countyHoverPreview || markerHoverPreview) && (
           <div
             data-tutorial="hover-tooltip"
-            className="pointer-events-none absolute top-2 left-2 z-[810] w-52 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
+            /*
+             * Mobile fix: this anchored hover preview is desktop-only.
+             * On mobile, "hover" is triggered by tap and the card lingers
+             * top-left over the map, reading as a stuck/sticky overlay
+             * while users pan. Taps on mobile already open the full
+             * CoverageDetailPanel, so the preview is redundant. Hide
+             * below the md breakpoint (<768px) to keep the map clean.
+             * Desktop/tablet anchored behavior is preserved unchanged.
+             */
+            className="pointer-events-none absolute top-2 left-2 z-[810] hidden md:block w-52 rounded-lg border border-border bg-card/95 px-2.5 py-2 text-card-foreground shadow-md backdrop-blur-sm"
           >
             {markerHoverPreview && (
               <div>
