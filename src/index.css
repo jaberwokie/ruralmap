@@ -526,3 +526,13 @@
   scrollbar-width: thin;
   scrollbar-color: hsl(var(--brand-health) / 0.35) transparent;
 }
+
+/* Access Gaps mode: force white interior on provider radius circles.
+   Single source of truth is the `.coverage-radius--gap` class applied in
+   MapView when `coverageGaps` is true. Keeps the SVG stroke (ring color)
+   intact so the colored ring still reads as a tier indicator. */
+.leaflet-overlay-pane svg path.coverage-radius--gap {
+  fill: #ffffff !important;
+  fill-opacity: 1 !important;
+}
+
