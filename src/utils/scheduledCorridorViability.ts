@@ -22,13 +22,19 @@ const DEG_TO_RAD = Math.PI / 180;
 const EARTH_RADIUS_MI = 3958.8;
 
 /** Distance threshold (mi) for planned outreach reach from anchor. */
-export const MAX_SCHEDULED_DISTANCE_MI = 180;
+export const MAX_SCHEDULED_DISTANCE_MI = 160;
 
-/** Minimum scheduled-ring area % required for planned classification. */
-export const MIN_SCHEDULED_AREA_PERCENT = 15;
+/** Minimum scheduled-ring area % required for planned classification.
+ *  Raised from 15 → 25: thin edge clipping (e.g. Churchill, where only the
+ *  SW corner near Fallon falls in the planned ring) is no longer enough. */
+export const MIN_SCHEDULED_AREA_PERCENT = 25;
 
-/** County centroid must be within this buffer (mi) of an approved corridor. */
-const COUNTY_CORRIDOR_BUFFER_MI = 25;
+/** Minimum (active + scheduled) combined area % required for planned. */
+export const MIN_COMBINED_AREA_PERCENT = 55;
+
+/** County centroid must be within this buffer (mi) of an approved corridor.
+ *  Tightened from 25 → 18: county must sit on the corridor, not just nearby. */
+const COUNTY_CORRIDOR_BUFFER_MI = 18;
 
 /**
  * Per-anchor whitelist of corridors that constitute realistic planned-outreach

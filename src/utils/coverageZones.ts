@@ -20,6 +20,7 @@ import {
   distanceMi,
   MAX_SCHEDULED_DISTANCE_MI,
   MIN_SCHEDULED_AREA_PERCENT,
+  MIN_COMBINED_AREA_PERCENT,
 } from '@/utils/scheduledCorridorViability';
 
 const nevadaFeature: Feature<Polygon> = {
@@ -168,7 +169,10 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       let primaryType: 'active' | 'scheduled' | 'remote';
       if (activePercent >= 60 && anchoringFtes.length > 0) {
         primaryType = 'active';
-      } else if (activePercent + scheduledPercent >= 40 && scheduledPercent >= MIN_SCHEDULED_AREA_PERCENT) {
+      } else if (
+        activePercent + scheduledPercent >= MIN_COMBINED_AREA_PERCENT &&
+        scheduledPercent >= MIN_SCHEDULED_AREA_PERCENT
+      ) {
         // Find nearest field FTE to this county centroid
         const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
         let nearest: typeof fieldFtes[number] | null = null;
