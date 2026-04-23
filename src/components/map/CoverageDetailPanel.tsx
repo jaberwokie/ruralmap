@@ -2778,6 +2778,7 @@ const CoverageGapContent = ({ radiusKm }: { radiusKm: number }) => (
 
 // ── Member Volume (clicked from choropleth) ──
 const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const area = getCountyArea(county);
   const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
@@ -2801,11 +2802,13 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
         </div>
       </DetailSection>
 
-      <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
-        <MemberVolumeSection county={county} />
-      </DetailSection>
+      {!isPublicSafe && (
+        <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
+          <MemberVolumeSection county={county} />
+        </DetailSection>
+      )}
 
-      {hasUtilization && (
+      {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} />
           <UtilizationMetricsCard county={county} />
