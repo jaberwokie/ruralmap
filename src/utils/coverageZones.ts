@@ -15,6 +15,12 @@ import { fteCapacityData } from '@/data/fte-capacity';
 import { nevadaBoundaryGeoJSON } from '@/data/nevada-boundary';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { mergePolygons, clipPolygon } from '@/utils/mergePolygons';
+import {
+  hasViableScheduledCorridor,
+  distanceMi,
+  MAX_SCHEDULED_DISTANCE_MI,
+  MIN_SCHEDULED_AREA_PERCENT,
+} from '@/utils/scheduledCorridorViability';
 
 const nevadaFeature: Feature<Polygon> = {
   type: 'Feature',
@@ -155,12 +161,44 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       });
 
       // Conservative classification — bias toward operational reality.
-      // Active requires a meaningful majority AND an anchoring FTE.
-      // Scheduled requires real reachable area within the outreach ring.
+      // Active (same-day) requires meaningful majority AND an anchoring FTE.
+      // Scheduled (planned) additionally requires a viable highway corridor
+      // shared between the nearest field anchor and the county — thin ring
+      // overlap alone is not enough.
       let primaryType: 'active' | 'scheduled' | 'remote';
-      if (activePercent >= 60 && anchoringFtes.length > 0) primaryType = 'active';
-      else if (activePercent + scheduledPercent >= 40) primaryType = 'scheduled';
-      else primaryType = 'remote';
+      if (activePercent >= 60 && anchoringFtes.length > 0) {
+        primaryType = 'active';
+      } else if (activePercent + scheduledPercent >= 40 && scheduledPercent >= MIN_SCHEDULED_AREA_PERCENT) {
+        // Find nearest field FTE to this county centroid
+        const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
+        let nearest: typeof fieldFtes[number] | null = null;
+        let nearestDistMi = Infinity;
+        fieldFtes.forEach(f => {
+          const d = distanceMi(
+            county.center[0], county.center[1],
+            f.hubLocation!.lat, f.hubLocation!.lng,
+          );
+          if (d < nearestDistMi) { nearestDistMi = d; nearest = f; }
+        });
+
+        if (
+          nearest &&
+          nearestDistMi <= MAX_SCHEDULED_DISTANCE_MI &&
+          hasViableScheduledCorridor(
+            nearest.label,
+            nearest.hubLocation!.lat,
+            nearest.hubLocation!.lng,
+            county.center[0],
+            county.center[1],
+          )
+        ) {
+          primaryType = 'scheduled';
+        } else {
+          primaryType = 'remote';
+        }
+      } else {
+        primaryType = 'remote';
+      }
 
       result.set(county.name, {
         activePercent,
