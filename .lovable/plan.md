@@ -1,34 +1,34 @@
 
 
-## Add help tooltip to "Tier 1 Providers" toggle
+## Update OG image: replace abstract square with Nevada outline
 
-Reuse the existing sidebar help system (no new component needed). Other toggles already render a `?` icon via the `helpKey` prop on `renderLayerToggleRow`, which looks up an entry in `HELP_TOOLTIPS` and renders a `HelpCircle` button with a Popover. The Tier 1 row currently doesn't pass `helpKey`.
+Swap the generic geometric shape currently sitting on the right side of `public/og-image.jpg` for a clean Nevada state silhouette, keeping all other branding (NovumHealth logo, title, subtitle, OpsFrame.io footer) exactly as approved.
 
-### Changes
+### Approach
 
-1. `src/data/help-tooltips.ts`
-   - Add a new entry:
-     ```
-     tier1Providers: {
-       label: 'Tier 1 Providers',
-       explanation: 'Top providers by Medicaid member visit volume.',
-     }
-     ```
+1. Use the real Nevada boundary geometry already in the project (`src/data/nevada-boundary.ts`) so the silhouette is geographically accurate — not a fake polygon.
+2. Render it as a filled shape in NovumHealth blue (`#064f88`) at ~30–50% opacity, sized to occupy roughly the same visual zone as the current square (right third of the canvas).
+3. Keep it minimal: solid silhouette only, no county lines, no pins, no labels. It must read instantly at small preview sizes.
+4. Regenerate `public/og-preview.jpg` first for review, then promote to `public/og-image.jpg` once approved.
 
-2. `src/components/map/Sidebar.tsx` (Tier 1 row, ~line 1021)
-   - Add `helpKey: 'tier1Providers'` to the `renderLayerToggleRow({...})` call for Tier 1 Providers.
+### Layout (unchanged except for the shape)
 
-That's it — the existing `renderHelpIcon` already provides:
-- inline placement to the right of the label (before the Switch)
-- `HelpCircle` icon at `w-3 h-3` with muted color and pointer cursor
-- click/hover/keyboard-accessible Popover (works on desktop and mobile tap)
-- `aria-label` and `aria-haspopup` already wired
-- styling consistent with every other sidebar tooltip
+```text
+┌─────────────────────────────────────────────┐
+│ [NovumHealth logo]                          │
+│                                             │
+│  Rural Operations Map           ⬢ Nevada    │
+│  Nevada Rural BH Coverage…      silhouette  │
+│                                             │
+│              BUILT ON                       │
+│             OpsFrame.io                     │
+└─────────────────────────────────────────────┘
+```
 
-### Validation
+### Open questions
 
-- "Tier 1 Providers" row shows a `?` icon between the label and the toggle switch.
-- Hover/click/tap opens a popover with title "Tier 1 Providers" and body "Top providers by Medicaid member visit volume."
-- Toggle behavior, layout, indentation, and dependency subtitle are unchanged.
-- Keyboard focus + Enter/Space opens the tooltip.
+- **Style**: filled silhouette (solid NovumHealth blue, ~40% opacity) or outlined only (stroke, no fill)?
+- **Position**: keep it on the right side where the square is now, or center it behind the title as a faint watermark?
+
+I'll default to **filled silhouette, right side, ~40% opacity** unless you say otherwise. Want me to generate the preview now?
 
