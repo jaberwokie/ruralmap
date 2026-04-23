@@ -1063,8 +1063,8 @@ const Sidebar = ({
 
                               nevadaCounties.forEach((c) => {
                                 const bd = getCountyCoverageBreakdown(c.name, radius);
-                                if (bd.activePercent >= 50) counts.active++;
-                                else if (bd.activePercent > 0 || bd.anchoringFtes.length > 0) counts.scheduled++;
+                                if (bd.primaryType === 'active') counts.active++;
+                                else if (bd.primaryType === 'scheduled') counts.scheduled++;
                                 else counts.remote++;
                               });
 
