@@ -1,86 +1,60 @@
+Churchill is not slipping through the planned/corridor branch anymore. The current marker comes from the county response classification source used by the map:
 
-Fix the real source of the white-circle bleed: it is not just the radius layer. The current `coverageGaps` geometry in `src/components/map/MapView.tsx` still subtracts hospital/clinic buffers even when `Provider Locations` is off, so the red gap polygon leaves white circular holes behind.
+- `src/components/map/MapView.tsx` builds the Response Capability markers from `getCountyCoverageBreakdown(county, coverageRadiusKm)`
+- `src/components/map/responseCapabilityVisuals.ts` returns `breakdown.primaryType` directly
+- `src/utils/coverageZones.ts` still marks a county as `active` whenever `activePercent >= 60 && anchoringFtes.length > 0`
+
+That means Churchill can still show a field-response pin even after the scheduled/planned logic was tightened, because the active branch is separate and currently more permissive.
 
 ## What to change
 
-### 1) Build one shared active coverage source list in `src/components/map/MapView.tsx`
-Create a single memoized provider list used by both:
-- the Access View radius renderer
-- the Access Gaps geometry builder
+### 1) Fix the source classification, not just the pin
+Update `src/utils/coverageZones.ts` so Churchill cannot remain `active` from edge-only same-day overlap.
 
-It should include only active sources:
-- `layers.serviceLocations` (or `topProvidersOnly`) → hospitals + clinics from the facility dataset
-- `layers.behavioralHealth` → behavioral health locations from `ruralServices`
+Implementation approach:
+- keep the existing active coverage radius math and buffered zone generation unchanged
+- replace the current raw `activePercent >= 60` gate with an anchor-aware county eligibility check for county-level `active` classification
+- only return `active` when the chosen field anchor provides meaningful same-day county coverage, not just a clipped edge or a buffer touching a sliver of the county
+- leave the scheduled corridor logic in place and only evaluate it after the stricter active check fails
 
-Structure:
-```ts
-const activeCoverageProviders = useMemo(() => {
-  const providerFacilities = (topProvidersOnly ? providerVisibleFacilities : filteredFacilities)
-    .filter((f) => Number.isFinite(f.lat) && Number.isFinite(f.lng))
-    .filter((f) => {
-      if (f.type === 'hospital' || f.type === 'clinic') return layers.serviceLocations || topProvidersOnly;
-      return false;
-    });
+This fixes the problem at the single source of truth used by the map marker.
 
-  const behavioralHealthProviders = layers.behavioralHealth
-    ? ruralServices.filter((s) => isBehavioralHealthService(s) && Number.isFinite(s.lat) && Number.isFinite(s.lng))
-    : [];
+### 2) Keep Churchill from reappearing through display-only helpers
+Audit the display surfaces that still infer field coverage from weaker rules so they stay consistent after the classification fix:
+- `src/utils/fieldCoverageStatus.ts`
+- `src/components/map/CoverageDetailPanel.tsx`
 
-  return [
-    ...providerFacilities.map((p) => ({ lat: p.lat, lng: p.lng, kind: 'provider' as const, source: p })),
-    ...behavioralHealthProviders.map((p) => ({ lat: p.lat, lng: p.lng, kind: 'behavioralHealth' as const, source: p })),
-  ];
-}, [...]);
-```
+Specifically:
+- remove any logic path where Churchill can still be described as having primary field coverage just because it appears in `fteCapacityData.counties[]`
+- keep these helpers aligned with the corrected county response truth so the map pin, hover card, and county panel agree
 
-### 2) Gate the radius render effect off that shared list
-In the coverage-radius effect:
-- keep `if (!coverageRadius) return`
-- replace the current local `hasActiveRadiusSources` / `visibleFacilities` logic with the shared list
-- if `activeCoverageProviders.length === 0`, return after clearing layers
-- render circles from `activeCoverageProviders`
-
-This keeps the current radius math and styling, but removes stale or mismatched radii.
-
-### 3) Gate the Access Gaps geometry off the same shared list
-In the `coverageGaps` effect:
-- remove the current ungated `hospitalAndClinicPoints = facilities.filter(...)`
-- use `activeCoverageProviders` as the only subtraction input
-
-Behavior becomes:
-- no active sources → full Nevada gap polygon, no white holes
-- only Provider Locations active → only hospital/clinic coverage subtracts
-- only Behavioral Health active → only BH coverage subtracts
-- both active → both subtract
-
-### 4) Leave everything else alone
-Do not touch:
-- radius distance math
-- gap morphology / `buffer` / `union` / `difference`
+### 3) Preserve all unrelated behavior
+Do not change:
+- scheduled/planned corridor math except where it is already downstream of the active gate
+- drive radius geometry
+- remote support placement
+- FTE locations
+- response capability marker styling
 - pane stacking
-- Nevada clipping
-- `coverage-radius--gap`
-- circle fill/stroke styling
-- clustering
-- marker rendering
-- county logic
+- clipping
 
-## Why this fixes the screenshot
-The screenshot shows white circles even with source toggles off because the gap polygon is still being cut by hospital/clinic coverage from an ungated dataset. Reusing one active provider list removes that mismatch.
+## QA
+Verify these cases after the change:
+- Churchill no longer renders a Same-Day or Planned field-response marker
+- Churchill falls to `remote` if it does not pass the stricter active test and still does not pass planned corridor rules
+- Nye remains correct
+- Lincoln remains correct
+- Humboldt remains remote
+- counties with true same-day field reach remain active
+- county detail language no longer contradicts the marker state for Churchill
 
-## File to patch
-- `src/components/map/MapView.tsx`
+## Technical details
+Files to update:
+- `src/utils/coverageZones.ts` — tighten county-level `active` classification
+- `src/utils/fieldCoverageStatus.ts` — align display-only field coverage truth if needed
+- `src/components/map/CoverageDetailPanel.tsx` — remove assignment-based fallback wording if it contradicts the corrected classification
 
-## QA to run after implementation
-- Provider Locations OFF + Behavioral Health OFF + Access Gaps ON → no white circles/holes anywhere; Nevada fills as a full gap
-- Provider Locations ON + Behavioral Health OFF → only hospital/clinic coverage appears
-- Provider Locations OFF + Behavioral Health ON → only BH coverage appears
-- Both ON → combined behavior
-- Distance to Provider OFF → no radius circles render
-- Access Gaps ON still works, but only from active sources
-- Recent pane-stacking and Nevada clipping fixes remain unchanged
-
-## Report back after implementation
-- where the shared active coverage provider list was constructed
-- that both the radius renderer and gap geometry now use it
-- confirmation that radius math, gap morphology, pane order, and styling were untouched
+Expected outcome:
+- Churchill’s field-response pin disappears because the county-level classification source no longer treats weak edge overlap as county-wide field availability
+- the scheduled/planned fix remains intact
+- the map and county panel stay in sync
