@@ -162,12 +162,32 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       });
 
       // Conservative classification — bias toward operational reality.
-      // Active (same-day) requires meaningful majority AND an anchoring FTE.
+      // Active (same-day) requires:
+      //   - meaningful majority of county area inside the active drive-time zone
+      //   - an anchoring field FTE
+      //   - the nearest field anchor's hub is within the active drive-time
+      //     radius of the county centroid (i.e. the county's operational
+      //     center — not just an edge sliver — is reachable same-day).
+      // This prevents large counties (e.g. Churchill) from being marked
+      // "active" purely because a buffer clips their far edge.
       // Scheduled (planned) additionally requires a viable highway corridor
       // shared between the nearest field anchor and the county — thin ring
       // overlap alone is not enough.
+      const fieldFtesAll = fteCapacityData.filter(f => f.hubLocation);
+      let nearestFieldFte: typeof fieldFtesAll[number] | null = null;
+      let nearestFieldDistMi = Infinity;
+      fieldFtesAll.forEach(f => {
+        const d = distanceMi(
+          county.center[0], county.center[1],
+          f.hubLocation!.lat, f.hubLocation!.lng,
+        );
+        if (d < nearestFieldDistMi) { nearestFieldDistMi = d; nearestFieldFte = f; }
+      });
+      const ACTIVE_RADIUS_MI = radiusKm * 0.621371;
+      const centroidWithinActive = nearestFieldDistMi <= ACTIVE_RADIUS_MI;
+
       let primaryType: 'active' | 'scheduled' | 'remote';
-      if (activePercent >= 60 && anchoringFtes.length > 0) {
+      if (activePercent >= 60 && anchoringFtes.length > 0 && centroidWithinActive) {
         primaryType = 'active';
       } else if (
         activePercent + scheduledPercent >= MIN_COMBINED_AREA_PERCENT &&
