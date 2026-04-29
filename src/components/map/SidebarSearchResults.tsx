@@ -94,9 +94,10 @@ const buildResults = (
     if (countyHits.length >= MAX_PER_GROUP) break;
   }
 
-  // Facilities — name/city/county/type/category/tags/phone
+  // Facilities — name/city/county/type/category/tags/phone (hospitals,
+  // clinics, tier1 providers). Behavioral health is sourced from rural
+  // services (no 'behavioralHealth' FacilityType exists).
   const facilityHits: SearchResult[] = [];
-  const bhFacilityHits: SearchResult[] = [];
   for (const f of facilities) {
     const tagBlob = (f as unknown as { tags?: string[] }).tags?.join(' ') ?? '';
     const categoryBlob = (f as unknown as { category?: string }).category ?? '';
@@ -109,22 +110,18 @@ const buildResults = (
       matches(tagBlob, q) ||
       matches((f as unknown as { phone?: string }).phone, q);
     if (!ok) continue;
-    const isBH = f.type === 'behavioralHealth';
     const sub = `${f.city ? `${f.city}, ` : ''}${f.county} County`;
-    const result: SearchResult = {
+    facilityHits.push({
       kind: 'Facility',
       id: `facility:${f.id}`,
       label: f.name,
       sub,
       facility: f,
-      group: isBH ? 'Behavioral Health' : 'Service',
-    };
-    if (isBH) {
-      if (bhFacilityHits.length < MAX_PER_GROUP) bhFacilityHits.push(result);
-    } else if (facilityHits.length < MAX_PER_GROUP) {
-      facilityHits.push(result);
-    }
+      group: 'Service',
+    });
+    if (facilityHits.length >= MAX_PER_GROUP) break;
   }
+  const bhFacilityHits: SearchResult[] = [];
 
   // Rural services — name/city/county/category/notes/phone
   const serviceHits: SearchResult[] = [];
