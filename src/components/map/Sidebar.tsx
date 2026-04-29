@@ -427,6 +427,7 @@ const Sidebar = ({
   // csvImportState, csvParsed — moved to Admin > Mapping.
   const [explainerOpen, setExplainerOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
