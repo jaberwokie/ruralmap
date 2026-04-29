@@ -394,6 +394,10 @@ const Sidebar = ({
     onFteCardClick,
     onCountySelect,
     onTransitProviderClick,
+    onServiceSelect,
+    onFacilitySelect,
+    onTribalNationSelect,
+    onFocusBounds,
   },
 }: SidebarProps) => {
   // Access Gaps requires at least one source layer that contributes to gap geometry.
