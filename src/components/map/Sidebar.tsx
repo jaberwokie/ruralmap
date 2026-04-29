@@ -77,6 +77,11 @@ export interface SidebarSelectionProps {
   onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
   onTransitProviderClick?: (providerId: string) => void;
+  /** Search-bar navigation hooks. Reuse Index handlers; no new logic. */
+  onServiceSelect?: (service: RuralService) => void;
+  onFacilitySelect?: (facility: Facility) => void;
+  onTribalNationSelect?: (tribe: TribalNation) => void;
+  onFocusBounds?: (bounds: [[number, number], [number, number]]) => void;
 }
 
 interface SidebarProps {
