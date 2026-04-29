@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect, type ReactNode, type MouseEvent, type KeyboardEvent, type TouchEvent } from 'react';
 import novumLogo from '@/assets/novumhealth-logo.svg';
 import MapExplainerModal from './MapExplainerModal';
+import SidebarSearchResults from './SidebarSearchResults';
 import { Search, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Map as MapIcon, Layers3, MapPin, Radio, Users, Activity, BarChart3, Circle, TriangleAlert, Wifi, Signal, Landmark, Check, Flame, Grid3X3, Download, TrainFront, Route, Star, type LucideIcon } from 'lucide-react';
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
@@ -10,11 +11,11 @@ import { exportCsv } from '@/utils/csvExport';
 
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
-import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { RURAL_SERVICE_CATEGORIES, type RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
-import { tribalNations } from '@/data/tribal-nations';
+import { tribalNations, type TribalNation } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCESS_TIER_LABELS } from '@/utils/providerAccessTiers';
@@ -77,6 +78,11 @@ export interface SidebarSelectionProps {
   onFteCardClick?: (fteId: string) => void;
   onCountySelect?: (county: string) => void;
   onTransitProviderClick?: (providerId: string) => void;
+  /** Search-bar navigation hooks. Reuse Index handlers; no new logic. */
+  onServiceSelect?: (service: RuralService) => void;
+  onFacilitySelect?: (facility: Facility) => void;
+  onTribalNationSelect?: (tribe: TribalNation) => void;
+  onFocusBounds?: (bounds: [[number, number], [number, number]]) => void;
 }
 
 interface SidebarProps {
@@ -389,6 +395,10 @@ const Sidebar = ({
     onFteCardClick,
     onCountySelect,
     onTransitProviderClick,
+    onServiceSelect,
+    onFacilitySelect,
+    onTribalNationSelect,
+    onFocusBounds,
   },
 }: SidebarProps) => {
   // Access Gaps requires at least one source layer that contributes to gap geometry.
@@ -417,6 +427,7 @@ const Sidebar = ({
   // csvImportState, csvParsed — moved to Admin > Mapping.
   const [explainerOpen, setExplainerOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const toggleFilters = useCallback(() => setFiltersOpen(v => !v), []);
   const [coreMapOpen, toggleCoreMap, setCoreMapOpen] = usePersistToggle('sidebar_layer_core', true);
   const [operationsOpen, toggleOperations, setOperationsOpen] = usePersistToggle('sidebar_layer_ops');
@@ -814,17 +825,63 @@ const Sidebar = ({
         </div>
       )}
 
-      {/* Search */}
+      {/*
+        Search bar — wired global navigator.
+        Logic lives in <SidebarSearchResults>. Data sources searched:
+          counties (nevadaCounties), facilities (allFacilities prop),
+          rural services (enrichedRuralServices), local transit providers,
+          tribal nations. Selecting a result reuses Index handlers
+          (onCountySelect / onFacilitySelect / onServiceSelect /
+          onTransitProviderClick / onTribalNationSelect + onFocusBounds).
+        Search query continues to drive map marker filtering through
+        useMapFilters → MapView (unchanged).
+      */}
       <div className="px-4 pt-2.5 pb-2" data-tutorial="search-bar">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--brand-health))]" />
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Search facilities, cities, or counties"
+            onChange={(e) => { onSearchChange(e.target.value); setSearchOpen(true); }}
+            onFocus={() => setSearchOpen(true)}
+            onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
+            data-search-input="sidebar"
+            placeholder="Search counties, services, BH, transit, tribal nations"
             className="w-full h-9 pl-9 pr-3 text-sm bg-card border border-[hsl(var(--brand-health)/0.35)] rounded-md text-foreground placeholder:text-[hsl(var(--brand-health)/0.6)] transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus:outline-none focus:border-[hsl(var(--brand-health))] focus:ring-2 focus:ring-[hsl(var(--brand-health)/0.2)]"
           />
+          {searchOpen && searchQuery.trim().length >= 2 && (
+            <SidebarSearchResults
+              query={searchQuery}
+              counties={nevadaCounties}
+              facilities={allFacilities}
+              services={ruralServices}
+              transitProviders={localTransitProviders}
+              tribalNations={tribalNations}
+              onClose={() => setSearchOpen(false)}
+              onSelect={(r) => {
+                setSearchOpen(false);
+                if (r.kind === 'County') {
+                  onCountySelect?.(r.county.name);
+                } else if (r.kind === 'Facility') {
+                  onFacilitySelect?.(r.facility);
+                } else if (r.kind === 'Service') {
+                  onServiceSelect?.(r.service);
+                } else if (r.kind === 'Transit') {
+                  onTransitProviderClick?.(r.provider.id);
+                } else if (r.kind === 'TribalNation') {
+                  if (onTribalNationSelect) {
+                    onTribalNationSelect(r.tribe);
+                  } else if (onFocusBounds) {
+                    // Fallback: zoom near centroid (~0.5° box).
+                    const { lat, lng } = r.tribe;
+                    onFocusBounds([[lat - 0.5, lng - 0.5], [lat + 0.5, lng + 0.5]]);
+                  } else if (r.tribe.counties[0]) {
+                    onCountySelect?.(r.tribe.counties[0]);
+                  }
+                }
+              }}
+            />
+          )}
         </div>
       </div>
 
