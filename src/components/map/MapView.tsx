@@ -2971,6 +2971,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       onMemberPlaceRef.current?.({ lat: pos.lat, lng: pos.lng });
     });
 
+    // Member pin must not propagate clicks to the map's background-click
+    // handler. Index.onMapBackgroundClick clears the member location when a
+    // member pin is present, so without this stop the pin would delete itself
+    // on click. The pin has no detail panel of its own — clicks are a no-op
+    // beyond keeping it visible. Pan/zoom/dragend are unaffected.
+    marker.on('click', (ev: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(ev);
+    });
+    marker.on('mousedown', (ev: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(ev);
+    });
+
     memberPinRef.current.addLayer(marker);
 
     // Radius rings: 10mi, 25mi, 40mi — refined weights and styles
