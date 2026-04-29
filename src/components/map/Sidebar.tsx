@@ -10,11 +10,11 @@ import { exportCsv } from '@/utils/csvExport';
 
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
-import { RURAL_SERVICE_CATEGORIES } from '@/data/rural-services';
+import { RURAL_SERVICE_CATEGORIES, type RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
-import { tribalNations } from '@/data/tribal-nations';
+import { tribalNations, type TribalNation } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { getProviderAccessTierByKm, getProviderAccessTierByMiles, PROVIDER_ACCESS_TIER_LABELS } from '@/utils/providerAccessTiers';
