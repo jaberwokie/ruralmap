@@ -1,5 +1,8 @@
 /**
- * Structured intake — domain chips → need chips. No freeform text input.
+ * Decision Assist — structured intake (domain chips → need chips).
+ *
+ * No freeform text input, no chat. Selection is local component state owned
+ * by DecisionAssistDrawer; this view only emits onDomainChange / onNeedChange.
  */
 
 import { ChevronLeft } from 'lucide-react';
