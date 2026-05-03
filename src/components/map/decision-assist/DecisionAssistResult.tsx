@@ -168,6 +168,18 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
           </ul>
         </div>
       )}
+
+      {/* Copy Plan */}
+      <div className="pt-1">
+        <button
+          type="button"
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopy(); }}
+          className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-md border border-border bg-card hover:bg-secondary transition-colors"
+        >
+          <Copy className="h-3 w-3" />
+          Copy Plan
+        </button>
+      </div>
     </div>
   );
 };
