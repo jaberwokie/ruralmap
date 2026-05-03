@@ -17,6 +17,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import type { Domain, Need } from './decisionAssistTypes';
+import { DOMAIN_LABELS, findNeed } from './decisionAssistTaxonomy';
 import { deriveDecisionAssist } from './deriveDecisionAssist';
 import DecisionAssistIntake from './DecisionAssistIntake';
 import DecisionAssistResultView from './DecisionAssistResult';
@@ -106,8 +107,13 @@ const DecisionAssistDrawer = ({
               onDomainChange={setSelectedDomain}
               onNeedChange={setSelectedNeed}
             />
-            {result && (
-              <DecisionAssistResultView result={result} onFacilitySelect={onFacilitySelect} />
+            {result && selectedDomain && selectedNeed && (
+              <DecisionAssistResultView
+                result={result}
+                domainLabel={DOMAIN_LABELS[selectedDomain]}
+                needLabel={findNeed(selectedNeed)?.label ?? selectedNeed}
+                onFacilitySelect={onFacilitySelect}
+              />
             )}
           </div>
         )}
