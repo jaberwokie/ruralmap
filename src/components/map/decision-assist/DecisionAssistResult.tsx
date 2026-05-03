@@ -1,7 +1,16 @@
 /**
- * Renders pathway, order of operations, confidence, constraint, next action,
- * and clickable primary targets. Click-through routes through the existing
- * onFacilitySelect handler — no new selection logic.
+ * Decision Assist — result view.
+ *
+ * Renders pathway, order of operations, confidence, constraint, next staff
+ * action, and clickable primary targets.
+ *
+ * BOUNDARIES:
+ * - Primary-target click-through routes through the onFacilitySelect prop
+ *   only. No direct selection mutation, no global state writes, no map
+ *   layer/filter changes.
+ * - "Copy Plan" produces plain text via navigator.clipboard.writeText for
+ *   AdvancedMD / Word paste workflows. No markdown, no HTML, no file
+ *   downloads, no new dependencies.
  */
 
 import { ArrowRight, AlertTriangle, CheckCircle2, Info, Copy } from 'lucide-react';
