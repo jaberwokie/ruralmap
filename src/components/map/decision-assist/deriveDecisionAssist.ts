@@ -1,15 +1,19 @@
 /**
  * Decision Assist — deterministic helper.
  *
- * Pure function. Wraps existing utilities only:
- *   - findBackupOptions (nearest 3 with tier labels, member-anchored)
- *   - getCountyForLocation
- *   - getFTEForCounty + getLoadStatus
- *   - checkHighwayAccess
- *   - facilityOffersBehavioralHealth
- *   - mobilityManagers (county lookup, never as a pin)
- *
- * No I/O, no async, no fetches, no map mutations. Reuses 10/25/40 mi tiers.
+ * BOUNDARIES:
+ * - Pure function. No I/O, no async, no fetches, no AI, no map mutations.
+ * - Reads only the DecisionAssistContext passed in (member + facilities +
+ *   services) and existing project utilities. Adds no new thresholds —
+ *   reuses the established 10/25/40 mi access tiers.
+ * - Wraps existing helpers only:
+ *     - getCountyForLocation
+ *     - getFTEForCounty + getLoadStatus
+ *     - checkHighwayAccess
+ *     - mobilityManagers (county lookup, never rendered as a map pin)
+ *     - taxonomy predicates (facilityMatch / serviceMatch)
+ * - Output (pathway, order of operations, confidence, constraint, next staff
+ *   action, primary targets) is deterministic for a given input.
  */
 
 import type { Facility } from '@/data/facilities';
