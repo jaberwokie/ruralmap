@@ -270,6 +270,9 @@ const Index = () => {
           onServiceSelect={onService}
           liveServices={mergedRuralServices}
         />
+        {/* Decision Assist — desktop-only guided intake drawer. Additive.
+            Rollback: delete src/components/map/decision-assist/ and remove
+            this block plus its import at the top of the file. */}
         <DecisionAssistDrawer
           memberLocation={member.memberLocation}
           facilities={facility.facilities}
