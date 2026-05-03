@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, useMemo } from 'react';
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
+import DecisionAssistDrawer from '@/components/map/decision-assist/DecisionAssistDrawer';
 import PresentationOverlay from '@/components/map/presentation/PresentationOverlay';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
@@ -268,6 +269,13 @@ const Index = () => {
           onFacilitySelect={onFacility}
           onServiceSelect={onService}
           liveServices={mergedRuralServices}
+        />
+        <DecisionAssistDrawer
+          memberLocation={member.memberLocation}
+          facilities={facility.facilities}
+          services={mergedRuralServices}
+          onFacilitySelect={onFacility}
+          isPresenting={presentation.isPresenting}
         />
         <PresentationOverlay
           isPresenting={presentation.isPresenting}
