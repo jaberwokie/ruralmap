@@ -1,14 +1,20 @@
 /**
  * Decision Assist — guided intake drawer.
  *
- * Desktop/laptop only (≥768px). Returns null on mobile so the subtree is
- * absent from the DOM. Hidden until a member pin/address is set. Hidden
- * during Presentation Mode. Additive only — no map mutations beyond calling
- * the passed onFacilitySelect handler.
+ * BOUNDARIES:
+ * - Deterministic helper UI. NOT AI, NOT chat, no network calls.
+ * - Desktop/laptop only for v1 (≥ md breakpoint via useIsMobile). On mobile
+ *   the subtree is absent from the DOM, not just hidden. No mobile fallback.
+ * - Reads only the passed-in member/facilities/services props. Must not
+ *   mutate map layers, filters, overlays, selection, or any global state.
+ * - Hidden until a member pin/address is set. Hidden during Presentation Mode.
+ * - Primary-target click-through MUST go through the provided onFacilitySelect
+ *   prop only — no direct selection or store writes.
  *
- * Mount: sibling of CoverageDetailPanel inside the map column in Index.tsx.
- * Position: absolute bottom-0 left-0 right-14 z-[640].
- * Rollback: delete this folder and remove the single mount line in Index.tsx.
+ * MOUNT: sibling of CoverageDetailPanel inside the map column in Index.tsx.
+ * POSITION: absolute bottom-0 left-0 right-14 z-[640].
+ * ROLLBACK: delete src/components/map/decision-assist/ and remove the single
+ *           <DecisionAssistDrawer /> mount block (and its import) in Index.tsx.
  */
 
 import { useEffect, useMemo, useState } from 'react';
