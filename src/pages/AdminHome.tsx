@@ -6,7 +6,7 @@
  */
 
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, Layers, ListChecks, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Layers, ListChecks, Users } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -68,6 +68,12 @@ export default function AdminHome() {
             title="Unmapped Top Utilized Providers"
             description="Review high-utilization billing providers not currently mapped."
             icon={<ListChecks className="h-4 w-4" />}
+          />
+          <ToolCard
+            to="/admin/training"
+            title="Staff Training"
+            description="Rural Map + Decision Assist training packet. Review on screen and download as .docx or PDF."
+            icon={<BookOpen className="h-4 w-4" />}
           />
         </div>
       </div>

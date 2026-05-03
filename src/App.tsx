@@ -19,6 +19,7 @@ import AdminMappingBehavioralHealth from "./pages/AdminMappingBehavioralHealth.t
 import AdminMappingVerificationQueue from "./pages/AdminMappingVerificationQueue.tsx";
 import AdminMappingAuditHistory from "./pages/AdminMappingAuditHistory.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
+import AdminTraining from "./pages/AdminTraining.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
 import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
@@ -66,6 +67,9 @@ const App = () => {
                 <Route path="/admin/mapping/verification-queue" element={<AdminMappingVerificationQueue />} />
                 <Route path="/admin/mapping/audit-history" element={<AdminMappingAuditHistory />} />
                 <Route path="/admin/mapping/import" element={<AdminMappingImport />} />
+
+                {/* Admin > Training (additive; rollback by removing this line and src/pages/AdminTraining.tsx + src/pages/admin-training/) */}
+                <Route path="/admin/training" element={<AdminTraining />} />
 
                 {/* Backward-compat: keep old bookmarks alive */}
                 <Route
