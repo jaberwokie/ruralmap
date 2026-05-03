@@ -29,10 +29,12 @@ describe('deriveDecisionAssist', () => {
     expect(r.constraint).toBeTruthy();
   });
 
-  it('returns high confidence for a tier1 nearby clinic', () => {
+  it('returns high confidence for a tier1 nearby clinic when FTE is available', () => {
+    // Carson City FTE: 3/5 load → 'available'
+    const carsonMember = { lat: 39.1638, lng: -119.7674 };
     const ctx: DecisionAssistContext = {
-      member,
-      facilities: [mkFacility({ id: 'f-near', lat: 36.2150, lng: -115.9700 })],
+      member: carsonMember,
+      facilities: [mkFacility({ id: 'f-near', city: 'Carson City', county: 'Carson City', lat: 39.1640, lng: -119.7680 })],
       services: [],
     };
     const r = deriveDecisionAssist(ctx, 'physical', 'primary_care');
