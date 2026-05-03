@@ -4,12 +4,15 @@
  * onFacilitySelect handler — no new selection logic.
  */
 
-import { ArrowRight, AlertTriangle, CheckCircle2, Info } from 'lucide-react';
+import { ArrowRight, AlertTriangle, CheckCircle2, Info, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Facility } from '@/data/facilities';
 import type { DecisionAssistResult } from './decisionAssistTypes';
 
 interface Props {
   result: DecisionAssistResult;
+  domainLabel: string;
+  needLabel: string;
   onFacilitySelect: (f: Facility) => void;
 }
 
@@ -19,9 +22,68 @@ const CONFIDENCE_STYLE = {
   low:    { color: 'hsl(0, 65%, 45%)',   bg: 'hsl(0, 65%, 97%)',   label: 'Low confidence', Icon: AlertTriangle },
 } as const;
 
-const DecisionAssistResultView = ({ result, onFacilitySelect }: Props) => {
+const CONFIDENCE_PLAIN: Record<DecisionAssistResult['confidence'], string> = {
+  high: 'High',
+  medium: 'Medium',
+  low: 'Low',
+};
+
+const buildPlanText = (
+  result: DecisionAssistResult,
+  domainLabel: string,
+  needLabel: string,
+): string => {
+  const lines: string[] = [];
+  lines.push('CARE PLAN SUMMARY');
+  lines.push('');
+  lines.push('Member Need:');
+  lines.push(`${domainLabel} – ${needLabel}`);
+  lines.push('');
+  lines.push('Recommended Pathway:');
+  lines.push(result.pathway);
+  lines.push('');
+  lines.push('Order of Operations:');
+  result.orderOfOperations.forEach(s => lines.push(`${s.step}. ${s.action}`));
+  lines.push('');
+  lines.push('Primary Options:');
+  if (result.primaryTargets.length === 0) {
+    lines.push('- None identified');
+  } else {
+    result.primaryTargets.forEach(t => {
+      const detail = t.distanceMi !== null
+        ? `${t.distanceMi} mi – ${t.tier}`
+        : t.kind === 'mobility_manager' ? 'County coordinator' : 'Hotline';
+      lines.push(`- ${t.name} (${detail})`);
+    });
+  }
+  lines.push('');
+  lines.push('Constraints:');
+  lines.push(result.constraint ?? 'None identified');
+  lines.push('');
+  lines.push('Confidence Level:');
+  lines.push(CONFIDENCE_PLAIN[result.confidence]);
+  lines.push('');
+  lines.push('Next Staff Action:');
+  lines.push(result.nextStaffAction);
+  lines.push('');
+  lines.push('Generated:');
+  lines.push(new Date().toLocaleString());
+  return lines.join('\n');
+};
+
+const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySelect }: Props) => {
   const conf = CONFIDENCE_STYLE[result.confidence];
   const ConfIcon = conf.Icon;
+
+  const handleCopy = async () => {
+    const text = buildPlanText(result, domainLabel, needLabel);
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Plan copied');
+    } catch {
+      toast.error('Could not copy plan');
+    }
+  };
 
   return (
     <div className="px-3 pb-3 space-y-2">
