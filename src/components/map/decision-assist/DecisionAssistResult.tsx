@@ -87,6 +87,7 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
 
   return (
     <div className="px-3 pb-3 space-y-2">
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">Operational Decision</p>
       {/* Pathway + confidence */}
       <div className="flex items-center justify-between gap-2">
         <div>
