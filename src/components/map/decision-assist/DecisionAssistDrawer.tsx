@@ -106,8 +106,13 @@ const DecisionAssistDrawer = ({
               onDomainChange={setSelectedDomain}
               onNeedChange={setSelectedNeed}
             />
-            {result && (
-              <DecisionAssistResultView result={result} onFacilitySelect={onFacilitySelect} />
+            {result && selectedDomain && selectedNeed && (
+              <DecisionAssistResultView
+                result={result}
+                domainLabel={DOMAIN_LABELS[selectedDomain]}
+                needLabel={findNeed(selectedNeed)?.label ?? selectedNeed}
+                onFacilitySelect={onFacilitySelect}
+              />
             )}
           </div>
         )}
