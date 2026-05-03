@@ -70,7 +70,7 @@ function RenderBlock({ block }: { block: TrainingBlock }) {
 
 function RenderSection({ section }: { section: TrainingSection }) {
   return (
-    <section className="mb-8">
+    <section className="mb-8 training-section">
       <h2 className="border-b border-border pb-1 text-lg font-semibold" style={{ color: '#064f88' }}>
         {section.title}
       </h2>
@@ -82,6 +82,44 @@ function RenderSection({ section }: { section: TrainingSection }) {
     </section>
   );
 }
+
+/**
+ * Print-only styles. Scoped to /admin/training via the .training-print-root
+ * wrapper class. Does not affect screen rendering or export logic.
+ */
+const PRINT_STYLES = `
+@media print {
+  .training-print-root .no-print { display: none !important; }
+  .training-print-root { background: white !important; color: black !important; }
+  .training-print-root main { padding: 0 !important; max-width: none !important; }
+  .training-print-root article {
+    border: none !important;
+    background: white !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .training-print-root h1 { font-size: 22pt; margin: 0 0 4pt; }
+  .training-print-root h2 { font-size: 15pt; margin: 14pt 0 6pt; }
+  .training-print-root h3 { font-size: 12pt; margin: 10pt 0 4pt; }
+  .training-print-root h4 { font-size: 11pt; margin: 8pt 0 3pt; }
+  .training-print-root p,
+  .training-print-root li { font-size: 10.5pt; line-height: 1.45; }
+  .training-print-root ul,
+  .training-print-root ol { margin: 4pt 0 8pt 18pt; }
+  .training-print-root .training-section {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 14pt;
+  }
+  .training-print-root h2,
+  .training-print-root h3,
+  .training-print-root h4 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+  @page { margin: 0.6in; }
+}
+`;
 
 export default function AdminTraining() {
   const perms = usePermissions();
@@ -119,8 +157,9 @@ export default function AdminTraining() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="border-b border-border bg-card">
+    <div className="min-h-screen bg-background text-foreground training-print-root">
+      <style>{PRINT_STYLES}</style>
+      <div className="border-b border-border bg-card no-print">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
