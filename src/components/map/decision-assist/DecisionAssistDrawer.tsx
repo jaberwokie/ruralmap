@@ -17,6 +17,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import type { Domain, Need } from './decisionAssistTypes';
+import { DOMAIN_LABELS, findNeed } from './decisionAssistTaxonomy';
 import { deriveDecisionAssist } from './deriveDecisionAssist';
 import DecisionAssistIntake from './DecisionAssistIntake';
 import DecisionAssistResultView from './DecisionAssistResult';
