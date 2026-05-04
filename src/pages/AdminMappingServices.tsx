@@ -28,6 +28,7 @@ import {
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
+import { SERVICE_CATEGORIES } from '@/utils/serviceCategoryMap';
 
 const SCHEMA_SECTIONS = [
   {
