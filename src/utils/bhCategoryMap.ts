@@ -169,13 +169,13 @@ const PHRASES: Pattern[] = [
   { category: 'Mental Health',               pattern: 'mental health clinic' },
   { category: 'Mental Health',               pattern: 'mental health services' },
   { category: 'Mental Health',               pattern: 'mental health' },
-  { category: 'Mental Health',               pattern: 'behavioral health services' },
 
   // Community Behavioral Health — explicit high-priority phrase wins;
   // bare "behavioral health" stays here as low-priority fallback.
   { category: 'Community Behavioral Health', pattern: 'community behavioral health' },
   { category: 'Community Behavioral Health', pattern: 'behavioral health clinic' },
   { category: 'Community Behavioral Health', pattern: 'behavioral health center' },
+  { category: 'Community Behavioral Health', pattern: 'behavioral health services' },
   { category: 'Community Behavioral Health', pattern: 'community mental health' },
   { category: 'Community Behavioral Health', pattern: 'bh clinic' },
   { category: 'Community Behavioral Health', pattern: 'behavioral health' },
@@ -211,6 +211,7 @@ const scorePhrase = (pattern: string, category: BHCategory): number => {
       pattern === 'community behavioral health' ||
       pattern === 'behavioral health clinic' ||
       pattern === 'behavioral health center' ||
+      pattern === 'behavioral health services' ||
       pattern === 'community mental health';
     if (!isExplicit) return base - FALLBACK_PENALTY;
   }
