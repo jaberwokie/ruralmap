@@ -59,8 +59,9 @@ const Index = () => {
    */
   const onMapBackgroundClick = useCallback(() => {
     selection.actions.handleMapClick();
-    if (member.memberLocation) member.clearMember();
-  }, [selection.actions, member]);
+    // Member pin persists across map/sidebar/filter clicks. It is only cleared
+    // by the search bar's explicit clear ("X") or by entering a new address.
+  }, [selection.actions]);
   const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
   const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
   /**
