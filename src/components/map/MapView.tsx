@@ -109,6 +109,10 @@ interface MapViewProps {
   presentationPhase?: PresentationPhase;
   onPresentationToggle?: () => void;
   onPresentationPhaseChange?: (phase: PresentationPhase) => void;
+  /** Decision Assist drawer expanded state. Used only to deterministically
+   *  offset the bottom-left Broadband/Cellular legend so it does not visually
+   *  jump when the drawer expands and the layout reflows. */
+  decisionAssistOpen?: boolean;
 }
 
 interface CountyHoverMetrics {
