@@ -211,6 +211,7 @@ const scorePhrase = (pattern: string, category: BHCategory): number => {
       pattern === 'community behavioral health' ||
       pattern === 'behavioral health clinic' ||
       pattern === 'behavioral health center' ||
+      pattern === 'behavioral health services' ||
       pattern === 'community mental health';
     if (!isExplicit) return base - FALLBACK_PENALTY;
   }
