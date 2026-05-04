@@ -34,6 +34,10 @@ interface Props {
   services: RuralService[];
   onFacilitySelect: (f: Facility) => void;
   isPresenting: boolean;
+  /** Lifted open-state callback so siblings (e.g. the bottom-left
+   *  Broadband/Cellular legend) can deterministically reposition when the
+   *  drawer expands. Optional — defaults to internal-only state. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 const DecisionAssistDrawer = ({
@@ -42,9 +46,17 @@ const DecisionAssistDrawer = ({
   services,
   onFacilitySelect,
   isPresenting,
+  onOpenChange,
 }: Props) => {
   const isMobile = useIsMobile();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpenState] = useState(false);
+  const setIsOpen = (next: boolean | ((prev: boolean) => boolean)) => {
+    setIsOpenState(prev => {
+      const value = typeof next === 'function' ? (next as (p: boolean) => boolean)(prev) : next;
+      onOpenChange?.(value);
+      return value;
+    });
+  };
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
 
