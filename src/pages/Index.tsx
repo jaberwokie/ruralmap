@@ -25,6 +25,10 @@ const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
 const Index = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  // Lifted Decision Assist open-state so the bottom-left Broadband/Cellular
+  // legend can deterministically offset above the drawer instead of visually
+  // jumping when layout flow shifts.
+  const [decisionAssistOpen, setDecisionAssistOpen] = useState(false);
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
   const layers = useMapLayers();
