@@ -81,6 +81,7 @@ const VALIDATION_RULES = [
 
 const STAGING_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
+  { key: 'category', label: 'Category' },
   { key: 'type', label: 'Type' },
   { key: 'npi', label: 'NPI' },
   { key: 'org', label: 'Organization' },
@@ -91,6 +92,7 @@ const STAGING_COLS: StagingTableColumn[] = [
 
 const VERIFIED_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
+  { key: 'category', label: 'Category' },
   { key: 'type', label: 'Type' },
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
@@ -100,6 +102,8 @@ const VERIFIED_COLS: StagingTableColumn[] = [
 
 const EDITABLE_FIELDS: EditableField[] = [
   { key: 'name', label: 'Name' },
+  { key: 'category_mapped', label: 'Category (controlled)', type: 'select', options: BH_CATEGORIES },
+  { key: 'category_raw', label: 'Category (raw / free-text)' },
   { key: 'bh_entity_type', label: 'BH entity type' },
   { key: 'bh_service_type', label: 'BH service type' },
   { key: 'npi', label: 'NPI' },
