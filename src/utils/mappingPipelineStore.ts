@@ -181,6 +181,9 @@ export const promoteStagingService = async (id: string): Promise<void> => {
   }).select('*').eq('id', id).single();
   if (e1 || !stg) throw new Error(e1?.message ?? 'Staging row not found');
   if (stg.validation_severity === 'error') throw new Error('Cannot promote a record with validation errors. Fix the source row and re-upload.');
+  if (!isServiceCategory(stg.category_mapped)) {
+    throw new Error('category_mapped required — set a controlled category before promotion.');
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   const {
