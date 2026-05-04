@@ -74,6 +74,7 @@ const VALIDATION_RULES = [
   'NPI, when provided, must be exactly 10 digits.',
   'Records without coordinates AND without a street address will not place on the map.',
   'BH entity type should match a known type — non-standard values are flagged as warnings.',
+  'category_mapped (controlled BH category) is required before a record can be promoted. Free-text categories are kept as category_raw and never written to verified records.',
   'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
   'Records remain in staging until manually promoted by an admin.',
 ];
