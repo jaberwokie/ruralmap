@@ -17,13 +17,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 
-export type EditableFieldType = 'text' | 'number' | 'textarea';
+export type EditableFieldType = 'text' | 'number' | 'textarea' | 'select';
 
 export interface EditableField {
   key: string;
   label: string;
   type?: EditableFieldType;
   placeholder?: string;
+  /** Used when `type === 'select'`. Empty string allowed for "(unset)". */
+  options?: ReadonlyArray<string>;
 }
 
 interface EditRecordDialogProps {
