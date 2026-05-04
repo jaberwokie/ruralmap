@@ -175,6 +175,7 @@ const PHRASES: Pattern[] = [
   { category: 'Community Behavioral Health', pattern: 'community behavioral health' },
   { category: 'Community Behavioral Health', pattern: 'behavioral health clinic' },
   { category: 'Community Behavioral Health', pattern: 'behavioral health center' },
+  { category: 'Community Behavioral Health', pattern: 'behavioral health services' },
   { category: 'Community Behavioral Health', pattern: 'community mental health' },
   { category: 'Community Behavioral Health', pattern: 'bh clinic' },
   { category: 'Community Behavioral Health', pattern: 'behavioral health' },
