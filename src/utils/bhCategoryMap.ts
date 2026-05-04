@@ -169,7 +169,6 @@ const PHRASES: Pattern[] = [
   { category: 'Mental Health',               pattern: 'mental health clinic' },
   { category: 'Mental Health',               pattern: 'mental health services' },
   { category: 'Mental Health',               pattern: 'mental health' },
-  { category: 'Mental Health',               pattern: 'behavioral health services' },
 
   // Community Behavioral Health — explicit high-priority phrase wins;
   // bare "behavioral health" stays here as low-priority fallback.
