@@ -227,8 +227,9 @@ export const promoteStagingServicesBulk = async (
       promoted += 1;
     } catch (e) {
       const msg = (e as Error)?.message ?? 'unknown';
-      if (/validation errors/i.test(msg)) {
+      if (/validation errors/i.test(msg) || /category_mapped/i.test(msg)) {
         skipped += 1;
+        failures.push({ id, reason: msg });
       } else {
         failed += 1;
         failures.push({ id, reason: msg });
