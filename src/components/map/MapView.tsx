@@ -109,6 +109,10 @@ interface MapViewProps {
   presentationPhase?: PresentationPhase;
   onPresentationToggle?: () => void;
   onPresentationPhaseChange?: (phase: PresentationPhase) => void;
+  /** Decision Assist drawer expanded state. Used only to deterministically
+   *  offset the bottom-left Broadband/Cellular legend so it does not visually
+   *  jump when the drawer expands and the layout reflows. */
+  decisionAssistOpen?: boolean;
 }
 
 interface CountyHoverMetrics {
@@ -700,7 +704,7 @@ const CoverageGapInfoButton = () => {
 };
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const { isPublicSafe } = usePublicSafeMode();
   const mapRef = useRef<L.Map | null>(null);
@@ -3288,7 +3292,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           </div>
         )}
       </TooltipProvider>
-      {(layers.broadbandAccess || layers.cellularCoverage) && (
+      {(layers.broadbandAccess || layers.cellularCoverage) && !decisionAssistOpen && (
+        // Legend is hidden while the Decision Assist drawer is expanded so it
+        // does not visually float above the drawer body. It returns to its
+        // anchored bottom-left position as soon as the drawer collapses.
         <div className="absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2">
           {layers.broadbandAccess && (
             <div>
