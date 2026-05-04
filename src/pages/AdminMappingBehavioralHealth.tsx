@@ -19,6 +19,7 @@ import {
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
+import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
 
 const SCHEMA_SECTIONS = [
   {
