@@ -98,7 +98,8 @@ const VERIFIED_COLS: StagingTableColumn[] = [
 
 const EDITABLE_FIELDS: EditableField[] = [
   { key: 'name', label: 'Name' },
-  { key: 'service_category', label: 'Service category' },
+  { key: 'category_mapped', label: 'Category (controlled)', type: 'select', options: SERVICE_CATEGORIES },
+  { key: 'service_category', label: 'Category (raw / free-text)' },
   { key: 'organization_name', label: 'Organization' },
   { key: 'street_address', label: 'Street address' },
   { key: 'city', label: 'City' },
