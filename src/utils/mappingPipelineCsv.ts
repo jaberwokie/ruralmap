@@ -106,9 +106,13 @@ const nullable = (v: string | undefined): string | null => {
 const csvToStagingServiceLegacy = (
   raw: Record<string, string>,
   meta: { source_file_name: string; source_row_number: number; import_batch_id: string },
-): Partial<StagingServiceRow> => ({
+): Partial<StagingServiceRow> => {
+  const category_raw = nullable(raw.service_category ?? raw.category);
+  return {
   name: raw.name ?? '',
-  service_category: nullable(raw.service_category ?? raw.category),
+  service_category: category_raw,
+  category_raw,
+  category_mapped: autoMapCategory(category_raw),
   service_subcategory: nullable(raw.service_subcategory ?? raw.subcategory),
   organization_name: nullable(raw.organization_name ?? raw.organization),
   description: nullable(raw.description),
@@ -140,7 +144,8 @@ const csvToStagingServiceLegacy = (
   resource_class: 'service',
   mappable: true,
   match_conflict: false,
-});
+  };
+};
 
 /**
  * Read a single canonical field from a raw row using the resolver's
