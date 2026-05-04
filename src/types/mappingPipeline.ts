@@ -123,6 +123,11 @@ export interface StagingBhRow {
   source_file_name: string | null;
   source_row_number: number | null;
   import_batch_id: string | null;
+  // Controlled BH category (additive). category_raw preserves the original
+  // CSV value for audit; category_mapped must be one of the controlled
+  // BH_CATEGORIES values before a row may be promoted.
+  category_raw: string | null;
+  category_mapped: string | null;
   created_at: string;
   updated_at: string;
 }
