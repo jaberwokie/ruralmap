@@ -18,6 +18,7 @@ import {
   normalizeTags, normalizeCategory, controlledAppend, isNoisePhrase,
 } from './serviceNormalize';
 import { autoMapCategory } from './serviceCategoryMap';
+import { autoMapBHCategory } from './bhCategoryMap';
 
 export interface ParsedCsv {
   headers: string[];
