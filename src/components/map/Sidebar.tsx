@@ -15,6 +15,7 @@ import { RURAL_SERVICE_CATEGORIES, type RuralService } from '@/data/rural-servic
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
+import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
 import { tribalNations, type TribalNation } from '@/data/tribal-nations';
 import { fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import { kmToMiles, getCountyCoverageBreakdown } from '@/utils/coverageZones';
