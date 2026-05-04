@@ -448,17 +448,32 @@ const Sidebar = ({
   const countyCount = nevadaCounties.length;
   const tribalNationCount = tribalNations.length;
 
+  // Live-merge verified Services + BH so sidebar counts reflect the actual
+  // map-facing active records after ingestion/promotion/deactivation. Falls
+  // back to the static enriched dataset until the live fetch resolves.
+  const { records: liveVerifiedRecords } = useLiveVerifiedRecords();
+  const mergedServicesForCounts = useMemo<RuralService[]>(() => {
+    if (liveVerifiedRecords.length === 0) return ruralServices;
+    const dedupKey = (n: string, lat: number, lng: number) =>
+      `${n.trim().toLowerCase()}|${lat.toFixed(4)}|${lng.toFixed(4)}`;
+    const liveKeys = new Set(liveVerifiedRecords.map((r) => dedupKey(r.name, r.lat, r.lng)));
+    const baseFiltered = ruralServices.filter(
+      (s) => !liveKeys.has(dedupKey(s.name, s.lat, s.lng)),
+    );
+    return [...baseFiltered, ...liveVerifiedRecords];
+  }, [liveVerifiedRecords]);
+
   const filteredServices = useMemo(() => {
-    let result = ruralServices.filter(isCommunitySupportService);
+    let result = mergedServicesForCounts.filter(isCommunitySupportService);
     if (filters.counties.size > 0) result = result.filter(s => filters.counties.has(s.county));
     return result;
-  }, [filters.counties]);
+  }, [filters.counties, mergedServicesForCounts]);
 
   const filteredBhServices = useMemo(() => {
-    let result = ruralServices.filter(isBehavioralHealthService);
+    let result = mergedServicesForCounts.filter(isBehavioralHealthService);
     if (filters.counties.size > 0) result = result.filter(s => filters.counties.has(s.county));
     return result;
-  }, [filters.counties]);
+  }, [filters.counties, mergedServicesForCounts]);
 
   const serviceCount = filteredServices.length;
   const bhCount = filteredBhServices.length;
