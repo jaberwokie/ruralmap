@@ -20,6 +20,7 @@ import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
 import { controlledAppend, normalizeTags } from './serviceNormalize';
+import { isServiceCategory } from './serviceCategoryMap';
 import {
   geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
   type GeocodeOutcome, type GeocodeRunSummary,
