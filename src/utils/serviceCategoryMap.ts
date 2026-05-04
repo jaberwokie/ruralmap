@@ -100,7 +100,9 @@ const PATTERNS: Array<{ pattern: string; category: ServiceCategory }> = [
   { category: 'Employment',           pattern: 'career' },
   { category: 'Employment',           pattern: 'job' },
 
-  // Legal
+  // Legal (explicit phrases score highest; must outrank generic terms)
+  { category: 'Legal',                pattern: 'legal services' },
+  { category: 'Legal',                pattern: 'legal assistance' },
   { category: 'Legal',                pattern: 'legal aid' },
   { category: 'Legal',                pattern: 'legal' },
   { category: 'Legal',                pattern: 'attorney' },
@@ -154,14 +156,14 @@ const PATTERNS: Array<{ pattern: string; category: ServiceCategory }> = [
   { category: 'Utilities',            pattern: 'utilities' },
   { category: 'Utilities',            pattern: 'utility' },
 
-  // Transportation
+  // Transportation (precise phrases only — avoid generic "transport"/"bus"/"transit" substring drift)
   { category: 'Transportation',       pattern: 'medical transportation' },
+  { category: 'Transportation',       pattern: 'medical transport' },
   { category: 'Transportation',       pattern: 'non-emergency transport' },
+  { category: 'Transportation',       pattern: 'public transit' },
+  { category: 'Transportation',       pattern: 'bus service' },
   { category: 'Transportation',       pattern: 'transportation' },
-  { category: 'Transportation',       pattern: 'transit' },
   { category: 'Transportation',       pattern: 'rideshare' },
-  { category: 'Transportation',       pattern: 'mobility' },
-  { category: 'Transportation',       pattern: 'bus' },
 
   // Financial Assistance (generic last; specific assistance categories above already won)
   { category: 'Financial Assistance', pattern: 'financial assistance' },
@@ -178,6 +180,8 @@ const PATTERNS: Array<{ pattern: string; category: ServiceCategory }> = [
   { category: 'Community Support',    pattern: 'navigator' },
   { category: 'Community Support',    pattern: 'peer support' },
   { category: 'Community Support',    pattern: 'outreach' },
+  { category: 'Community Support',    pattern: 'public library' },
+  { category: 'Community Support',    pattern: 'library' },
   { category: 'Community Support',    pattern: 'community' },
   { category: 'Community Support',    pattern: 'peer' },
 ];
