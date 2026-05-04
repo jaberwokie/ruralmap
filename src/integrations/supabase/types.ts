@@ -77,6 +77,8 @@ export type Database = {
           appointment_required: boolean | null
           bh_entity_type: string | null
           bh_service_type: string | null
+          category_mapped: string | null
+          category_raw: string | null
           city: string | null
           county: string | null
           created_at: string
@@ -130,6 +132,8 @@ export type Database = {
           appointment_required?: boolean | null
           bh_entity_type?: string | null
           bh_service_type?: string | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
@@ -183,6 +187,8 @@ export type Database = {
           appointment_required?: boolean | null
           bh_entity_type?: string | null
           bh_service_type?: string | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
@@ -416,6 +422,8 @@ export type Database = {
           appointment_required: boolean | null
           bh_entity_type: string | null
           bh_service_type: string | null
+          category_mapped: string | null
+          category_raw: string | null
           city: string | null
           county: string | null
           created_at: string
@@ -469,6 +477,8 @@ export type Database = {
           appointment_required?: boolean | null
           bh_entity_type?: string | null
           bh_service_type?: string | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
@@ -522,6 +532,8 @@ export type Database = {
           appointment_required?: boolean | null
           bh_entity_type?: string | null
           bh_service_type?: string | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
