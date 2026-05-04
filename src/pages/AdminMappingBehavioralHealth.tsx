@@ -211,6 +211,7 @@ export default function AdminMappingBehavioralHealth() {
     active_status: r.active_status,
     cells: {
       name: r.name,
+      category: r.category_mapped ?? r.category_raw ?? '—',
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
