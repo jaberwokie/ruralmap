@@ -68,6 +68,7 @@ const VALIDATION_RULES = [
   'Latitude and longitude must be a valid pair (both or neither).',
   'Records without coordinates AND without a street address will not place on the map.',
   'Service category should match a known category — non-standard values are flagged as warnings.',
+  'category_mapped (controlled category) is required before a record can be promoted. Free-text categories are kept as category_raw and never written to verified records.',
   'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
   'ZIP must be 5 digits or ZIP+4.',
   'Records remain in staging until manually promoted by an admin.',
