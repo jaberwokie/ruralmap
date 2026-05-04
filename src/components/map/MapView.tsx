@@ -3292,7 +3292,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
           </div>
         )}
       </TooltipProvider>
-      {(layers.broadbandAccess || layers.cellularCoverage) && (
+      {(layers.broadbandAccess || layers.cellularCoverage) && !decisionAssistOpen && (
+        // Legend is hidden while the Decision Assist drawer is expanded so it
+        // does not visually float above the drawer body. It returns to its
+        // anchored bottom-left position as soon as the drawer collapses.
         <div className="absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2">
           {layers.broadbandAccess && (
             <div>
