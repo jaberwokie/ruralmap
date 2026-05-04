@@ -187,6 +187,16 @@ export default function AdminMappingBehavioralHealth() {
     validation_messages: r.validation_messages,
     cells: {
       name: r.name,
+      category: r.category_mapped
+        ? r.category_mapped
+        : (
+          <span className="inline-flex items-center gap-1">
+            <span className="text-muted-foreground">{r.category_raw ?? r.bh_service_type ?? '—'}</span>
+            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+              Needs mapping
+            </span>
+          </span>
+        ),
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       npi: r.npi ?? '—',
       org: r.organization_name ?? '—',
