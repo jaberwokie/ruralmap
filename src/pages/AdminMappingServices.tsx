@@ -271,7 +271,7 @@ export default function AdminMappingServices() {
     has_coords: r.latitude != null && r.longitude != null,
     cells: {
       name: r.name,
-      category: r.service_category ?? '—',
+      category: r.category_mapped ?? r.service_category ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
       verified: `${r.verification_status}${r.verification_confidence ? ` · ${r.verification_confidence}` : ''}`,
