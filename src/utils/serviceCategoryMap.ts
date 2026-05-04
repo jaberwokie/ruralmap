@@ -180,6 +180,8 @@ const PATTERNS: Array<{ pattern: string; category: ServiceCategory }> = [
   { category: 'Community Support',    pattern: 'navigator' },
   { category: 'Community Support',    pattern: 'peer support' },
   { category: 'Community Support',    pattern: 'outreach' },
+  { category: 'Community Support',    pattern: 'public library' },
+  { category: 'Community Support',    pattern: 'library' },
   { category: 'Community Support',    pattern: 'community' },
   { category: 'Community Support',    pattern: 'peer' },
 ];
