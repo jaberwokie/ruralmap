@@ -17,6 +17,7 @@ import { resolveHeaders } from './serviceHeaderResolver';
 import {
   normalizeTags, normalizeCategory, controlledAppend, isNoisePhrase,
 } from './serviceNormalize';
+import { autoMapCategory } from './serviceCategoryMap';
 
 export interface ParsedCsv {
   headers: string[];
