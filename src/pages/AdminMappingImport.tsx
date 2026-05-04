@@ -55,14 +55,12 @@ export default function AdminMappingImport() {
           title="Services"
           description="Community services and resources for the Services map layer."
           icon={<Database className="h-4 w-4" />}
-          status="pending"
         />
         <PickerCard
           to="/admin/mapping/behavioral-health"
           title="Behavioral Health"
           description="BH facilities and resources for the Behavioral Health map layer."
           icon={<Brain className="h-4 w-4" />}
-          status="pending"
         />
       </div>
 
