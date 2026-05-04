@@ -58,6 +58,11 @@ export interface StagingServiceRow {
   resource_class: string;
   mappable: boolean;
   match_conflict: boolean;
+  // Controlled category (additive). category_raw preserves the original
+  // CSV value for audit; category_mapped must be one of the controlled
+  // SERVICE_CATEGORIES values before a row may be promoted.
+  category_raw: string | null;
+  category_mapped: string | null;
   created_at: string;
   updated_at: string;
 }

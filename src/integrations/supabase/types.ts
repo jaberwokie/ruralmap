@@ -235,6 +235,8 @@ export type Database = {
           access_notes: string | null
           active_status: boolean
           appointment_required: boolean | null
+          category_mapped: string | null
+          category_raw: string | null
           city: string | null
           county: string | null
           created_at: string
@@ -281,6 +283,8 @@ export type Database = {
           access_notes?: string | null
           active_status?: boolean
           appointment_required?: boolean | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
@@ -327,6 +331,8 @@ export type Database = {
           access_notes?: string | null
           active_status?: boolean
           appointment_required?: boolean | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
@@ -568,6 +574,8 @@ export type Database = {
           access_notes: string | null
           active_status: boolean
           appointment_required: boolean | null
+          category_mapped: string | null
+          category_raw: string | null
           city: string | null
           county: string | null
           created_at: string
@@ -613,6 +621,8 @@ export type Database = {
           access_notes?: string | null
           active_status?: boolean
           appointment_required?: boolean | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string
@@ -658,6 +668,8 @@ export type Database = {
           access_notes?: string | null
           active_status?: boolean
           appointment_required?: boolean | null
+          category_mapped?: string | null
+          category_raw?: string | null
           city?: string | null
           county?: string | null
           created_at?: string

@@ -20,6 +20,7 @@ import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
 import { controlledAppend, normalizeTags } from './serviceNormalize';
+import { isServiceCategory } from './serviceCategoryMap';
 import {
   geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
   type GeocodeOutcome, type GeocodeRunSummary,
@@ -180,6 +181,9 @@ export const promoteStagingService = async (id: string): Promise<void> => {
   }).select('*').eq('id', id).single();
   if (e1 || !stg) throw new Error(e1?.message ?? 'Staging row not found');
   if (stg.validation_severity === 'error') throw new Error('Cannot promote a record with validation errors. Fix the source row and re-upload.');
+  if (!isServiceCategory(stg.category_mapped)) {
+    throw new Error('category_mapped required — set a controlled category before promotion.');
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   const {
@@ -223,8 +227,9 @@ export const promoteStagingServicesBulk = async (
       promoted += 1;
     } catch (e) {
       const msg = (e as Error)?.message ?? 'unknown';
-      if (/validation errors/i.test(msg)) {
+      if (/validation errors/i.test(msg) || /category_mapped/i.test(msg)) {
         skipped += 1;
+        failures.push({ id, reason: msg });
       } else {
         failed += 1;
         failures.push({ id, reason: msg });

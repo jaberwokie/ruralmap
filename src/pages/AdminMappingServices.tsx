@@ -28,6 +28,7 @@ import {
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
+import { SERVICE_CATEGORIES } from '@/utils/serviceCategoryMap';
 
 const SCHEMA_SECTIONS = [
   {
@@ -67,6 +68,7 @@ const VALIDATION_RULES = [
   'Latitude and longitude must be a valid pair (both or neither).',
   'Records without coordinates AND without a street address will not place on the map.',
   'Service category should match a known category — non-standard values are flagged as warnings.',
+  'category_mapped (controlled category) is required before a record can be promoted. Free-text categories are kept as category_raw and never written to verified records.',
   'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
   'ZIP must be 5 digits or ZIP+4.',
   'Records remain in staging until manually promoted by an admin.',
@@ -96,7 +98,8 @@ const VERIFIED_COLS: StagingTableColumn[] = [
 
 const EDITABLE_FIELDS: EditableField[] = [
   { key: 'name', label: 'Name' },
-  { key: 'service_category', label: 'Service category' },
+  { key: 'category_mapped', label: 'Category (controlled)', type: 'select', options: SERVICE_CATEGORIES },
+  { key: 'service_category', label: 'Category (raw / free-text)' },
   { key: 'organization_name', label: 'Organization' },
   { key: 'street_address', label: 'Street address' },
   { key: 'city', label: 'City' },
@@ -223,7 +226,16 @@ export default function AdminMappingServices() {
     geocode_confidence: tag?.confidence ?? null,
     cells: {
       name: r.name,
-      category: r.service_category ?? '—',
+      category: r.category_mapped
+        ? r.category_mapped
+        : (
+          <span className="inline-flex items-center gap-1">
+            <span className="text-muted-foreground">{r.category_raw ?? r.service_category ?? '—'}</span>
+            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+              Needs mapping
+            </span>
+          </span>
+        ),
       org: r.organization_name ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
@@ -259,7 +271,7 @@ export default function AdminMappingServices() {
     has_coords: r.latitude != null && r.longitude != null,
     cells: {
       name: r.name,
-      category: r.service_category ?? '—',
+      category: r.category_mapped ?? r.service_category ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
       verified: `${r.verification_status}${r.verification_confidence ? ` · ${r.verification_confidence}` : ''}`,
