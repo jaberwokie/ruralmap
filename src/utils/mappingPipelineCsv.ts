@@ -261,6 +261,8 @@ const csvToStagingServiceResolved = (
   return {
     name,
     service_category,
+    category_raw: rawCategory,
+    category_mapped: autoMapCategory(rawCategory ?? service_category),
     service_subcategory: nullable(readField(raw, primary, 'subcategory')),
     description,
     street_address,
