@@ -76,7 +76,8 @@ const DecisionAssistDrawer = ({
     : 'Tap to start';
 
   return (
-    <div className="absolute bottom-0 left-0 right-14 z-[640] pointer-events-none">
+    {/* right offset clears the 16rem (w-64) Details panel + its right-3 gutter. */}
+    <div className="absolute bottom-0 left-0 right-[17.5rem] z-[640] pointer-events-none">
       <div className="pointer-events-auto mx-2 mb-2 rounded-md border border-border bg-card shadow-lg overflow-hidden">
         {/* Header / collapsed tab */}
         <button
