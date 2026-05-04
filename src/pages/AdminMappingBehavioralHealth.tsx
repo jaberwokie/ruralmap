@@ -19,6 +19,7 @@ import {
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
+import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
 
 const SCHEMA_SECTIONS = [
   {
@@ -73,12 +74,14 @@ const VALIDATION_RULES = [
   'NPI, when provided, must be exactly 10 digits.',
   'Records without coordinates AND without a street address will not place on the map.',
   'BH entity type should match a known type — non-standard values are flagged as warnings.',
+  'category_mapped (controlled BH category) is required before a record can be promoted. Free-text categories are kept as category_raw and never written to verified records.',
   'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
   'Records remain in staging until manually promoted by an admin.',
 ];
 
 const STAGING_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
+  { key: 'category', label: 'Category' },
   { key: 'type', label: 'Type' },
   { key: 'npi', label: 'NPI' },
   { key: 'org', label: 'Organization' },
@@ -89,6 +92,7 @@ const STAGING_COLS: StagingTableColumn[] = [
 
 const VERIFIED_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
+  { key: 'category', label: 'Category' },
   { key: 'type', label: 'Type' },
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
@@ -98,6 +102,8 @@ const VERIFIED_COLS: StagingTableColumn[] = [
 
 const EDITABLE_FIELDS: EditableField[] = [
   { key: 'name', label: 'Name' },
+  { key: 'category_mapped', label: 'Category (controlled)', type: 'select', options: BH_CATEGORIES },
+  { key: 'category_raw', label: 'Category (raw / free-text)' },
   { key: 'bh_entity_type', label: 'BH entity type' },
   { key: 'bh_service_type', label: 'BH service type' },
   { key: 'npi', label: 'NPI' },
@@ -181,6 +187,16 @@ export default function AdminMappingBehavioralHealth() {
     validation_messages: r.validation_messages,
     cells: {
       name: r.name,
+      category: r.category_mapped
+        ? r.category_mapped
+        : (
+          <span className="inline-flex items-center gap-1">
+            <span className="text-muted-foreground">{r.category_raw ?? r.bh_service_type ?? '—'}</span>
+            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+              Needs mapping
+            </span>
+          </span>
+        ),
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       npi: r.npi ?? '—',
       org: r.organization_name ?? '—',
@@ -195,6 +211,7 @@ export default function AdminMappingBehavioralHealth() {
     active_status: r.active_status,
     cells: {
       name: r.name,
+      category: r.category_mapped ?? r.category_raw ?? '—',
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',

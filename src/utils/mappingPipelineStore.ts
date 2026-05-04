@@ -21,6 +21,7 @@ import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
 import { controlledAppend, normalizeTags } from './serviceNormalize';
 import { isServiceCategory } from './serviceCategoryMap';
+import { isBHCategory } from './bhCategoryMap';
 import {
   geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
   type GeocodeOutcome, type GeocodeRunSummary,
@@ -603,6 +604,9 @@ export const promoteStagingBh = async (id: string): Promise<void> => {
   }).select('*').eq('id', id).single();
   if (e1 || !stg) throw new Error(e1?.message ?? 'Staging row not found');
   if (stg.validation_severity === 'error') throw new Error('Cannot promote a record with validation errors. Fix the source row and re-upload.');
+  if (!isBHCategory(stg.category_mapped)) {
+    throw new Error('category_mapped required — set a controlled BH category before promotion.');
+  }
 
   const { data: { user } } = await supabase.auth.getUser();
   const { id: _id, review_status: _rs, validation_severity: _vs, validation_messages: _vm, created_at: _ca, updated_at: _ua, ...rest } = stg;
