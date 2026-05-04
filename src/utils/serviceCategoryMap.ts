@@ -100,7 +100,9 @@ const PATTERNS: Array<{ pattern: string; category: ServiceCategory }> = [
   { category: 'Employment',           pattern: 'career' },
   { category: 'Employment',           pattern: 'job' },
 
-  // Legal
+  // Legal (explicit phrases score highest; must outrank generic terms)
+  { category: 'Legal',                pattern: 'legal services' },
+  { category: 'Legal',                pattern: 'legal assistance' },
   { category: 'Legal',                pattern: 'legal aid' },
   { category: 'Legal',                pattern: 'legal' },
   { category: 'Legal',                pattern: 'attorney' },
