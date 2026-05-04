@@ -245,13 +245,9 @@ const Index = () => {
         <CoverageDetailPanel
           entity={activeEntity}
           onClear={() => {
-            if (selection.lockedEntity && member.memberLocation) {
-              selection.actions.clearSelection();
-              return;
-            }
-            if (member.memberLocation) {
-              member.clearMember();
-            }
+            // Closing a detail panel never clears the member pin. The pin is
+            // only removed by the address search bar's clear ("X") or by
+            // entering a new address.
             selection.actions.clearSelection();
           }}
           coverageRadiusKm={layers.coverageRadiusKm}
