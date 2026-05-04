@@ -226,7 +226,16 @@ export default function AdminMappingServices() {
     geocode_confidence: tag?.confidence ?? null,
     cells: {
       name: r.name,
-      category: r.service_category ?? '—',
+      category: r.category_mapped
+        ? r.category_mapped
+        : (
+          <span className="inline-flex items-center gap-1">
+            <span className="text-muted-foreground">{r.category_raw ?? r.service_category ?? '—'}</span>
+            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+              Needs mapping
+            </span>
+          </span>
+        ),
       org: r.organization_name ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
