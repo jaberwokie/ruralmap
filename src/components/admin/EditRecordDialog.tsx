@@ -119,6 +119,18 @@ export default function EditRecordDialog({
                   placeholder={f.placeholder}
                   className="text-[12px] min-h-[60px]"
                 />
+              ) : f.type === 'select' ? (
+                <select
+                  id={`edit-${f.key}`}
+                  value={draft[f.key] ?? ''}
+                  onChange={(e) => setDraft((d) => ({ ...d, [f.key]: e.target.value }))}
+                  className="h-8 w-full rounded border border-input bg-background px-2 text-[12px]"
+                >
+                  <option value="">(unset)</option>
+                  {(f.options ?? []).map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
               ) : (
                 <Input
                   id={`edit-${f.key}`}
