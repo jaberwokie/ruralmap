@@ -156,14 +156,14 @@ const PATTERNS: Array<{ pattern: string; category: ServiceCategory }> = [
   { category: 'Utilities',            pattern: 'utilities' },
   { category: 'Utilities',            pattern: 'utility' },
 
-  // Transportation
+  // Transportation (precise phrases only — avoid generic "transport"/"bus"/"transit" substring drift)
   { category: 'Transportation',       pattern: 'medical transportation' },
+  { category: 'Transportation',       pattern: 'medical transport' },
   { category: 'Transportation',       pattern: 'non-emergency transport' },
+  { category: 'Transportation',       pattern: 'public transit' },
+  { category: 'Transportation',       pattern: 'bus service' },
   { category: 'Transportation',       pattern: 'transportation' },
-  { category: 'Transportation',       pattern: 'transit' },
   { category: 'Transportation',       pattern: 'rideshare' },
-  { category: 'Transportation',       pattern: 'mobility' },
-  { category: 'Transportation',       pattern: 'bus' },
 
   // Financial Assistance (generic last; specific assistance categories above already won)
   { category: 'Financial Assistance', pattern: 'financial assistance' },
