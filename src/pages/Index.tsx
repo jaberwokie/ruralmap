@@ -281,6 +281,7 @@ const Index = () => {
           services={mergedRuralServices}
           onFacilitySelect={onFacility}
           isPresenting={presentation.isPresenting}
+          onOpenChange={setDecisionAssistOpen}
         />
         <PresentationOverlay
           isPresenting={presentation.isPresenting}
