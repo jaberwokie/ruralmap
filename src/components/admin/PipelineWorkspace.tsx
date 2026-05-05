@@ -124,7 +124,7 @@ interface PipelineWorkspaceProps {
 
 export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const {
-    title, purpose, status, schemaSections, validationRules, template,
+    title, purpose, status, pipelineKey, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
     loading, uploading, onUpload, onPromote, onPromoteBulk, onGeocodeBulk,
     onReject, onDeactivate, onRefresh, onEditStaging, onEditVerified,
