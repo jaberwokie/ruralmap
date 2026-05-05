@@ -128,6 +128,10 @@ export interface StagingBhRow {
   // BH_CATEGORIES values before a row may be promoted.
   category_raw: string | null;
   category_mapped: string | null;
+  // Optional BH access tags (telehealth, fqhc, rural_health_clinic,
+  // critical_access_hospital). Comma-separated, normalized via
+  // utils/bhAccessTags. Additive — does not affect category gating.
+  service_tags: string | null;
   created_at: string;
   updated_at: string;
 }
