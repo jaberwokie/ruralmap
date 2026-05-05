@@ -84,6 +84,7 @@ const VALIDATION_RULES = [
 const STAGING_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
   { key: 'category', label: 'Category' },
+  { key: 'tags', label: 'Access tags' },
   { key: 'type', label: 'Type' },
   { key: 'npi', label: 'NPI' },
   { key: 'org', label: 'Organization' },
@@ -95,12 +96,27 @@ const STAGING_COLS: StagingTableColumn[] = [
 const VERIFIED_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
   { key: 'category', label: 'Category' },
+  { key: 'tags', label: 'Access tags' },
   { key: 'type', label: 'Type' },
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
   { key: 'verified', label: 'Verification' },
   { key: 'promoted', label: 'Promoted' },
 ];
+
+const renderTagBadges = (raw: string | null | undefined) => {
+  const tags = parseBhAccessTags(raw);
+  if (tags.length === 0) return <span className="text-muted-foreground">—</span>;
+  return (
+    <span className="inline-flex flex-wrap gap-1">
+      {tags.map((t: BhAccessTag) => (
+        <Badge key={t} variant="outline" className="px-1.5 py-0 text-[10px] font-medium">
+          {BH_ACCESS_TAG_LABELS[t]}
+        </Badge>
+      ))}
+    </span>
+  );
+};
 
 const EDITABLE_FIELDS: EditableField[] = [
   { key: 'name', label: 'Name' },
