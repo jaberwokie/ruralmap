@@ -232,6 +232,7 @@ export default function AdminMappingBehavioralHealth() {
     cells: {
       name: r.name,
       category: r.category_mapped ?? r.category_raw ?? '—',
+      tags: renderTagBadges(r.service_tags),
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
