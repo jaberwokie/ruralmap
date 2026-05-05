@@ -124,7 +124,9 @@ export const validateBhRow = (row: Partial<StagingBhRow>): ValidationMessage[] =
   if (hasLng && !isFiniteLng(row.longitude ?? null)) {
     out.push({ field: 'longitude', severity: 'error', message: 'Longitude must be between -180 and 180.' });
   }
-  if (!hasLat && !hasLng && !row.street_address) {
+  const isTelehealthTagged = typeof row.service_tags === 'string'
+    && /\btelehealth\b/i.test(row.service_tags);
+  if (!hasLat && !hasLng && !row.street_address && !isTelehealthTagged) {
     out.push({
       field: 'address',
       severity: 'warning',
