@@ -107,6 +107,7 @@ export type Database = {
           referral_required: boolean | null
           residential_capable: boolean | null
           review_status: string
+          service_tags: string | null
           source_file_name: string | null
           source_row_number: number | null
           specialties: string | null
@@ -162,6 +163,7 @@ export type Database = {
           referral_required?: boolean | null
           residential_capable?: boolean | null
           review_status?: string
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           specialties?: string | null
@@ -217,6 +219,7 @@ export type Database = {
           referral_required?: boolean | null
           residential_capable?: boolean | null
           review_status?: string
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           specialties?: string | null
@@ -453,6 +456,7 @@ export type Database = {
           promoted_by: string | null
           referral_required: boolean | null
           residential_capable: boolean | null
+          service_tags: string | null
           source_file_name: string | null
           source_row_number: number | null
           specialties: string | null
@@ -508,6 +512,7 @@ export type Database = {
           promoted_by?: string | null
           referral_required?: boolean | null
           residential_capable?: boolean | null
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           specialties?: string | null
@@ -563,6 +568,7 @@ export type Database = {
           promoted_by?: string | null
           referral_required?: boolean | null
           residential_capable?: boolean | null
+          service_tags?: string | null
           source_file_name?: string | null
           source_row_number?: number | null
           specialties?: string | null
