@@ -16,6 +16,7 @@ import type {
   AuditLogRow, AuditAction, PipelineKey, ValidationMessage,
 } from '@/types/mappingPipeline';
 import { summarizeSeverity, validateServiceRow, validateBhRow } from './mappingPipelineValidation';
+import { getBhSourceTrust, applyTrustToBhMessages } from './bhSourceTrust';
 import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
@@ -545,7 +546,9 @@ export const insertStagingBh = async (
   let errors = 0;
   let warnings = 0;
   const prepared = rows.map((r) => {
-    const messages = validateBhRow(r);
+    const trust = getBhSourceTrust(r);
+    const rawMessages = validateBhRow(r);
+    const messages = applyTrustToBhMessages(rawMessages, trust);
     const sev = summarizeSeverity(messages);
     if (sev === 'error') errors++;
     else if (sev === 'warning') warnings++;
