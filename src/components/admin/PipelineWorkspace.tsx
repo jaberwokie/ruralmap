@@ -60,11 +60,15 @@ export interface StagingTableColumn {
   key: string;
   label: string;
   className?: string;
+  /** When true, header becomes clickable and rows sort using `sortValues[key]`. */
+  sortable?: boolean;
 }
 
 export interface StagingTableRow {
   id: string;
   cells: Record<string, ReactNode>;
+  /** Optional numeric/string values used for sorting when a column is sortable. */
+  sortValues?: Record<string, number | string>;
   validation_severity: ValidationSeverity | null;
   review_status: ReviewStatus;
   validation_messages: { message: string; severity: ValidationSeverity }[];
