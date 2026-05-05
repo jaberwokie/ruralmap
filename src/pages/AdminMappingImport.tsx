@@ -47,18 +47,21 @@ export default function AdminMappingImport() {
           title="Provider Locations"
           description="Verified provider/facility service locations using verified_* schema."
           icon={<MapPin className="h-4 w-4" />}
+          pipelineKey="provider_mapping"
         />
         <PickerCard
           to="/admin/mapping/services"
           title="Services"
           description="Community services and resources for the Services map layer."
           icon={<Database className="h-4 w-4" />}
+          pipelineKey="services"
         />
         <PickerCard
           to="/admin/mapping/behavioral-health"
           title="Behavioral Health"
           description="BH facilities and resources for the Behavioral Health map layer."
           icon={<Brain className="h-4 w-4" />}
+          pipelineKey="behavioral_health"
         />
       </div>
 
