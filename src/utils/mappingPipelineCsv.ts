@@ -20,6 +20,7 @@ import {
 import { autoMapCategory } from './serviceCategoryMap';
 import { autoMapBHCategory } from './bhCategoryMap';
 import { normalizeBhAccessTags } from './bhAccessTags';
+import { normalizeZip } from './zipNormalize';
 
 export interface ParsedCsv {
   headers: string[];
@@ -328,7 +329,7 @@ export const csvToStagingBh = (
     street_address: nullable(raw.street_address ?? raw.address),
     city: nullable(raw.city),
     state: nullable(raw.state),
-    zip: nullable(raw.zip),
+    zip: normalizeZip(raw.zip),
     county: nullable(raw.county),
     latitude: toNum(raw.latitude ?? raw.lat),
     longitude: toNum(raw.longitude ?? raw.lng ?? raw.lon),
