@@ -135,6 +135,7 @@ const EDITABLE_FIELDS: EditableField[] = [
   { key: 'longitude', label: 'Longitude', type: 'number' },
   { key: 'phone', label: 'Phone' },
   { key: 'website', label: 'Website' },
+  { key: 'service_tags', label: 'Access tags (comma-separated: telehealth, fqhc, rural_health_clinic, critical_access_hospital)', type: 'textarea' },
   { key: 'access_notes', label: 'Access notes', type: 'textarea' },
 ];
 
