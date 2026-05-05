@@ -122,13 +122,14 @@ export default function AdminMapping() {
           title="Provider Mapping"
           description="Upload verified provider/facility locations using the verified_* schema."
           icon={<MapPin className="h-4 w-4" />}
-          status="active"
+          pipelineKey="provider_mapping"
         />
         <ToolCard
           to="/admin/mapping/provider-metadata"
           title="Provider Metadata Enrichment"
           description="Attach imported/unverified metadata (phone, NPI, etc.) to existing providers. Never creates pins."
           icon={<Tag className="h-4 w-4" />}
+          pipelineKey="provider_metadata"
           footer={formatRelative(enrichmentActivity)}
         />
         <ToolCard
@@ -136,20 +137,21 @@ export default function AdminMapping() {
           title="Service Mapping"
           description="Community service and resource locations for the Services map layer."
           icon={<Database className="h-4 w-4" />}
-          status="active"
+          pipelineKey="services"
         />
         <ToolCard
           to="/admin/mapping/behavioral-health"
           title="Behavioral Health Mapping"
           description="BH locations and resources for the Behavioral Health map layer."
           icon={<Brain className="h-4 w-4" />}
-          status="active"
+          pipelineKey="behavioral_health"
         />
         <ToolCard
           to="/admin/mapping/verification-queue"
           title="Verification Priority Queue"
           description="Outreach workflow, apply verification, and queue triage."
           icon={<ListChecks className="h-4 w-4" />}
+          pipelineKey="verification_queue"
           footer={formatRelative(verificationActivity)}
         />
         <ToolCard
@@ -157,12 +159,14 @@ export default function AdminMapping() {
           title="Verification Audit History"
           description="Full history of verification actions and entity changes."
           icon={<History className="h-4 w-4" />}
+          pipelineKey="audit_history"
         />
         <ToolCard
           to="/admin/mapping/import"
           title="Data Import"
           description="Unified ingestion intake — pick a type, see its schema, then upload."
           icon={<Upload className="h-4 w-4" />}
+          pipelineKey="data_import"
         />
       </div>
     </AdminMappingLayout>
