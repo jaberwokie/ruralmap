@@ -19,6 +19,7 @@ import {
 } from './serviceNormalize';
 import { autoMapCategory } from './serviceCategoryMap';
 import { autoMapBHCategory } from './bhCategoryMap';
+import { normalizeBhAccessTags } from './bhAccessTags';
 
 export interface ParsedCsv {
   headers: string[];
