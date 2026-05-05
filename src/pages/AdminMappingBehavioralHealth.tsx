@@ -15,9 +15,10 @@ import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingBh, listStagingBh, listVerifiedBh, listAudit,
   promoteStagingBh, rejectStagingBh, deactivateVerifiedBh,
-  editBhRecord,
+  editBhRecord, geocodeStagingBhBulk,
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
+import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
 import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
 import { BH_ACCESS_TAG_LABELS, parseBhAccessTags, normalizeBhAccessTags, type BhAccessTag } from '@/utils/bhAccessTags';
@@ -199,36 +200,49 @@ export default function AdminMappingBehavioralHealth() {
     }
   };
 
-  const stagingRows = useMemo(() => staging.map((r) => ({
-    id: r.id,
-    review_status: r.review_status,
-    validation_severity: r.validation_severity,
-    validation_messages: r.validation_messages,
-    cells: {
-      name: r.name,
-      category: r.category_mapped
-        ? r.category_mapped
-        : (
-          <span className="inline-flex items-center gap-1">
-            <span className="text-muted-foreground">{r.category_raw ?? r.bh_service_type ?? '—'}</span>
-            <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
-              Needs mapping
+  const stagingRows = useMemo(() => staging.map((r) => {
+    const tag = parseGeocodeTag(r.access_notes);
+    const failed = isGeocodeFailed(r.access_notes);
+    const tags = parseBhAccessTags(r.service_tags);
+    const telehealthOnly =
+      (tags.includes('telehealth') || r.telehealth_available === true) &&
+      (!r.street_address || r.street_address.trim() === '');
+    return {
+      id: r.id,
+      review_status: r.review_status,
+      validation_severity: r.validation_severity,
+      validation_messages: r.validation_messages,
+      mappable: !telehealthOnly,
+      has_coords: r.latitude != null && r.longitude != null,
+      geocode_status: (tag ? 'geocoded' : failed ? 'failed' : null) as 'geocoded' | 'failed' | null,
+      geocode_confidence: tag?.confidence ?? null,
+      cells: {
+        name: r.name,
+        category: r.category_mapped
+          ? r.category_mapped
+          : (
+            <span className="inline-flex items-center gap-1">
+              <span className="text-muted-foreground">{r.category_raw ?? r.bh_service_type ?? '—'}</span>
+              <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+                Needs mapping
+              </span>
             </span>
-          </span>
-        ),
-      tags: renderTagBadges(r.service_tags),
-      type: r.bh_entity_type ?? r.bh_service_type ?? '—',
-      npi: r.npi ?? '—',
-      org: r.organization_name ?? '—',
-      city: r.city ?? '—',
-      county: r.county ?? '—',
-      caps: formatCaps(r),
-    },
-  })), [staging]);
+          ),
+        tags: renderTagBadges(r.service_tags),
+        type: r.bh_entity_type ?? r.bh_service_type ?? '—',
+        npi: r.npi ?? '—',
+        org: r.organization_name ?? '—',
+        city: r.city ?? '—',
+        county: r.county ?? '—',
+        caps: formatCaps(r),
+      },
+    };
+  }), [staging]);
 
   const verifiedRows = useMemo(() => verified.map((r) => ({
     id: r.id,
     active_status: r.active_status,
+    has_coords: r.latitude != null && r.longitude != null,
     cells: {
       name: r.name,
       category: r.category_mapped ?? r.category_raw ?? '—',
@@ -262,6 +276,19 @@ export default function AdminMappingBehavioralHealth() {
         uploading={uploading}
         onUpload={handleUpload}
         onPromote={async (id) => { await promoteStagingBh(id); toast.success('Promoted to verified.'); await refresh(); }}
+        onGeocodeBulk={async (ids) => {
+          const res = await geocodeStagingBhBulk(ids);
+          const parts = [
+            `${res.geocoded} geocoded`,
+            `${res.failed} failed`,
+            `${res.skipped} skipped`,
+          ];
+          if (res.geocoded > 0) {
+            parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
+          }
+          toast.success(`Geocode: ${parts.join(', ')}`);
+          await refresh();
+        }}
         onReject={async (id) => { await rejectStagingBh(id); toast.success('Rejected.'); await refresh(); }}
         onDeactivate={async (id) => { await deactivateVerifiedBh(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
         onRefresh={() => void refresh()}
