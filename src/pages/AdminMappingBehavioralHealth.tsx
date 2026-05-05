@@ -15,9 +15,10 @@ import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingBh, listStagingBh, listVerifiedBh, listAudit,
   promoteStagingBh, rejectStagingBh, deactivateVerifiedBh,
-  editBhRecord,
+  editBhRecord, geocodeStagingBhBulk,
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
+import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
 import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
 import { BH_ACCESS_TAG_LABELS, parseBhAccessTags, normalizeBhAccessTags, type BhAccessTag } from '@/utils/bhAccessTags';
