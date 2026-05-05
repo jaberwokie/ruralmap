@@ -216,6 +216,7 @@ export default function AdminMappingBehavioralHealth() {
             </span>
           </span>
         ),
+      tags: renderTagBadges(r.service_tags),
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       npi: r.npi ?? '—',
       org: r.organization_name ?? '—',
