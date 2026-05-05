@@ -23,6 +23,7 @@ import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPi
 import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
 import { BH_ACCESS_TAG_LABELS, parseBhAccessTags, normalizeBhAccessTags, type BhAccessTag } from '@/utils/bhAccessTags';
 import { getBhSourceTrust } from '@/utils/bhSourceTrust';
+import { normalizeZip } from '@/utils/zipNormalize';
 import { computeBhSiteDensity, siteDensityTier } from '@/utils/bhSiteDensity';
 import { Badge } from '@/components/ui/badge';
 
