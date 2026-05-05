@@ -19,6 +19,7 @@ import {
 } from './serviceNormalize';
 import { autoMapCategory } from './serviceCategoryMap';
 import { autoMapBHCategory } from './bhCategoryMap';
+import { normalizeBhAccessTags } from './bhAccessTags';
 
 export interface ParsedCsv {
   headers: string[];
@@ -353,6 +354,9 @@ export const csvToStagingBh = (
     verification_source: nullable(raw.verification_source ?? raw.source),
     category_raw,
     category_mapped: autoMapBHCategory(category_raw),
+    service_tags: normalizeBhAccessTags(
+      raw.service_tags ?? raw.tags ?? raw.access_tags ?? raw.bh_tags,
+    ),
     source_file_name: meta.source_file_name,
     source_row_number: meta.source_row_number,
     import_batch_id: meta.import_batch_id,

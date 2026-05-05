@@ -20,6 +20,8 @@ import {
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
 import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
+import { BH_ACCESS_TAG_LABELS, parseBhAccessTags, normalizeBhAccessTags, type BhAccessTag } from '@/utils/bhAccessTags';
+import { Badge } from '@/components/ui/badge';
 
 const SCHEMA_SECTIONS = [
   {
@@ -82,6 +84,7 @@ const VALIDATION_RULES = [
 const STAGING_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
   { key: 'category', label: 'Category' },
+  { key: 'tags', label: 'Access tags' },
   { key: 'type', label: 'Type' },
   { key: 'npi', label: 'NPI' },
   { key: 'org', label: 'Organization' },
@@ -93,12 +96,27 @@ const STAGING_COLS: StagingTableColumn[] = [
 const VERIFIED_COLS: StagingTableColumn[] = [
   { key: 'name', label: 'Name' },
   { key: 'category', label: 'Category' },
+  { key: 'tags', label: 'Access tags' },
   { key: 'type', label: 'Type' },
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
   { key: 'verified', label: 'Verification' },
   { key: 'promoted', label: 'Promoted' },
 ];
+
+const renderTagBadges = (raw: string | null | undefined) => {
+  const tags = parseBhAccessTags(raw);
+  if (tags.length === 0) return <span className="text-muted-foreground">—</span>;
+  return (
+    <span className="inline-flex flex-wrap gap-1">
+      {tags.map((t: BhAccessTag) => (
+        <Badge key={t} variant="outline" className="px-1.5 py-0 text-[10px] font-medium">
+          {BH_ACCESS_TAG_LABELS[t]}
+        </Badge>
+      ))}
+    </span>
+  );
+};
 
 const EDITABLE_FIELDS: EditableField[] = [
   { key: 'name', label: 'Name' },
@@ -117,6 +135,7 @@ const EDITABLE_FIELDS: EditableField[] = [
   { key: 'longitude', label: 'Longitude', type: 'number' },
   { key: 'phone', label: 'Phone' },
   { key: 'website', label: 'Website' },
+  { key: 'service_tags', label: 'Access tags (comma-separated: telehealth, fqhc, rural_health_clinic, critical_access_hospital)', type: 'textarea' },
   { key: 'access_notes', label: 'Access notes', type: 'textarea' },
 ];
 
@@ -197,6 +216,7 @@ export default function AdminMappingBehavioralHealth() {
             </span>
           </span>
         ),
+      tags: renderTagBadges(r.service_tags),
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       npi: r.npi ?? '—',
       org: r.organization_name ?? '—',
@@ -212,6 +232,7 @@ export default function AdminMappingBehavioralHealth() {
     cells: {
       name: r.name,
       category: r.category_mapped ?? r.category_raw ?? '—',
+      tags: renderTagBadges(r.service_tags),
       type: r.bh_entity_type ?? r.bh_service_type ?? '—',
       city: r.city ?? '—',
       county: r.county ?? '—',
@@ -262,7 +283,11 @@ export default function AdminMappingBehavioralHealth() {
         initial={(editTarget?.row ?? {}) as unknown as Record<string, unknown>}
         onSave={async (changes) => {
           if (!editTarget) return;
-          await editBhRecord(editTarget.scope, editTarget.row.id, changes);
+          const next = { ...changes };
+          if ('service_tags' in next) {
+            next.service_tags = normalizeBhAccessTags(next.service_tags as string | null);
+          }
+          await editBhRecord(editTarget.scope, editTarget.row.id, next);
           toast.success('Edit saved.');
           await refresh();
         }}
