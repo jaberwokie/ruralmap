@@ -520,9 +520,28 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                   </th>
                 ) : null}
                 <th className="text-left px-2 py-1.5 whitespace-nowrap">Status</th>
-                {stagingColumns.map((c) => (
-                  <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
-                ))}
+                {stagingColumns.map((c) => {
+                  if (!c.sortable) {
+                    return <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>;
+                  }
+                  const isActive = sort?.key === c.key;
+                  const arrow = isActive ? (sort?.dir === 'asc' ? '↑' : '↓') : '↕';
+                  return (
+                    <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>
+                      <button
+                        type="button"
+                        onClick={() => setSort((prev) => {
+                          if (!prev || prev.key !== c.key) return { key: c.key, dir: 'desc' };
+                          if (prev.dir === 'desc') return { key: c.key, dir: 'asc' };
+                          return null;
+                        })}
+                        className={cn('inline-flex items-center gap-1 hover:text-foreground', isActive && 'text-foreground')}
+                      >
+                        {c.label}<span className="text-[9px] opacity-60">{arrow}</span>
+                      </button>
+                    </th>
+                  );
+                })}
                 <th className="text-right px-2 py-1.5 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
