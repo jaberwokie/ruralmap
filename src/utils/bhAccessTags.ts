@@ -17,6 +17,7 @@ export const BH_ACCESS_TAGS = [
   'fqhc',
   'rural_health_clinic',
   'critical_access_hospital',
+  'ccbhc',
 ] as const;
 
 export type BhAccessTag = (typeof BH_ACCESS_TAGS)[number];
