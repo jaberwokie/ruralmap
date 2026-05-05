@@ -16,6 +16,7 @@ import type {
   AuditLogRow, AuditAction, PipelineKey, ValidationMessage,
 } from '@/types/mappingPipeline';
 import { summarizeSeverity, validateServiceRow, validateBhRow } from './mappingPipelineValidation';
+import { getBhSourceTrust, applyTrustToBhMessages } from './bhSourceTrust';
 import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
 import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
