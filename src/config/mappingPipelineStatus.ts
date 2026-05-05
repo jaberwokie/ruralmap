@@ -46,9 +46,8 @@ export const MAPPING_PIPELINE_STATUS: Record<MappingPipelineKey, MappingPipeline
     label: 'ACTIVE',
   },
   behavioral_health: {
-    status: 'active_limited',
+    status: 'active',
     label: 'ACTIVE',
-    note: 'Geocoding pending.',
   },
   verification_queue: {
     status: 'active',
