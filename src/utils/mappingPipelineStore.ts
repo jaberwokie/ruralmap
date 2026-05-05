@@ -675,3 +675,99 @@ export const editBhRecord = async (
   });
   if (scope === 'verified_bh') notifyVerifiedRecordsChanged();
 };
+
+/**
+ * Bulk-geocode STAGING behavioral health rows. Mirrors the Services
+ * geocoding workflow exactly: Nominatim primary + city/county fallback,
+ * 1.1s throttle, structured `[geocode:...]` tag stamped into access_notes,
+ * one audit row per outcome, no broadcast (staging-only edits).
+ *
+ * Eligibility:
+ *  - Skip rows with no street address (non-mappable for our purposes).
+ *  - Skip rows already carrying coords.
+ *  - Skip telehealth-tagged rows that have no street address — they stay
+ *    list-only by design.
+ *  - Operates on `staging_bh` only — verified rows are never touched.
+ */
+export const geocodeStagingBhBulk = async (
+  ids: string[],
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
+): Promise<GeocodeRunSummary> => {
+  const stagingAll = await listStagingBh();
+  const stgById = new Map(stagingAll.map((r) => [r.id, r] as const));
+
+  const targets: StagingBhRow[] = ids
+    .map((id) => stgById.get(id))
+    .filter((r): r is StagingBhRow => !!r);
+
+  // Adapt BH rows into the geocoder's candidate shape. BH has no
+  // `mappable` column — derive: row is mappable unless it is a
+  // telehealth-only record without a street address.
+  const candidates: GeocodeCandidate[] = targets.map((r) => {
+    const tags = parseBhAccessTags(r.service_tags);
+    const telehealthOnly =
+      (tags.includes('telehealth') || r.telehealth_available === true) &&
+      (!r.street_address || r.street_address.trim() === '');
+    const mappable = !telehealthOnly;
+    return {
+      id: r.id,
+      mappable,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      street_address: r.street_address,
+      city: r.city,
+      state: r.state,
+      zip: r.zip,
+      county: r.county,
+      access_notes: r.access_notes,
+    };
+  });
+
+  const outcomes = await geocodeMany(candidates, options?.onProgress);
+
+  for (let i = 0; i < outcomes.length; i++) {
+    const oc = outcomes[i];
+    const row = targets[i];
+    if (!row) continue;
+
+    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
+      const publicConfidence: 'high' | 'low' =
+        oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      await editBhRecord('staging_bh', row.id, {
+        latitude: oc.latitude,
+        longitude: oc.longitude,
+        access_notes: stampedNotes,
+      } as Partial<StagingBhRow>);
+      await writeAudit({
+        pipeline: 'behavioral_health',
+        action: 'record_edited',
+        target_table: 'staging_bh',
+        target_row_id: row.id,
+        details: {
+          geocode: true,
+          strategy: oc.strategy,
+          confidence: publicConfidence,
+          latitude: oc.latitude,
+          longitude: oc.longitude,
+        },
+      });
+    } else if (oc.status === 'failed') {
+      const stampedNotes = stampGeocodeFailure(row.access_notes);
+      await editBhRecord('staging_bh', row.id, {
+        access_notes: stampedNotes,
+      } as Partial<StagingBhRow>);
+      await writeAudit({
+        pipeline: 'behavioral_health',
+        action: 'record_edited',
+        target_table: 'staging_bh',
+        target_row_id: row.id,
+        details: { geocode: true, status: 'none', reason: oc.reason },
+      });
+    }
+  }
+
+  return summarizeGeocodeRun(outcomes);
+};
