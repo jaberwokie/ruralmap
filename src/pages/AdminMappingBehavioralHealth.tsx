@@ -263,7 +263,8 @@ export default function AdminMappingBehavioralHealth() {
       <PipelineWorkspace
         title="Behavioral health pipeline"
         purpose="Therapists, psychiatrists, BH clinics, IOP/PHP, crisis stabilization, mobile crisis, detox, residential, SUD, MAT-capable locations. Marked Draft until admin sign-off — functionality is complete."
-        status="draft"
+        status="active"
+        pipelineKey="behavioral_health"
         schemaSections={SCHEMA_SECTIONS}
         validationRules={VALIDATION_RULES}
         template={BEHAVIORAL_HEALTH_TEMPLATE}

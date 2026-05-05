@@ -9,16 +9,18 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, MapPin, Database, Brain } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
+import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
+import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
 
 interface PickerCardProps {
   to: string;
   title: string;
   description: string;
   icon: React.ReactNode;
-  status?: 'active' | 'pending';
+  pipelineKey: MappingPipelineKey;
 }
 
-const PickerCard = ({ to, title, description, icon, status = 'active' }: PickerCardProps) => (
+const PickerCard = ({ to, title, description, icon, pipelineKey }: PickerCardProps) => (
   <Link
     to={to}
     className="group flex flex-col gap-2 rounded border border-border bg-card p-4 transition-colors hover:border-[hsl(var(--brand-health)/0.5)]"
@@ -26,11 +28,7 @@ const PickerCard = ({ to, title, description, icon, status = 'active' }: PickerC
     <div className="flex items-center gap-2 text-muted-foreground group-hover:text-[hsl(var(--brand-health))]">
       {icon}
       <span className="font-medium text-sm text-foreground">{title}</span>
-      {status === 'pending' ? (
-        <span className="rounded border border-[hsl(var(--brand-health)/0.4)] bg-[hsl(var(--brand-health)/0.06)] px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-[hsl(var(--brand-health))]">
-          Pipeline pending
-        </span>
-      ) : null}
+      <MappingStatusChip pipeline={pipelineKey} compact />
       <ArrowRight className="ml-auto h-3.5 w-3.5 opacity-0 -translate-x-1 transition-all group-hover:opacity-100 group-hover:translate-x-0" />
     </div>
     <p className="text-xs text-muted-foreground">{description}</p>
@@ -49,18 +47,21 @@ export default function AdminMappingImport() {
           title="Provider Locations"
           description="Verified provider/facility service locations using verified_* schema."
           icon={<MapPin className="h-4 w-4" />}
+          pipelineKey="provider_mapping"
         />
         <PickerCard
           to="/admin/mapping/services"
           title="Services"
           description="Community services and resources for the Services map layer."
           icon={<Database className="h-4 w-4" />}
+          pipelineKey="services"
         />
         <PickerCard
           to="/admin/mapping/behavioral-health"
           title="Behavioral Health"
           description="BH facilities and resources for the Behavioral Health map layer."
           icon={<Brain className="h-4 w-4" />}
+          pipelineKey="behavioral_health"
         />
       </div>
 

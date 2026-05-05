@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
 import type { ValidationSeverity, ReviewStatus, AuditLogRow } from '@/types/mappingPipeline';
 import { cn } from '@/lib/utils';
+import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
+import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
 
 export type PipelineStatus = 'active' | 'draft' | 'admin_only' | 'not_configured';
 
@@ -86,6 +88,11 @@ interface PipelineWorkspaceProps {
   title: string;
   purpose: string;
   status: PipelineStatus;
+  /**
+   * When provided, the header chip is read from the centralized
+   * `mappingPipelineStatus` config and `status` is ignored for the chip.
+   */
+  pipelineKey?: MappingPipelineKey;
 
   schemaSections: { heading: string; fields: SchemaField[] }[];
   validationRules: string[];
@@ -117,7 +124,7 @@ interface PipelineWorkspaceProps {
 
 export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const {
-    title, purpose, status, schemaSections, validationRules, template,
+    title, purpose, status, pipelineKey, schemaSections, validationRules, template,
     stagingColumns, stagingRows, verifiedColumns, verifiedRows, auditEntries,
     loading, uploading, onUpload, onPromote, onPromoteBulk, onGeocodeBulk,
     onReject, onDeactivate, onRefresh, onEditStaging, onEditVerified,
@@ -226,7 +233,11 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold" style={{ color: '#064f88' }}>{title}</h2>
-              <PipelineStatusChip status={status} />
+              {pipelineKey ? (
+                <MappingStatusChip pipeline={pipelineKey} compact showNote />
+              ) : (
+                <PipelineStatusChip status={status} />
+              )}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{purpose}</p>
           </div>

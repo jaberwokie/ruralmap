@@ -9,24 +9,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
+import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
+import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
 import { getEnrichmentAudit, subscribeToEnrichment, getEnrichmentRecords } from '@/utils/providerEnrichmentStore';
 import { getAuditLog } from '@/utils/verificationAuditLog';
-
-type CardStatus = 'active' | 'draft' | 'admin_only' | 'not_configured';
-
-const STATUS_LABEL: Record<CardStatus, string> = {
-  active: 'Active',
-  draft: 'Draft',
-  admin_only: 'Admin Only',
-  not_configured: 'Not Configured',
-};
-
-const STATUS_CLASS: Record<CardStatus, string> = {
-  active: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700',
-  draft: 'border-amber-500/50 bg-amber-500/10 text-amber-700',
-  admin_only: 'border-sky-500/50 bg-sky-500/10 text-sky-700',
-  not_configured: 'border-muted-foreground/40 bg-muted/40 text-muted-foreground',
-};
 
 function formatRelative(iso: string | null | undefined): string {
   if (!iso) return 'No recent activity';
@@ -50,22 +36,18 @@ interface ToolCardProps {
   title: string;
   description: string;
   icon: React.ReactNode;
-  status?: CardStatus;
+  pipelineKey: MappingPipelineKey;
   footer?: string;
 }
 
-const ToolCard = ({ to, title, description, icon, status, footer }: ToolCardProps) => (
+const ToolCard = ({ to, title, description, icon, pipelineKey, footer }: ToolCardProps) => (
   <Link
     to={to}
     className="group relative flex items-start gap-3 rounded border border-border bg-card p-4 pr-24 transition-colors hover:border-[hsl(var(--brand-health)/0.5)]"
   >
-    {status ? (
-      <span
-        className={`absolute top-3 right-3 rounded border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${STATUS_CLASS[status]}`}
-      >
-        {STATUS_LABEL[status]}
-      </span>
-    ) : null}
+    <span className="absolute top-3 right-3">
+      <MappingStatusChip pipeline={pipelineKey} compact />
+    </span>
     <div className="mt-0.5 text-muted-foreground group-hover:text-[hsl(var(--brand-health))]">{icon}</div>
     <div className="flex-1 min-w-0">
       <div className="flex items-center gap-1.5 font-medium text-sm">
@@ -140,13 +122,14 @@ export default function AdminMapping() {
           title="Provider Mapping"
           description="Upload verified provider/facility locations using the verified_* schema."
           icon={<MapPin className="h-4 w-4" />}
-          status="active"
+          pipelineKey="provider_mapping"
         />
         <ToolCard
           to="/admin/mapping/provider-metadata"
           title="Provider Metadata Enrichment"
           description="Attach imported/unverified metadata (phone, NPI, etc.) to existing providers. Never creates pins."
           icon={<Tag className="h-4 w-4" />}
+          pipelineKey="provider_metadata"
           footer={formatRelative(enrichmentActivity)}
         />
         <ToolCard
@@ -154,20 +137,21 @@ export default function AdminMapping() {
           title="Service Mapping"
           description="Community service and resource locations for the Services map layer."
           icon={<Database className="h-4 w-4" />}
-          status="active"
+          pipelineKey="services"
         />
         <ToolCard
           to="/admin/mapping/behavioral-health"
           title="Behavioral Health Mapping"
           description="BH locations and resources for the Behavioral Health map layer."
           icon={<Brain className="h-4 w-4" />}
-          status="active"
+          pipelineKey="behavioral_health"
         />
         <ToolCard
           to="/admin/mapping/verification-queue"
           title="Verification Priority Queue"
           description="Outreach workflow, apply verification, and queue triage."
           icon={<ListChecks className="h-4 w-4" />}
+          pipelineKey="verification_queue"
           footer={formatRelative(verificationActivity)}
         />
         <ToolCard
@@ -175,12 +159,14 @@ export default function AdminMapping() {
           title="Verification Audit History"
           description="Full history of verification actions and entity changes."
           icon={<History className="h-4 w-4" />}
+          pipelineKey="audit_history"
         />
         <ToolCard
           to="/admin/mapping/import"
           title="Data Import"
           description="Unified ingestion intake — pick a type, see its schema, then upload."
           icon={<Upload className="h-4 w-4" />}
+          pipelineKey="data_import"
         />
       </div>
     </AdminMappingLayout>
