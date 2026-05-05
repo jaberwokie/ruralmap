@@ -283,7 +283,11 @@ export default function AdminMappingBehavioralHealth() {
         initial={(editTarget?.row ?? {}) as unknown as Record<string, unknown>}
         onSave={async (changes) => {
           if (!editTarget) return;
-          await editBhRecord(editTarget.scope, editTarget.row.id, changes);
+          const next = { ...changes };
+          if ('service_tags' in next) {
+            next.service_tags = normalizeBhAccessTags(next.service_tags as string | null);
+          }
+          await editBhRecord(editTarget.scope, editTarget.row.id, next);
           toast.success('Edit saved.');
           await refresh();
         }}
