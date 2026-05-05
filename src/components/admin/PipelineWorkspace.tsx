@@ -233,7 +233,11 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-semibold" style={{ color: '#064f88' }}>{title}</h2>
-              <PipelineStatusChip status={status} />
+              {pipelineKey ? (
+                <MappingStatusChip pipeline={pipelineKey} compact showNote />
+              ) : (
+                <PipelineStatusChip status={status} />
+              )}
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{purpose}</p>
           </div>
