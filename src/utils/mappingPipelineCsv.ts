@@ -20,6 +20,7 @@ import {
 import { autoMapCategory } from './serviceCategoryMap';
 import { autoMapBHCategory } from './bhCategoryMap';
 import { normalizeBhAccessTags } from './bhAccessTags';
+import { normalizeZip } from './zipNormalize';
 
 export interface ParsedCsv {
   headers: string[];
