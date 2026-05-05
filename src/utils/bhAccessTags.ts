@@ -45,6 +45,9 @@ const VARIANT_MAP: Array<{ test: RegExp; tag: BhAccessTag }> = [
   { test: /\bcah\b/i, tag: 'critical_access_hospital' },
   { test: /\bcritical\s+access\s+hospital\b/i, tag: 'critical_access_hospital' },
   { test: /\brural\s+access\s+hospital\b/i, tag: 'critical_access_hospital' },
+  // certified community behavioral health clinic
+  { test: /\bccbhc\b/i, tag: 'ccbhc' },
+  { test: /\bcertified\s+community\s+behavioral\s+health\s+clinic\b/i, tag: 'ccbhc' },
 ];
 
 const isCanonical = (s: string): s is BhAccessTag =>
