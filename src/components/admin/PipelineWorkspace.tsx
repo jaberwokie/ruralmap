@@ -88,6 +88,11 @@ interface PipelineWorkspaceProps {
   title: string;
   purpose: string;
   status: PipelineStatus;
+  /**
+   * When provided, the header chip is read from the centralized
+   * `mappingPipelineStatus` config and `status` is ignored for the chip.
+   */
+  pipelineKey?: MappingPipelineKey;
 
   schemaSections: { heading: string; fields: SchemaField[] }[];
   validationRules: string[];
