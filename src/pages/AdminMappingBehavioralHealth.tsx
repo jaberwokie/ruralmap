@@ -362,6 +362,9 @@ export default function AdminMappingBehavioralHealth() {
           if ('service_tags' in next) {
             next.service_tags = normalizeBhAccessTags(next.service_tags as string | null);
           }
+          if ('zip' in next) {
+            next.zip = normalizeZip(next.zip);
+          }
           await editBhRecord(editTarget.scope, editTarget.row.id, next);
           toast.success('Edit saved.');
           await refresh();
