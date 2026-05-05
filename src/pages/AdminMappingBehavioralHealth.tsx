@@ -207,6 +207,7 @@ export default function AdminMappingBehavioralHealth() {
     const telehealthOnly =
       (tags.includes('telehealth') || r.telehealth_available === true) &&
       (!r.street_address || r.street_address.trim() === '');
+    const trust = getBhSourceTrust(r);
     return {
       id: r.id,
       review_status: r.review_status,
@@ -217,7 +218,20 @@ export default function AdminMappingBehavioralHealth() {
       geocode_status: (tag ? 'geocoded' : failed ? 'failed' : null) as 'geocoded' | 'failed' | null,
       geocode_confidence: tag?.confidence ?? null,
       cells: {
-        name: r.name,
+        name: (
+          <span className="inline-flex items-center gap-1.5">
+            <span>{r.name}</span>
+            {trust === 'high' && (
+              <Badge
+                variant="outline"
+                className="border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-emerald-700"
+                title="Trusted partner source — non-critical warnings downgraded. Critical checks still apply."
+              >
+                Trusted Source
+              </Badge>
+            )}
+          </span>
+        ),
         category: r.category_mapped
           ? r.category_mapped
           : (
