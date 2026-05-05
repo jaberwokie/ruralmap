@@ -60,11 +60,15 @@ export interface StagingTableColumn {
   key: string;
   label: string;
   className?: string;
+  /** When true, header becomes clickable and rows sort using `sortValues[key]`. */
+  sortable?: boolean;
 }
 
 export interface StagingTableRow {
   id: string;
   cells: Record<string, ReactNode>;
+  /** Optional numeric/string values used for sorting when a column is sortable. */
+  sortValues?: Record<string, number | string>;
   validation_severity: ValidationSeverity | null;
   review_status: ReviewStatus;
   validation_messages: { message: string; severity: ValidationSeverity }[];
@@ -139,13 +143,27 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const [geocodeRunning, setGeocodeRunning] = useState(false);
   const [geocodeProgress, setGeocodeProgress] = useState<{ done: number; total: number } | null>(null);
 
+  const [sort, setSort] = useState<{ key: string; dir: 'asc' | 'desc' } | null>(null);
+
   const filteredStaging = useMemo(() => {
-    return stagingRows.filter((r) => {
+    const filtered = stagingRows.filter((r) => {
       if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
       if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
       return true;
     });
-  }, [stagingRows, reviewFilter, severityFilter]);
+    if (!sort) return filtered;
+    const { key, dir } = sort;
+    const mult = dir === 'asc' ? 1 : -1;
+    return [...filtered].sort((a, b) => {
+      const av = a.sortValues?.[key];
+      const bv = b.sortValues?.[key];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mult;
+      return String(av).localeCompare(String(bv)) * mult;
+    });
+  }, [stagingRows, reviewFilter, severityFilter, sort]);
 
   // Drop selection ids that are no longer visible after filter changes.
   const visibleIds = useMemo(() => new Set(filteredStaging.map((r) => r.id)), [filteredStaging]);
@@ -502,9 +520,28 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
                   </th>
                 ) : null}
                 <th className="text-left px-2 py-1.5 whitespace-nowrap">Status</th>
-                {stagingColumns.map((c) => (
-                  <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
-                ))}
+                {stagingColumns.map((c) => {
+                  if (!c.sortable) {
+                    return <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>;
+                  }
+                  const isActive = sort?.key === c.key;
+                  const arrow = isActive ? (sort?.dir === 'asc' ? '↑' : '↓') : '↕';
+                  return (
+                    <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>
+                      <button
+                        type="button"
+                        onClick={() => setSort((prev) => {
+                          if (!prev || prev.key !== c.key) return { key: c.key, dir: 'desc' };
+                          if (prev.dir === 'desc') return { key: c.key, dir: 'asc' };
+                          return null;
+                        })}
+                        className={cn('inline-flex items-center gap-1 hover:text-foreground', isActive && 'text-foreground')}
+                      >
+                        {c.label}<span className="text-[9px] opacity-60">{arrow}</span>
+                      </button>
+                    </th>
+                  );
+                })}
                 <th className="text-right px-2 py-1.5 whitespace-nowrap">Actions</th>
               </tr>
             </thead>
