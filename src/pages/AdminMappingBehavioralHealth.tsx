@@ -203,58 +203,87 @@ export default function AdminMappingBehavioralHealth() {
     }
   };
 
-  const stagingRows = useMemo(() => staging.map((r) => {
-    const tag = parseGeocodeTag(r.access_notes);
-    const failed = isGeocodeFailed(r.access_notes);
-    const tags = parseBhAccessTags(r.service_tags);
-    const telehealthOnly =
-      (tags.includes('telehealth') || r.telehealth_available === true) &&
-      (!r.street_address || r.street_address.trim() === '');
-    const trust = getBhSourceTrust(r);
-    return {
-      id: r.id,
-      review_status: r.review_status,
-      validation_severity: r.validation_severity,
-      validation_messages: r.validation_messages,
-      mappable: !telehealthOnly,
-      has_coords: r.latitude != null && r.longitude != null,
-      geocode_status: (tag ? 'geocoded' : failed ? 'failed' : null) as 'geocoded' | 'failed' | null,
-      geocode_confidence: tag?.confidence ?? null,
-      cells: {
-        name: (
-          <span className="inline-flex items-center gap-1.5">
-            <span>{r.name}</span>
-            {trust === 'high' && (
-              <Badge
-                variant="outline"
-                className="border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-emerald-700"
-                title="Trusted partner source — non-critical warnings downgraded. Critical checks still apply."
-              >
-                Trusted Source
-              </Badge>
-            )}
-          </span>
-        ),
-        category: r.category_mapped
-          ? r.category_mapped
-          : (
-            <span className="inline-flex items-center gap-1">
-              <span className="text-muted-foreground">{r.category_raw ?? r.bh_service_type ?? '—'}</span>
-              <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
-                Needs mapping
-              </span>
+  const stagingRows = useMemo(() => {
+    const densityMap = computeBhSiteDensity(staging);
+    return staging.map((r) => {
+      const tag = parseGeocodeTag(r.access_notes);
+      const failed = isGeocodeFailed(r.access_notes);
+      const tags = parseBhAccessTags(r.service_tags);
+      const telehealthOnly =
+        (tags.includes('telehealth') || r.telehealth_available === true) &&
+        (!r.street_address || r.street_address.trim() === '');
+      const trust = getBhSourceTrust(r);
+      const density = densityMap.get(r.id) ?? 1;
+      const tier = siteDensityTier(density);
+      return {
+        id: r.id,
+        review_status: r.review_status,
+        validation_severity: r.validation_severity,
+        validation_messages: r.validation_messages,
+        mappable: !telehealthOnly,
+        has_coords: r.latitude != null && r.longitude != null,
+        geocode_status: (tag ? 'geocoded' : failed ? 'failed' : null) as 'geocoded' | 'failed' | null,
+        geocode_confidence: tag?.confidence ?? null,
+        sortValues: { density },
+        cells: {
+          name: (
+            <span className="inline-flex items-center gap-1.5">
+              <span>{r.name}</span>
+              {trust === 'high' && (
+                <Badge
+                  variant="outline"
+                  className="border-emerald-500/40 bg-emerald-500/10 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-emerald-700"
+                  title="Trusted partner source — non-critical warnings downgraded. Critical checks still apply."
+                >
+                  Trusted Source
+                </Badge>
+              )}
             </span>
           ),
-        tags: renderTagBadges(r.service_tags),
-        type: r.bh_entity_type ?? r.bh_service_type ?? '—',
-        npi: r.npi ?? '—',
-        org: r.organization_name ?? '—',
-        city: r.city ?? '—',
-        county: r.county ?? '—',
-        caps: formatCaps(r),
-      },
-    };
-  }), [staging]);
+          category: r.category_mapped
+            ? r.category_mapped
+            : (
+              <span className="inline-flex items-center gap-1">
+                <span className="text-muted-foreground">{r.category_raw ?? r.bh_service_type ?? '—'}</span>
+                <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9px] font-medium uppercase tracking-wider text-amber-700">
+                  Needs mapping
+                </span>
+              </span>
+            ),
+          tags: renderTagBadges(r.service_tags),
+          type: r.bh_entity_type ?? r.bh_service_type ?? '—',
+          npi: r.npi ?? '—',
+          org: r.organization_name ?? '—',
+          city: r.city ?? '—',
+          county: r.county ?? '—',
+          caps: formatCaps(r),
+          density: (
+            <span className="inline-flex items-center gap-1 text-muted-foreground tabular-nums">
+              <span>{density}</span>
+              {tier === 'multi' && (
+                <Badge
+                  variant="outline"
+                  className="border-sky-500/40 bg-sky-500/10 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-sky-700"
+                  title={`${density} BH records share this organization + city + county`}
+                >
+                  Multi
+                </Badge>
+              )}
+              {tier === 'hub' && (
+                <Badge
+                  variant="outline"
+                  className="border-violet-500/40 bg-violet-500/10 px-1.5 py-0 text-[9px] font-medium uppercase tracking-wider text-violet-700"
+                  title={`${density} BH records share this organization + city + county — high-value access hub`}
+                >
+                  Hub
+                </Badge>
+              )}
+            </span>
+          ),
+        },
+      };
+    });
+  }, [staging]);
 
   const verifiedRows = useMemo(() => verified.map((r) => ({
     id: r.id,
