@@ -20,6 +20,8 @@ import { Button } from '@/components/ui/button';
 import { downloadCsvTemplate, type CsvTemplate } from '@/utils/csvTemplates';
 import type { ValidationSeverity, ReviewStatus, AuditLogRow } from '@/types/mappingPipeline';
 import { cn } from '@/lib/utils';
+import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
+import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
 
 export type PipelineStatus = 'active' | 'draft' | 'admin_only' | 'not_configured';
 
