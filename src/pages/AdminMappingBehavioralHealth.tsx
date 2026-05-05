@@ -93,6 +93,7 @@ const STAGING_COLS: StagingTableColumn[] = [
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
   { key: 'caps', label: 'Capabilities' },
+  { key: 'density', label: 'Site density', sortable: true },
 ];
 
 const VERIFIED_COLS: StagingTableColumn[] = [
