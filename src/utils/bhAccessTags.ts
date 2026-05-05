@@ -27,6 +27,7 @@ export const BH_ACCESS_TAG_LABELS: Record<BhAccessTag, string> = {
   fqhc: 'FQHC',
   rural_health_clinic: 'Rural Health Clinic',
   critical_access_hospital: 'Critical Access Hospital',
+  ccbhc: 'CCBHC',
 };
 
 const VARIANT_MAP: Array<{ test: RegExp; tag: BhAccessTag }> = [
