@@ -17,6 +17,7 @@ export const BH_ACCESS_TAGS = [
   'fqhc',
   'rural_health_clinic',
   'critical_access_hospital',
+  'ccbhc',
 ] as const;
 
 export type BhAccessTag = (typeof BH_ACCESS_TAGS)[number];
@@ -26,6 +27,7 @@ export const BH_ACCESS_TAG_LABELS: Record<BhAccessTag, string> = {
   fqhc: 'FQHC',
   rural_health_clinic: 'Rural Health Clinic',
   critical_access_hospital: 'Critical Access Hospital',
+  ccbhc: 'CCBHC',
 };
 
 const VARIANT_MAP: Array<{ test: RegExp; tag: BhAccessTag }> = [
@@ -43,6 +45,9 @@ const VARIANT_MAP: Array<{ test: RegExp; tag: BhAccessTag }> = [
   { test: /\bcah\b/i, tag: 'critical_access_hospital' },
   { test: /\bcritical\s+access\s+hospital\b/i, tag: 'critical_access_hospital' },
   { test: /\brural\s+access\s+hospital\b/i, tag: 'critical_access_hospital' },
+  // certified community behavioral health clinic
+  { test: /\bccbhc\b/i, tag: 'ccbhc' },
+  { test: /\bcertified\s+community\s+behavioral\s+health\s+clinic\b/i, tag: 'ccbhc' },
 ];
 
 const isCanonical = (s: string): s is BhAccessTag =>
