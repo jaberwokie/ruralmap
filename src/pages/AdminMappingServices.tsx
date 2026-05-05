@@ -376,6 +376,7 @@ export default function AdminMappingServices() {
         title="Service location pipeline"
         purpose="Food, shelter, transportation, employment, recovery, peer support, case management, outreach, hygiene, and benefits navigation locations. Clinical providers belong in Provider Mapping."
         status="active"
+        pipelineKey="services"
         schemaSections={SCHEMA_SECTIONS}
         validationRules={VALIDATION_RULES}
         template={SERVICE_TEMPLATE}
