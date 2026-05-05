@@ -22,6 +22,7 @@ import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import type { StagingBhRow, VerifiedBhRow, AuditLogRow } from '@/types/mappingPipeline';
 import { BH_CATEGORIES } from '@/utils/bhCategoryMap';
 import { BH_ACCESS_TAG_LABELS, parseBhAccessTags, normalizeBhAccessTags, type BhAccessTag } from '@/utils/bhAccessTags';
+import { getBhSourceTrust } from '@/utils/bhSourceTrust';
 import { Badge } from '@/components/ui/badge';
 
 const SCHEMA_SECTIONS = [
