@@ -24,8 +24,9 @@ import { isServiceCategory } from './serviceCategoryMap';
 import { isBHCategory } from './bhCategoryMap';
 import {
   geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
-  type GeocodeOutcome, type GeocodeRunSummary,
+  type GeocodeOutcome, type GeocodeRunSummary, type GeocodeCandidate,
 } from './serviceGeocode';
+import { parseBhAccessTags } from './bhAccessTags';
 
 type Json = Record<string, unknown>;
 
