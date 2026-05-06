@@ -35,6 +35,8 @@
 - [ ] FTE field zones render
 - [ ] FTE response strain line still appears
 - [ ] Remote/scheduled/field coverage classifications still make operational sense
+- [ ] Toggle Response Capability OFF and confirm planned/scheduled/remote response-capability county pins disappear
+- [ ] Toggle Response Capability ON and confirm they return
 
 ## Modes
 
