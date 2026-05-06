@@ -212,13 +212,13 @@ export function computeFieldResponseStrain(
   let coverageLabel: string;
   if (anchoringFtes.length >= 2) {
     coverage = 'shared';
-    coverageLabel = `Shared field coverage — ${anchoringFtes.join(', ')}`;
+    coverageLabel = 'Shared field coverage';
   } else if (anchoringFtes.length === 1) {
     coverage = 'single';
-    coverageLabel = `Single FTE coverage — ${anchoringFtes[0]}`;
+    coverageLabel = 'Single FTE coverage';
   } else if (!beyondSameDay) {
     coverage = 'strained';
-    coverageLabel = 'Strained — beyond active radius, scheduled outreach';
+    coverageLabel = 'Beyond active radius — scheduled outreach only';
   } else {
     coverage = 'noSameDay';
     coverageLabel = 'Outside realistic same-day field response';
@@ -313,9 +313,9 @@ export const STRAIN_TIER_TONE: Record<StrainTier, string> = {
 };
 
 export const STRAIN_TIER_OPERATIONAL_REALITY: Record<StrainTier, string> = {
-  low: 'Same-day response is realistic',
-  moderate: 'Response possible, but resource-constrained',
-  high: 'Field response unlikely without reallocation',
+  low: 'Same-day field response is realistic.',
+  moderate: 'Field response possible, but capacity-constrained.',
+  high: 'Field response unlikely without reallocation.',
 };
 
 export function getStrainTier(strain: FieldResponseStrain): StrainTier {

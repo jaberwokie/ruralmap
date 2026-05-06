@@ -278,14 +278,7 @@ const FieldResponseStrainSection = ({
             <span className="text-right font-semibold text-foreground">~{strain.roundTripMi} mi · ~{strain.roundTripMin} min</span>
           </div>
 
-          <div className={`text-[10px] font-medium ${sameDayTone}`}>{sameDayLabel}</div>
-          <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
-          <div className={`text-[11px] font-semibold ${STRAIN_TONE[strain.coverage]} pt-1 border-t border-border/60`}>
-            {getStrainRecommendation(strain)}
-          </div>
-          <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]} opacity-90`}>
-            {getCapacityBoundaryLabel(strain)}
-          </div>
+          <div className={`text-[10px] font-medium ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
 
           <div className={`text-[10px] leading-tight pt-1 border-t border-border/60 ${STRAIN_TIER_TONE[tier]}`}>
             <span className="font-semibold">Operational reality:</span> {STRAIN_TIER_OPERATIONAL_REALITY[tier]}
