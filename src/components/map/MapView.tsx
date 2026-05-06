@@ -42,6 +42,7 @@ import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLay
 import { renderBehavioralHealthMarkers } from '@/components/map/layers/BehavioralHealthMarkerLayer';
 import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer';
 import { renderFteHubs } from '@/components/map/layers/FteOverlayLayer';
+import { renderUtilizationChoropleth } from '@/components/map/layers/UtilizationOverlayLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
@@ -2197,31 +2198,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // ── Utilization Intensity choropleth (purple ramp) ──
   useEffect(() => {
     if (!utilizationRef.current) return;
-    utilizationRef.current.clearLayers();
-    if (!layers.utilizationIntensity || coverageGaps) return;
-
-    nevadaCounties.forEach(county => {
-      const util = getCountyUtilization(county.name);
-      const tier = getUtilizationTier(util.avgVisitsPerMember);
-      const colors = UTILIZATION_COLORS[tier];
-
-      const clipped = getCountyFeature(county.name);
-      if (!clipped) return;
-
-      const geoLayer = L.geoJSON(clipped, {
-        pane: MAP_PANES.countyPolygons,
-        style: {
-          color: colors.border,
-          weight: 1,
-          fillColor: colors.fill,
-          fillOpacity: 1,
-        },
-      });
-      geoLayer.on('click', (e: L.LeafletEvent) => {
-        const memberCount = memberVolumeData.find(entry => entry.county === county.name)?.memberCount ?? util.totalMembers;
-        selectOverlayEntity({ type: 'memberVolume', county: county.name, memberCount }, 'utilization-county', e);
-      });
-      utilizationRef.current!.addLayer(geoLayer);
+    if (!layers.utilizationIntensity || coverageGaps) {
+      utilizationRef.current.clearLayers();
+      return;
+    }
+    renderUtilizationChoropleth({
+      group: utilizationRef.current,
+      pane: MAP_PANES.countyPolygons,
+      getCountyFeature,
+      onCountyClick: (payload, e) => {
+        selectOverlayEntity(payload, 'utilization-county', e);
+      },
     });
   }, [clearCountyHoverPreview, coverageGaps, layers.utilizationIntensity, selectOverlayEntity, updateCountyHoverPreview]);
 
