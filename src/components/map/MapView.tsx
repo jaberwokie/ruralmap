@@ -1661,35 +1661,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     if (!layers.fteCapacity || activeFteCoverageIds.length === 0) return;
 
-    // Render every active FTE's county responsibility footprint. Field FTEs
-    // (Carson, Pahrump) use a dashed border + light tinted fill. The Remote
-    // Coordination Team uses a dotted border + lower-opacity fill so it reads
-    // as remote support rather than in-person field territory and stays
-    // distinguishable when overlapped with field overlays.
-    activeFteCoverageIds.forEach((fteId) => {
-      const fte = fteCapacityData.find((f) => f.id === fteId);
-      if (!fte) return;
-      const roleColor = FTE_ROLE_COLORS[fte.id]?.primary ?? 'hsl(0,0%,50%)';
-      const isRemote = fte.hubLocation === null;
-
-      fte.counties.forEach((countyName) => {
-        const countyFeature = getCountyFeature(countyName);
-        if (!countyFeature) return;
-
-        const serviceAreaLayer = createGeoJsonLayer(
-          countyFeature,
-          MAP_PANES.highlights,
-          {
-            color: roleColor,
-            weight: isRemote ? 1.5 : 2,
-            dashArray: isRemote ? '2 5' : '6 4',
-            fillColor: roleColor,
-            fillOpacity: isRemote ? 0.05 : 0.08,
-          },
-          false,
-        );
-        highlightsRef.current!.addLayer(serviceAreaLayer);
-      });
+    renderFteFieldCoverageZones({
+      group: highlightsRef.current,
+      pane: MAP_PANES.highlights,
+      activeFteCoverageIds,
+      getCountyFeature,
+      createGeoJsonLayer,
     });
   }, [layers.fteCapacity, selectedCounty, selectedFteId, activeFteCoverageIds]);
 
