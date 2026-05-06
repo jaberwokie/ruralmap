@@ -221,7 +221,18 @@ export const deriveDecisionAssist = (
     steps.push({ step: n++, action: 'Confirm transportation, hours, and acceptance before scheduling.' });
   }
 
-  if (fteLoad && fteLoad !== 'available' && fte) {
+  if (isRemoteOnly) {
+    steps.push({
+      step: n++,
+      action: 'No field response available at member location — coordinate remotely; consider scheduled outreach or reallocation if recurring need.',
+    });
+  } else if (strain && strain.coverage === 'strained' && strain.responder) {
+    const anchor = strain.responder.anchorSite?.name ?? strain.responder.label;
+    steps.push({
+      step: n++,
+      action: `Field response from ${anchor} is strained (~${strain.oneWayMi} mi) — schedule outreach or use alternative routing.`,
+    });
+  } else if (fteLoad && fteLoad !== 'available' && fte) {
     steps.push({
       step: n++,
       action: `${fte.label}: ${LOAD_STATUS_LABELS[fteLoad]} — coordinate handoff accordingly.`,
