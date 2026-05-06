@@ -236,6 +236,39 @@ const FieldResponseStrainSection = ({
   }
   if (!point) return null;
 
+  // Mixed-reach guard: when looking at a county as a whole (no explicit
+  // point target), don't generalise one anchor FTE to the whole county.
+  // Show local + remote framing instead.
+  const isCountyWide = !target && !!county;
+  const reach = county ? getCountyReachShape(county, coverageRadiusKm) : null;
+  if (isCountyWide && reach?.isMixed) {
+    return (
+      <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">Mixed</span>
+        </div>
+        <div className="text-[11px] text-foreground leading-tight">
+          <span className="font-medium">Field reach:</span> Mixed across this county
+        </div>
+        <div className="text-[10px] text-muted-foreground leading-tight">
+          {reach.anchoringFtes.length > 0
+            ? `Local field response available near ${reach.anchoringFtes.join(', ')}. Remote coordination likely outside the local field zone.`
+            : 'Field response depends on the local site. Remote coordination likely outside any local field zone.'}
+        </div>
+        <div className="text-[10px] leading-tight pt-1 border-t border-border/60 text-amber-700">
+          <span className="font-semibold">Operational reality:</span> One FTE does not cover the whole county. Use a specific site or member location for site-level response.
+        </div>
+        <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
+          {caption ?? 'County is geographically large — site-level distance applies; county-wide responder is not meaningful.'}
+        </div>
+      </div>
+    );
+  }
+
   const strain = computeFieldResponseStrain(point, coverageRadiusKm, county ? { county } : undefined);
   if (!strain) return null;
 
