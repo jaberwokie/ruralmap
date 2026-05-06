@@ -10,7 +10,7 @@
  * No new entity types, no new map layers, no routing API.
  */
 import { fteCapacityData, type FTECapacity } from '@/data/fte-capacity';
-import { kmToMiles, kmToDriveMinutes, getCountyCoverageBreakdown } from '@/utils/coverageZones';
+import { kmToMiles, kmToDriveMinutes, getCountyCoverageBreakdown, countyHasFieldResponseUnavailable } from '@/utils/coverageZones';
 
 // ── County-level response classification ──────────────────────────────────
 // Reuses the same anchored-FTE coverage breakdown the rest of the app uses.
@@ -47,6 +47,16 @@ export function getCountyResponseClassification(
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   const fieldServing = serving.filter(f => f.hubLocation);
   const anchors = breakdown.anchoringFtes;
+
+  if (countyHasFieldResponseUnavailable(county)) {
+    return {
+      level: 'noSameDay',
+      label: 'Remote coordination',
+      sub: 'Field response not available same-day',
+      tone: LEVEL_TONE.noSameDay,
+      anchoringFtes: [],
+    };
+  }
 
   // Build "anchored from {anchor sites}" subline using real anchor sites
   const anchorSiteNames = anchors
