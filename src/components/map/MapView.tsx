@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEBUG_CLICKS, debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
+import { createMemberPinMarker } from './layers/MemberPinLayer';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.heat';
