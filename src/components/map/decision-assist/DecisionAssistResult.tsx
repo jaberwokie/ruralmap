@@ -112,35 +112,25 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
         </span>
       </div>
 
-      {/* Next staff action */}
-      <div className="rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-0.5">Next staff action</p>
-        <p className="text-[11px] font-medium text-foreground leading-snug">{result.nextStaffAction}</p>
-      </div>
-
-      {/* Constraint */}
-      {result.constraint && (
-        <div
-          className="rounded-md border px-2 py-1.5 text-[11px] leading-snug"
-          style={{ borderColor: 'hsl(38, 85%, 80%)', background: 'hsl(38, 85%, 96%)', color: 'hsl(38, 85%, 30%)' }}
-        >
-          <span className="font-semibold">Constraint: </span>{result.constraint}
+      {/* Tightened action block: Primary / Backup / Constraint */}
+      <div className="rounded-md border border-primary/30 bg-primary/5 px-2 py-1.5 space-y-1">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-primary mb-0.5">Primary</p>
+          <p className="text-[11px] font-medium text-foreground leading-snug">{result.primary}</p>
         </div>
-      )}
-
-      {/* Order of operations */}
-      <div>
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Order of operations</p>
-        <ol className="space-y-1">
-          {result.orderOfOperations.map(s => (
-            <li key={s.step} className="flex gap-2 text-[11px] text-foreground leading-snug">
-              <span className="flex-shrink-0 w-4 h-4 rounded-full bg-secondary text-foreground text-[10px] font-semibold flex items-center justify-center">
-                {s.step}
-              </span>
-              <span>{s.action}</span>
-            </li>
-          ))}
-        </ol>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">Backup</p>
+          <p className="text-[11px] text-foreground leading-snug">{result.backup ?? 'None'}</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">Constraint</p>
+          <p
+            className="text-[11px] leading-snug"
+            style={{ color: result.constraint ? 'hsl(38, 85%, 30%)' : undefined }}
+          >
+            {result.constraint ?? 'None'}
+          </p>
+        </div>
       </div>
 
       {/* Primary targets */}
