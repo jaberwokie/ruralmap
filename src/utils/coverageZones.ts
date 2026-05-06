@@ -40,6 +40,8 @@ const SCHEDULED_RADIUS_MULT = 1.5;
 const _activeZoneCache = new Map<number, Feature<Polygon | MultiPolygon> | null>();
 const _scheduledZoneCache = new Map<number, Feature<Polygon | MultiPolygon> | null>();
 
+const FIELD_RESPONSE_UNAVAILABLE_COUNTIES = new Set(['Churchill']);
+
 function buildMergedBufferZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
   const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
   if (fieldFtes.length === 0) return null;
@@ -187,9 +189,12 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       const centroidWithinActive = nearestFieldDistMi <= ACTIVE_RADIUS_MI;
 
       let primaryType: 'active' | 'scheduled' | 'remote';
-      if (activePercent >= 60 && anchoringFtes.length > 0 && centroidWithinActive) {
+      const fieldResponseAvailable = !FIELD_RESPONSE_UNAVAILABLE_COUNTIES.has(county.name);
+
+      if (fieldResponseAvailable && activePercent >= 60 && anchoringFtes.length > 0 && centroidWithinActive) {
         primaryType = 'active';
       } else if (
+        fieldResponseAvailable &&
         activePercent + scheduledPercent >= MIN_COMBINED_AREA_PERCENT &&
         scheduledPercent >= MIN_SCHEDULED_AREA_PERCENT
       ) {
