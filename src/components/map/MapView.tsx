@@ -151,8 +151,8 @@ interface MarkerHoverPreview {
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
 
-// Haversine + member tier helpers extracted to @/lib/operational/memberAccess.
-import { haversineKm, computeMemberDistanceInfo } from '@/lib/operational';
+// Member distance helpers extracted to @/lib/operational/memberAccess.
+import { computeMemberDistanceInfo } from '@/lib/operational';
 
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
