@@ -49,6 +49,36 @@ export const appendImportedFacilities = (additions: Facility[]): Facility[] => {
   return next;
 };
 
+/**
+ * Upsert a single facility by id. If an existing record shares the id, only
+ * the provided non-null fields overwrite the previous values (preserves any
+ * data the caller did not include). Returns 'created' or 'updated'.
+ */
+export const upsertImportedFacility = (
+  facility: Facility,
+  matchId?: string,
+): 'created' | 'updated' => {
+  const current = getImportedFacilities();
+  const targetId = matchId ?? facility.id;
+  const idx = current.findIndex((f) => f.id === targetId);
+  if (idx === -1) {
+    writeImportedFacilities([...current, facility]);
+    return 'created';
+  }
+  const prev = current[idx];
+  const merged: Facility = { ...prev };
+  for (const [k, v] of Object.entries(facility)) {
+    if (v == null || v === '') continue;
+    (merged as unknown as Record<string, unknown>)[k] = v;
+  }
+  // Preserve original id
+  merged.id = prev.id;
+  const next = [...current];
+  next[idx] = merged;
+  writeImportedFacilities(next);
+  return 'updated';
+};
+
 export const clearImportedFacilities = (): void => {
   writeImportedFacilities([]);
 };
