@@ -22,7 +22,7 @@ import { getCountyForLocation } from '@/utils/countyLookup';
 import { getLoadStatus, LOAD_STATUS_LABELS } from '@/data/fte-capacity';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import { mobilityManagers } from '@/data/mobility-managers';
-import { computeFieldResponseStrain } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, getCountyReachShape } from '@/utils/fieldResponseStrain';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 import { findNeed } from './decisionAssistTaxonomy';
 import type {
