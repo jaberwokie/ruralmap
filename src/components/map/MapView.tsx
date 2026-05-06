@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEBUG_CLICKS, debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
+import { DEBUG_ENABLED, SELECTION_GUARD_MS, getEntityDebugMeta, stopInteractionEvent } from '@/components/map/layers/MapInteractionUtils';
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import { createMemberPinMarker } from './layers/MemberPinLayer';
@@ -156,7 +157,7 @@ const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>
 );
 
 const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
-const DEBUG_ENABLED = DEBUG_CLICKS;
+
 
 const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
   {
@@ -397,34 +398,7 @@ const POINT_MARKER_PRIORITY = {
   selectedBoost: 2200,
 } as const;
 
-const SELECTION_GUARD_MS = 220;
 
-const getEntityDebugMeta = (entity: MapEntity | null | undefined) => {
-  if (!entity) {
-    return { entityType: null, entityId: null, entityName: null };
-  }
-
-  switch (entity.type) {
-    case 'facility':
-      return { entityType: entity.type, entityId: entity.facility.id, entityName: entity.facility.name };
-    case 'ruralService':
-      return { entityType: entity.type, entityId: entity.service.id, entityName: entity.service.name };
-    case 'county':
-      return { entityType: entity.type, entityId: entity.county, entityName: entity.county };
-    case 'memberVolume':
-      return { entityType: entity.type, entityId: entity.county, entityName: entity.county };
-    case 'coverageGap':
-      return { entityType: entity.type, entityId: String(entity.radiusKm), entityName: `Coverage Gap ${entity.radiusKm}km` };
-    case 'coverageArea':
-      return { entityType: entity.type, entityId: entity.area, entityName: entity.area };
-    case 'ruralServiceGroup':
-      return { entityType: entity.type, entityId: entity.county, entityName: entity.county };
-    case 'fteDetail':
-      return { entityType: entity.type, entityId: entity.fteId, entityName: entity.fteId };
-    default:
-      return { entityType: null, entityId: null, entityName: null };
-  }
-};
 
 const getDeclutterRadiusByZoom = (zoom: number) => {
   if (zoom <= 7) return 22;
@@ -640,15 +614,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, []);
 
-  const stopInteractionEvent = useCallback((event?: L.LeafletEvent | Event | null) => {
-    if (!event) return;
-    const originalEvent = (event as L.LeafletEvent & { originalEvent?: Event }).originalEvent;
-    if (originalEvent) {
-      L.DomEvent.stop(originalEvent as any);
-      return;
-    }
-    L.DomEvent.stop(event as any);
-  }, []);
 
   const armInteractionGuard = useCallback((source: 'marker' | 'county' | 'overlay') => {
     const expiresAt = Date.now() + SELECTION_GUARD_MS;
