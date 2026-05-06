@@ -1812,6 +1812,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     nevadaCounties.forEach((county) => {
       const breakdown = getCountyCoverageBreakdown(county.name, coverageRadiusKm);
       const category = getResponseCapabilityCategory(breakdown);
+      // Zone visibility filter — additive, hides marker only. Classification
+      // and selection logic remain unchanged so detail panels still work
+      // when the user later toggles the category back on.
+      if (!responseCapabilityVisible[category]) return;
       const markerSize = RESPONSE_CAPABILITY_META[category].markerSize;
       const buildIcon = (hovered = false) => L.divIcon({
         className: '',
