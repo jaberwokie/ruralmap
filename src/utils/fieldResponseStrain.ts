@@ -224,13 +224,20 @@ export function computeFieldResponseStrain(
     coverageLabel = 'Outside realistic same-day field response';
   }
 
+  // Gate "likely responder" on real anchoring coverage. Without an anchoring
+  // FTE, surfacing a nearest hub misleads the user into thinking field
+  // response is feasible when it isn't (Remote-only). Distance metrics that
+  // imply feasibility are zeroed out alongside.
+  const hasAnchoringResponder = anchoringFtes.length > 0;
+  const responder = hasAnchoringResponder ? primary.fte : null;
+
   return {
-    responder: primary.fte,
-    km: primary.km,
-    oneWayMi,
-    oneWayMin,
-    roundTripMi: oneWayMi * 2,
-    roundTripMin: oneWayMin * 2,
+    responder,
+    km: hasAnchoringResponder ? primary.km : NaN,
+    oneWayMi: hasAnchoringResponder ? oneWayMi : 0,
+    oneWayMin: hasAnchoringResponder ? oneWayMin : 0,
+    roundTripMi: hasAnchoringResponder ? oneWayMi * 2 : 0,
+    roundTripMin: hasAnchoringResponder ? oneWayMin * 2 : 0,
     withinActive,
     coverage,
     coverageLabel,
