@@ -1511,7 +1511,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       {hasFte && (
         <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
           <FieldCapacitySection county={county} />
-          <CapacityStatusSection county={county} />
+          <CapacityStatusSection county={county} coverageRadiusKm={coverageRadiusKm} />
           <FieldResponseStrainSection county={county} coverageRadiusKm={coverageRadiusKm} />
         </DetailSection>
       )}
