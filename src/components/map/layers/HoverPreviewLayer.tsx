@@ -111,7 +111,7 @@ const CoverageGapInfoButton = () => {
 interface HoverPreviewLayerProps {
   countyHoverPreview: CountyHoverPreview | null;
   markerHoverPreview: MarkerHoverPreview | null;
-  layers: LayerState;
+  layers: { broadbandAccess: boolean; cellularCoverage: boolean };
   isPublicSafe: boolean;
 }
 
