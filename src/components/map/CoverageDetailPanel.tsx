@@ -243,7 +243,7 @@ const FieldResponseStrainSection = ({
   const reach = county ? getCountyReachShape(county, coverageRadiusKm) : null;
   if (isCountyWide && reach?.isMixed) {
     return (
-      <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
+      <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1">
         <div className="flex items-center justify-between gap-1.5">
           <div className="flex items-center gap-1.5">
             <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
@@ -251,19 +251,16 @@ const FieldResponseStrainSection = ({
           </div>
           <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">Mixed</span>
         </div>
+        {reach.anchoringFtes.length > 0 && (
+          <div className="text-[11px] text-foreground leading-tight">
+            Local field response available near {reach.anchoringFtes.join(', ')}
+          </div>
+        )}
         <div className="text-[11px] text-foreground leading-tight">
-          <span className="font-medium">Field reach:</span> Mixed across this county
+          Remote coordination required outside the local field zone
         </div>
-        <div className="text-[10px] text-muted-foreground leading-tight">
-          {reach.anchoringFtes.length > 0
-            ? `Local field response available near ${reach.anchoringFtes.join(', ')}. Remote coordination likely outside the local field zone.`
-            : 'Field response depends on the local site. Remote coordination likely outside any local field zone.'}
-        </div>
-        <div className="text-[10px] leading-tight pt-1 border-t border-border/60 text-amber-700">
-          <span className="font-semibold">Operational reality:</span> One FTE does not cover the whole county. Use a specific site or member location for site-level response.
-        </div>
-        <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
-          {caption ?? 'County is geographically large — site-level distance applies; county-wide responder is not meaningful.'}
+        <div className="text-[10px] text-muted-foreground leading-tight pt-1 border-t border-border/60">
+          Use a specific site or member location to determine actual response.
         </div>
       </div>
     );
