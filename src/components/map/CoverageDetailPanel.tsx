@@ -54,6 +54,7 @@ import { useAccordion } from './hooks/useAccordion';
 import { MemberDistanceBadge } from './MemberDistanceBadge';
 import { normalizeWebsite, websiteDisplayLabel } from './detail/websiteUtils';
 import { ActionStep, MetaRow, ActionButtonRow, CopyAddress, CoverageGapContent } from './detail/SharedDetailParts';
+import { PsychiatryBadge, InpatientBadge } from './detail/ServiceLineBadges';
 
 // GAP_COUNTIES extracted to @/lib/operational/accessGaps.
 
