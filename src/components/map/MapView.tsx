@@ -3008,11 +3008,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       memberRingsRef.current!.addLayer(circle);
     });
 
-    // Auto-focus map to show 25mi ring on initial placement
-    if (map) {
+    // Auto-focus map to show 25mi ring on first placement or new address.
+    // Drag updates keep the current viewport.
+    const fitKey = memberLocation.address
+      ? `addr:${memberLocation.address}`
+      : `coord:${lat.toFixed(5)},${lng.toFixed(5)}`;
+    if (map && lastFittedMemberKeyRef.current !== fitKey) {
       const metersFor25mi = milesToMeters(25);
       const bounds = L.latLng(lat, lng).toBounds(metersFor25mi * 2);
       map.fitBounds(bounds, { padding: [40, 40], maxZoom: 10 });
+      lastFittedMemberKeyRef.current = fitKey;
     }
 
   }, [mapReady, memberLocation]);
