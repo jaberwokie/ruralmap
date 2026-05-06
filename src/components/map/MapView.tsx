@@ -3,6 +3,7 @@ import { DEBUG_CLICKS, debugMarkerClick, debugCountyClick, debugMapClear } from 
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import { createMemberPinMarker } from './layers/MemberPinLayer';
+import { addMemberRadiusRings } from './layers/MemberRadiusRingsLayer';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.heat';
@@ -2949,27 +2950,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
     memberPinRef.current.addLayer(marker);
 
-    // Radius rings: 10mi, 25mi, 40mi — refined weights and styles
+    // Radius rings: 10mi, 25mi, 40mi — extracted to ./layers/MemberRadiusRingsLayer.
     const milesToMeters = (mi: number) => mi * 1609.344;
-    const ringDefs = [
-      { mi: 10, color: 'hsla(0, 0%, 30%, 0.52)', weight: 3, dash: '',    fillOpacity: 0.032 },
-      { mi: 25, color: 'hsla(0, 0%, 30%, 0.22)', weight: 1.5, dash: '8 5', fillOpacity: 0.015 },
-      { mi: 40, color: 'hsla(0, 0%, 30%, 0.10)', weight: 1,   dash: '4 4', fillOpacity: 0.008 },
-    ];
-
-    ringDefs.forEach(({ mi, color, weight, dash, fillOpacity }) => {
-      const circle = L.circle([lat, lng], {
-        radius: milesToMeters(mi),
-        color,
-        weight,
-        fillColor: color,
-        fillOpacity,
-        dashArray: dash || undefined,
-        interactive: false,
-        pane: PANE_CONFIG.memberRings.id,
-      });
-      memberRingsRef.current!.addLayer(circle);
-    });
+    addMemberRadiusRings(memberRingsRef.current!, lat, lng, PANE_CONFIG.memberRings.id);
 
     // Auto-focus map to show 25mi ring on first placement or new address.
     // Drag updates keep the current viewport.
