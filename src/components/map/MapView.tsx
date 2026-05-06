@@ -43,6 +43,7 @@ import { renderBehavioralHealthMarkers } from '@/components/map/layers/Behaviora
 import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer';
 import { renderFteHubs } from '@/components/map/layers/FteOverlayLayer';
 import { renderUtilizationChoropleth } from '@/components/map/layers/UtilizationOverlayLayer';
+import { renderAccessGapOverlay } from '@/components/map/layers/AccessGapOverlayLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
@@ -1991,76 +1992,26 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // Draw coverage gap overlays
   useEffect(() => {
     if (!gapsRef.current) return;
-    gapsRef.current.clearLayers();
-
-    if (!coverageGaps) return;
+    if (!coverageGaps) {
+      gapsRef.current.clearLayers();
+      return;
+    }
 
     // Access Gap eligibility uses the SAME shared active provider list as
     // the radius renderer. This guarantees the white "holes" punched out of
     // the red gap polygon always match the visible radii — no stale
     // hospital/clinic subtraction when Provider Locations is off.
-    const eligibleProviders: Array<{ lat: number; lng: number }> = activeCoverageProviders.map(
-      (p) => ({ lat: p.lat, lng: p.lng }),
-    );
+    const eligibleProviders = activeCoverageProviders.map((p) => ({ lat: p.lat, lng: p.lng }));
 
-    const analysisFeature: Feature<Polygon | MultiPolygon> = { type: "Feature", properties: {}, geometry: nevadaBoundaryGeoJSON };
-
-    if (eligibleProviders.length === 0) {
-      const geoLayer = L.geoJSON(analysisFeature as any, {
-        style: {
-          color: 'hsla(0, 84%, 60%, 0.5)',
-          weight: 1.5,
-          fillColor: 'hsla(0, 84%, 60%, 0.15)',
-          fillOpacity: 1,
-        },
-      });
-      gapsRef.current.addLayer(geoLayer);
-      return;
-    }
-
-    try {
-      const buffers = eligibleProviders.map(p => {
-        const pt = turfPoint([p.lng, p.lat]);
-        return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
-      });
-
-      // Union all buffers in one pass to eliminate internal overlap seams.
-      // Fallback keeps every buffer if Turf returns null for non-overlapping sets.
-      const mergedCoverage = (union(featureCollection(buffers) as any) as Feature<Polygon | MultiPolygon> | null)
-        ?? ({
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'MultiPolygon',
-            coordinates: buffers.map(b => b.geometry.coordinates),
-          },
-        } as Feature<MultiPolygon>);
-
-      // Morphological close: expand then shrink to seal micro-gaps between adjacent buffers
-      const expanded = buffer(mergedCoverage, 0.5, { units: 'kilometers' });
-      const cleaned = expanded ? buffer(expanded, -0.5, { units: 'kilometers' }) ?? mergedCoverage : mergedCoverage;
-
-      const fc = featureCollection([analysisFeature, cleaned]);
-      const gapGeometry = difference(fc as any);
-
-      if (gapGeometry) {
-        const geoLayer = L.geoJSON(gapGeometry as any, {
-          pane: MAP_PANES.gapOverlays,
-          style: {
-            color: 'hsla(0, 84%, 60%, 0.13)',
-            weight: 0,
-            fillColor: 'hsla(0, 84%, 60%, 0.13)',
-            fillOpacity: 1,
-          },
-        });
-        geoLayer.on('click', (e: L.LeafletEvent) => {
-          selectOverlayEntity({ type: 'coverageGap', radiusKm }, 'coverage-gap-overlay', e);
-        });
-        gapsRef.current.addLayer(geoLayer);
-      }
-    } catch (e) {
-      console.error('Coverage gap calculation error:', e);
-    }
+    renderAccessGapOverlay({
+      group: gapsRef.current,
+      pane: MAP_PANES.gapOverlays,
+      activeProviders: eligibleProviders,
+      radiusKm,
+      onClick: (payload, e) => {
+        selectOverlayEntity(payload, 'coverage-gap-overlay', e);
+      },
+    });
   }, [coverageGaps, activeCoverageProviders, radiusKm, selectOverlayEntity]);
 
   // ── Grey overlay for non-same-day areas + Operational Coverage Model ──
