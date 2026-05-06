@@ -6,11 +6,25 @@ export type MarkerClusterGroupLike = L.LayerGroup & {
   clearLayers: () => void;
 };
 
-export const getMarkerClusterFactory = () => (L as typeof L & {
-  markerClusterGroup?: (options?: Record<string, unknown>) => MarkerClusterGroupLike & {
-    getAllChildMarkers?: () => L.Marker[];
-  };
-}).markerClusterGroup;
+let markerClusterUnavailableWarned = false;
+
+export const getMarkerClusterFactory = () => {
+  const factory = (L as typeof L & {
+    markerClusterGroup?: (options?: Record<string, unknown>) => MarkerClusterGroupLike & {
+      getAllChildMarkers?: () => L.Marker[];
+    };
+  }).markerClusterGroup;
+
+  if (!factory && !markerClusterUnavailableWarned) {
+    markerClusterUnavailableWarned = true;
+    console.warn(
+      '[MapClusterSetup] Leaflet marker clustering is unavailable (L.markerClusterGroup is not loaded). ' +
+        'Clustered map pins (providers, behavioral health, services) may not render.',
+    );
+  }
+
+  return factory;
+};
 
 export const getDeclutterRadiusByZoom = (zoom: number) => {
   if (zoom <= 7) return 22;
