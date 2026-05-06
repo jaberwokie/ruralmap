@@ -2924,11 +2924,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, [layers.cellularCoverage]);
 
   // ── Member pin + radius rings ──
+  // Tracks the last memberLocation we auto-fit to, so we only fit on first
+  // placement or when the underlying address changes (geocode result).
+  // Drag-end re-renders the pin in place but must NOT re-fit/re-zoom the
+  // map — that reads as the pin "jumping" mid-interaction.
+  const lastFittedMemberKeyRef = useRef<string | null>(null);
   useEffect(() => {
     if (!mapReady || !memberPinRef.current || !memberRingsRef.current) return;
     memberPinRef.current.clearLayers();
     memberRingsRef.current.clearLayers();
-    if (!memberLocation) return;
+    if (!memberLocation) {
+      lastFittedMemberKeyRef.current = null;
+      return;
+    }
 
     const { lat, lng } = memberLocation;
     const map = mapRef.current;
