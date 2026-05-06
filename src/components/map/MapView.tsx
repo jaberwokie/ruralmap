@@ -783,7 +783,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     return result;
-  }, [countyFilters, hasServiceLineFilter, ruralServices, selectedCounty, serviceCategoryFilters, typeFilters]);
+  }, [countyFilters, hasServiceLineFilter, ruralServices, searchQuery, selectedCounty, serviceCategoryFilters, typeFilters]);
 
   const filteredCommunityServices = useMemo(() => {
     if (hasServiceLineFilter) return [];
