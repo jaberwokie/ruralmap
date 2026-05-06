@@ -139,9 +139,12 @@ export type StrainCoverageState =
   | 'noSameDay';    // beyond 1.5× radius, no realistic same-day field
 
 export interface FieldResponseStrain {
-  /** Nearest anchored field FTE — the likely responder. */
-  responder: FTECapacity;
-  /** Straight-line km from anchor site to target. */
+  /** Nearest anchored field FTE — the likely responder.
+   *  NULL when no valid anchoring FTE exists for this point/county
+   *  (Remote-only coverage). The UI must not surface a "likely responder"
+   *  in that case — there is no realistic same-day field path. */
+  responder: FTECapacity | null;
+  /** Straight-line km from anchor site to target. NaN when responder is null. */
   km: number;
   oneWayMi: number;
   oneWayMin: number;
@@ -221,13 +224,20 @@ export function computeFieldResponseStrain(
     coverageLabel = 'Outside realistic same-day field response';
   }
 
+  // Gate "likely responder" on real anchoring coverage. Without an anchoring
+  // FTE, surfacing a nearest hub misleads the user into thinking field
+  // response is feasible when it isn't (Remote-only). Distance metrics that
+  // imply feasibility are zeroed out alongside.
+  const hasAnchoringResponder = anchoringFtes.length > 0;
+  const responder = hasAnchoringResponder ? primary.fte : null;
+
   return {
-    responder: primary.fte,
-    km: primary.km,
-    oneWayMi,
-    oneWayMin,
-    roundTripMi: oneWayMi * 2,
-    roundTripMin: oneWayMin * 2,
+    responder,
+    km: hasAnchoringResponder ? primary.km : NaN,
+    oneWayMi: hasAnchoringResponder ? oneWayMi : 0,
+    oneWayMin: hasAnchoringResponder ? oneWayMin : 0,
+    roundTripMi: hasAnchoringResponder ? oneWayMi * 2 : 0,
+    roundTripMin: hasAnchoringResponder ? oneWayMin * 2 : 0,
     withinActive,
     coverage,
     coverageLabel,
@@ -249,6 +259,9 @@ export const STRAIN_TONE: Record<StrainCoverageState, string> = {
  * surfaces remote coordination as the realistic path instead.
  */
 export function getStrainRecommendation(strain: FieldResponseStrain): string {
+  if (!strain.responder) {
+    return 'No realistic same-day field response — remote coordination support likely required';
+  }
   const anchor = strain.responder.anchorSite?.name ?? strain.responder.label;
   switch (strain.coverage) {
     case 'shared':
