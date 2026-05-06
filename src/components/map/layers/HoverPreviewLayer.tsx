@@ -33,7 +33,7 @@ export interface CountyHoverMetrics {
   cellularFiveGPct?: number;
 }
 
-export interface CountyHoverPreview extends CountyHoverMetrics {}
+export type CountyHoverPreview = CountyHoverMetrics;
 
 export interface MarkerHoverPreview {
   name: string;
