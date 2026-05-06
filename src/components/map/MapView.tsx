@@ -44,6 +44,7 @@ import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer
 import { renderFteHubs } from '@/components/map/layers/FteOverlayLayer';
 import { renderUtilizationChoropleth } from '@/components/map/layers/UtilizationOverlayLayer';
 import { renderAccessGapOverlay } from '@/components/map/layers/AccessGapOverlayLayer';
+import { renderProviderRadii } from '@/components/map/layers/ProviderRadiusLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
@@ -1919,74 +1920,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // Draw coverage radii
   useEffect(() => {
     if (!radiusRef.current) return;
-    radiusRef.current.clearLayers();
-
-    if (!coverageRadius) return;
-
-    // Render gate: only draw radii when there is at least one active source.
-    if (activeCoverageProviders.length === 0) return;
-
-    const visibleFacilities = activeCoverageProviders.map((p) => ({
-      id: `${p.kind}:${p.lat},${p.lng}`,
-      lat: p.lat,
-      lng: p.lng,
-      type: p.facilityType,
-    }));
-
-      const accessTier = getProviderAccessTierByKm(radiusKm);
-
-      visibleFacilities.forEach(facility => {
-        const colors = accessTier === 'strong'
-          ? facility.type === 'hospital'
-            ? { stroke: 'hsla(0, 72%, 51%, 0.55)', fill: 'hsla(0, 72%, 51%, 0.10)', dashArray: undefined, haloOpacity: 0.7 }
-            : { stroke: 'hsla(217, 91%, 60%, 0.38)', fill: 'hsla(217, 91%, 60%, 0.08)', dashArray: undefined, haloOpacity: 0.7 }
-          : accessTier === 'conditional'
-            ? facility.type === 'hospital'
-              ? { stroke: 'hsla(0, 72%, 51%, 0.42)', fill: 'hsla(0, 72%, 51%, 0.08)', dashArray: undefined, haloOpacity: 0.52 }
-              : { stroke: 'hsla(217, 91%, 60%, 0.3)', fill: 'hsla(217, 91%, 60%, 0.06)', dashArray: undefined, haloOpacity: 0.52 }
-            : accessTier === 'weak'
-              ? facility.type === 'hospital'
-                ? { stroke: 'hsla(0, 72%, 51%, 0.28)', fill: 'hsla(0, 72%, 51%, 0.05)', dashArray: '8 8', haloOpacity: 0.38 }
-                : { stroke: 'hsla(217, 91%, 60%, 0.22)', fill: 'hsla(217, 91%, 60%, 0.045)', dashArray: '8 8', haloOpacity: 0.38 }
-              : facility.type === 'hospital'
-                ? { stroke: 'hsla(0, 20%, 45%, 0.2)', fill: 'hsla(0, 12%, 50%, 0.035)', dashArray: '4 10', haloOpacity: 0.26 }
-                : { stroke: 'hsla(217, 18%, 52%, 0.18)', fill: 'hsla(217, 18%, 52%, 0.03)', dashArray: '4 10', haloOpacity: 0.26 };
-
-        // Single source of truth for the white-centered gap visual.
-        // Driven directly by the same `coverageGaps` flag that controls the
-        // Access Gaps overlay — no parallel condition can drift.
-        const isGap = coverageGaps;
-        const fillColor = isGap ? '#ffffff' : colors.fill;
-        // Force full opacity in gap mode so no prior blue tint can show
-        // through. Non-gap circles keep `fillOpacity: 1` (the colored fill
-        // already encodes its own alpha in HSLA), preserving prior styling.
-        const fillOpacity = 1;
-
-        const halo = L.circle([facility.lat, facility.lng], {
-          pane: MAP_PANES.driveRadii,
-          radius: radiusKm * 1000,
-          color: `hsla(0, 0%, 100%, ${colors.haloOpacity})`,
-          weight: 4,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          interactive: false,
-        });
-        radiusRef.current!.addLayer(halo);
-
-        const circle = L.circle([facility.lat, facility.lng], {
-          pane: MAP_PANES.driveRadii,
-          radius: radiusKm * 1000,
-          color: colors.stroke, // stroke / ring color preserved in both modes
-          weight: 2.5,
-          fillColor,
-          fillOpacity,
-          dashArray: colors.dashArray,
-          interactive: false,
-          // Tag the SVG path so we can verify the gap state in DOM/tests.
-          className: isGap ? 'coverage-radius coverage-radius--gap' : 'coverage-radius',
-        });
-        radiusRef.current!.addLayer(circle);
-      });
+    if (!coverageRadius) {
+      radiusRef.current.clearLayers();
+      return;
+    }
+    renderProviderRadii({
+      group: radiusRef.current,
+      pane: MAP_PANES.driveRadii,
+      providers: activeCoverageProviders,
+      radiusKm,
+      isGap: coverageGaps,
+    });
   }, [activeCoverageProviders, coverageRadius, coverageGaps, radiusKm]);
 
   // Draw coverage gap overlays
