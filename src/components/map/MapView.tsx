@@ -464,45 +464,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
   return coordinates;
 };
 
-const createPointClusterIcon = (markers: L.Marker[]) => {
-  const pointMarkers = markers as MapPointMarker[];
-  const providerMarkers = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations');
-  const providerCount = providerMarkers.length;
-  const serviceCount = pointMarkers.filter((marker) => marker.__pointKind === 'servicePresence').length;
-  const behavioralHealthCount = pointMarkers.filter((marker) => marker.__pointKind === 'behavioralHealth').length;
-  const hospitalCount = providerMarkers.filter((marker) => marker.__providerType === 'hospital').length;
-  const clinicCount = providerMarkers.filter((marker) => marker.__providerType === 'clinic').length;
-  const totalCount = providerCount + serviceCount + behavioralHealthCount;
-  const iconSize = 24;
-  const categoryCounts = [
-    { color: 'hsl(var(--hospital))', count: hospitalCount },
-    { color: 'hsl(var(--clinic))', count: clinicCount },
-    { color: 'hsl(var(--service-presence))', count: serviceCount },
-    { color: 'hsl(var(--behavioral-health))', count: behavioralHealthCount },
-  ].filter((entry) => entry.count > 0);
-  const primaryPinColor = [...categoryCounts].sort((left, right) => right.count - left.count)[0]?.color ?? 'hsl(var(--clinic))';
-  const primaryPin = getSharedPinSvgMarkup('providerLocations', 16, { color: primaryPinColor });
-  const indicatorDots = categoryCounts
-    .map(({ color, count }) => `<span class="cluster-marker__dot" style="--cluster-dot:${color}" aria-hidden="true" title="${count}"></span>`)
-    .join('');
-
-  const html = `
-    <div class="cluster-marker-composed" data-count="${totalCount}" style="width:${iconSize + 8}px;height:${iconSize + 14}px;">
-      <span class="cluster-marker-composed__pin" aria-hidden="true">${primaryPin}</span>
-      <span class="cluster-marker-composed__badge" aria-hidden="true">
-        <span class="cluster-marker-composed__count">${getClusterBadgeLabel(totalCount)}</span>
-      </span>
-      ${indicatorDots ? `<span class="cluster-marker-composed__indicators" aria-hidden="true">${indicatorDots}</span>` : ''}
-    </div>
-  `.trim();
-
-  return L.divIcon({
-    className: '',
-    html,
-    iconSize: [iconSize, iconSize],
-    iconAnchor: [iconSize / 2, iconSize],
-  });
-};
+// Cluster icon construction (createPointClusterIcon) lives in MapClusterSetup.
 
 // Hover preview helpers (numberFormatter, county display name, severity,
 // metric row, info button) live in HoverPreviewLayer.
