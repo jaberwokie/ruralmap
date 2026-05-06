@@ -3,13 +3,16 @@ import type { LayerState, CoverageState, EngagementGapView } from '@/types/layer
 import { getToggleDiagnosticConfig } from '@/data/layer-registry';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
+// Default loadout: lead with coverage and field reach. Analysis layers
+// (BH, Services, Access Gaps, Tier 1, Tribal, Connectivity) are intentionally
+// off so the initial map is operationally useful without visual noise.
 const DEFAULT_LAYERS: LayerState = {
   counties: true,
-  services: true,
+  services: false,
   behavioralHealth: false,
   serviceLocations: true,
-  operationalCoverage: false,
-  fteCapacity: false,
+  operationalCoverage: true,
+  fteCapacity: true,
   utilizationIntensity: false,
   engagementGap: false,
   broadbandAccess: false,
