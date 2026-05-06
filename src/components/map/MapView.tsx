@@ -1735,7 +1735,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     coverageGreyRef.current.clearLayers();
     operationalResponseMarkerRef.current.clearLayers();
 
-    if (!layers.operationalCoverage || coverageGaps) return;
+    if (!layers.operationalCoverage || coverageGaps) {
+      // Dev assertion: when Response Capability is off, the marker group must
+      // not retain any planned/scheduled/remote response-capability pins.
+      if (import.meta.env.DEV && !layers.operationalCoverage) {
+        const remaining = operationalResponseMarkerRef.current.getLayers().length;
+        if (remaining > 0) {
+          console.error(
+            `[ResponseCapability] Expected 0 markers when layer is off, found ${remaining}.`,
+          );
+        }
+      }
+      return;
+    }
 
     const activeZone = activeCoverageZone;
     const inactiveArea = activeZone
