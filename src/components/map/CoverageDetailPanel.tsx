@@ -244,8 +244,8 @@ const FieldResponseStrainSection = ({
     ? 'text-emerald-700'
     : strain.coverage === 'noSameDay' ? 'text-red-600' : 'text-amber-700';
 
-  const role = FTE_ROLE_COLORS[strain.responder.id];
-  const anchorName = strain.responder.anchorSite?.name ?? strain.responder.label;
+  const role = strain.responder ? FTE_ROLE_COLORS[strain.responder.id] : null;
+  const anchorName = strain.responder ? (strain.responder.anchorSite?.name ?? strain.responder.label) : null;
 
   const tier = getStrainTier(strain);
 
@@ -259,22 +259,30 @@ const FieldResponseStrainSection = ({
         <span className={`text-[10px] font-semibold uppercase tracking-wide ${STRAIN_TIER_TONE[tier]}`}>{STRAIN_TIER_LABEL[tier]}</span>
       </div>
 
-      <div className="flex items-start gap-1.5">
-        <div className="w-2 h-2 mt-1 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
-        <div className="text-[11px] text-foreground leading-tight">
-          <span className="font-medium">Likely responder:</span> {strain.responder.label}
-          {strain.responder.anchorSite && (
-            <span className="text-muted-foreground"> · from {anchorName}</span>
-          )}
-        </div>
-      </div>
+      {strain.responder ? (
+        <>
+          <div className="flex items-start gap-1.5">
+            <div className="w-2 h-2 mt-1 rounded-full flex-shrink-0" style={{ backgroundColor: role?.primary }} />
+            <div className="text-[11px] text-foreground leading-tight">
+              <span className="font-medium">Likely responder:</span> {strain.responder.label}
+              {strain.responder.anchorSite && (
+                <span className="text-muted-foreground"> · from {anchorName}</span>
+              )}
+            </div>
+          </div>
 
-      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
-        <span className="text-muted-foreground">One-way</span>
-        <span className="text-right font-medium text-foreground">~{strain.oneWayMi} mi · ~{strain.oneWayMin} min</span>
-        <span className="text-muted-foreground">Round-trip</span>
-        <span className="text-right font-semibold text-foreground">~{strain.roundTripMi} mi · ~{strain.roundTripMin} min</span>
-      </div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[11px]">
+            <span className="text-muted-foreground">One-way</span>
+            <span className="text-right font-medium text-foreground">~{strain.oneWayMi} mi · ~{strain.oneWayMin} min</span>
+            <span className="text-muted-foreground">Round-trip</span>
+            <span className="text-right font-semibold text-foreground">~{strain.roundTripMi} mi · ~{strain.roundTripMin} min</span>
+          </div>
+        </>
+      ) : (
+        <div className="text-[11px] text-foreground leading-tight">
+          <span className="font-medium">Field response:</span> Remote coordination only
+        </div>
+      )}
 
       <div className={`text-[10px] font-medium ${sameDayTone}`}>{sameDayLabel}</div>
       <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
