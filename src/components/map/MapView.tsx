@@ -657,6 +657,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       result = result.filter((facility) => countyFilters.has(facility.county));
     }
 
+    // County review scoping (parity with Services/BH at line 759):
+    // when a county is selected via map/sidebar, narrow provider pins to
+    // that county so the map matches the county detail panel one-for-one.
+    // Additive — does not change clustering, Access Gaps, FTE, or
+    // Response Capability inputs (which read from `providerFacilities` /
+    // FTE geometry, not this filtered list).
+    if (selectedCounty) {
+      result = result.filter((facility) => sameCounty(facility.county, selectedCounty));
+    }
+
     if (typeFilters && typeFilters.size > 0) {
       const providerTypeFilters = new Set(
         [...typeFilters].filter((type) => type === 'hospital' || type === 'clinic')
@@ -681,7 +691,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     return result;
-  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters, hasServiceLineFilter]);
+  }, [providerMarkerFacilities, searchQuery, countyFilters, selectedCounty, typeFilters, hasServiceLineFilter]);
 
   const topProvidersVisible = useMemo(() => {
     const scored = providerFilteredFacilities.map((facility) => ({
