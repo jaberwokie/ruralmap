@@ -117,41 +117,8 @@ interface MapViewProps {
   decisionAssistOpen?: boolean;
 }
 
-interface CountyHoverMetrics {
-  county: string;
-  totalMembers?: number;
-  unengagedMembers?: number;
-  providerCount?: number;
-  serviceCount?: number;
-  coverageGapPercent?: number;
-  broadbandStatus?: BroadbandStatus;
-  pct_100_20_plus?: number;
-  pct_25_3_to_100_20?: number;
-  pct_below_25_3?: number;
-  broadbandReadiness?: OperationalBroadbandReadiness;
-  broadbandSatelliteShare?: number;
-  broadbandUneven?: boolean;
-  cellularReadiness?: OperationalCellularReadiness;
-  cellularLtePct?: number;
-  cellularFiveGPct?: number;
-}
+// Hover preview types are owned by HoverPreviewLayer.
 
-interface CountyHoverPreview extends CountyHoverMetrics {
-}
-
-interface MarkerHoverPreview {
-  name: string;
-  subtitle?: string;
-  address?: string;
-  detail?: string;
-  extraHtml?: string;
-  memberDistanceMi?: number;
-  memberTierLabel?: string;
-  /** Drive distance + time line for Field Response county markers. */
-  driveEstimate?: string;
-}
-
-type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
 
 // Member distance helpers extracted to @/lib/operational/memberAccess.
 import { computeMemberDistanceInfo } from '@/lib/operational';
