@@ -259,6 +259,9 @@ export const STRAIN_TONE: Record<StrainCoverageState, string> = {
  * surfaces remote coordination as the realistic path instead.
  */
 export function getStrainRecommendation(strain: FieldResponseStrain): string {
+  if (!strain.responder) {
+    return 'No realistic same-day field response — remote coordination support likely required';
+  }
   const anchor = strain.responder.anchorSite?.name ?? strain.responder.label;
   switch (strain.coverage) {
     case 'shared':
