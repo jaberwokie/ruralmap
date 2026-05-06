@@ -20,7 +20,10 @@ import type {
   StagingProviderRow, ValidationMessage, ValidationSeverity, AuditLogRow,
 } from '@/types/mappingPipeline';
 import { writeAudit, listAudit } from '@/utils/mappingPipelineStore';
-import { appendImportedFacilities } from '@/utils/importedFacilitiesStore';
+import {
+  appendImportedFacilities, getImportedFacilities, upsertImportedFacility,
+} from '@/utils/importedFacilitiesStore';
+import { findProviderMatch } from '@/utils/providerMatchKey';
 import {
   geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
   type GeocodeOutcome, type GeocodeRunSummary,
