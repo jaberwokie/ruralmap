@@ -1741,7 +1741,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       if (import.meta.env.DEV && !layers.operationalCoverage) {
         const remaining = operationalResponseMarkerRef.current.getLayers().length;
         if (remaining > 0) {
-          // eslint-disable-next-line no-console
           console.error(
             `[ResponseCapability] Expected 0 markers when layer is off, found ${remaining}.`,
           );
