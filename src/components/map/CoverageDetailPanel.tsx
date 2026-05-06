@@ -14,7 +14,7 @@ import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
-import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getCountyResponseClassification, getStrainTier, STRAIN_TIER_LABEL, STRAIN_TIER_TONE, STRAIN_TIER_OPERATIONAL_REALITY } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getCountyResponseClassification, getStrainTier, STRAIN_TIER_LABEL, STRAIN_TIER_TONE, STRAIN_TIER_OPERATIONAL_REALITY, getCountyReachShape } from '@/utils/fieldResponseStrain';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
@@ -185,16 +185,20 @@ const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; 
 };
 
 /** Capacity Status section for county panel */
-const CapacityStatusSection = ({ county }: { county: string }) => {
+const CapacityStatusSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   if (serving.length === 0) return null;
+
+  const reach = getCountyReachShape(county, coverageRadiusKm);
 
   // Show all assigned FTEs
   return (
     <div className="space-y-1.5 mb-2">
       {serving.map(fte => {
         const role = FTE_ROLE_COLORS[fte.id];
-        const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
+        const coverageLabel = fte.hubLocation
+          ? (reach.isMixed ? 'Local field coverage' : 'Active Field Coverage')
+          : (reach.isMixed ? 'Remote support outside local reach' : 'Remote Only');
         return (
           <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
             <div className="flex items-center gap-1.5 mb-0.5">
@@ -231,6 +235,39 @@ const FieldResponseStrainSection = ({
     if (cd) point = { lat: cd.center[0], lng: cd.center[1] };
   }
   if (!point) return null;
+
+  // Mixed-reach guard: when looking at a county as a whole (no explicit
+  // point target), don't generalise one anchor FTE to the whole county.
+  // Show local + remote framing instead.
+  const isCountyWide = !target && !!county;
+  const reach = county ? getCountyReachShape(county, coverageRadiusKm) : null;
+  if (isCountyWide && reach?.isMixed) {
+    return (
+      <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
+        <div className="flex items-center justify-between gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+          </div>
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-700">Mixed</span>
+        </div>
+        <div className="text-[11px] text-foreground leading-tight">
+          <span className="font-medium">Field reach:</span> Mixed across this county
+        </div>
+        <div className="text-[10px] text-muted-foreground leading-tight">
+          {reach.anchoringFtes.length > 0
+            ? `Local field response available near ${reach.anchoringFtes.join(', ')}. Remote coordination likely outside the local field zone.`
+            : 'Field response depends on the local site. Remote coordination likely outside any local field zone.'}
+        </div>
+        <div className="text-[10px] leading-tight pt-1 border-t border-border/60 text-amber-700">
+          <span className="font-semibold">Operational reality:</span> One FTE does not cover the whole county. Use a specific site or member location for site-level response.
+        </div>
+        <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
+          {caption ?? 'County is geographically large — site-level distance applies; county-wide responder is not meaningful.'}
+        </div>
+      </div>
+    );
+  }
 
   const strain = computeFieldResponseStrain(point, coverageRadiusKm, county ? { county } : undefined);
   if (!strain) return null;
@@ -1507,7 +1544,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       {hasFte && (
         <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
           <FieldCapacitySection county={county} />
-          <CapacityStatusSection county={county} />
+          <CapacityStatusSection county={county} coverageRadiusKm={coverageRadiusKm} />
           <FieldResponseStrainSection county={county} coverageRadiusKm={coverageRadiusKm} />
         </DetailSection>
       )}
