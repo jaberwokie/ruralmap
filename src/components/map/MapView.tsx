@@ -43,6 +43,7 @@ import { renderBehavioralHealthMarkers } from '@/components/map/layers/Behaviora
 import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer';
 import { renderFteHubs } from '@/components/map/layers/FteOverlayLayer';
 import { renderFteFieldCoverageZones } from '@/components/map/layers/FieldCoverageZoneLayer';
+import { renderSelectedCountyHighlight } from '@/components/map/layers/SelectedCountyHighlightLayer';
 import { renderUtilizationChoropleth } from '@/components/map/layers/UtilizationOverlayLayer';
 import { renderAccessGapOverlay } from '@/components/map/layers/AccessGapOverlayLayer';
 import { renderProviderRadii } from '@/components/map/layers/ProviderRadiusLayer';
@@ -1642,23 +1643,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!highlightsRef.current) return;
     highlightsRef.current.clearLayers();
 
-    if (selectedCounty) {
-      const selectedCountyFeature = getCountyFeature(selectedCounty);
-      if (selectedCountyFeature) {
-        const selectedLayer = createGeoJsonLayer(
-          selectedCountyFeature,
-          MAP_PANES.highlights,
-          {
-            color: 'hsl(200, 60%, 50%)',
-            weight: 2.5,
-            fillColor: 'hsla(200, 60%, 50%, 0.08)',
-            fillOpacity: 1,
-          },
-          false,
-        );
-        highlightsRef.current.addLayer(selectedLayer);
-      }
-    }
+    renderSelectedCountyHighlight({
+      group: highlightsRef.current,
+      pane: MAP_PANES.highlights,
+      selectedCounty,
+      getCountyFeature,
+      createGeoJsonLayer,
+    });
 
     if (!layers.fteCapacity || activeFteCoverageIds.length === 0) return;
 
