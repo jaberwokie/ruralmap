@@ -1,5 +1,5 @@
 import { MapPin, Navigation, AlertTriangle, CheckCircle2, Brain, Route, TrainFront, Bus } from 'lucide-react';
-import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getStrainTier, STRAIN_TIER_LABEL, STRAIN_TIER_TONE, STRAIN_TIER_OPERATIONAL_REALITY } from '@/utils/fieldResponseStrain';
 import { FTE_ROLE_COLORS } from '@/data/fte-capacity';
 import type { MemberAccessAnalysis, AccessTierKey } from '@/hooks/useMemberAccess';
 import type { Facility } from '@/data/facilities';
@@ -382,11 +382,16 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
         </div>
       </div>
 
-      {strain && (
+      {strain && (() => {
+        const tier = getStrainTier(strain);
+        return (
         <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
-          <div className="flex items-center gap-1.5">
-            <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
-            <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+          <div className="flex items-center justify-between gap-1.5">
+            <div className="flex items-center gap-1.5">
+              <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+            </div>
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${STRAIN_TIER_TONE[tier]}`}>{STRAIN_TIER_LABEL[tier]}</span>
           </div>
 
           <div className="flex items-start gap-1.5">
@@ -415,11 +420,16 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
             {getCapacityBoundaryLabel(strain)}
           </div>
 
+          <div className={`text-[10px] leading-tight pt-1 border-t border-border/60 ${STRAIN_TIER_TONE[tier]}`}>
+            <span className="font-semibold">Operational reality:</span> {STRAIN_TIER_OPERATIONAL_REALITY[tier]}
+          </div>
+
           <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
             Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed. Remote support remains available regardless of field response reach.
           </div>
         </div>
-      )}
+        );
+      })()}
 
       <div className="divide-y divide-border/50">
         {analysis.tiers.map(tier => (

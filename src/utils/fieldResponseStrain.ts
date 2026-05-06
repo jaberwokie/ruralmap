@@ -280,3 +280,40 @@ export function getCapacityBoundaryLabel(strain: FieldResponseStrain): string {
       return 'Current model does not support reliable same-day field response';
   }
 }
+
+// ── Strain tier (clarity-only mapping over existing classification) ──
+// Maps the existing `coverage` state to a 3-tier user-facing label.
+// No new math — purely a string view of the existing strain result.
+
+export type StrainTier = 'low' | 'moderate' | 'high';
+
+export const STRAIN_TIER_LABEL: Record<StrainTier, string> = {
+  low: 'Low',
+  moderate: 'Moderate',
+  high: 'High',
+};
+
+export const STRAIN_TIER_TONE: Record<StrainTier, string> = {
+  low: 'text-emerald-700',
+  moderate: 'text-amber-700',
+  high: 'text-red-600',
+};
+
+export const STRAIN_TIER_OPERATIONAL_REALITY: Record<StrainTier, string> = {
+  low: 'Same-day response is realistic',
+  moderate: 'Response possible, but resource-constrained',
+  high: 'Field response unlikely without reallocation',
+};
+
+export function getStrainTier(strain: FieldResponseStrain): StrainTier {
+  switch (strain.coverage) {
+    case 'shared':
+      return 'low';
+    case 'single':
+    case 'strained':
+      return 'moderate';
+    case 'noSameDay':
+      return 'high';
+  }
+}
+

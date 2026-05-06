@@ -14,7 +14,7 @@ import { type LocalTransitProvider, getProviderZones, LOCAL_TRANSIT_SERVICE_TYPE
 import { hasNoLocalTransit } from '@/data/no-transit-counties';
 import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS } from '@/data/operational-coverage';
 import { getCountyCoverageBreakdown, kmToMiles, kmToDriveMinutes } from '@/utils/coverageZones';
-import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getCountyResponseClassification } from '@/utils/fieldResponseStrain';
+import { computeFieldResponseStrain, STRAIN_TONE, getStrainRecommendation, getCapacityBoundaryLabel, getCountyResponseClassification, getStrainTier, STRAIN_TIER_LABEL, STRAIN_TIER_TONE, STRAIN_TIER_OPERATIONAL_REALITY } from '@/utils/fieldResponseStrain';
 import { COUNTY_FTE_MAP, fteCapacityData, getLoadStatus, LOAD_STATUS_LABELS, LOAD_STATUS_COLORS, LOAD_STATUS_GUIDANCE, FTE_ROLE_COLORS, LoadStatus } from '@/data/fte-capacity';
 import { getCountyUtilization, getFacilityUtilization, getUtilizationTier, UTILIZATION_COLORS, OPERATIONAL_READ_COLORS, getCountyEngagementMetrics } from '@/utils/utilizationAggregation';
 import { isBehavioralHealthService } from '@/utils/ruralServiceClassification';
@@ -247,11 +247,16 @@ const FieldResponseStrainSection = ({
   const role = FTE_ROLE_COLORS[strain.responder.id];
   const anchorName = strain.responder.anchorSite?.name ?? strain.responder.label;
 
+  const tier = getStrainTier(strain);
+
   return (
     <div className="rounded-md border border-border bg-card px-2 py-2 mb-2 space-y-1.5">
-      <div className="flex items-center gap-1.5">
-        <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+      <div className="flex items-center justify-between gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <Navigation className="w-3 h-3 flex-shrink-0 text-foreground/70" />
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-foreground">Field Response Strain</span>
+        </div>
+        <span className={`text-[10px] font-semibold uppercase tracking-wide ${STRAIN_TIER_TONE[tier]}`}>{STRAIN_TIER_LABEL[tier]}</span>
       </div>
 
       <div className="flex items-start gap-1.5">
@@ -278,6 +283,10 @@ const FieldResponseStrainSection = ({
       </div>
       <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]} opacity-90`}>
         {getCapacityBoundaryLabel(strain)}
+      </div>
+
+      <div className={`text-[10px] leading-tight pt-1 border-t border-border/60 ${STRAIN_TIER_TONE[tier]}`}>
+        <span className="font-semibold">Operational reality:</span> {STRAIN_TIER_OPERATIONAL_REALITY[tier]}
       </div>
 
       <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
