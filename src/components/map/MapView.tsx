@@ -1783,6 +1783,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
     operationalCoverageRef.current.addLayer(activeOutline);
 
+    // Hard gate: response-capability county markers (active / planned / remote)
+    // must only render when the Response Capability layer toggle is on. The
+    // outer effect already returns early when the toggle is off, but keep this
+    // explicit so any future change to the outer flow cannot leak planned
+    // field-response pins (e.g. Churchill) onto the map while the layer is off.
+    if (!layers.operationalCoverage) return;
+
     nevadaCounties.forEach((county) => {
       const breakdown = getCountyCoverageBreakdown(county.name, coverageRadiusKm);
       const category = getResponseCapabilityCategory(breakdown);
