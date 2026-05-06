@@ -156,7 +156,7 @@ const CLIPPED_COUNTY_FEATURES = new Map<string, Feature<Polygon | MultiPolygon>>
 );
 
 const getCountyFeature = (countyName: string) => CLIPPED_COUNTY_FEATURES.get(countyName) ?? null;
-const DEBUG_ENABLED = DEBUG_CLICKS;
+
 
 const DEBUG_LAYER_DEFINITIONS: DebugLayerDefinition[] = [
   {
