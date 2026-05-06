@@ -313,9 +313,9 @@ export const STRAIN_TIER_TONE: Record<StrainTier, string> = {
 };
 
 export const STRAIN_TIER_OPERATIONAL_REALITY: Record<StrainTier, string> = {
-  low: 'Same-day response is realistic',
-  moderate: 'Response possible, but resource-constrained',
-  high: 'Field response unlikely without reallocation',
+  low: 'Same-day field response is realistic.',
+  moderate: 'Field response possible, but capacity-constrained.',
+  high: 'Field response unlikely without reallocation.',
 };
 
 export function getStrainTier(strain: FieldResponseStrain): StrainTier {
