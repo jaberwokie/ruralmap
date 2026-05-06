@@ -39,6 +39,7 @@ import { HoverPreviewLayer, type CountyHoverPreview, type MarkerHoverPreview, ty
 import { renderCountyPolygons } from '@/components/map/layers/CountyPolygonLayer';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLayer';
+import { renderBehavioralHealthMarkers } from '@/components/map/layers/BehavioralHealthMarkerLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
@@ -1861,70 +1862,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     if (layers.behavioralHealth && !topProvidersOnly) {
-      const markerSize = MAP_PIN_VISUALS.behavioralHealth.size;
-      const hitSize = Math.max(markerSize, 28);
-      const behavioralHealthIcon = L.divIcon({
-        className: '',
-        html: getSharedPinSvgMarkup('behavioralHealth', markerSize),
-        iconSize: [hitSize, hitSize],
-        iconAnchor: [hitSize / 2, hitSize],
-        tooltipAnchor: [0, -hitSize],
-      });
-
-      filteredBehavioralHealthServices.forEach((service) => {
-        const countyServices = behavioralHealthServicesByCounty.get(service.county) ?? [service];
-        const [displayLat, displayLng] = displayCoordinates.get(`behavioral-health:${service.id}`) ?? [service.lat, service.lng];
-
-        const marker = L.marker([displayLat, displayLng], {
-          icon: behavioralHealthIcon,
-          pane: MAP_PANES.behavioralHealth,
-          zIndexOffset: POINT_MARKER_PRIORITY.base,
-        }) as MapPointMarker;
-
-        marker.__pointKind = 'behavioralHealth';
-        marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
-        marker.__entity = { type: 'ruralService', service };
-        marker.__entityType = 'ruralService';
-        marker.__entityId = service.id;
-        marker.__entityName = service.name;
-        applyMarkerPriority(marker, 'default');
-        const bhValidation = serviceValidation.records.get(service.id);
-        if (bhValidation && bhValidation.confidence !== 'verified') {
-          marker.setOpacity(0.82);
-        }
-        logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'behavioral-health-marker', pointKind: marker.__pointKind });
-
-        // No hover interaction for pins — click only
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker', event, marker);
-        });
-
-        // Native DOM click backup — same pattern as provider markers
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'behavioral-health-marker-native' });
-              selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity | undefined, 'behavioral-health-marker-native', null, marker);
-            });
-          }
-        });
-
-        marker.on('mouseover', () => {
-          const distInfo = getMemberDistanceInfo(service.lat, service.lng);
-          markerHoverPreviewRef.current({
-            name: service.name,
-            subtitle: `${service.city}, ${service.county} County`,
-            address: service.address,
-            detail: `Behavioral Health · ${service.category}`,
-            ...distInfo,
-          });
-        });
-        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
-
-        // Add to MarkerClusterGroup — same click interception path as providers.
-        pointClusterRef.current!.addLayer(marker);
+      renderBehavioralHealthMarkers({
+        services: filteredBehavioralHealthServices,
+        displayCoordinates,
+        behavioralHealthPane: MAP_PANES.behavioralHealth,
+        baseZIndexOffset: POINT_MARKER_PRIORITY.base,
+        serviceValidation,
+        applyMarkerPriority,
+        selectMarkerEntity,
+        selectMarkerEntityRef,
+        getMemberDistanceInfo,
+        markerHoverPreviewRef,
+        logMapSelectionDebug,
+        cluster: pointClusterRef.current!,
       });
     }
 
