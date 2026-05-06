@@ -325,10 +325,18 @@ export default function AdminMappingProviders() {
           loading={loading}
           uploading={uploading}
           onUpload={handleStagingUpload}
-          onPromote={async (id) => { await promoteStagingProvider(id); toast.success('Promoted — added to map.'); await refresh(); }}
+          onPromote={async (id) => {
+            const out = await promoteStagingProvider(id);
+            if (out === 'created') toast.success('Created — new pin added.');
+            else if (out === 'updated') toast.success('Updated — existing pin refreshed.');
+            else toast.warning('Conflict — left pending. Resolve in staging.');
+            await refresh();
+          }}
           onPromoteBulk={async (ids) => {
             const res = await promoteStagingProvidersBulk(ids);
-            const parts: string[] = [`${res.promoted} promoted`];
+            const parts: string[] = [
+              `${res.created} created`, `${res.updated} updated`, `${res.conflict} conflict`,
+            ];
             if (res.skipped) parts.push(`${res.skipped} skipped`);
             if (res.failed) parts.push(`${res.failed} failed`);
             toast.success(`Bulk promote: ${parts.join(', ')}`);
