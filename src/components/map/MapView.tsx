@@ -39,6 +39,7 @@ import { HoverPreviewLayer, type CountyHoverPreview, type MarkerHoverPreview, ty
 import { renderCountyPolygons } from '@/components/map/layers/CountyPolygonLayer';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLayer';
+import { renderBehavioralHealthMarkers } from '@/components/map/layers/BehavioralHealthMarkerLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
