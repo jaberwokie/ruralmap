@@ -50,4 +50,8 @@ export interface DecisionAssistResult {
   constraint: string | null;
   nextStaffAction: string;
   primaryTargets: DecisionAssistTarget[];
+  /** Tightened single-line primary action for staff. */
+  primary: string;
+  /** Optional backup line. Null when none needed. */
+  backup: string | null;
 }
