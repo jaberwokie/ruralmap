@@ -17,7 +17,6 @@ export const getMarkerClusterFactory = () => {
 
   if (!factory && !markerClusterUnavailableWarned) {
     markerClusterUnavailableWarned = true;
-    // eslint-disable-next-line no-console
     console.warn(
       '[MapClusterSetup] Leaflet marker clustering is unavailable (L.markerClusterGroup is not loaded). ' +
         'Clustered map pins (providers, behavioral health, services) may not render.',
