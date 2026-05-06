@@ -3,7 +3,7 @@ import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import type { BroadbandStatus, OperationalBroadbandReadiness } from '@/data/broadband-coverage';
 import type { OperationalCellularReadiness } from '@/data/cellular-coverage';
-import type { LayerState } from '@/types/layers';
+
 
 /**
  * Anchored hover-preview overlay extracted from MapView. Pure display:
