@@ -382,35 +382,11 @@ type MapPointMarker = L.Marker & {
 
 type PointSelectionEntity = Extract<MapEntity, { type: 'facility' | 'ruralService' }>;
 
-type MarkerClusterGroupLike = L.LayerGroup & {
-  addLayers: (layers: L.Layer[]) => void;
-  clearLayers: () => void;
-};
-
-const markerClusterFactory = (L as typeof L & {
-  markerClusterGroup?: (options?: Record<string, unknown>) => MarkerClusterGroupLike & {
-    getAllChildMarkers?: () => L.Marker[];
-  };
-}).markerClusterGroup;
-
 const POINT_MARKER_PRIORITY = {
   base: 2000,
   hoveredBoost: 1100,
   selectedBoost: 2200,
 } as const;
-
-
-
-const getDeclutterRadiusByZoom = (zoom: number) => {
-  if (zoom <= 7) return 22;
-  if (zoom === 8) return 18;
-  if (zoom === 9) return 14;
-  if (zoom === 10) return 10;
-  if (zoom === 11) return 6;
-  return 4;
-};
-
-const getClusterBadgeLabel = (count: number) => (count > 99 ? '99+' : String(count));
 
 const OVERLAP_DECLUTTER_ZOOM = 11;
 const NEARBY_MARKER_THRESHOLD = 0.00035;
