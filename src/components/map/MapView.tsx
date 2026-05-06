@@ -1219,54 +1219,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
-    markersRef.current = markerClusterFactory?.({
-      maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      spiderfyOnMaxZoom: false,
-      disableClusteringAtZoom: 12,
-      removeOutsideVisibleBounds: false,
-      animate: true,
-      animateAddingMarkers: false,
-      spiderfyDistanceMultiplier: 0.85,
-      clusterPane: MAP_PANES.facilityMarkers,
-      spiderLegPolylineOptions: {
-        color: 'hsl(var(--border))',
-        weight: 1,
-        opacity: 0.85,
-      },
-      iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
-    }) ?? null;
+    markersRef.current = createFacilityClusterGroup(MAP_PANES.facilityMarkers);
     markersRef.current?.addTo(map);
 
     // Facility cluster group click handler — uses stable ref
-    (markersRef.current as any)?.on?.('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
+    bindClusterChildClick(markersRef.current, (marker, e) => {
+      const m = marker as MapPointMarker | undefined;
+      selectMarkerEntityRef.current(m?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, m);
     });
     topProviderMarkersRef.current = L.layerGroup().addTo(map);
-    pointClusterRef.current = markerClusterFactory?.({
-      maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      // Spiderfy any cluster the user clicks once it can't zoom any further —
-      // critical for shared-coordinate stacks (e.g. city-centroid geocodes
-      // where 10+ records land on the same lat/lng).
-      spiderfyOnMaxZoom: true,
-      // Do NOT disable clustering by zoom — coincident markers must remain
-      // grouped and spiderfiable at any zoom level.
-      removeOutsideVisibleBounds: false,
-      animate: true,
-      animateAddingMarkers: false,
-      spiderfyDistanceMultiplier: 1.4,
-      clusterPane: MAP_PANES.groupedMarkers,
-      spiderLegPolylineOptions: {
-        color: 'hsl(var(--border))',
-        weight: 1,
-        opacity: 0.85,
-      },
-      iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
-    }) ?? null;
+    pointClusterRef.current = createGroupedPointClusterGroup(MAP_PANES.groupedMarkers);
     pointClusterRef.current?.addTo(map);
 
     // Handle clicks on individual markers inside the cluster group.
@@ -1274,9 +1236,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // marker.on('click') may not fire reliably. This listener catches all
     // child-marker clicks via the cluster group's own event system.
     // Uses stable ref to avoid stale closure (bound once at map init).
-    (pointClusterRef.current as any)?.on?.('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'cluster-group-click', e, marker);
+    bindClusterChildClick(pointClusterRef.current, (marker, e) => {
+      const m = marker as MapPointMarker | undefined;
+      selectMarkerEntityRef.current(m?.__entity as PointSelectionEntity | undefined, 'cluster-group-click', e, m);
     });
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
