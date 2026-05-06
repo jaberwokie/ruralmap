@@ -150,7 +150,10 @@ export type AuditAction =
   | 'record_promoted'
   | 'record_rejected'
   | 'record_edited'
-  | 'verification_changed';
+  | 'verification_changed'
+  | 'provider_created'
+  | 'provider_updated'
+  | 'provider_skipped_conflict';
 
 export type PipelineKey = 'services' | 'behavioral_health' | 'provider_mapping';
 
