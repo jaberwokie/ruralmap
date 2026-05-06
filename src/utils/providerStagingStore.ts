@@ -235,10 +235,10 @@ export const rejectStagingProvider = async (id: string): Promise<void> => {
   });
 };
 
-const toFacility = (r: StagingProviderRow): Facility => {
+const toFacility = (r: StagingProviderRow, id?: string): Facility => {
   const type: FacilityType = r.type === 'hospital' ? 'hospital' : 'clinic';
-  return {
-    id: `staging-${r.id}`,
+  const f: Facility & { npi?: string | null } = {
+    id: id ?? `staging-${r.id}`,
     name: r.name,
     type,
     city: r.city ?? '',
@@ -251,9 +251,16 @@ const toFacility = (r: StagingProviderRow): Facility => {
     notes: r.notes ?? undefined,
     dataConfidence: 'Unverified',
   };
+  if (r.npi) (f as { npi?: string | null }).npi = r.npi;
+  return f;
 };
 
-export const promoteStagingProvider = async (id: string): Promise<void> => {
+export type PromoteOutcome = 'created' | 'updated' | 'conflict';
+
+export const promoteStagingProvider = async (
+  id: string,
+  options?: { resolveConflict?: 'force_update' | 'force_create' },
+): Promise<PromoteOutcome> => {
   const { data: stg, error: e1 } = await (tbl() as unknown as {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingProviderRow | null; error: { message: string } | null }> } };
   }).select('*').eq('id', id).single();
@@ -263,27 +270,78 @@ export const promoteStagingProvider = async (id: string): Promise<void> => {
     throw new Error('Cannot promote without latitude and longitude. Geocode first.');
   }
 
-  appendImportedFacilities([toFacility(stg)]);
+  const existing = getImportedFacilities();
+  const match = findProviderMatch(
+    {
+      name: stg.name, npi: stg.npi, city: stg.city, county: stg.county,
+      phone: stg.phone, street_address: stg.street_address,
+    },
+    existing,
+  );
+
+  let outcome: PromoteOutcome;
+  let action: 'provider_created' | 'provider_updated' | 'provider_skipped_conflict';
+
+  if (match.outcome === 'conflict' && !options?.resolveConflict) {
+    // Leave staging pending; do not auto-merge.
+    await writeAudit({
+      pipeline: 'provider_mapping', action: 'provider_skipped_conflict',
+      target_table: 'staging_providers', target_row_id: id,
+      details: {
+        name: stg.name,
+        candidate_ids: (match.candidates ?? []).map((c) => c.id),
+      },
+    });
+    return 'conflict';
+  }
+
+  if (match.outcome === 'match' || (match.outcome === 'conflict' && options?.resolveConflict === 'force_update')) {
+    const target = match.matched ?? match.candidates?.[0];
+    if (target && options?.resolveConflict !== 'force_create') {
+      upsertImportedFacility(toFacility(stg, target.id), target.id);
+      outcome = 'updated';
+      action = 'provider_updated';
+    } else {
+      appendImportedFacilities([toFacility(stg)]);
+      outcome = 'created';
+      action = 'provider_created';
+    }
+  } else {
+    appendImportedFacilities([toFacility(stg)]);
+    outcome = 'created';
+    action = 'provider_created';
+  }
 
   await (tbl() as unknown as {
     update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
   }).update({ review_status: 'approved', last_reviewed_at: new Date().toISOString() }).eq('id', id);
 
   await writeAudit({
-    pipeline: 'provider_mapping', action: 'record_promoted',
+    pipeline: 'provider_mapping', action,
     target_table: 'staging_providers', target_row_id: id,
-    details: { name: stg.name, source_row_number: stg.source_row_number, target: 'imported_facilities_store' },
+    details: {
+      name: stg.name,
+      source_row_number: stg.source_row_number,
+      target: 'imported_facilities_store',
+      strategy: match.strategy ?? null,
+      matched_id: match.matched?.id ?? null,
+    },
   });
+  return outcome;
 };
 
 export const promoteStagingProvidersBulk = async (
   ids: string[],
-): Promise<{ promoted: number; skipped: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
-  let promoted = 0, skipped = 0, failed = 0;
+): Promise<{ promoted: number; created: number; updated: number; conflict: number; skipped: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
+  let created = 0, updated = 0, conflict = 0, skipped = 0, failed = 0;
   const failures: Array<{ id: string; reason: string }> = [];
   for (const id of ids) {
-    try { await promoteStagingProvider(id); promoted += 1; }
-    catch (e) {
+    try {
+      const out = await promoteStagingProvider(id);
+      if (out === 'created') created += 1;
+      else if (out === 'updated') updated += 1;
+      else if (out === 'conflict') conflict += 1;
+    } catch (e) {
       const msg = (e as Error)?.message ?? 'unknown';
       if (/validation errors/i.test(msg) || /latitude/i.test(msg)) {
         skipped += 1; failures.push({ id, reason: msg });
@@ -292,7 +350,7 @@ export const promoteStagingProvidersBulk = async (
       }
     }
   }
-  return { promoted, skipped, failed, failures };
+  return { promoted: created + updated, created, updated, conflict, skipped, failed, failures };
 };
 
 export const geocodeStagingProvidersBulk = async (
