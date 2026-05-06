@@ -176,6 +176,29 @@ export default function AdminMappingProviders() {
     }
   };
 
+  // Map staging row id → most recent promotion outcome from audit log.
+  const outcomeById = useMemo(() => {
+    const map = new Map<string, 'created' | 'updated' | 'conflict'>();
+    // Audit list is ordered most-recent first; only set first hit per id.
+    for (const a of audit) {
+      const id = a.target_row_id;
+      if (!id || map.has(id)) continue;
+      if (a.action === 'provider_created') map.set(id, 'created');
+      else if (a.action === 'provider_updated') map.set(id, 'updated');
+      else if (a.action === 'provider_skipped_conflict') map.set(id, 'conflict');
+    }
+    return map;
+  }, [audit]);
+
+  const renderOutcome = (id: string, reviewStatus: string) => {
+    const o = outcomeById.get(id);
+    if (o === 'created') return <span className="text-emerald-700">Created</span>;
+    if (o === 'updated') return <span className="text-sky-700">Updated</span>;
+    if (o === 'conflict') return <span className="text-amber-700">Conflict</span>;
+    if (reviewStatus === 'rejected') return <span className="text-muted-foreground">Skipped</span>;
+    return <span className="text-muted-foreground">—</span>;
+  };
+
   const stagingRows = useMemo(() => staging.map((r) => {
     const tag = parseGeocodeTag(r.access_notes);
     const failed = isGeocodeFailed(r.access_notes);
@@ -197,10 +220,11 @@ export default function AdminMappingProviders() {
         coords: r.latitude != null && r.longitude != null
           ? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`
           : '—',
+        outcome: renderOutcome(r.id, r.review_status),
         source: r.source_file_name ?? '—',
       },
     };
-  }), [staging]);
+  }), [staging, outcomeById]);
 
   // ── Render ───────────────────────────────────────────────────────
   const uploadSlot = (
