@@ -11,6 +11,7 @@ import { exportCsv } from '@/utils/csvExport';
 
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
+import type { ZoneFilters } from '@/types/zoneFilters';
 import { RURAL_SERVICE_CATEGORIES, type RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
@@ -52,6 +53,9 @@ export interface SidebarLayerProps {
   onCoverageRadiusKmChange?: (km: number) => void;
   engagementGapView: EngagementGapView;
   onEngagementGapViewChange: (view: EngagementGapView) => void;
+  /** Zone overlay visibility filters. Additive UI-only state. */
+  zoneFilters: ZoneFilters;
+  onToggleResponseCapabilityCategory: (category: ResponseCapabilityCategory) => void;
 }
 
 export interface SidebarFilterProps {
@@ -373,6 +377,8 @@ const Sidebar = ({
     onCoverageRadiusKmChange,
     engagementGapView,
     onEngagementGapViewChange,
+    zoneFilters,
+    onToggleResponseCapabilityCategory,
   },
   filter: {
     searchQuery,
@@ -1209,19 +1215,42 @@ const Sidebar = ({
                                   </div>
 
                                   <div className="space-y-2">
-                                    <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
+                                    <div className="flex items-center justify-between gap-2">
+                                      <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/80">Response Capability</div>
+                                      <div className="flex items-center gap-1">
+                                        {(['active', 'scheduled', 'remote'] as const).map((category) => {
+                                          const on = zoneFilters.responseCapability[category];
+                                          const dotClass = category === 'active' ? 'bg-response-active' : category === 'scheduled' ? 'bg-response-scheduled' : 'bg-response-remote';
+                                          const shortLabel = category === 'active' ? 'Active' : category === 'scheduled' ? 'Scheduled' : 'Remote';
+                                          return (
+                                            <button
+                                              key={category}
+                                              type="button"
+                                              onClick={() => onToggleResponseCapabilityCategory(category)}
+                                              aria-pressed={on}
+                                              title={`${on ? 'Hide' : 'Show'} ${RESPONSE_CAPABILITY_META[category].label} markers`}
+                                              className={`inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[9px] font-medium transition-colors ${on ? 'border-foreground/30 bg-secondary text-foreground' : 'border-border bg-background text-muted-foreground/60 line-through'}`}
+                                            >
+                                              <span className={`h-1.5 w-1.5 rounded-full ${dotClass} ${on ? '' : 'opacity-40'}`} />
+                                              {shortLabel}
+                                            </button>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
                                     {(['active', 'scheduled', 'remote'] as const).map((category) => {
                                       const meta = RESPONSE_CAPABILITY_META[category];
                                       const publicLabel = category === 'active'
                                         ? 'Same-Day Reach Zone (Operational Estimate)'
                                         : meta.label;
+                                      const hidden = !zoneFilters.responseCapability[category];
                                       return (
-                                        <div key={category} className="flex gap-2">
+                                        <div key={category} className={`flex gap-2 ${hidden ? 'opacity-40' : ''}`}>
                                           <div className="mt-0.5 flex-shrink-0">
                                             {renderResponseCapabilityVisual(category)}
                                           </div>
                                           <div className="min-w-0">
-                                            <div className={`text-[11px] font-medium leading-tight ${meta.titleClassName}`}>{isPublicSafe ? publicLabel : meta.label}</div>
+                                            <div className={`text-[11px] font-medium leading-tight ${meta.titleClassName}`}>{isPublicSafe ? publicLabel : meta.label}{hidden && <span className="ml-1 text-[9px] font-normal italic text-muted-foreground">hidden</span>}</div>
                                             <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">{meta.description}</p>
                                           </div>
                                         </div>

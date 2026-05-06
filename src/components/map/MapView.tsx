@@ -133,6 +133,8 @@ interface MapViewProps {
    *  offset the bottom-left Broadband/Cellular legend so it does not visually
    *  jump when the drawer expands and the layout reflows. */
   decisionAssistOpen?: boolean;
+  /** Optional Response Capability category visibility filter. Defaults to all on. */
+  responseCapabilityVisible?: Record<'active' | 'scheduled' | 'remote', boolean>;
 }
 
 // Hover preview types are owned by HoverPreviewLayer.
@@ -478,7 +480,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true } }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const { isPublicSafe } = usePublicSafeMode();
   const mapRef = useRef<L.Map | null>(null);
@@ -1810,6 +1812,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     nevadaCounties.forEach((county) => {
       const breakdown = getCountyCoverageBreakdown(county.name, coverageRadiusKm);
       const category = getResponseCapabilityCategory(breakdown);
+      // Zone visibility filter — additive, hides marker only. Classification
+      // and selection logic remain unchanged so detail panels still work
+      // when the user later toggles the category back on.
+      if (!responseCapabilityVisible[category]) return;
       const markerSize = RESPONSE_CAPABILITY_META[category].markerSize;
       const buildIcon = (hovered = false) => L.divIcon({
         className: '',
@@ -1861,7 +1867,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       operationalResponseMarkerRef.current!.addLayer(marker);
     });
-  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
+  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, responseCapabilityVisible, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {
