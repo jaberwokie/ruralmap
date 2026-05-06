@@ -761,12 +761,12 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       );
     }
 
-    // County review scoping: when a county is selected via the map/sidebar,
-    // narrow the Services pin set to that county so the map matches the
-    // Local Resource Network panel one-for-one. This applies on top of any
-    // explicit countyFilters chip selection.
-    if (selectedCounty) {
-      result = result.filter((service) => sameCounty(service.county, selectedCounty));
+    // County review scoping: only narrow when the user has an explicit county
+    // selection AND is NOT typing a free-text search. Free-text search must
+    // not be collapsed to a stale prior-selected county.
+    const activeServiceCountyFilter = !searchQuery && selectedCounty ? selectedCounty : null;
+    if (activeServiceCountyFilter) {
+      result = result.filter((service) => sameCounty(service.county, activeServiceCountyFilter));
     }
 
     if (serviceCategoryFilters && serviceCategoryFilters.size > 0) {
