@@ -1062,7 +1062,9 @@ const Sidebar = ({
                   {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {/* section intro removed for cleanup */}
+                      <p className="px-2 py-1 text-[10px] leading-snug text-muted-foreground/80">
+                        Start with coverage and field reach. Turn on analysis layers as needed.
+                      </p>
                       {(['counties', 'tribalNations', 'serviceLocations', 'behavioralHealth', 'services'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         const count = coreMapCounts[key];
