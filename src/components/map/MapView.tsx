@@ -1867,7 +1867,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
       operationalResponseMarkerRef.current!.addLayer(marker);
     });
-  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
+  }, [activeCoverageZone, clearCountyHoverPreview, coverageGaps, coverageRadiusKm, layers.operationalCoverage, responseCapabilityVisible, selectCountyEntity, selectedCounty, updateCountyHoverPreview]);
 
   // ── FTE Capacity hub indicators ──
   useEffect(() => {

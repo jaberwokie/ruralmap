@@ -231,6 +231,7 @@ const Index = () => {
           topProvidersOnly={filters.topProvidersOnly}
           engagementRateBelow20Only={filters.engagementRateBelow20Only}
           engagementGapView={layers.engagementGapView}
+          responseCapabilityVisible={zoneFilters.responseCapability}
           memberLocation={member.memberLocation}
           memberAnalysis={member.analysis}
           onMemberPlace={member.placeMember}
