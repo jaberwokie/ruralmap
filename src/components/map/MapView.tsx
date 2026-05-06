@@ -36,6 +36,7 @@ import { collectGeometryWarnings, createLayerConflictMaps, type DebugIsolationGr
 import { buildFacilityValidationIndex, getFacilityCoordinateSourceLabel } from '@/utils/facilityValidation';
 import { buildServiceValidationIndex } from '@/utils/serviceValidation';
 import { HoverPreviewLayer, type CountyHoverPreview, type MarkerHoverPreview, type CountyHoverMetrics } from '@/components/map/layers/HoverPreviewLayer';
+import { renderCountyPolygons } from '@/components/map/layers/CountyPolygonLayer';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
@@ -1591,75 +1592,24 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // This keeps toggle ownership clean: county toggle controls county-only layers.
   useEffect(() => {
     if (!countyFillRef.current || !countyBorderRef.current) return;
-    countyFillRef.current.clearLayers();
-    countyBorderRef.current.clearLayers();
-    labelsRef.current?.clearLayers();
-    if (!layers.counties) return;
-
-    nevadaCounties.forEach(county => {
-      const clipped = getCountyFeature(county.name);
-      if (!clipped) return;
-
-      const hitArea = L.geoJSON(clipped, {
-        pane: MAP_PANES.countyPolygons,
-        style: {
-          color: 'transparent',
-          weight: 0,
-          fillColor: 'hsla(200, 40%, 65%, 0.01)',
-          fillOpacity: 1,
-        },
-        interactive: true,
-        smoothFactor: 0,
-      } as any);
-
-      hitArea.on('mouseover', (event: L.LeafletMouseEvent) => {
-        updateCountyHoverPreview(county.name, event);
-        hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.06)' });
-      });
-      hitArea.on('mouseout', () => {
-        clearCountyHoverPreview();
-        hitArea.setStyle({ fillColor: 'hsla(200, 40%, 65%, 0.01)' });
-      });
-      hitArea.on('click', (e: L.LeafletEvent) => {
-        selectCountyEntity(county.name, 'county-hit-area', e);
-      });
-      countyFillRef.current!.addLayer(hitArea);
-
-      const borderLayer = createGeoJsonLayer(
-        clipped,
-        MAP_PANES.countyBorders,
-        {
-          color: 'hsl(240, 5%, 80%)',
-          weight: 0.75,
-          opacity: 0.7,
-          fillColor: 'transparent',
-          fillOpacity: 0,
-          dashArray: '4 4',
-        },
-        false,
-      );
-      countyBorderRef.current!.addLayer(borderLayer);
-
-      const label = L.divIcon({
-        className: 'county-label',
-        html: `<span style="
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 0.1em;
-          text-transform: uppercase;
-          color: hsl(var(--muted-foreground) / 0.58);
-          white-space: nowrap;
-          pointer-events: none;
-          text-shadow: 0 0 2px hsl(var(--background) / 0.65);
-        ">${county.name}</span>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      });
-      L.marker(county.center, {
-        icon: label,
-        interactive: false,
-        pane: MAP_PANES.labels,
-      }).addTo(labelsRef.current!);
+    if (!layers.counties) {
+      countyFillRef.current.clearLayers();
+      countyBorderRef.current.clearLayers();
+      labelsRef.current?.clearLayers();
+      return;
+    }
+    renderCountyPolygons({
+      fillGroup: countyFillRef.current,
+      borderGroup: countyBorderRef.current,
+      labelsGroup: labelsRef.current,
+      countyPolygonsPane: MAP_PANES.countyPolygons,
+      countyBordersPane: MAP_PANES.countyBorders,
+      labelsPane: MAP_PANES.labels,
+      getCountyFeature,
+      createGeoJsonLayer,
+      onHover: (name, event) => updateCountyHoverPreview(name, event),
+      onHoverClear: () => clearCountyHoverPreview(),
+      onSelect: (name, source, e) => selectCountyEntity(name, source, e),
     });
   }, [clearCountyHoverPreview, layers.counties, selectCountyEntity, updateCountyHoverPreview]);
 
