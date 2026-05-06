@@ -615,14 +615,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, []);
 
 
+  const guardRefs = { interactionGuardUntil: interactionGuardUntilRef, markerGuardUntil: markerGuardUntilRef };
   const armInteractionGuard = useCallback((source: 'marker' | 'county' | 'overlay') => {
-    const expiresAt = Date.now() + SELECTION_GUARD_MS;
-    interactionGuardUntilRef.current = Math.max(interactionGuardUntilRef.current, expiresAt);
-    if (source === 'marker') markerGuardUntilRef.current = expiresAt;
+    armSelectionGuard(guardRefs, source);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const hasActiveInteractionGuard = useCallback(() => Date.now() < interactionGuardUntilRef.current, []);
-  const hasActiveMarkerGuard = useCallback(() => Date.now() < markerGuardUntilRef.current, []);
+  const hasActiveInteractionGuard = useCallback(() => isInteractionGuardActive(guardRefs), []);
+  const hasActiveMarkerGuard = useCallback(() => isMarkerGuardActive(guardRefs), []);
 
   const selectMarkerEntity = useCallback((entity: PointSelectionEntity | null | undefined, source: string, originalEvent?: L.LeafletEvent | Event | null, marker?: MapPointMarker | null) => {
     if (!entity) {
