@@ -40,6 +40,7 @@ import { renderCountyPolygons } from '@/components/map/layers/CountyPolygonLayer
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLayer';
 import { renderBehavioralHealthMarkers } from '@/components/map/layers/BehavioralHealthMarkerLayer';
+import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
@@ -1791,73 +1792,19 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     };
 
     if (layers.services && !topProvidersOnly) {
-      const markerSize = MAP_PIN_VISUALS.servicePresence.size;
-      const hitSize = Math.max(markerSize, 28);
-      const servicePresenceIcon = L.divIcon({
-        className: '',
-        html: getSharedPinSvgMarkup('servicePresence', markerSize),
-        iconSize: [hitSize, hitSize],
-        iconAnchor: [hitSize / 2, hitSize],
-        tooltipAnchor: [0, -hitSize],
-      });
-
-      filteredCommunityServices.forEach((service) => {
-        const countyServices = communityServicesByCounty.get(service.county) ?? [service];
-        const [displayLat, displayLng] = displayCoordinates.get(`service:${service.id}`) ?? [service.lat, service.lng];
-
-        const marker = L.marker([displayLat, displayLng], {
-          icon: servicePresenceIcon,
-          pane: MAP_PANES.servicePresence,
-          zIndexOffset: POINT_MARKER_PRIORITY.base,
-        }) as MapPointMarker;
-
-        marker.__pointKind = 'servicePresence';
-        marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
-        marker.__entity = { type: 'ruralService', service };
-        marker.__entityType = 'ruralService';
-        marker.__entityId = service.id;
-        marker.__entityName = service.name;
-        applyMarkerPriority(marker, 'default');
-        // Reduce opacity for approximate/city-center pins
-        const svcValidation = serviceValidation.records.get(service.id);
-        if (svcValidation && svcValidation.confidence !== 'verified') {
-          marker.setOpacity(0.82);
-        }
-        logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'service-marker', pointKind: marker.__pointKind });
-
-        // No hover interaction for pins — click only
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'service-marker', event, marker);
-        });
-
-        // Native DOM click backup — same pattern as provider markers
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'service-marker-native' });
-              selectMarkerEntityRef.current(marker.__entity as PointSelectionEntity | undefined, 'service-marker-native', null, marker);
-            });
-          }
-        });
-
-        marker.on('mouseover', () => {
-          const distInfo = getMemberDistanceInfo(service.lat, service.lng);
-          markerHoverPreviewRef.current({
-            name: service.name,
-            subtitle: `${service.city}, ${service.county} County`,
-            address: service.address,
-            detail: service.category,
-            ...distInfo,
-          });
-        });
-        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
-
-        // Add to MarkerClusterGroup — same click interception path as providers.
-        // The cluster group's on('click') handler (line ~1311) catches all
-        // child marker clicks reliably, matching the provider interaction contract.
-        pointClusterRef.current!.addLayer(marker);
+      renderServiceMarkers({
+        services: filteredCommunityServices,
+        displayCoordinates,
+        servicePresencePane: MAP_PANES.servicePresence,
+        baseZIndexOffset: POINT_MARKER_PRIORITY.base,
+        serviceValidation,
+        applyMarkerPriority,
+        selectMarkerEntity,
+        selectMarkerEntityRef,
+        getMemberDistanceInfo,
+        markerHoverPreviewRef,
+        logMapSelectionDebug,
+        cluster: pointClusterRef.current!,
       });
     }
 
