@@ -12,3 +12,6 @@ export * from './fieldResponse';
 export * from './providerVisibility';
 export * from './corridorLogic';
 export * from './accessGaps';
+export * from './distance';
+export * from './connectivity';
+export * from './sorting';
