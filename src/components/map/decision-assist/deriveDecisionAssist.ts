@@ -98,6 +98,8 @@ export const deriveDecisionAssist = (
       constraint: 'Invalid selection.',
       nextStaffAction: 'Re-select a need.',
       primaryTargets: [],
+      primary: 'Re-select a need',
+      backup: null,
     };
   }
 
