@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEBUG_CLICKS, debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
 import { DEBUG_ENABLED, SELECTION_GUARD_MS, getEntityDebugMeta, stopInteractionEvent } from '@/components/map/layers/MapInteractionUtils';
+import { armSelectionGuard, isInteractionGuardActive, isMarkerGuardActive } from '@/components/map/layers/MapSelectionGuards';
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import { createMemberPinMarker } from './layers/MemberPinLayer';
