@@ -412,25 +412,33 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
                 <span className="text-muted-foreground">Round-trip</span>
                 <span className="text-right font-semibold text-foreground">~{strain.roundTripMi} mi · ~{strain.roundTripMin} min</span>
               </div>
+
+              <div className={`text-[10px] font-medium ${strainSameDayTone}`}>{strainSameDayLabel}</div>
+              <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
+              <div className={`text-[11px] font-semibold ${STRAIN_TONE[strain.coverage]} pt-1 border-t border-border/60`}>
+                {getStrainRecommendation(strain)}
+              </div>
+              <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]} opacity-90`}>
+                {getCapacityBoundaryLabel(strain)}
+              </div>
+
+              <div className={`text-[10px] leading-tight pt-1 border-t border-border/60 ${STRAIN_TIER_TONE[tier]}`}>
+                <span className="font-semibold">Operational reality:</span> {STRAIN_TIER_OPERATIONAL_REALITY[tier]}
+              </div>
             </>
           ) : (
-            <div className="text-[11px] text-foreground leading-tight">
-              <span className="font-medium">Field response:</span> Remote coordination only
-            </div>
+            <>
+              <div className="text-[11px] text-foreground leading-tight">
+                <span className="font-medium">Field response:</span> Remote coordination only
+              </div>
+              <div className="text-[10px] text-muted-foreground leading-tight">
+                No realistic same-day field response from current FTE placement.
+              </div>
+              <div className={`text-[10px] leading-tight pt-1 border-t border-border/60 ${STRAIN_TIER_TONE[tier]}`}>
+                <span className="font-semibold">Operational reality:</span> {STRAIN_TIER_OPERATIONAL_REALITY[tier]}
+              </div>
+            </>
           )}
-
-          <div className={`text-[10px] font-medium ${strainSameDayTone}`}>{strainSameDayLabel}</div>
-          <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]}`}>{strain.coverageLabel}</div>
-          <div className={`text-[11px] font-semibold ${STRAIN_TONE[strain.coverage]} pt-1 border-t border-border/60`}>
-            {getStrainRecommendation(strain)}
-          </div>
-          <div className={`text-[10px] ${STRAIN_TONE[strain.coverage]} opacity-90`}>
-            {getCapacityBoundaryLabel(strain)}
-          </div>
-
-          <div className={`text-[10px] leading-tight pt-1 border-t border-border/60 ${STRAIN_TIER_TONE[tier]}`}>
-            <span className="font-semibold">Operational reality:</span> {STRAIN_TIER_OPERATIONAL_REALITY[tier]}
-          </div>
 
           <div className="text-[9px] text-muted-foreground/80 italic leading-tight pt-0.5 border-t border-border/60">
             Estimated from straight-line distance to anchor site at ~80 km/h rural average. Round-trip reflects staff time consumed. Remote support remains available regardless of field response reach.
