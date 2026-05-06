@@ -133,6 +133,8 @@ interface MapViewProps {
    *  offset the bottom-left Broadband/Cellular legend so it does not visually
    *  jump when the drawer expands and the layout reflows. */
   decisionAssistOpen?: boolean;
+  /** Optional Response Capability category visibility filter. Defaults to all on. */
+  responseCapabilityVisible?: Record<'active' | 'scheduled' | 'remote', boolean>;
 }
 
 // Hover preview types are owned by HoverPreviewLayer.
@@ -478,7 +480,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true } }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const { isPublicSafe } = usePublicSafeMode();
   const mapRef = useRef<L.Map | null>(null);
