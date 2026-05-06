@@ -70,6 +70,7 @@ const STAGING_COLS: StagingTableColumn[] = [
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
   { key: 'coords', label: 'Coords' },
+  { key: 'outcome', label: 'Promotion' },
   { key: 'source', label: 'Source' },
 ];
 
