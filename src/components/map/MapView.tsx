@@ -691,7 +691,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     return result;
-  }, [providerMarkerFacilities, searchQuery, countyFilters, typeFilters, hasServiceLineFilter]);
+  }, [providerMarkerFacilities, searchQuery, countyFilters, selectedCounty, typeFilters, hasServiceLineFilter]);
 
   const topProvidersVisible = useMemo(() => {
     const scored = providerFilteredFacilities.map((facility) => ({
