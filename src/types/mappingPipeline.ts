@@ -154,6 +154,35 @@ export type AuditAction =
 
 export type PipelineKey = 'services' | 'behavioral_health' | 'provider_mapping';
 
+export interface StagingProviderRow {
+  id: string;
+  name: string;
+  type: string | null;
+  provider_name: string | null;
+  npi: string | null;
+  organization_name: string | null;
+  street_address: string | null;
+  city: string | null;
+  state: string | null;
+  zip: string | null;
+  county: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  phone: string | null;
+  website: string | null;
+  notes: string | null;
+  access_notes: string | null;
+  review_status: ReviewStatus;
+  validation_severity: ValidationSeverity | null;
+  validation_messages: ValidationMessage[];
+  active_status: boolean;
+  source_file_name: string | null;
+  source_row_number: number | null;
+  import_batch_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AuditLogRow {
   id: string;
   pipeline: string;
