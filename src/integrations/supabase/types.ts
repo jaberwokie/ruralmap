@@ -239,6 +239,93 @@ export type Database = {
         }
         Relationships: []
       }
+      staging_providers: {
+        Row: {
+          access_notes: string | null
+          active_status: boolean
+          city: string | null
+          county: string | null
+          created_at: string
+          id: string
+          import_batch_id: string | null
+          latitude: number | null
+          longitude: number | null
+          name: string
+          notes: string | null
+          npi: string | null
+          organization_name: string | null
+          phone: string | null
+          provider_name: string | null
+          review_status: string
+          source_file_name: string | null
+          source_row_number: number | null
+          state: string | null
+          street_address: string | null
+          type: string | null
+          updated_at: string
+          validation_messages: Json
+          validation_severity: string | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          active_status?: boolean
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          import_batch_id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          notes?: string | null
+          npi?: string | null
+          organization_name?: string | null
+          phone?: string | null
+          provider_name?: string | null
+          review_status?: string
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          type?: string | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          active_status?: boolean
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          import_batch_id?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          notes?: string | null
+          npi?: string | null
+          organization_name?: string | null
+          phone?: string | null
+          provider_name?: string | null
+          review_status?: string
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          type?: string | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       staging_services: {
         Row: {
           access_notes: string | null
