@@ -19,9 +19,11 @@
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { getCountyForLocation } from '@/utils/countyLookup';
-import { getFTEForCounty, getLoadStatus, LOAD_STATUS_LABELS } from '@/data/fte-capacity';
+import { getLoadStatus, LOAD_STATUS_LABELS } from '@/data/fte-capacity';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import { mobilityManagers } from '@/data/mobility-managers';
+import { computeFieldResponseStrain } from '@/utils/fieldResponseStrain';
+import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 import { findNeed } from './decisionAssistTaxonomy';
 import type {
   Confidence,
@@ -101,8 +103,12 @@ export const deriveDecisionAssist = (
 
   const { member, facilities, services } = ctx;
   const county = getCountyForLocation(member.lat, member.lng);
-  const fte = county ? getFTEForCounty(county) : undefined;
+  // Site-based strain: use member point, not whole-county FTE assignment.
+  // Mixed/large counties (e.g. Nye) cannot be summarised by one anchor FTE.
+  const strain = computeFieldResponseStrain(member, ACTIVE_COVERAGE_RADIUS_KM);
+  const fte = strain?.responder ?? null;
   const fteLoad = fte ? getLoadStatus(fte.currentLoad, fte.capacity) : null;
+  const isRemoteOnly = !!strain && strain.responder === null;
   const highway = checkHighwayAccess(member.lat, member.lng);
 
   // Build candidates
@@ -166,16 +172,22 @@ export const deriveDecisionAssist = (
     confidence = 'low';
   }
 
-  // Constraint (worst single signal)
+  // Constraint (worst single signal). Remote-only and strained field reach
+  // are surfaced explicitly so staff don't infer in-person feasibility.
   let constraint: string | null = null;
-  if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
+  if (isRemoteOnly) {
+    constraint = `${county ?? 'Member location'} outside any field FTE reach — remote coordination required; in-person referrals require scheduled outreach or alternative routing.`;
+  } else if (strain && strain.coverage === 'strained') {
+    const anchor = strain.responder?.anchorSite?.name ?? strain.responder?.label ?? 'nearest hub';
+    constraint = `Strained field reach from ${anchor} (~${strain.oneWayMi} mi) — schedule outreach or route remotely.`;
+  } else if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
     constraint = 'No in-network record found for this need in current data.';
   } else if (nearestGeo?.tier === 'Non-Viable') {
     constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — non-viable for routine in-person.`;
   } else if (nearestGeo?.tier === 'High Friction') {
     constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — confirm transport.`;
   } else if (fteLoad === 'over') {
-    constraint = `${county ?? 'County'} field FTE at/over capacity — route remotely or schedule.`;
+    constraint = `${fte?.label ?? 'Field FTE'} at/over capacity — route remotely or schedule.`;
   } else if (!highway.hasAccess && nearestGeo && (nearestGeo.distanceMi ?? 0) > 10) {
     constraint = 'Member not on a major highway corridor — coordinate transport.';
   }
@@ -209,7 +221,18 @@ export const deriveDecisionAssist = (
     steps.push({ step: n++, action: 'Confirm transportation, hours, and acceptance before scheduling.' });
   }
 
-  if (fteLoad && fteLoad !== 'available' && fte) {
+  if (isRemoteOnly) {
+    steps.push({
+      step: n++,
+      action: 'No field response available at member location — coordinate remotely; consider scheduled outreach or reallocation if recurring need.',
+    });
+  } else if (strain && strain.coverage === 'strained' && strain.responder) {
+    const anchor = strain.responder.anchorSite?.name ?? strain.responder.label;
+    steps.push({
+      step: n++,
+      action: `Field response from ${anchor} is strained (~${strain.oneWayMi} mi) — schedule outreach or use alternative routing.`,
+    });
+  } else if (fteLoad && fteLoad !== 'available' && fte) {
     steps.push({
       step: n++,
       action: `${fte.label}: ${LOAD_STATUS_LABELS[fteLoad]} — coordinate handoff accordingly.`,
