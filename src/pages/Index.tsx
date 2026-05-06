@@ -20,6 +20,8 @@ import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
 import AdminVersionBadge from '@/components/AdminVersionBadge';
 import PublicSafeDisclaimer from '@/components/map/PublicSafeDisclaimer';
+import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
+import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
@@ -37,6 +39,18 @@ const Index = () => {
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
   const presentation = usePresentationMode();
+  // Zone overlay visibility filters — temporary UI state, not persisted.
+  // Affects only zone overlay rendering; never pin/cluster/calculation logic.
+  const [zoneFilters, setZoneFilters] = useState<ZoneFilters>(DEFAULT_ZONE_FILTERS);
+  const toggleResponseCapabilityCategory = useCallback((category: ResponseCapabilityCategory) => {
+    setZoneFilters((prev) => ({
+      ...prev,
+      responseCapability: {
+        ...prev.responseCapability,
+        [category]: !prev.responseCapability[category],
+      },
+    }));
+  }, []);
 
   // Dev-only invariant + transition logging for Staffing Capacity & Load.
   // Stripped from production builds via import.meta.env.DEV check inside.
@@ -168,7 +182,7 @@ const Index = () => {
       */}
       <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 flex-1 md:flex-none min-h-0 md:h-full`}>
         <Sidebar
-          layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView }}
+          layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView, zoneFilters, onToggleResponseCapabilityCategory: toggleResponseCapabilityCategory }}
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
           facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
           selection={{
