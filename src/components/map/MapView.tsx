@@ -38,6 +38,7 @@ import { buildServiceValidationIndex } from '@/utils/serviceValidation';
 import { HoverPreviewLayer, type CountyHoverPreview, type MarkerHoverPreview, type CountyHoverMetrics } from '@/components/map/layers/HoverPreviewLayer';
 import { renderCountyPolygons } from '@/components/map/layers/CountyPolygonLayer';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
+import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
