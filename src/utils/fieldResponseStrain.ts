@@ -139,9 +139,12 @@ export type StrainCoverageState =
   | 'noSameDay';    // beyond 1.5× radius, no realistic same-day field
 
 export interface FieldResponseStrain {
-  /** Nearest anchored field FTE — the likely responder. */
-  responder: FTECapacity;
-  /** Straight-line km from anchor site to target. */
+  /** Nearest anchored field FTE — the likely responder.
+   *  NULL when no valid anchoring FTE exists for this point/county
+   *  (Remote-only coverage). The UI must not surface a "likely responder"
+   *  in that case — there is no realistic same-day field path. */
+  responder: FTECapacity | null;
+  /** Straight-line km from anchor site to target. NaN when responder is null. */
   km: number;
   oneWayMi: number;
   oneWayMin: number;
