@@ -1643,23 +1643,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!highlightsRef.current) return;
     highlightsRef.current.clearLayers();
 
-    if (selectedCounty) {
-      const selectedCountyFeature = getCountyFeature(selectedCounty);
-      if (selectedCountyFeature) {
-        const selectedLayer = createGeoJsonLayer(
-          selectedCountyFeature,
-          MAP_PANES.highlights,
-          {
-            color: 'hsl(200, 60%, 50%)',
-            weight: 2.5,
-            fillColor: 'hsla(200, 60%, 50%, 0.08)',
-            fillOpacity: 1,
-          },
-          false,
-        );
-        highlightsRef.current.addLayer(selectedLayer);
-      }
-    }
+    renderSelectedCountyHighlight({
+      group: highlightsRef.current,
+      pane: MAP_PANES.highlights,
+      selectedCounty,
+      getCountyFeature,
+      createGeoJsonLayer,
+    });
 
     if (!layers.fteCapacity || activeFteCoverageIds.length === 0) return;
 
