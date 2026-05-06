@@ -220,7 +220,17 @@ const Index = () => {
           memberLocation={member.memberLocation}
           memberAnalysis={member.analysis}
           onMemberPlace={member.placeMember}
-          onMemberClear={() => { member.clearMember(); selection.actions.clearSelection(); }}
+          onMemberClear={() => {
+            // Clearing the member address (X button) must only remove the
+            // member pin/analysis. The detail-panel "Member Access" card is a
+            // derived view of `member.analysis`, so it vanishes automatically
+            // when analysis becomes null. We must NOT call
+            // `selection.actions.clearSelection()` here because that would
+            // also wipe any unrelated locked entity (county / provider /
+            // service / BH / FTE) and the multi-select FTE coverage overlay
+            // set the user explicitly enabled from the sidebar.
+            member.clearMember();
+          }}
           onMemberGeocode={member.geocodeAddress}
           memberIsGeocoding={member.isGeocoding}
           memberGeocodeError={member.geocodeError}
