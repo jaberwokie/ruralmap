@@ -103,8 +103,12 @@ export const deriveDecisionAssist = (
 
   const { member, facilities, services } = ctx;
   const county = getCountyForLocation(member.lat, member.lng);
-  const fte = county ? getFTEForCounty(county) : undefined;
+  // Site-based strain: use member point, not whole-county FTE assignment.
+  // Mixed/large counties (e.g. Nye) cannot be summarised by one anchor FTE.
+  const strain = computeFieldResponseStrain(member, ACTIVE_COVERAGE_RADIUS_KM);
+  const fte = strain?.responder ?? null;
   const fteLoad = fte ? getLoadStatus(fte.currentLoad, fte.capacity) : null;
+  const isRemoteOnly = !!strain && strain.responder === null;
   const highway = checkHighwayAccess(member.lat, member.lng);
 
   // Build candidates
