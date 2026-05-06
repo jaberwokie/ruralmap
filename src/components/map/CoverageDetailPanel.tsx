@@ -52,29 +52,8 @@ import { deriveVerificationQueue as deriveVerificationQueueFn } from '@/utils/ve
 import { deriveLastDirectlyVerified as deriveLastDirectlyVerifiedFn } from '@/utils/verificationAuditLog';
 import { formatDisplayValue, formatTagLabel } from '@/utils/displayFormat';
 
-/** Counties with no hospital or clinic within ~50 km of their geographic center */
-const GAP_COUNTIES = (() => {
-  const R = 50;
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const haversine = (lat1: number, lng1: number, lat2: number, lng2: number) => {
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
-  const countyCenters: Record<string, [number, number]> = {
-    Esmeralda: [37.78, -117.63], Mineral: [38.54, -118.43], Lincoln: [37.64, -114.87],
-    Eureka: [39.98, -116.00], Storey: [39.44, -119.53], Pershing: [40.56, -118.40],
-    Lander: [40.07, -117.04],
-  };
-  const coverageFacilities = defaultFacilities.filter(f => f.type === 'hospital' || f.type === 'clinic');
-  const gaps = new Set<string>();
-  for (const [name, [lat, lng]] of Object.entries(countyCenters)) {
-    const nearest = Math.min(...coverageFacilities.map(f => haversine(lat, lng, f.lat, f.lng)));
-    if (nearest > R) gaps.add(name);
-  }
-  return gaps;
-})();
+// GAP_COUNTIES extracted to @/lib/operational/accessGaps.
+
 
 import type { MapEntity } from '@/types/entities';
 import { UtilizationTogglesContext, useUtilizationToggles, UtilizationProviderClickContext, type UtilizationToggles, type UtilizationProviderClickHandler } from '@/components/map/utilization/UtilizationTogglesContext';
@@ -304,16 +283,7 @@ const FieldResponseStrainSection = ({
   );
 };
 
-const haversineKmLocal = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
-const getMemberTierLabel = (mi: number) =>
-  mi <= 10 ? 'Local Access' : mi <= 25 ? 'Managed Access' : mi <= 40 ? 'High Friction' : 'Non-Viable';
+// haversineKmLocal + getMemberTierLabel extracted to @/lib/operational/memberAccess.
 
 const TIER_LABEL_COLOR: Record<string, string> = {
   'Local Access': 'text-green-600',
