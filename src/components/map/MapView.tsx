@@ -43,6 +43,7 @@ import { renderBehavioralHealthMarkers } from '@/components/map/layers/Behaviora
 import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer';
 import { renderFteHubs } from '@/components/map/layers/FteOverlayLayer';
 import { renderUtilizationChoropleth } from '@/components/map/layers/UtilizationOverlayLayer';
+import { renderAccessGapOverlay } from '@/components/map/layers/AccessGapOverlayLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
