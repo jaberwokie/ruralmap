@@ -1,7 +1,9 @@
 import L from 'leaflet';
 import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
-import { getFacilityCoordinateSourceLabel, type FacilityValidationIndex } from '@/utils/facilityValidation';
+import { getFacilityCoordinateSourceLabel, buildFacilityValidationIndex } from '@/utils/facilityValidation';
+
+type FacilityValidationIndex = ReturnType<typeof buildFacilityValidationIndex>;
 import { getFacilityUtilization, getScaledPinSize } from '@/utils/utilizationAggregation';
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
