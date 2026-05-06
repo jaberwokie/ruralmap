@@ -13,7 +13,7 @@
  */
 
 import { fteCapacityData } from '@/data/fte-capacity';
-import { getCountyCoverageBreakdown } from '@/utils/coverageZones';
+import { countyHasFieldResponseUnavailable, getCountyCoverageBreakdown } from '@/utils/coverageZones';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 /** Minimum % of county area inside the active FTE drive-time zone for the
@@ -36,7 +36,7 @@ export function getFieldCoverageStatus(county: string): FieldCoverageStatus {
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   const breakdown = getCountyCoverageBreakdown(county, ACTIVE_COVERAGE_RADIUS_KM);
   const status: FieldCoverageStatus = {
-    hasFieldCoverage: breakdown.activePercent >= FIELD_COVERAGE_MIN_ACTIVE_PERCENT,
+    hasFieldCoverage: !countyHasFieldResponseUnavailable(county) && breakdown.activePercent >= FIELD_COVERAGE_MIN_ACTIVE_PERCENT,
     hasRemoteCoverage: serving.some(f => f.hubLocation === null),
   };
   _cache.set(county, status);
