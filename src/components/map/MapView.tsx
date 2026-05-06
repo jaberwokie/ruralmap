@@ -644,15 +644,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const providerFilteredFacilities = useMemo(() => {
     let result = providerMarkerFacilities.filter((facility) => Number.isFinite(facility.lat) && Number.isFinite(facility.lng));
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((facility) =>
-        facility.name.toLowerCase().includes(q)
-        || facility.city.toLowerCase().includes(q)
-        || facility.county.toLowerCase().includes(q)
-      );
-    }
-
     if (countyFilters && countyFilters.size > 0) {
       result = result.filter((facility) => countyFilters.has(facility.county));
     }
@@ -661,7 +652,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // selection AND is NOT typing a free-text search. Free-text search is the
     // active intent; a stale `selectedCounty` from a prior click must not
     // collapse providers down to one county while the user searches.
-    const activeCountyFilter = !searchQuery && selectedCounty ? selectedCounty : null;
+    const hasActiveSearchText = searchQuery.trim().length > 0;
+    const activeCountyFilter = !hasActiveSearchText && selectedCounty ? selectedCounty : null;
     if (activeCountyFilter) {
       result = result.filter((facility) => sameCounty(facility.county, activeCountyFilter));
     }
