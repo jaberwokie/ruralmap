@@ -2192,7 +2192,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         onFteHubClickRef.current?.(fteId);
       },
     });
-  }, [armInteractionGuard, layers.fteCapacity, selectedFteId, stopInteractionEvent, topProvidersOnly]);
+  }, [armInteractionGuard, layers.fteCapacity, selectedFteId, stopInteractionEvent]);
 
   // ── Utilization Intensity choropleth (purple ramp) ──
   useEffect(() => {
