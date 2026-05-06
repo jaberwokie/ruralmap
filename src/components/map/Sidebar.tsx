@@ -1107,7 +1107,7 @@ const Sidebar = ({
                             */}
                             {key === 'serviceLocations' && (() => {
                               const tier1Count = allFacilities.filter(f => f.tier === 'tier1').length;
-                              const dependencyOff = !layers.serviceLocations;
+                              const providersOff = !layers.serviceLocations;
                               return (
                                 <div className="ml-5 mt-0.5">
                                   {renderLayerToggleRow({
@@ -1116,9 +1116,9 @@ const Sidebar = ({
                                     iconClassName: 'text-tier1 translate-x-[5px]',
                                     checked: layers.tier1Highlight,
                                     onCheckedChange: () => onToggleLayer('tier1Highlight'),
-                                    subtitle: dependencyOff
-                                      ? `${tier1Count} Tier 1 · enable Provider Locations to view`
-                                      : `${tier1Count} Tier 1 · highlight on clinic pins`,
+                                    subtitle: providersOff
+                                      ? `${tier1Count} Tier 1 · shown alone when Provider Locations is off`
+                                      : `${tier1Count} Tier 1 · highlighted among provider pins`,
                                     helpKey: 'tier1Providers',
                                   })}
                                 </div>
