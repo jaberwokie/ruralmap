@@ -254,6 +254,52 @@ export const deriveDecisionAssist = (
 
   const nextStaffAction = steps[0].action;
 
+  // ── Tightened Primary / Backup ─────────────────────────────────────────
+  // Priority order: hotline → mobility manager → remote-only → mixed county
+  // → strained field → anchored field → nearest in-person → fallback.
+  let primary: string;
+  let backup: string | null = null;
+
+  const firstFacilityOrService = primaryTargets.find(t => t.kind === 'facility' || t.kind === 'service');
+  const anchorName = strain?.responder
+    ? (strain.responder.anchorSite?.name ?? strain.responder.label)
+    : null;
+
+  if (need.hotline) {
+    primary = `Connect member to ${need.hotline.name} (${need.hotline.line})`;
+    backup = firstFacilityOrService
+      ? `Refer to ${firstFacilityOrService.name} (${firstFacilityOrService.distanceMi} mi)`
+      : null;
+  } else if (need.preferMobilityManager) {
+    const mmTarget = primaryTargets.find(t => t.kind === 'mobility_manager');
+    primary = mmTarget
+      ? `Contact ${mmTarget.name}`
+      : 'Escalate to NBH coordination — no county Mobility Manager';
+    backup = null;
+  } else if (isRemoteOnly) {
+    primary = 'Remote coordination';
+    backup = 'Schedule outreach if feasible';
+  } else if (isMixedCounty) {
+    primary = 'Use member location to determine responder';
+    backup = 'Remote coordination if outside local field zone';
+  } else if (strain && strain.coverage === 'strained' && anchorName) {
+    primary = `Route to ${anchorName}`;
+    backup = 'Schedule outreach within 24–48 hours';
+  } else if (anchorName) {
+    primary = `Route to ${anchorName} for same-day field response`;
+    backup = (fteLoad === 'near' || fteLoad === 'over')
+      ? 'Schedule outreach within 24–48 hours'
+      : null;
+  } else if (firstFacilityOrService) {
+    primary = `Refer to ${firstFacilityOrService.name} (${firstFacilityOrService.distanceMi} mi)`;
+    backup = nearestGeo?.tier === 'High Friction' || nearestGeo?.tier === 'Non-Viable'
+      ? 'Confirm transport before scheduling'
+      : null;
+  } else {
+    primary = need.fallbackAction;
+    backup = null;
+  }
+
   return {
     pathway: need.pathway,
     orderOfOperations: steps,
@@ -261,5 +307,7 @@ export const deriveDecisionAssist = (
     constraint,
     nextStaffAction,
     primaryTargets,
+    primary,
+    backup,
   };
 };
