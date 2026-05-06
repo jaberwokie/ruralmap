@@ -195,10 +195,22 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
       let primaryType: 'active' | 'scheduled' | 'remote';
       const fieldResponseAvailable = !FIELD_RESPONSE_UNAVAILABLE_COUNTIES.has(county.name);
 
-      if (fieldResponseAvailable && activePercent >= 60 && anchoringFtes.length > 0 && centroidWithinActive) {
+      // Hard anchor gate: a county can only be classified as active or scheduled
+      // when at least one real, non-planned FTE hub anchors it (its active
+      // drive-time buffer actually touches the county). Geometric overlap
+      // from the outer scheduled ring alone is not enough.
+      const hasAnchoringFte = anchoringFtes.length > 0;
+
+      if (
+        fieldResponseAvailable &&
+        hasAnchoringFte &&
+        activePercent >= 60 &&
+        centroidWithinActive
+      ) {
         primaryType = 'active';
       } else if (
         fieldResponseAvailable &&
+        hasAnchoringFte &&
         activePercent + scheduledPercent >= MIN_COMBINED_AREA_PERCENT &&
         scheduledPercent >= MIN_SCHEDULED_AREA_PERCENT
       ) {
