@@ -185,16 +185,20 @@ const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; 
 };
 
 /** Capacity Status section for county panel */
-const CapacityStatusSection = ({ county }: { county: string }) => {
+const CapacityStatusSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   if (serving.length === 0) return null;
+
+  const reach = getCountyReachShape(county, coverageRadiusKm);
 
   // Show all assigned FTEs
   return (
     <div className="space-y-1.5 mb-2">
       {serving.map(fte => {
         const role = FTE_ROLE_COLORS[fte.id];
-        const coverageLabel = fte.hubLocation ? 'Active Field Coverage' : 'Remote Only';
+        const coverageLabel = fte.hubLocation
+          ? (reach.isMixed ? 'Local field coverage' : 'Active Field Coverage')
+          : (reach.isMixed ? 'Remote support outside local reach' : 'Remote Only');
         return (
           <div key={fte.id} className={`rounded-md border-2 px-2 py-1.5 ${role?.light ?? 'bg-secondary'} ${role?.border ?? 'border-border'}`}>
             <div className="flex items-center gap-1.5 mb-0.5">
