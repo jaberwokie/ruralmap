@@ -614,55 +614,10 @@ const createPointClusterIcon = (markers: L.Marker[]) => {
   });
 };
 
-const numberFormatter = new Intl.NumberFormat();
+// Hover preview helpers (numberFormatter, county display name, severity,
+// metric row, info button) live in HoverPreviewLayer.
 
-const getCountyDisplayName = (county: string) => county === 'Carson City' ? county : `${county} County`;
 
-const CountyHoverMetricRow = ({ label, value, emphasize = false }: { label: string; value: string; emphasize?: boolean }) => (
-  <div className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 text-[10px] leading-4">
-    <span className="truncate text-muted-foreground">{label}</span>
-    <span className={`text-right font-medium tabular-nums ${emphasize ? 'text-foreground' : 'text-foreground/85'}`}>{value}</span>
-  </div>
-);
-
-const getCoverageGapSeverity = (coverageGapPercent: number): CoverageGapSeverity => {
-  if (coverageGapPercent > 60) return 'High';
-  if (coverageGapPercent >= 30) return 'Moderate';
-  return 'Low';
-};
-
-const COVERAGE_GAP_SEVERITY_DOT: Record<CoverageGapSeverity, string> = {
-  High: 'bg-destructive',
-  Moderate: 'bg-amber-500',
-  Low: 'bg-primary',
-};
-
-const CoverageGapInfoButton = () => {
-  const [open, setOpen] = useState(false);
-
-  return (
-    <Tooltip open={open} onOpenChange={setOpen}>
-      <TooltipTrigger asChild>
-        <button
-          type="button"
-          className="pointer-events-auto inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-          onMouseEnter={() => setOpen(true)}
-          onMouseLeave={() => setOpen(false)}
-          onClick={(event) => {
-            event.stopPropagation();
-            setOpen((current) => !current);
-          }}
-          aria-label="Explain coverage gap"
-        >
-          <Info className="h-2.5 w-2.5" />
-        </button>
-      </TooltipTrigger>
-      <TooltipContent side="right" align="start" sideOffset={8} className="max-w-52 text-[10px] leading-4">
-        Percent of county area outside provider coverage radius based on current radius setting.
-      </TooltipContent>
-    </Tooltip>
-  );
-};
 
 
 const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false }: MapViewProps) => {
