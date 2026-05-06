@@ -174,24 +174,30 @@ export const deriveDecisionAssist = (
     confidence = 'low';
   }
 
-  // Constraint (worst single signal). Remote-only and strained field reach
-  // are surfaced explicitly so staff don't infer in-person feasibility.
+  // Mixed-county detection (e.g. Nye): one anchor cannot stand for whole county.
+  const reach = county ? getCountyReachShape(county, ACTIVE_COVERAGE_RADIUS_KM) : null;
+  const isMixedCounty = !!reach?.isMixed;
+
+  // Constraint — single short reason, no duplication.
   let constraint: string | null = null;
   if (isRemoteOnly) {
-    constraint = `${county ?? 'Member location'} outside any field FTE reach — remote coordination required; in-person referrals require scheduled outreach or alternative routing.`;
+    constraint = 'Outside field FTE reach';
+  } else if (isMixedCounty) {
+    constraint = 'Field coverage varies by location within county';
   } else if (strain && strain.coverage === 'strained') {
-    const anchor = strain.responder?.anchorSite?.name ?? strain.responder?.label ?? 'nearest hub';
-    constraint = `Strained field reach from ${anchor} (~${strain.oneWayMi} mi) — schedule outreach or route remotely.`;
-  } else if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
-    constraint = 'No in-network record found for this need in current data.';
-  } else if (nearestGeo?.tier === 'Non-Viable') {
-    constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — non-viable for routine in-person.`;
-  } else if (nearestGeo?.tier === 'High Friction') {
-    constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — confirm transport.`;
+    constraint = 'Field capacity strained';
   } else if (fteLoad === 'over') {
-    constraint = `${fte?.label ?? 'Field FTE'} at/over capacity — route remotely or schedule.`;
+    constraint = 'Field capacity at limit';
+  } else if (fteLoad === 'near') {
+    constraint = 'Field capacity constrained';
+  } else if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
+    constraint = 'No in-network record for this need';
+  } else if (nearestGeo?.tier === 'Non-Viable') {
+    constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — non-viable`;
+  } else if (nearestGeo?.tier === 'High Friction') {
+    constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — confirm transport`;
   } else if (!highway.hasAccess && nearestGeo && (nearestGeo.distanceMi ?? 0) > 10) {
-    constraint = 'Member not on a major highway corridor — coordinate transport.';
+    constraint = 'Off major highway — coordinate transport';
   }
 
   // Order of operations
