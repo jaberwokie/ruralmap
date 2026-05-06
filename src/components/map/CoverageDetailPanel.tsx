@@ -2173,7 +2173,7 @@ const FacilityContent = ({
         {isHighUtilClinic && (
           <span
             className="inline-flex items-center gap-1 rounded-sm border border-tier1/40 bg-tier1/10 px-1.5 py-px text-[9px] font-semibold uppercase tracking-wide text-tier1"
-            title="Tier 1 Provider — high-utilization clinic / community provider"
+            title="Tier 1 indicates network priority, not distance or guaranteed availability."
           >
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-tier1" />
             Tier 1 Provider
@@ -2183,6 +2183,11 @@ const FacilityContent = ({
       <h3 className="text-sm font-semibold text-foreground leading-tight mb-2" style={{ wordBreak: 'break-word' }}>
         {facility.name}
       </h3>
+      {isHighUtilClinic && (
+        <p className="-mt-1 mb-2 text-[10px] leading-snug text-muted-foreground">
+          Tier 1 indicates network priority, not distance or guaranteed availability.
+        </p>
+      )}
 
       {/* Decision-support: top-of-panel guidance (Phase 1) */}
       <RecommendedNextStep facility={facility} memberLocation={memLoc} />

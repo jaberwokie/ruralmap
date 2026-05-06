@@ -1503,12 +1503,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     topProviderMarkersRef.current.clearLayers();
     selectedPointMarkerRef.current = null;
 
-    const shouldRenderProviderLocations = layers.serviceLocations || topProvidersOnly;
+    const tier1Only = layers.tier1Highlight && !layers.serviceLocations && !topProvidersOnly;
+    const shouldRenderProviderLocations = layers.serviceLocations || topProvidersOnly || tier1Only;
 
     if (!layers.services && !layers.behavioralHealth && !shouldRenderProviderLocations) return;
 
     const nextFacilityMarkers: L.Layer[] = [];
-    const visibleFacilities = shouldRenderProviderLocations ? providerVisibleFacilities : [];
+    const baseProviderList = shouldRenderProviderLocations ? providerVisibleFacilities : [];
+    const visibleFacilities = tier1Only
+      ? baseProviderList.filter((f) => f.tier === 'tier1')
+      : baseProviderList;
     // When Top 20 is active, force declutter zoom so overlapping providers always fan out
     const effectiveZoom = topProvidersOnly ? Math.max(mapZoom, OVERLAP_DECLUTTER_ZOOM) : mapZoom;
     const displayCoordinates = getDisplayCoordinates([

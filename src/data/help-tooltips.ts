@@ -133,6 +133,7 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   },
   tier1Providers: {
     label: 'Tier 1 Providers',
-    explanation: 'Top providers by Medicaid member visit volume.',
+    explanation:
+      'High-priority network providers used for operational review. Tier 1 indicates network priority — it is not a measure of distance, proximity, or guaranteed availability, and does not imply that a member can access the provider.',
   },
 };
