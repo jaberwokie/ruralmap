@@ -38,6 +38,7 @@ import { buildServiceValidationIndex } from '@/utils/serviceValidation';
 import { HoverPreviewLayer, type CountyHoverPreview, type MarkerHoverPreview, type CountyHoverMetrics } from '@/components/map/layers/HoverPreviewLayer';
 import { renderCountyPolygons } from '@/components/map/layers/CountyPolygonLayer';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
+import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
@@ -1928,127 +1929,25 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
 
     if (shouldRenderProviderLocations) {
-      const showUtilization = layers.utilizationIntensity;
-
-      visibleFacilities.forEach(facility => {
-        const util = getFacilityUtilization(facility);
-        const validation = facilityValidation.records.get(facility.id);
-        const dataConfidence = getFacilityDataConfidence(facility);
-        const [displayLat, displayLng] = displayCoordinates.get(`facility:${facility.id}`) ?? [facility.lat, facility.lng];
-        const useUniformSize = topProvidersOnly && mapZoom < 11;
-        const scaledSize = showUtilization && util && !useUniformSize
-          ? getScaledPinSize(MAP_PIN_VISUALS.providerLocations.size, util.totalVisits)
-          : MAP_PIN_VISUALS.providerLocations.size;
-        const hitSize = Math.max(scaledSize, 28);
-        const markerOpacity = dataConfidence === 'Unverified' ? 0.82 : 1;
-        const baseMarkerHtml = getSharedPinSvgMarkup('providerLocations', scaledSize, {
-          color: facility.type === 'hospital' ? 'hsl(var(--hospital))' : 'hsl(var(--clinic))',
-          opacity: markerOpacity,
-        });
-
-        // Tier 1 highlight is an additive visual ring on existing clinic pins.
-        // Strict source of truth: facility.tier === 'tier1' (set in facilities.ts).
-        // Only applies when both the Provider Locations layer and the Tier 1
-        // Highlight toggle are on. Never adds a new marker, never replaces the
-        // pin color, never affects hospitals.
-        const isTier1Clinic = facility.type === 'clinic' && facility.tier === 'tier1';
-        const showTier1Ring = isTier1Clinic && layers.tier1Highlight;
-        const markerHtml = showTier1Ring
-          ? `<div class="tier1-ring" aria-label="Tier 1 Provider">${baseMarkerHtml}</div>`
-          : baseMarkerHtml;
-
-        const icon = L.divIcon({
-          className: '',
-          html: markerHtml,
-          iconSize: [hitSize, hitSize],
-          iconAnchor: [hitSize / 2, hitSize],
-          tooltipAnchor: [0, -hitSize],
-        });
-
-        const marker = L.marker([displayLat, displayLng], {
-          icon,
-          pane: MAP_PANES.facilityMarkers,
-          zIndexOffset: POINT_MARKER_PRIORITY.base,
-        }) as MapPointMarker;
-
-        marker.__pointKind = 'providerLocations';
-        marker.__providerType = facility.type === 'hospital' ? 'hospital' : 'clinic';
-        marker.__baseZIndexOffset = POINT_MARKER_PRIORITY.base;
-        marker.__entity = { type: 'facility', facility };
-        marker.__entityType = 'facility';
-        marker.__entityId = facility.id;
-        marker.__entityName = facility.name;
-        applyMarkerPriority(marker, 'default');
-        logMapSelectionDebug('marker-rendered', marker.__entity, { source: 'facility-marker', pointKind: marker.__pointKind });
-
-        // No hover interaction for pins — click only
-
-        marker.on('click', (event: L.LeafletEvent) => {
-          selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'facility-marker', event, marker);
-
-          if (!facilityValidationMode || !validation) return;
-
-          const validationHtml = `
-            <div style="padding: 8px 12px; font-size: 12px; width: 260px; white-space: normal; word-break: break-word; overflow-wrap: anywhere;">
-              <div style="font-weight: 700; margin-bottom: 4px;">${facility.name}</div>
-              <div style="color: hsl(240, 4%, 46%); margin-bottom: 6px;">${getFacilityTypeLabel(facility)} · ${facility.county} County</div>
-              <div><strong>Source address:</strong> ${validation.sourceAddress}</div>
-              <div><strong>Latitude:</strong> ${facility.lat.toFixed(4)}</div>
-              <div><strong>Longitude:</strong> ${facility.lng.toFixed(4)}</div>
-              <div><strong>Geocoding source:</strong> ${getFacilityCoordinateSourceLabel(validation.coordinateSource)}</div>
-              <div><strong>Confidence:</strong> ${validation.confidence === 'verified' ? 'Verified' : validation.confidence === 'manual_review' ? 'Approximate — manual review' : 'Approximate'}</div>
-              ${validation.notes ? `<div style="margin-top: 6px; color: hsl(240, 4%, 46%);">${validation.notes}</div>` : ''}
-              ${validation.issues.length > 0 ? `<div style="margin-top: 6px;"><strong>Checks:</strong><ul style="margin: 4px 0 0 18px; padding: 0;">${validation.issues.map((issue) => `<li>${issue}</li>`).join('')}</ul></div>` : ''}
-            </div>
-          `;
-
-          marker.bindPopup(validationHtml, { maxWidth: 280 }).openPopup();
-        });
-
-        // Native DOM click backup — same pattern as service/behavioral markers
-        marker.once('add', () => {
-          const iconEl = marker.getElement?.();
-          if (iconEl) {
-            iconEl.addEventListener('click', (nativeEvent: MouseEvent) => {
-              nativeEvent.stopPropagation();
-              logMapSelectionDebug('native-dom-click', marker.__entity, { source: 'facility-marker-native' });
-              selectMarkerEntity(marker.__entity as PointSelectionEntity | undefined, 'facility-marker-native', null, marker);
-            });
-          }
-        });
-
-        const classification = getFacilityClassification(facility);
-        const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
-          ? 'Clinic / Community Provider'
-          : getFacilityTypeLabel(facility);
-
-        const claimsMetrics = getProviderClaimsMetrics(facility);
-         // PUBLIC_SAFE_MODE: hide claims-derived metrics (members attributed,
-         // penetration) from hover tooltips.
-         const publicMode = isPublicSafeModeActive();
-         const claimsDetail = (!publicMode && claimsMetrics)
-           ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
-           : undefined;
-
-        marker.on('mouseover', () => {
-          const distInfo = getMemberDistanceInfo(facility.lat, facility.lng);
-          markerHoverPreviewRef.current({
-            name: facility.name,
-            subtitle: `${facility.city}, ${facility.county} County`,
-            address: facility.address,
-            detail: typeLabel,
-            extraHtml: [
-              `Data Confidence: ${dataConfidence}`,
-              !publicMode && showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
-              claimsDetail,
-            ].filter(Boolean).join('\n'),
-            ...distInfo,
-          });
-        });
-        marker.on('mouseout', () => markerHoverPreviewRef.current(null));
-
-        nextFacilityMarkers.push(marker);
+      const providerMarkers = renderProviderMarkers({
+        visibleFacilities,
+        displayCoordinates,
+        mapZoom,
+        facilityMarkersPane: MAP_PANES.facilityMarkers,
+        baseZIndexOffset: POINT_MARKER_PRIORITY.base,
+        showUtilization: layers.utilizationIntensity,
+        showTier1Highlight: layers.tier1Highlight,
+        topProvidersOnly,
+        facilityValidation,
+        facilityValidationMode,
+        applyMarkerPriority,
+        selectMarkerEntity: (entity, source, event, marker) =>
+          selectMarkerEntity(entity, source, event ?? undefined, marker),
+        getMemberDistanceInfo,
+        markerHoverPreviewRef,
+        logMapSelectionDebug,
       });
+      providerMarkers.forEach((marker) => nextFacilityMarkers.push(marker));
     }
 
     if (nextFacilityMarkers.length > 0) {
