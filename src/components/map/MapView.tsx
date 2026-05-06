@@ -42,6 +42,7 @@ import { renderProviderMarkers } from '@/components/map/layers/ProviderMarkerLay
 import { renderBehavioralHealthMarkers } from '@/components/map/layers/BehavioralHealthMarkerLayer';
 import { renderServiceMarkers } from '@/components/map/layers/ServiceMarkerLayer';
 import { renderFteHubs } from '@/components/map/layers/FteOverlayLayer';
+import { renderFteFieldCoverageZones } from '@/components/map/layers/FieldCoverageZoneLayer';
 import { renderUtilizationChoropleth } from '@/components/map/layers/UtilizationOverlayLayer';
 import { renderAccessGapOverlay } from '@/components/map/layers/AccessGapOverlayLayer';
 import { renderProviderRadii } from '@/components/map/layers/ProviderRadiusLayer';
