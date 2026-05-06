@@ -2183,6 +2183,11 @@ const FacilityContent = ({
       <h3 className="text-sm font-semibold text-foreground leading-tight mb-2" style={{ wordBreak: 'break-word' }}>
         {facility.name}
       </h3>
+      {isHighUtilClinic && (
+        <p className="-mt-1 mb-2 text-[10px] leading-snug text-muted-foreground">
+          Tier 1 indicates network priority, not distance or guaranteed availability.
+        </p>
+      )}
 
       {/* Decision-support: top-of-panel guidance (Phase 1) */}
       <RecommendedNextStep facility={facility} memberLocation={memLoc} />
