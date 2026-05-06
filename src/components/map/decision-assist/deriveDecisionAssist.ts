@@ -172,16 +172,22 @@ export const deriveDecisionAssist = (
     confidence = 'low';
   }
 
-  // Constraint (worst single signal)
+  // Constraint (worst single signal). Remote-only and strained field reach
+  // are surfaced explicitly so staff don't infer in-person feasibility.
   let constraint: string | null = null;
-  if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
+  if (isRemoteOnly) {
+    constraint = `${county ?? 'Member location'} outside any field FTE reach — remote coordination required; in-person referrals require scheduled outreach or alternative routing.`;
+  } else if (strain && strain.coverage === 'strained') {
+    const anchor = strain.responder?.anchorSite?.name ?? strain.responder?.label ?? 'nearest hub';
+    constraint = `Strained field reach from ${anchor} (~${strain.oneWayMi} mi) — schedule outreach or route remotely.`;
+  } else if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
     constraint = 'No in-network record found for this need in current data.';
   } else if (nearestGeo?.tier === 'Non-Viable') {
     constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — non-viable for routine in-person.`;
   } else if (nearestGeo?.tier === 'High Friction') {
     constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — confirm transport.`;
   } else if (fteLoad === 'over') {
-    constraint = `${county ?? 'County'} field FTE at/over capacity — route remotely or schedule.`;
+    constraint = `${fte?.label ?? 'Field FTE'} at/over capacity — route remotely or schedule.`;
   } else if (!highway.hasAccess && nearestGeo && (nearestGeo.distanceMi ?? 0) > 10) {
     constraint = 'Member not on a major highway corridor — coordinate transport.';
   }
