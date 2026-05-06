@@ -42,6 +42,10 @@ const _scheduledZoneCache = new Map<number, Feature<Polygon | MultiPolygon> | nu
 
 const FIELD_RESPONSE_UNAVAILABLE_COUNTIES = new Set(['Churchill']);
 
+export function countyHasFieldResponseUnavailable(county: string): boolean {
+  return FIELD_RESPONSE_UNAVAILABLE_COUNTIES.has(county);
+}
+
 function buildMergedBufferZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
   const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
   if (fieldFtes.length === 0) return null;
