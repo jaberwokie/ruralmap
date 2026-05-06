@@ -151,16 +151,8 @@ interface MarkerHoverPreview {
 
 type CoverageGapSeverity = 'High' | 'Moderate' | 'Low';
 
-// Haversine distance in km
-const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
+// Haversine + member tier helpers extracted to @/lib/operational/memberAccess.
+import { haversineKm, computeMemberDistanceInfo } from '@/lib/operational';
 
 const RADIUS_COLORS = { stroke: 'hsla(200, 50%, 50%, 0.6)', fill: 'hsla(200, 50%, 50%, 0.10)' };
 
@@ -769,10 +761,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const getMemberDistanceInfo = useCallback((targetLat: number, targetLng: number): { memberDistanceMi: number; memberTierLabel: string } | null => {
     const ml = memberLocationRef.current;
     if (!ml) return null;
-    const km = haversineKm(ml.lat, ml.lng, targetLat, targetLng);
-    const mi = km * 0.621371;
-    const tierLabel = mi <= 10 ? 'Local Access' : mi <= 25 ? 'Managed Access' : mi <= 40 ? 'High Friction' : 'Non-Viable';
-    return { memberDistanceMi: Math.round(mi * 10) / 10, memberTierLabel: tierLabel };
+    return computeMemberDistanceInfo(ml.lat, ml.lng, targetLat, targetLng);
   }, []);
   const interactionGuardUntilRef = useRef(0);
   const markerGuardUntilRef = useRef(0);
