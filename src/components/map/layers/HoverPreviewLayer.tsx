@@ -69,7 +69,7 @@ const CountyHoverMetricRow = ({
   </div>
 );
 
-export const getCoverageGapSeverity = (coverageGapPercent: number): CoverageGapSeverity => {
+const getCoverageGapSeverity = (coverageGapPercent: number): CoverageGapSeverity => {
   if (coverageGapPercent > 60) return 'High';
   if (coverageGapPercent >= 30) return 'Moderate';
   return 'Low';
