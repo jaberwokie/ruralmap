@@ -6,7 +6,7 @@ export type MarkerClusterGroupLike = L.LayerGroup & {
   clearLayers: () => void;
 };
 
-export const markerClusterFactory = (L as typeof L & {
+export const getMarkerClusterFactory = () => (L as typeof L & {
   markerClusterGroup?: (options?: Record<string, unknown>) => MarkerClusterGroupLike & {
     getAllChildMarkers?: () => L.Marker[];
   };
@@ -80,6 +80,8 @@ const SPIDER_LEG_OPTIONS = {
  * cleanly when the user zooms in.
  */
 export const createFacilityClusterGroup = (clusterPane: string): MarkerClusterGroupLike | null => {
+  const markerClusterFactory = getMarkerClusterFactory();
+
   return markerClusterFactory?.({
     maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
     showCoverageOnHover: false,
@@ -103,6 +105,8 @@ export const createFacilityClusterGroup = (clusterPane: string): MarkerClusterGr
  * expandable at any zoom level.
  */
 export const createGroupedPointClusterGroup = (clusterPane: string): MarkerClusterGroupLike | null => {
+  const markerClusterFactory = getMarkerClusterFactory();
+
   return markerClusterFactory?.({
     maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
     showCoverageOnHover: false,
