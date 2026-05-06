@@ -37,8 +37,7 @@ import TransportationCoordinationSection from '@/components/map/TransportationCo
 import { getMobilityManagersForCounty } from '@/data/mobility-managers';
 import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
-import { checkHighwayAccess } from '@/utils/highwayProximity';
-import { GAP_COUNTIES, haversineKm as haversineKmLocal, getMemberTierLabel } from '@/lib/operational';
+import { GAP_COUNTIES } from '@/lib/operational';
 import {
   resolvePsychiatryBadge, resolveInpatientBadge,
   hasPsychiatricData, hasInpatientData,
@@ -285,14 +284,7 @@ const FieldResponseStrainSection = ({
   );
 };
 
-// haversineKmLocal + getMemberTierLabel extracted to @/lib/operational/memberAccess.
-
-const TIER_LABEL_COLOR: Record<string, string> = {
-  'Local Access': 'text-green-600',
-  'Managed Access': 'text-amber-600',
-  'High Friction': 'text-red-500',
-  'Non-Viable': 'text-muted-foreground',
-};
+// MemberDistanceBadge + tier color map extracted to ./MemberDistanceBadge.
 
 
 // MemberDistanceBadge extracted to ./MemberDistanceBadge.
