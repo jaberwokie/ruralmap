@@ -38,7 +38,7 @@ import { getMobilityManagersForCounty } from '@/data/mobility-managers';
 import { RecommendedNextStep, AccessFrictionSummary, LastTouchedSummary, BackupOptions } from '@/components/map/decision-support/DecisionSupportBlocks';
 import { getEnrichmentForProvider } from '@/utils/providerEnrichmentStore';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
-import { GAP_COUNTIES, haversineKm as haversineKmLocal, getMemberTierLabel, kmToMi } from '@/lib/operational';
+import { GAP_COUNTIES, haversineKm as haversineKmLocal, getMemberTierLabel } from '@/lib/operational';
 import {
   resolvePsychiatryBadge, resolveInpatientBadge,
   hasPsychiatricData, hasInpatientData,
