@@ -152,7 +152,7 @@ export type AuditAction =
   | 'record_edited'
   | 'verification_changed';
 
-export type PipelineKey = 'services' | 'behavioral_health';
+export type PipelineKey = 'services' | 'behavioral_health' | 'provider_mapping';
 
 export interface AuditLogRow {
   id: string;
