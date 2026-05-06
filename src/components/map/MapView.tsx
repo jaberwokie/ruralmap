@@ -614,15 +614,6 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
   }, []);
 
-  const stopInteractionEvent = useCallback((event?: L.LeafletEvent | Event | null) => {
-    if (!event) return;
-    const originalEvent = (event as L.LeafletEvent & { originalEvent?: Event }).originalEvent;
-    if (originalEvent) {
-      L.DomEvent.stop(originalEvent as any);
-      return;
-    }
-    L.DomEvent.stop(event as any);
-  }, []);
 
   const armInteractionGuard = useCallback((source: 'marker' | 'county' | 'overlay') => {
     const expiresAt = Date.now() + SELECTION_GUARD_MS;
