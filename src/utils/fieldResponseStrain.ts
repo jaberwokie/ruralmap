@@ -212,13 +212,13 @@ export function computeFieldResponseStrain(
   let coverageLabel: string;
   if (anchoringFtes.length >= 2) {
     coverage = 'shared';
-    coverageLabel = `Shared field coverage — ${anchoringFtes.join(', ')}`;
+    coverageLabel = 'Shared field coverage';
   } else if (anchoringFtes.length === 1) {
     coverage = 'single';
-    coverageLabel = `Single FTE coverage — ${anchoringFtes[0]}`;
+    coverageLabel = 'Single FTE coverage';
   } else if (!beyondSameDay) {
     coverage = 'strained';
-    coverageLabel = 'Strained — beyond active radius, scheduled outreach';
+    coverageLabel = 'Beyond active radius — scheduled outreach only';
   } else {
     coverage = 'noSameDay';
     coverageLabel = 'Outside realistic same-day field response';
