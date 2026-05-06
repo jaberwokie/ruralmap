@@ -2034,31 +2034,7 @@ const OperationalInlineBadges = ({ meta }: { meta?: Partial<ServiceOperationalMe
   );
 };
 
-// ── Service-Line Badges ──
-
-const PsychiatryBadge = ({ fields }: { fields?: Partial<import('@/types/service-lines').PsychiatricServiceFields> | null }) => {
-  if (!hasPsychiatricData(fields)) return null;
-  const badge = resolvePsychiatryBadge(fields);
-  const colors = PSYCHIATRY_BADGE_COLORS[badge];
-  return (
-    <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-medium ${colors.bg} ${colors.text}`}>
-      <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${colors.dot}`} />
-      {badge}
-    </span>
-  );
-};
-
-const InpatientBadge = ({ fields }: { fields?: Partial<import('@/types/service-lines').InpatientServiceFields> | null }) => {
-  if (!hasInpatientData(fields)) return null;
-  const badge = resolveInpatientBadge(fields);
-  const colors = INPATIENT_BADGE_COLORS[badge];
-  return (
-    <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9px] font-medium ${colors.bg} ${colors.text}`}>
-      <span className={`inline-block h-1.5 w-1.5 rounded-full shrink-0 ${colors.dot}`} />
-      {badge}
-    </span>
-  );
-};
+// PsychiatryBadge + InpatientBadge extracted to ./detail/ServiceLineBadges.
 
 const YNU_LABELS: Record<string, string> = { yes: 'Yes', no: 'No', unknown: 'Unknown' };
 const MEDICAID_LABELS: Record<string, string> = { participating: 'Yes', non_participating: 'No', unknown: 'Unknown' };
