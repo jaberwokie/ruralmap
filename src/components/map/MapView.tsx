@@ -2,6 +2,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEBUG_CLICKS, debugMarkerClick, debugCountyClick, debugMapClear } from '@/components/map/debugClickOverlay';
 import { DEBUG_ENABLED, getEntityDebugMeta, stopInteractionEvent } from '@/components/map/layers/MapInteractionUtils';
 import { armSelectionGuard, isInteractionGuardActive, isMarkerGuardActive } from '@/components/map/layers/MapSelectionGuards';
+import {
+  type MarkerClusterGroupLike,
+  createFacilityClusterGroup,
+  createGroupedPointClusterGroup,
+  bindClusterChildClick,
+} from '@/components/map/layers/MapClusterSetup';
 import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import { createMemberPinMarker } from './layers/MemberPinLayer';
@@ -382,35 +388,11 @@ type MapPointMarker = L.Marker & {
 
 type PointSelectionEntity = Extract<MapEntity, { type: 'facility' | 'ruralService' }>;
 
-type MarkerClusterGroupLike = L.LayerGroup & {
-  addLayers: (layers: L.Layer[]) => void;
-  clearLayers: () => void;
-};
-
-const markerClusterFactory = (L as typeof L & {
-  markerClusterGroup?: (options?: Record<string, unknown>) => MarkerClusterGroupLike & {
-    getAllChildMarkers?: () => L.Marker[];
-  };
-}).markerClusterGroup;
-
 const POINT_MARKER_PRIORITY = {
   base: 2000,
   hoveredBoost: 1100,
   selectedBoost: 2200,
 } as const;
-
-
-
-const getDeclutterRadiusByZoom = (zoom: number) => {
-  if (zoom <= 7) return 22;
-  if (zoom === 8) return 18;
-  if (zoom === 9) return 14;
-  if (zoom === 10) return 10;
-  if (zoom === 11) return 6;
-  return 4;
-};
-
-const getClusterBadgeLabel = (count: number) => (count > 99 ? '99+' : String(count));
 
 const OVERLAP_DECLUTTER_ZOOM = 11;
 const NEARBY_MARKER_THRESHOLD = 0.00035;
@@ -488,45 +470,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
   return coordinates;
 };
 
-const createPointClusterIcon = (markers: L.Marker[]) => {
-  const pointMarkers = markers as MapPointMarker[];
-  const providerMarkers = pointMarkers.filter((marker) => marker.__pointKind === 'providerLocations');
-  const providerCount = providerMarkers.length;
-  const serviceCount = pointMarkers.filter((marker) => marker.__pointKind === 'servicePresence').length;
-  const behavioralHealthCount = pointMarkers.filter((marker) => marker.__pointKind === 'behavioralHealth').length;
-  const hospitalCount = providerMarkers.filter((marker) => marker.__providerType === 'hospital').length;
-  const clinicCount = providerMarkers.filter((marker) => marker.__providerType === 'clinic').length;
-  const totalCount = providerCount + serviceCount + behavioralHealthCount;
-  const iconSize = 24;
-  const categoryCounts = [
-    { color: 'hsl(var(--hospital))', count: hospitalCount },
-    { color: 'hsl(var(--clinic))', count: clinicCount },
-    { color: 'hsl(var(--service-presence))', count: serviceCount },
-    { color: 'hsl(var(--behavioral-health))', count: behavioralHealthCount },
-  ].filter((entry) => entry.count > 0);
-  const primaryPinColor = [...categoryCounts].sort((left, right) => right.count - left.count)[0]?.color ?? 'hsl(var(--clinic))';
-  const primaryPin = getSharedPinSvgMarkup('providerLocations', 16, { color: primaryPinColor });
-  const indicatorDots = categoryCounts
-    .map(({ color, count }) => `<span class="cluster-marker__dot" style="--cluster-dot:${color}" aria-hidden="true" title="${count}"></span>`)
-    .join('');
-
-  const html = `
-    <div class="cluster-marker-composed" data-count="${totalCount}" style="width:${iconSize + 8}px;height:${iconSize + 14}px;">
-      <span class="cluster-marker-composed__pin" aria-hidden="true">${primaryPin}</span>
-      <span class="cluster-marker-composed__badge" aria-hidden="true">
-        <span class="cluster-marker-composed__count">${getClusterBadgeLabel(totalCount)}</span>
-      </span>
-      ${indicatorDots ? `<span class="cluster-marker-composed__indicators" aria-hidden="true">${indicatorDots}</span>` : ''}
-    </div>
-  `.trim();
-
-  return L.divIcon({
-    className: '',
-    html,
-    iconSize: [iconSize, iconSize],
-    iconAnchor: [iconSize / 2, iconSize],
-  });
-};
+// Cluster icon construction (createPointClusterIcon) lives in MapClusterSetup.
 
 // Hover preview helpers (numberFormatter, county display name, severity,
 // metric row, info button) live in HoverPreviewLayer.
@@ -1275,54 +1219,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     servicePresenceMarkerRef.current = L.featureGroup().addTo(map);
     behavioralHealthHaloRef.current = L.featureGroup().addTo(map);
     behavioralHealthMarkerRef.current = L.featureGroup().addTo(map);
-    markersRef.current = markerClusterFactory?.({
-      maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      spiderfyOnMaxZoom: false,
-      disableClusteringAtZoom: 12,
-      removeOutsideVisibleBounds: false,
-      animate: true,
-      animateAddingMarkers: false,
-      spiderfyDistanceMultiplier: 0.85,
-      clusterPane: MAP_PANES.facilityMarkers,
-      spiderLegPolylineOptions: {
-        color: 'hsl(var(--border))',
-        weight: 1,
-        opacity: 0.85,
-      },
-      iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
-    }) ?? null;
+    markersRef.current = createFacilityClusterGroup(MAP_PANES.facilityMarkers);
     markersRef.current?.addTo(map);
 
     // Facility cluster group click handler — uses stable ref
-    (markersRef.current as any)?.on?.('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, marker);
+    bindClusterChildClick(markersRef.current, (marker, e) => {
+      const m = marker as MapPointMarker | undefined;
+      selectMarkerEntityRef.current(m?.__entity as PointSelectionEntity | undefined, 'facility-cluster-marker', e, m);
     });
     topProviderMarkersRef.current = L.layerGroup().addTo(map);
-    pointClusterRef.current = markerClusterFactory?.({
-      maxClusterRadius: (zoom: number) => getDeclutterRadiusByZoom(zoom),
-      showCoverageOnHover: false,
-      zoomToBoundsOnClick: true,
-      // Spiderfy any cluster the user clicks once it can't zoom any further —
-      // critical for shared-coordinate stacks (e.g. city-centroid geocodes
-      // where 10+ records land on the same lat/lng).
-      spiderfyOnMaxZoom: true,
-      // Do NOT disable clustering by zoom — coincident markers must remain
-      // grouped and spiderfiable at any zoom level.
-      removeOutsideVisibleBounds: false,
-      animate: true,
-      animateAddingMarkers: false,
-      spiderfyDistanceMultiplier: 1.4,
-      clusterPane: MAP_PANES.groupedMarkers,
-      spiderLegPolylineOptions: {
-        color: 'hsl(var(--border))',
-        weight: 1,
-        opacity: 0.85,
-      },
-      iconCreateFunction: (cluster: { getAllChildMarkers: () => L.Marker[] }) => createPointClusterIcon(cluster.getAllChildMarkers()),
-    }) ?? null;
+    pointClusterRef.current = createGroupedPointClusterGroup(MAP_PANES.groupedMarkers);
     pointClusterRef.current?.addTo(map);
 
     // Handle clicks on individual markers inside the cluster group.
@@ -1330,9 +1236,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // marker.on('click') may not fire reliably. This listener catches all
     // child-marker clicks via the cluster group's own event system.
     // Uses stable ref to avoid stale closure (bound once at map init).
-    (pointClusterRef.current as any)?.on?.('click', (e: any) => {
-      const marker = e.layer as MapPointMarker | undefined;
-      selectMarkerEntityRef.current(marker?.__entity as PointSelectionEntity | undefined, 'cluster-group-click', e, marker);
+    bindClusterChildClick(pointClusterRef.current, (marker, e) => {
+      const m = marker as MapPointMarker | undefined;
+      selectMarkerEntityRef.current(m?.__entity as PointSelectionEntity | undefined, 'cluster-group-click', e, m);
     });
     fteCapacityRef.current = L.layerGroup().addTo(map);
     labelsRef.current = L.layerGroup().addTo(map);
