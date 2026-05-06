@@ -398,34 +398,7 @@ const POINT_MARKER_PRIORITY = {
   selectedBoost: 2200,
 } as const;
 
-const SELECTION_GUARD_MS = 220;
 
-const getEntityDebugMeta = (entity: MapEntity | null | undefined) => {
-  if (!entity) {
-    return { entityType: null, entityId: null, entityName: null };
-  }
-
-  switch (entity.type) {
-    case 'facility':
-      return { entityType: entity.type, entityId: entity.facility.id, entityName: entity.facility.name };
-    case 'ruralService':
-      return { entityType: entity.type, entityId: entity.service.id, entityName: entity.service.name };
-    case 'county':
-      return { entityType: entity.type, entityId: entity.county, entityName: entity.county };
-    case 'memberVolume':
-      return { entityType: entity.type, entityId: entity.county, entityName: entity.county };
-    case 'coverageGap':
-      return { entityType: entity.type, entityId: String(entity.radiusKm), entityName: `Coverage Gap ${entity.radiusKm}km` };
-    case 'coverageArea':
-      return { entityType: entity.type, entityId: entity.area, entityName: entity.area };
-    case 'ruralServiceGroup':
-      return { entityType: entity.type, entityId: entity.county, entityName: entity.county };
-    case 'fteDetail':
-      return { entityType: entity.type, entityId: entity.fteId, entityName: entity.fteId };
-    default:
-      return { entityType: null, entityId: null, entityName: null };
-  }
-};
 
 const getDeclutterRadiusByZoom = (zoom: number) => {
   if (zoom <= 7) return 22;
