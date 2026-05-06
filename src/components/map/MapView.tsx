@@ -657,14 +657,13 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       result = result.filter((facility) => countyFilters.has(facility.county));
     }
 
-    // County review scoping (parity with Services/BH at line 759):
-    // when a county is selected via map/sidebar, narrow provider pins to
-    // that county so the map matches the county detail panel one-for-one.
-    // Additive — does not change clustering, Access Gaps, FTE, or
-    // Response Capability inputs (which read from `providerFacilities` /
-    // FTE geometry, not this filtered list).
-    if (selectedCounty) {
-      result = result.filter((facility) => sameCounty(facility.county, selectedCounty));
+    // County review scoping: only narrow when the user has an explicit county
+    // selection AND is NOT typing a free-text search. Free-text search is the
+    // active intent; a stale `selectedCounty` from a prior click must not
+    // collapse providers down to one county while the user searches.
+    const activeCountyFilter = !searchQuery && selectedCounty ? selectedCounty : null;
+    if (activeCountyFilter) {
+      result = result.filter((facility) => sameCounty(facility.county, activeCountyFilter));
     }
 
     if (typeFilters && typeFilters.size > 0) {
