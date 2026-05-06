@@ -12,7 +12,6 @@ import { exportCsv } from '@/utils/csvExport';
 import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import type { ZoneFilters } from '@/types/zoneFilters';
-import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import { RURAL_SERVICE_CATEGORIES, type RuralService } from '@/data/rural-services';
 import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
 import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
