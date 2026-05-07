@@ -17,7 +17,7 @@
  *           <DecisionAssistDrawer /> mount block (and its import) in Index.tsx.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronUp, ChevronDown, X, Stethoscope } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Facility } from '@/data/facilities';
