@@ -1361,56 +1361,84 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     const pane = map.getPane(PANE_CONFIG.tribalNations.id);
     if (!pane) return;
-    const svg = pane.querySelector('svg') as SVGSVGElement | null;
-    if (!svg) return;
 
     const SVG_NS = 'http://www.w3.org/2000/svg';
     const CLIP_ID = 'nevada-tribal-clip';
+    const CLIP_URL = `url(#${CLIP_ID})`;
 
-    let defs = svg.querySelector('defs') as SVGDefsElement | null;
-    let createdDefs = false;
-    if (!defs) {
-      defs = document.createElementNS(SVG_NS, 'defs');
-      svg.insertBefore(defs, svg.firstChild);
-      createdDefs = true;
-    }
-    const clipPath = document.createElementNS(SVG_NS, 'clipPath');
-    clipPath.setAttribute('id', CLIP_ID);
-    clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
-    const clipPathEl = document.createElementNS(SVG_NS, 'path');
-    clipPath.appendChild(clipPathEl);
-    defs.appendChild(clipPath);
-
-    const overlayG = svg.querySelector('g') as SVGGElement | null;
-    const prevClip = overlayG?.getAttribute('clip-path') ?? null;
-    if (overlayG) overlayG.setAttribute('clip-path', `url(#${CLIP_ID})`);
+    // clipPath lives in the pane SVG's <defs>. The pane SVG is created lazily
+    // by Leaflet, so we resolve it on each apply and (re)build the clipPath
+    // node if it has been removed by a Leaflet rebuild.
+    const ensureClipPath = (svg: SVGSVGElement): SVGPathElement => {
+      let defs = svg.querySelector(':scope > defs') as SVGDefsElement | null;
+      if (!defs) {
+        defs = document.createElementNS(SVG_NS, 'defs');
+        svg.insertBefore(defs, svg.firstChild);
+      }
+      let clipPath = defs.querySelector(`#${CLIP_ID}`) as SVGElement | null;
+      if (!clipPath) {
+        clipPath = document.createElementNS(SVG_NS, 'clipPath');
+        clipPath.setAttribute('id', CLIP_ID);
+        clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
+        const p = document.createElementNS(SVG_NS, 'path');
+        clipPath.appendChild(p);
+        defs.appendChild(clipPath);
+      }
+      return clipPath.querySelector('path') as SVGPathElement;
+    };
 
     const coords = nevadaBoundaryGeoJSON.coordinates[0] as [number, number][];
 
-    const updateClip = () => {
+    const buildD = () => {
       let d = '';
       for (let i = 0; i < coords.length; i++) {
         const [lng, lat] = coords[i];
         const pt = map.latLngToLayerPoint([lat, lng]);
         d += (i === 0 ? 'M' : 'L') + pt.x + ',' + pt.y;
       }
-      d += 'Z';
-      clipPathEl.setAttribute('d', d);
+      return d + 'Z';
     };
 
-    updateClip();
-    map.on('zoomend moveend viewreset zoom', updateClip);
+    // Apply clip-path to every rendered Tribal SVG element (groups + paths)
+    // inside the Tribal Nations pane. Leaflet may recreate these nodes on
+    // pan/zoom, so we re-apply on every relevant event.
+    const apply = () => {
+      const svgs = pane.querySelectorAll('svg');
+      svgs.forEach((svg) => {
+        const pathEl = ensureClipPath(svg as SVGSVGElement);
+        pathEl.setAttribute('d', buildD());
+        // Apply to overlay <g> children and any rendered <path> elements.
+        svg.querySelectorAll('g, path').forEach((el) => {
+          if ((el as Element).closest('clipPath')) return;
+          if (el.getAttribute('clip-path') !== CLIP_URL) {
+            el.setAttribute('clip-path', CLIP_URL);
+          }
+        });
+      });
+    };
+
+    apply();
+    map.on('zoomend moveend viewreset zoom zoomstart movestart', apply);
+
+    // Watch for Leaflet adding/removing tribal SVG nodes after re-renders.
+    const observer = new MutationObserver(() => apply());
+    observer.observe(pane, { childList: true, subtree: true });
 
     return () => {
-      map.off('zoomend moveend viewreset zoom', updateClip);
-      if (overlayG) {
-        if (prevClip) overlayG.setAttribute('clip-path', prevClip);
-        else overlayG.removeAttribute('clip-path');
-      }
-      clipPath.remove();
-      if (createdDefs && defs && defs.childNodes.length === 0) defs.remove();
+      map.off('zoomend moveend viewreset zoom zoomstart movestart', apply);
+      observer.disconnect();
+      pane.querySelectorAll('svg').forEach((svg) => {
+        svg.querySelectorAll('g, path').forEach((el) => {
+          if ((el as Element).closest('clipPath')) return;
+          if (el.getAttribute('clip-path') === CLIP_URL) {
+            el.removeAttribute('clip-path');
+          }
+        });
+        const cp = svg.querySelector(`#${CLIP_ID}`);
+        cp?.remove();
+      });
     };
-  }, [mapReady]);
+  }, [mapReady, tribalBoundariesReady, layers.tribalNations]);
 
   // Draw state boundary + inverse mask to visually clip content outside Nevada
   useEffect(() => {
