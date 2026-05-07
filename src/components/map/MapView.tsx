@@ -56,6 +56,7 @@ import { renderUtilizationChoropleth } from '@/components/map/layers/Utilization
 import { renderAccessGapOverlay } from '@/components/map/layers/AccessGapOverlayLayer';
 import { renderProviderRadii } from '@/components/map/layers/ProviderRadiusLayer';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityCategory, getResponseCapabilityMarkerHtml } from '@/components/map/responseCapabilityVisuals';
+import MapLegend from '@/components/map/MapLegend';
 import { getRemoteSupportMarkerLatLng, getActiveFieldMarkerLatLng } from '@/utils/remoteSupportPlacement';
 import { getDriveEstimate } from '@/utils/driveEstimate';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
