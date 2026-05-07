@@ -44,9 +44,10 @@ describe('deriveDecisionAssist', () => {
     expect(r.constraint).toBeNull();
   });
 
-  it('flags non-viable distance constraint', () => {
+  it('flags non-viable distance constraint outside mixed county coverage caveats', () => {
+    const carsonMember = { lat: 39.1638, lng: -119.7674 };
     const ctx: DecisionAssistContext = {
-      member,
+      member: carsonMember,
       facilities: [mkFacility({ id: 'f-far', lat: 40.8230, lng: -115.7314 })], // Elko, ~280mi
       services: [],
     };
