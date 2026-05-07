@@ -1,7 +1,7 @@
 import type { LayerState } from '@/types/layers';
 
 interface MapLegendProps {
-  layers: LayerState;
+  layers: Partial<LayerState>;
   /** Used to detect a meaningful operational state. County-only stays minimal. */
   hasAccessGaps?: boolean;
   hasTier1?: boolean;
