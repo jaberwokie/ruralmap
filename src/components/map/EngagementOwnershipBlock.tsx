@@ -53,7 +53,7 @@ const Row = ({
 
 const EngagementOwnershipBlock = ({ county, compact = false }: EngagementOwnershipBlockProps) => {
   if (!county) return null;
-  const isPrimary = countyHasFieldCoverage(county);
+  const isPrimary = getEngagementOwnership(county).inPersonAvailable;
 
   const headerLabel = isPrimary ? 'Primary CHW Coverage' : 'Remote CHW Coverage';
 
