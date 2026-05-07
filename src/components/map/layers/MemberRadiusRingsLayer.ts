@@ -11,8 +11,9 @@ import L from 'leaflet';
  *   - 25 mi  → Managed       → tier1             (amber)
  *   - 40 mi  → High Friction → access-gap-border (red)
  *
- * Subtle by design: low-opacity strokes, near-zero fill, dashed outer rings —
- * the member pin stays visually primary.
+ * Subtle by design: low-opacity strokes, dashed outer rings, and only the
+ * innermost ring carries a near-invisible fill. The member pin stays the
+ * visual focal point and map geography remains fully readable.
  */
 export type MemberDistanceRingTier = 'local' | 'managed' | 'highFriction';
 
@@ -28,9 +29,9 @@ export interface MemberDistanceRingStyle {
 }
 
 export const MEMBER_DISTANCE_RING_STYLES: Record<MemberDistanceRingTier, MemberDistanceRingStyle> = {
-  local:        { mi: 10, hslVar: '--service-presence',  strokeAlpha: 0.55, fillAlpha: 0.04,  weight: 2 },
-  managed:      { mi: 25, hslVar: '--tier1',             strokeAlpha: 0.45, fillAlpha: 0.025, weight: 1.5,  dash: '6 4' },
-  highFriction: { mi: 40, hslVar: '--access-gap-border', strokeAlpha: 0.40, fillAlpha: 0.02,  weight: 1.25, dash: '4 4' },
+  local:        { mi: 10, hslVar: '--service-presence',  strokeAlpha: 0.45, fillAlpha: 0.02, weight: 2 },
+  managed:      { mi: 25, hslVar: '--tier1',             strokeAlpha: 0.30, fillAlpha: 0,   weight: 1.5,  dash: '6 4' },
+  highFriction: { mi: 40, hslVar: '--access-gap-border', strokeAlpha: 0.25, fillAlpha: 0,   weight: 1.25, dash: '4 4' },
 };
 
 /** Render order: largest first so smaller rings stay visually crisp on top. */
@@ -61,8 +62,8 @@ export const addMemberRadiusRings = (
       radius: milesToMeters(mi),
       color: hsla(hslVar, strokeAlpha),
       weight,
-      fillColor: hsla(hslVar, fillAlpha),
-      fillOpacity: 1, // alpha baked into fill color so token chain stays declarative
+      fillColor: fillAlpha > 0 ? hsla(hslVar, fillAlpha) : undefined,
+      fillOpacity: fillAlpha > 0 ? 1 : 0,
       dashArray: dash,
       interactive: false,
       pane: paneId,
