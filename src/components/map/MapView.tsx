@@ -12,6 +12,7 @@ import { useBroadbandData } from '@/hooks/useBroadbandData';
 import L from 'leaflet';
 import { createMemberPinMarker } from './layers/MemberPinLayer';
 import { addMemberRadiusRings } from './layers/MemberRadiusRingsLayer';
+import { attachMemberOverlapShift } from './layers/MemberOverlapShift';
 import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster';
 import 'leaflet.heat';
