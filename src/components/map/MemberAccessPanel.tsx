@@ -15,7 +15,7 @@ import {
   type LocalTransitSupportLevel,
 } from '@/data/local-transit-providers';
 import { getCountyForLocation } from '@/utils/countyLookup';
-import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
+import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 
@@ -266,12 +266,13 @@ interface MemberAccessPanelProps {
 }
 
 const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
-  // Engagement-ownership gating: derive in-person availability from field coverage of the member's county.
-  // Mirrors EngagementOwnershipBlock's two-state model (Primary CHW vs Remote CHW).
+  // Engagement-ownership gating — uses the SAME source of truth as the
+  // Engagement Ownership card (getEngagementOwnership) so the two surfaces
+  // cannot disagree.
   const memberCountyForRec = getCountyForLocation(analysis.location.lat, analysis.location.lng);
-  const inPersonAvailable = memberCountyForRec ? countyHasFieldCoverage(memberCountyForRec) : false;
-  // Remote support exists whenever a county is resolved (Remote CHW is the fallback ownership state).
-  const remoteSupportAvailable = !!memberCountyForRec;
+  const ownership = getEngagementOwnership(memberCountyForRec);
+  const inPersonAvailable = ownership.inPersonAvailable;
+  const remoteSupportAvailable = ownership.telehealthAvailable;
 
   const baseRecStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
@@ -280,11 +281,21 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
   };
 
   // If the upstream recommendation claims local in-person viability but in-person engagement
-  // is not actually owned for this county, replace it with the correct ownership-gated guidance.
+  // is not actually owned for this area, replace it with ownership-gated guidance.
   const claimsLocalInPerson = analysis.recommendation === 'Local in-person engagement viable';
   let displayedRecommendation = analysis.recommendation;
   let recStyle = baseRecStyle;
   if (claimsLocalInPerson && !inPersonAvailable) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn('[EngagementOwnership] mismatch: upstream recommended local in-person but ownership reports in-person unavailable', {
+        memberLat: analysis.location.lat,
+        memberLng: analysis.location.lng,
+        county: ownership.county,
+        upstreamRecommendation: analysis.recommendation,
+        ownership,
+      });
+    }
     if (remoteSupportAvailable) {
       displayedRecommendation = 'Remote coordination support only';
       recStyle = {

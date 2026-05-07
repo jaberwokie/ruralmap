@@ -10,7 +10,7 @@
  */
 
 import { CheckCircle2, AlertTriangle, Headphones } from 'lucide-react';
-import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
+import { getEngagementOwnership } from '@/utils/engagementOwnership';
 
 interface EngagementOwnershipBlockProps {
   county: string | null | undefined;
@@ -53,7 +53,7 @@ const Row = ({
 
 const EngagementOwnershipBlock = ({ county, compact = false }: EngagementOwnershipBlockProps) => {
   if (!county) return null;
-  const isPrimary = countyHasFieldCoverage(county);
+  const isPrimary = getEngagementOwnership(county).inPersonAvailable;
 
   const headerLabel = isPrimary ? 'Primary CHW Coverage' : 'Remote CHW Coverage';
 
