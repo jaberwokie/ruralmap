@@ -46,6 +46,12 @@ export interface RuralService {
   notes?: string;
   lat: number;
   lng: number;
+  /** Controlled Behavioral Health category from the verified BH pipeline. */
+  bhCategoryMapped?: string | null;
+  /** Raw BH entity/service descriptors retained for pathway-specific routing. */
+  bhEntityType?: string | null;
+  bhServiceType?: string | null;
+  serviceTags?: string | null;
   /** Medicaid participation and operational metadata */
   operational?: Partial<ServiceOperationalMeta>;
   /** Operational triage class — provisional, overrideable */

@@ -49,6 +49,41 @@ const hospitals = (facilities: Facility[]) =>
 const byCategory = (cats: string[]) =>
   (services: RuralService[]) => services.filter(s => cats.includes(s.category));
 
+const includesAny = (value: string | null | undefined, patterns: RegExp[]): boolean =>
+  patterns.some((pattern) => pattern.test(value ?? ''));
+
+const therapyTextPatterns = [
+  /\btherapy\b/i,
+  /\btherapist\b/i,
+  /\bpsychotherapy\b/i,
+  /\bcounsel(?:ing|ling|or)\b/i,
+  /\bmental\s+health\s+counsel(?:ing|ling)\b/i,
+];
+
+const genericCommunityBhCategories = new Set(['Community Behavioral Health']);
+
+/**
+ * Therapy / counseling must not treat generic BH access/site records as
+ * therapy targets. Live verified BH rows preserve `bhCategoryMapped` so a
+ * Community Behavioral Health site with no entity/service therapy signal can
+ * remain visible as a BH pin without becoming a Therapy primary target.
+ */
+const therapyServices = (services: RuralService[]) => services.filter((service) => {
+  if (service.category !== 'Mental Health') return false;
+
+  const mapped = service.bhCategoryMapped ?? null;
+  const hasTherapySignal =
+    mapped === 'Therapy / Counseling' ||
+    includesAny(service.bhEntityType, therapyTextPatterns) ||
+    includesAny(service.bhServiceType, therapyTextPatterns) ||
+    includesAny(service.serviceTags, therapyTextPatterns) ||
+    includesAny(service.notes, therapyTextPatterns);
+
+  if (hasTherapySignal) return true;
+
+  return !mapped || !genericCommunityBhCategories.has(mapped);
+});
+
 export const NEEDS: NeedDef[] = [
   // ── Physical ─────────────────────────────────────────────
   {
@@ -98,7 +133,7 @@ export const NEEDS: NeedDef[] = [
   {
     id: 'therapy', label: 'Therapy / counseling', domain: 'behavioral',
     facilityMatch: bhFacilities,
-    serviceMatch: byCategory(['Mental Health']),
+    serviceMatch: therapyServices,
     fallbackAction: 'Offer telehealth-first intake; refer to 988 if acuity escalates.',
     pathway: 'Therapy / counseling',
   },
