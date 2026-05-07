@@ -2357,10 +2357,15 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   // Drag-end re-renders the pin in place but must NOT re-fit/re-zoom the
   // map — that reads as the pin "jumping" mid-interaction.
   const lastFittedMemberKeyRef = useRef<string | null>(null);
+  const memberOverlapShiftRef = useRef<{ detach: () => void } | null>(null);
   useEffect(() => {
     if (!mapReady || !memberPinRef.current || !memberRingsRef.current) return;
     memberPinRef.current.clearLayers();
     memberRingsRef.current.clearLayers();
+    if (memberOverlapShiftRef.current) {
+      memberOverlapShiftRef.current.detach();
+      memberOverlapShiftRef.current = null;
+    }
     if (!memberLocation) {
       lastFittedMemberKeyRef.current = null;
       return;
@@ -2379,6 +2384,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // Radius rings: 10mi, 25mi, 40mi — extracted to ./layers/MemberRadiusRingsLayer.
     const milesToMeters = (mi: number) => mi * 1609.344;
     addMemberRadiusRings(memberRingsRef.current!, lat, lng, PANE_CONFIG.memberRings.id);
+
+    // Visual de-collision: when a provider marker / cluster icon overlaps
+    // the member pin within ~22px at the current zoom, nudge it diagonally
+    // (+8, -8) so both stay readable. Coordinates are NOT mutated.
+    if (map) {
+      memberOverlapShiftRef.current = attachMemberOverlapShift(map, L.latLng(lat, lng), {
+        providerPaneIds: [PANE_CONFIG.providerMarkers.id, PANE_CONFIG.markers.id],
+        memberPaneId: PANE_CONFIG.memberPin.id,
+        clusterGroups: [markersRef.current, pointClusterRef.current],
+      });
+    }
 
     // Auto-focus map to show 25mi ring on first placement or new address.
     // Drag updates keep the current viewport.
