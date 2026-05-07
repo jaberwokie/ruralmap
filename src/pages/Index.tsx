@@ -317,6 +317,12 @@ const Index = () => {
         <EmptyStateOverlay
           layers={layers.layers}
           visibleFacilityCount={facility.filteredFacilities.length}
+          visibleBehavioralHealthCount={facility.filteredFacilities.length}
+          visibleServiceCount={
+            filters.filters.counties.size > 0
+              ? mergedRuralServices.filter((s) => filters.filters.counties.has(s.county)).length
+              : mergedRuralServices.length
+          }
           isLoading={showInitialMapCover || member.isGeocoding}
         />
         <PublicSafeDisclaimer />
