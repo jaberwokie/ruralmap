@@ -6,11 +6,12 @@ interface MapLegendProps {
   hasAccessGaps?: boolean;
   hasTier1?: boolean;
   /**
-   * When true, the Decision Assist drawer is expanded. The legend stays
-   * visible but lifts above the drawer using the `--decision-assist-height`
-   * CSS variable published by the drawer (ResizeObserver-driven).
+   * When true, the Decision Assist drawer is mounted (collapsed OR expanded).
+   * The legend lifts above the drawer using the measured
+   * `--decision-assist-height` CSS variable published by the drawer
+   * (ResizeObserver-driven), so the lift tracks both states.
    */
-  decisionAssistOpen?: boolean;
+  decisionAssistVisible?: boolean;
 }
 
 interface Section {
