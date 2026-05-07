@@ -33,6 +33,7 @@ const Index = () => {
   // legend can deterministically offset above the drawer instead of visually
   // jumping when layout flow shifts.
   const [decisionAssistOpen, setDecisionAssistOpen] = useState(false);
+  const isMobileLayout = useIsMobile();
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
   const layers = useMapLayers();
