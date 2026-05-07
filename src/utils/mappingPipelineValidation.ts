@@ -11,6 +11,7 @@ import type {
   StagingServiceRow,
   StagingBhRow,
 } from '@/types/mappingPipeline';
+import { detectNevadaPlaceNameMismatch } from '@/utils/nevadaPlaceNameValidation';
 
 const SERVICE_CATEGORIES = new Set([
   'food', 'shelter', 'transportation', 'employment', 'recovery',
@@ -162,6 +163,15 @@ export const validateBhRow = (row: Partial<StagingBhRow>): ValidationMessage[] =
 
   if (row.zip && !/^\d{5}(-\d{4})?$/.test(row.zip)) {
     out.push({ field: 'zip', severity: 'warning', message: 'ZIP should be 5 digits or ZIP+4.' });
+  }
+
+  const placeMismatch = detectNevadaPlaceNameMismatch(row);
+  if (placeMismatch) {
+    out.push({
+      field: 'location_name_mismatch',
+      severity: 'error',
+      message: `Name references ${placeMismatch.namePlace}, but ${placeMismatch.evidence} indicates ${placeMismatch.locationPlace}. Review location fields before promotion.`,
+    });
   }
 
   return out;
