@@ -5,7 +5,15 @@
 
 const isDebugEnabled = (): boolean => {
   try {
-    return new URLSearchParams(window.location.search).get('debugClicks') === '1';
+    const params = new URLSearchParams(window.location.search);
+    // Public Safe Mode (?public=1 or ?publicSafe=1) hard-disables all debug
+    // tooling, even if ?debugClicks=1 is also present in the URL. This keeps
+    // internal QA panels, geometry warnings, click pulses, and the
+    // Ctrl+Shift+D shortcut out of any public-shared pageview.
+    if (params.get('public') === '1' || params.get('publicSafe') === '1') {
+      return false;
+    }
+    return params.get('debugClicks') === '1';
   } catch {
     return false;
   }
