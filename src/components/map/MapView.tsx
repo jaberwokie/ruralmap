@@ -2574,7 +2574,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         layers={layers}
         hasAccessGaps={coverageGaps}
         hasTier1={layers.tier1Highlight}
-        decisionAssistOpen={decisionAssistOpen}
+        decisionAssistVisible={decisionAssistVisible}
       />
       {DEBUG_ENABLED && (
         <MapDebugPanel
