@@ -2140,9 +2140,9 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       const layer = L.geoJSON(feature as any, {
         pane: MAP_PANES.tribalNations,
         style: {
-          color: 'hsl(30, 65%, 45%)',
+          color: 'hsla(280, 40%, 40%, 0.6)',
           weight: 1.5,
-          fillColor: 'hsla(30, 65%, 50%, 0.12)',
+          fillColor: 'hsla(280, 40%, 55%, 0.25)',
           fillOpacity: 1,
           interactive: true,
         },
