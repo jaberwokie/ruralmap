@@ -5,8 +5,12 @@ interface MapLegendProps {
   /** Used to detect a meaningful operational state. County-only stays minimal. */
   hasAccessGaps?: boolean;
   hasTier1?: boolean;
-  /** Hide legend while the Decision Assist drawer is expanded. */
-  hidden?: boolean;
+  /**
+   * When true, the Decision Assist drawer is expanded. The legend stays
+   * visible but lifts above the drawer using the `--decision-assist-height`
+   * CSS variable published by the drawer (ResizeObserver-driven).
+   */
+  decisionAssistOpen?: boolean;
 }
 
 interface Section {
@@ -29,8 +33,10 @@ const square = (style: React.CSSProperties) => (
  * `LayerState` — no extra calculation. Replaces the prior connectivity-only
  * floating block.
  */
-const MapLegend = ({ layers, hasAccessGaps, hasTier1, hidden }: MapLegendProps) => {
-  if (hidden) return null;
+const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistOpen }: MapLegendProps) => {
+  const liftStyle: React.CSSProperties = decisionAssistOpen
+    ? { bottom: 'calc(var(--decision-assist-height, 96px) + 20px)' }
+    : {};
 
   const sections: Section[] = [];
 
