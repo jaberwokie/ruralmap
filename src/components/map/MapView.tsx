@@ -130,10 +130,11 @@ interface MapViewProps {
   presentationPhase?: PresentationPhase;
   onPresentationToggle?: () => void;
   onPresentationPhaseChange?: (phase: PresentationPhase) => void;
-  /** Decision Assist drawer expanded state. Used only to deterministically
-   *  offset the bottom-left Broadband/Cellular legend so it does not visually
-   *  jump when the drawer expands and the layout reflows. */
-  decisionAssistOpen?: boolean;
+  /** True whenever the Decision Assist drawer is mounted (collapsed OR
+   *  expanded). Drives the bottom-left legend lift so it clears the drawer
+   *  the moment it appears, not only after the user expands it. The actual
+   *  offset uses the measured `--decision-assist-height` CSS variable. */
+  decisionAssistVisible?: boolean;
   /** Optional Response Capability category visibility filter. Defaults to all on. */
   responseCapabilityVisible?: Record<'active' | 'scheduled' | 'remote', boolean>;
 }
