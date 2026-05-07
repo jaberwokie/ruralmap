@@ -99,7 +99,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, hidden }: MapLegendProps) 
     sections.push({
       key: 'services',
       title: 'Services',
-      rows: [{ swatch: dot('bg-rural-service'), label: 'Community services' }],
+      rows: [{ swatch: dot('bg-service-presence'), label: 'Community services' }],
     });
   }
 
