@@ -607,7 +607,19 @@ export const promoteStagingBh = async (id: string): Promise<void> => {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingBhRow | null; error: { message: string } | null }> } };
   }).select('*').eq('id', id).single();
   if (e1 || !stg) throw new Error(e1?.message ?? 'Staging row not found');
-  if (stg.validation_severity === 'error') throw new Error('Cannot promote a record with validation errors. Fix the source row and re-upload.');
+  const trust = getBhSourceTrust(stg);
+  const promotionMessages = applyTrustToBhMessages(validateBhRow(stg), trust);
+  const promotionSeverity = summarizeSeverity(promotionMessages);
+  if (promotionSeverity !== stg.validation_severity) {
+    await (supabase.from('staging_bh' as never) as never as {
+      update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+    }).update({
+      validation_messages: promotionMessages as unknown as Json[],
+      validation_severity: promotionSeverity,
+      updated_at: new Date().toISOString(),
+    }).eq('id', id);
+  }
+  if (promotionSeverity === 'error') throw new Error('Cannot promote a record with validation errors. Fix the source row and re-upload.');
   if (!isBHCategory(stg.category_mapped)) {
     throw new Error('category_mapped required — set a controlled BH category before promotion.');
   }

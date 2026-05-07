@@ -52,6 +52,7 @@ const CRITICAL_WARNING_FIELDS = new Set<string>([
   'latitude',
   'longitude',
   'latitude/longitude',
+  'location_name_mismatch',
   'name',
   'duplicate',
 ]);

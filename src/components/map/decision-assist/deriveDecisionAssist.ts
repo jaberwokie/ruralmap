@@ -24,6 +24,7 @@ import { checkHighwayAccess } from '@/utils/highwayProximity';
 import { mobilityManagers } from '@/data/mobility-managers';
 import { computeFieldResponseStrain, getCountyReachShape } from '@/utils/fieldResponseStrain';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
+import { isNearNevadaPlace } from '@/utils/nevadaPlaceNameValidation';
 import { findNeed } from './decisionAssistTaxonomy';
 import type {
   Confidence,
@@ -176,7 +177,24 @@ const facilityToTarget = (f: Facility, member: { lat: number; lng: number }): De
   return { ...t, facility: f };
 };
 
-const serviceToTarget = (s: RuralService, member: { lat: number; lng: number }): DecisionAssistTarget => {
+const serviceToTarget = (s: RuralService, member: { lat: number; lng: number }, needId?: Need): DecisionAssistTarget => {
+  if (
+    import.meta.env.DEV &&
+    needId === 'therapy' &&
+    /pahrump/i.test(s.name) &&
+    (/tonopah/i.test(s.city) || isNearNevadaPlace(s.lat, s.lng, 'Tonopah'))
+  ) {
+    // eslint-disable-next-line no-console
+    console.warn('BH target name/location mismatch.', {
+      stage: 'therapyTargetBuilder',
+      source: 'service',
+      target: s.name,
+      city: s.city,
+      county: s.county,
+      targetCoords: { lat: s.lat, lng: s.lng },
+      memberCoords: member,
+    });
+  }
   const t = buildGeoTarget(
     { id: s.id, name: s.name, lat: s.lat, lng: s.lng, county: s.county, city: s.city, source: 'service' },
     member,
@@ -223,7 +241,7 @@ export const deriveDecisionAssist = (
 
   // Build candidates
   const facilityCandidates = need.facilityMatch(facilities, services).map(f => facilityToTarget(f, member));
-  const serviceCandidates = need.serviceMatch(services).map(s => serviceToTarget(s, member));
+  const serviceCandidates = need.serviceMatch(services).map(s => serviceToTarget(s, member, needId));
   let allCandidates = [...facilityCandidates, ...serviceCandidates]
     .sort((a, b) => {
       const t = tierRank[a.tier] - tierRank[b.tier];
