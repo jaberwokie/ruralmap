@@ -20,6 +20,7 @@ import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
 import AdminVersionBadge from '@/components/AdminVersionBadge';
 import PublicSafeDisclaimer from '@/components/map/PublicSafeDisclaimer';
+import EmptyStateOverlay from '@/components/map/EmptyStateOverlay';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 
@@ -312,6 +313,11 @@ const Index = () => {
           isPresenting={presentation.isPresenting}
           phase={presentation.phase}
           hasDetailPanel={!!activeEntity}
+        />
+        <EmptyStateOverlay
+          layers={layers.layers}
+          visibleFacilityCount={facility.filteredFacilities.length}
+          isLoading={showInitialMapCover || member.isGeocoding}
         />
         <PublicSafeDisclaimer />
       </div>
