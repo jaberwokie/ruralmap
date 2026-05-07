@@ -3,6 +3,8 @@ import type { LayerState } from '@/types/layers';
 interface EmptyStateOverlayProps {
   layers: LayerState;
   visibleFacilityCount: number;
+  visibleBehavioralHealthCount: number;
+  visibleServiceCount: number;
   isLoading: boolean;
 }
 
@@ -12,11 +14,20 @@ interface EmptyStateOverlayProps {
  * derived layer + facility visibility — no extra recalculation. County
  * boundaries alone still count as empty (per spec).
  */
-const EmptyStateOverlay = ({ layers, visibleFacilityCount, isLoading }: EmptyStateOverlayProps) => {
+const EmptyStateOverlay = ({
+  layers,
+  visibleFacilityCount,
+  visibleBehavioralHealthCount,
+  visibleServiceCount,
+  isLoading,
+}: EmptyStateOverlayProps) => {
   if (isLoading) return null;
 
   const providerVisible = layers.serviceLocations && visibleFacilityCount > 0;
-  const otherPinsVisible = layers.behavioralHealth || layers.services;
+  const behavioralHealthVisible =
+    layers.behavioralHealth && visibleBehavioralHealthCount > 0;
+  const servicesVisible = layers.services && visibleServiceCount > 0;
+  const otherPinsVisible = behavioralHealthVisible || servicesVisible;
   const operationalOverlays =
     layers.operationalCoverage ||
     layers.fteCapacity ||
