@@ -59,6 +59,30 @@ const DecisionAssistDrawer = ({
   };
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Measure drawer card height and publish as `--decision-assist-height` on
+  // the nearest map shell so siblings (legend) can offset above the drawer
+  // without z-index stacking. Cleared when the component unmounts.
+  useEffect(() => {
+    const card = cardRef.current;
+    const container = containerRef.current;
+    if (!card || !container) return;
+    const shell = container.parentElement as HTMLElement | null;
+    if (!shell) return;
+    const write = () => {
+      const h = card.getBoundingClientRect().height;
+      shell.style.setProperty('--decision-assist-height', `${Math.round(h)}px`);
+    };
+    write();
+    const ro = new ResizeObserver(write);
+    ro.observe(card);
+    return () => {
+      ro.disconnect();
+      shell.style.removeProperty('--decision-assist-height');
+    };
+  }, [isOpen, memberLocation, isPresenting, isMobile]);
 
   // Reset all selections when the member context goes away.
   useEffect(() => {
