@@ -46,8 +46,20 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, hidden }: MapLegendProps) 
     });
   }
 
-  // 2. FTE hubs + field zones / 3. Response Capability (same operational layer)
-  if (layers.operationalCoverage || layers.fteCapacity) {
+  // 2. FTE hubs + field zones
+  if (layers.fteCapacity) {
+    sections.push({
+      key: 'fte',
+      title: 'Field Capacity',
+      rows: [
+        { swatch: dot('bg-response-active'), label: 'FTE hub' },
+        { swatch: square({ border: '1px solid hsla(160,55%,40%,0.6)' }), label: 'Field reach zone' },
+      ],
+    });
+  }
+
+  // 3. Response Capability
+  if (layers.operationalCoverage) {
     sections.push({
       key: 'response',
       title: 'Response Capability',
