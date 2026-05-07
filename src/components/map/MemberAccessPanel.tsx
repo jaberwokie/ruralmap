@@ -15,7 +15,7 @@ import {
   type LocalTransitSupportLevel,
 } from '@/data/local-transit-providers';
 import { getCountyForLocation } from '@/utils/countyLookup';
-import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
+import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 
