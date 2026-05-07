@@ -2392,7 +2392,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       memberOverlapShiftRef.current = attachMemberOverlapShift(map, L.latLng(lat, lng), {
         providerPaneIds: [PANE_CONFIG.providerMarkers.id, PANE_CONFIG.markers.id],
         memberPaneId: PANE_CONFIG.memberPin.id,
-        clusterGroups: [markersRef.current, pointClusterRef.current],
+        clusterGroups: [markersRef.current, pointClusterRef.current, topProviderMarkersRef.current],
       });
     }
 
