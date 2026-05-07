@@ -7,6 +7,7 @@ import { deriveDecisionAssist } from '@/components/map/decision-assist/deriveDec
 import type { DecisionAssistContext } from '@/components/map/decision-assist/decisionAssistTypes';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
+import { validateBhRow } from '@/utils/mappingPipelineValidation';
 
 const member = { lat: 36.2129, lng: -115.9697 }; // Pahrump, NV
 
@@ -69,5 +70,46 @@ describe('deriveDecisionAssist', () => {
     expect(r.confidence).toBe('high');
     expect(r.primaryTargets[0].kind).toBe('hotline');
     expect(r.primaryTargets[0].name).toMatch(/988/);
+  });
+
+  it('flags BH staging rows when the name place conflicts with the location place', () => {
+    const messages = validateBhRow({
+      name: 'State of Nevada Rural Clinics - Pahrump',
+      city: 'Tonopah',
+      county: 'Nye',
+      street_address: '119 Saint Patrick Lane',
+      latitude: 38.100063,
+      longitude: -117.2250609,
+    });
+
+    expect(messages).toEqual(expect.arrayContaining([
+      expect.objectContaining({ field: 'location_name_mismatch', severity: 'error' }),
+    ]));
+  });
+
+  it('warns in development when Therapy receives a Pahrump-named target at Tonopah', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    try {
+      const ctx: DecisionAssistContext = {
+        member: { lat: 38.1000, lng: -117.2250 },
+        facilities: [],
+        services: [mkService({
+          id: 'verified-bh-mismatch',
+          name: 'State of Nevada Rural Clinics - Pahrump',
+          category: 'Mental Health',
+          city: 'Tonopah',
+          county: 'Nye',
+          lat: 38.100063,
+          lng: -117.2250609,
+        })],
+      };
+      deriveDecisionAssist(ctx, 'behavioral', 'therapy');
+      expect(warn).toHaveBeenCalledWith(
+        'BH target name/location mismatch.',
+        expect.objectContaining({ stage: 'therapyTargetBuilder', target: 'State of Nevada Rural Clinics - Pahrump' }),
+      );
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
