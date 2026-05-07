@@ -34,8 +34,8 @@ const square = (style: React.CSSProperties) => (
  * `LayerState` — no extra calculation. Replaces the prior connectivity-only
  * floating block.
  */
-const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistOpen }: MapLegendProps) => {
-  const liftStyle: React.CSSProperties = decisionAssistOpen
+const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: MapLegendProps) => {
+  const liftStyle: React.CSSProperties = decisionAssistVisible
     ? { bottom: 'calc(var(--decision-assist-height, 96px) + 20px)' }
     : {};
 
