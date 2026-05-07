@@ -6,11 +6,12 @@ interface MapLegendProps {
   hasAccessGaps?: boolean;
   hasTier1?: boolean;
   /**
-   * When true, the Decision Assist drawer is expanded. The legend stays
-   * visible but lifts above the drawer using the `--decision-assist-height`
-   * CSS variable published by the drawer (ResizeObserver-driven).
+   * When true, the Decision Assist drawer is mounted (collapsed OR expanded).
+   * The legend lifts above the drawer using the measured
+   * `--decision-assist-height` CSS variable published by the drawer
+   * (ResizeObserver-driven), so the lift tracks both states.
    */
-  decisionAssistOpen?: boolean;
+  decisionAssistVisible?: boolean;
 }
 
 interface Section {
@@ -33,8 +34,8 @@ const square = (style: React.CSSProperties) => (
  * `LayerState` — no extra calculation. Replaces the prior connectivity-only
  * floating block.
  */
-const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistOpen }: MapLegendProps) => {
-  const liftStyle: React.CSSProperties = decisionAssistOpen
+const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: MapLegendProps) => {
+  const liftStyle: React.CSSProperties = decisionAssistVisible
     ? { bottom: 'calc(var(--decision-assist-height, 96px) + 20px)' }
     : {};
 

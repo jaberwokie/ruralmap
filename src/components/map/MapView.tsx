@@ -130,10 +130,11 @@ interface MapViewProps {
   presentationPhase?: PresentationPhase;
   onPresentationToggle?: () => void;
   onPresentationPhaseChange?: (phase: PresentationPhase) => void;
-  /** Decision Assist drawer expanded state. Used only to deterministically
-   *  offset the bottom-left Broadband/Cellular legend so it does not visually
-   *  jump when the drawer expands and the layout reflows. */
-  decisionAssistOpen?: boolean;
+  /** True whenever the Decision Assist drawer is mounted (collapsed OR
+   *  expanded). Drives the bottom-left legend lift so it clears the drawer
+   *  the moment it appears, not only after the user expands it. The actual
+   *  offset uses the measured `--decision-assist-height` CSS variable. */
+  decisionAssistVisible?: boolean;
   /** Optional Response Capability category visibility filter. Defaults to all on. */
   responseCapabilityVisible?: Record<'active' | 'scheduled' | 'remote', boolean>;
 }
@@ -481,7 +482,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistOpen = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true } }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistVisible = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true } }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const { isPublicSafe } = usePublicSafeMode();
   const mapRef = useRef<L.Map | null>(null);
@@ -2573,7 +2574,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         layers={layers}
         hasAccessGaps={coverageGaps}
         hasTier1={layers.tier1Highlight}
-        decisionAssistOpen={decisionAssistOpen}
+        decisionAssistVisible={decisionAssistVisible}
       />
       {DEBUG_ENABLED && (
         <MapDebugPanel

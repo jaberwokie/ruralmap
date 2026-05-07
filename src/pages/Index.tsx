@@ -23,6 +23,7 @@ import PublicSafeDisclaimer from '@/components/map/PublicSafeDisclaimer';
 import EmptyStateOverlay from '@/components/map/EmptyStateOverlay';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
@@ -32,6 +33,7 @@ const Index = () => {
   // legend can deterministically offset above the drawer instead of visually
   // jumping when layout flow shifts.
   const [decisionAssistOpen, setDecisionAssistOpen] = useState(false);
+  const isMobileLayout = useIsMobile();
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
   const layers = useMapLayers();
@@ -253,7 +255,7 @@ const Index = () => {
           memberManualMode={member.manualPlacementMode}
           focusBounds={focusBounds}
           presentationIsPresenting={presentation.isPresenting}
-          decisionAssistOpen={decisionAssistOpen}
+          decisionAssistVisible={!isMobileLayout && !!member.memberLocation && !presentation.isPresenting}
           presentationPhase={presentation.phase}
           onPresentationToggle={presentation.toggle}
           onPresentationPhaseChange={presentation.setPhase}
