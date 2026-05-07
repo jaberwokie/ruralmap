@@ -9,10 +9,10 @@ import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 const DEFAULT_LAYERS: LayerState = {
   counties: true,
   services: false,
-  behavioralHealth: false,
+  behavioralHealth: true,
   serviceLocations: true,
-  operationalCoverage: true,
-  fteCapacity: true,
+  operationalCoverage: false,
+  fteCapacity: false,
   utilizationIntensity: false,
   engagementGap: false,
   broadbandAccess: false,
@@ -21,7 +21,6 @@ const DEFAULT_LAYERS: LayerState = {
   railCorridor: false,
   localTransitZones: false,
   tier1Highlight: false,
-  // Demand & Utilization — additive, all default OFF
   memberDemandZip: false,
   countyUtilization: false,
   providerUtilizationReach: false,
