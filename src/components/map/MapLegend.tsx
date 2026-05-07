@@ -155,14 +155,20 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistOpen }: MapL
   if (sections.length === 0) {
     if (!layers.counties) return null;
     return (
-      <div className="pointer-events-none absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
+      <div
+        style={liftStyle}
+        className="pointer-events-none absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur-sm transition-[bottom] duration-150"
+      >
         <p className="text-[10px] text-muted-foreground">Reference boundaries</p>
       </div>
     );
   }
 
   return (
-    <div className="pointer-events-none absolute bottom-4 left-4 z-[800] max-w-[180px] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2">
+    <div
+      style={liftStyle}
+      className="pointer-events-none absolute bottom-4 left-4 z-[800] max-w-[180px] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2 transition-[bottom] duration-150"
+    >
       {sections.map((section, i) => (
         <div key={section.key}>
           {i > 0 && <div className="-mt-1 mb-1.5 border-t border-border/50" />}
