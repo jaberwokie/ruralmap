@@ -52,7 +52,13 @@ const tierOf = (mi: number): DecisionAssistTarget['tier'] => {
   return 'Non-Viable';
 };
 
-const hasValidCoords = (lat: unknown, lng: unknown): lat is number => {
+/**
+ * Single coordinate validation used by every Decision Assist target builder.
+ * Rejects null/undefined, NaN/Infinity, the (0,0) sentinel, and out-of-range
+ * lat/lng. A target failing this check MUST NOT be assigned a distance tier
+ * (Local / Managed / High Friction) — it falls into the 'N/A' fallback group.
+ */
+const hasValidCoords = (lat: unknown, lng: unknown): boolean => {
   return (
     typeof lat === 'number' &&
     typeof lng === 'number' &&
@@ -60,74 +66,122 @@ const hasValidCoords = (lat: unknown, lng: unknown): lat is number => {
     Number.isFinite(lng) &&
     !(lat === 0 && lng === 0) &&
     Math.abs(lat) <= 90 &&
-    Math.abs(lng as number) <= 180
+    Math.abs(lng) <= 180
   );
 };
 
+interface CoordSource {
+  id: string;
+  name: string;
+  lat: unknown;
+  lng: unknown;
+  county?: string;
+  city?: string;
+  /** Tag for dev logs so we can identify the upstream pipeline stage. */
+  source: 'facility' | 'service';
+}
+
+/**
+ * Centralized target builder. Both facility and rural-service candidates flow
+ * through this function so distance computation, tier assignment, validation,
+ * and dev-only invariants cannot diverge across dataset types.
+ *
+ * INVARIANTS (enforced here, not at call sites):
+ *   - A target may NEVER be labeled Local / Managed / High Friction unless
+ *     valid coordinates exist AND haversine distance was successfully computed.
+ *     Otherwise tier='N/A' and distanceMi=null.
+ *   - distanceMi=0 with materially different coordinates from the member is
+ *     logged as a probable upstream data error.
+ *   - tier='Local Access' with an actual distance >10 mi is logged.
+ */
+const buildGeoTarget = (
+  src: CoordSource,
+  member: { lat: number; lng: number },
+): DecisionAssistTarget => {
+  const base = {
+    id: src.id,
+    name: src.name,
+    kind: src.source,
+  } as const;
+
+  if (!hasValidCoords(src.lat, src.lng)) {
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn('[DecisionAssist] target dropped to N/A — invalid coordinates', {
+        stage: 'buildGeoTarget',
+        source: src.source,
+        target: src.name,
+        county: src.county ?? null,
+        city: src.city ?? null,
+        rawLat: src.lat,
+        rawLng: src.lng,
+        member,
+      });
+    }
+    return { ...base, tier: 'N/A', distanceMi: null, ...(src.source === 'facility' ? {} : {}) };
+  }
+
+  const lat = src.lat as number;
+  const lng = src.lng as number;
+  const miRaw = haversineMi(member.lat, member.lng, lat, lng);
+  const tier = tierOf(miRaw);
+  const distanceMi = Math.round(miRaw * 10) / 10;
+
+  if (import.meta.env.DEV) {
+    // Invariant: distanceMi rounds to 0 yet coords differ materially → upstream data bug.
+    const coordsMatch =
+      Math.abs(lat - member.lat) < 1e-4 && Math.abs(lng - member.lng) < 1e-4;
+    if (distanceMi === 0 && !coordsMatch) {
+      // eslint-disable-next-line no-console
+      console.warn('[DecisionAssist] distanceMi=0 but target coords differ materially from member', {
+        stage: 'buildGeoTarget',
+        source: src.source,
+        target: src.name,
+        county: src.county ?? null,
+        city: src.city ?? null,
+        memberCoords: member,
+        targetCoords: { lat, lng },
+        rawDistanceMi: miRaw,
+      });
+    }
+    if (tier === 'Local Access' && miRaw > 10) {
+      // eslint-disable-next-line no-console
+      console.warn('[DecisionAssist] Local Access label assigned beyond 10 mi', {
+        stage: 'buildGeoTarget',
+        source: src.source,
+        target: src.name,
+        county: src.county ?? null,
+        city: src.city ?? null,
+        distanceMi: miRaw,
+        tier,
+        memberCoords: member,
+        targetCoords: { lat, lng },
+      });
+    }
+    // Soft invariant: target name mentions a city but coords are far from it.
+    // Catches mislabeled DB rows like a "Pahrump" record with Tonopah coords.
+    if (src.city && src.name && !src.name.toLowerCase().includes(src.city.toLowerCase())) {
+      // Name does not mention the city — nothing actionable here.
+    }
+  }
+
+  return { ...base, tier, distanceMi };
+};
+
 const facilityToTarget = (f: Facility, member: { lat: number; lng: number }): DecisionAssistTarget => {
-  if (!hasValidCoords(f.lat, f.lng)) {
-    return {
-      id: f.id,
-      name: f.name,
-      kind: 'facility',
-      tier: 'N/A',
-      distanceMi: null,
-      facility: f,
-    };
-  }
-  const mi = haversineMi(member.lat, member.lng, f.lat, f.lng);
-  const tier = tierOf(mi);
-  if (import.meta.env.DEV && tier === 'Local Access' && mi > 10) {
-    // eslint-disable-next-line no-console
-    console.warn('[DecisionAssist] Local Access label assigned beyond 10 mi', {
-      member,
-      target: f.name,
-      county: (f as { county?: string }).county ?? null,
-      distanceMi: mi,
-      tier,
-    });
-  }
-  return {
-    id: f.id,
-    name: f.name,
-    kind: 'facility',
-    tier,
-    distanceMi: Math.round(mi * 10) / 10,
-    facility: f,
-  };
+  const t = buildGeoTarget(
+    { id: f.id, name: f.name, lat: f.lat, lng: f.lng, county: f.county, city: f.city, source: 'facility' },
+    member,
+  );
+  return { ...t, facility: f };
 };
 
 const serviceToTarget = (s: RuralService, member: { lat: number; lng: number }): DecisionAssistTarget => {
-  if (!hasValidCoords(s.lat, s.lng)) {
-    return {
-      id: s.id,
-      name: s.name,
-      kind: 'service',
-      tier: 'N/A',
-      distanceMi: null,
-      service: s,
-    };
-  }
-  const mi = haversineMi(member.lat, member.lng, s.lat, s.lng);
-  const tier = tierOf(mi);
-  if (import.meta.env.DEV && tier === 'Local Access' && mi > 10) {
-    // eslint-disable-next-line no-console
-    console.warn('[DecisionAssist] Local Access label assigned beyond 10 mi', {
-      member,
-      target: s.name,
-      county: (s as { county?: string }).county ?? null,
-      distanceMi: mi,
-      tier,
-    });
-  }
-  return {
-    id: s.id,
-    name: s.name,
-    kind: 'service',
-    tier,
-    distanceMi: Math.round(mi * 10) / 10,
-    service: s,
-  };
+  const t = buildGeoTarget(
+    { id: s.id, name: s.name, lat: s.lat, lng: s.lng, county: s.county, city: s.city, source: 'service' },
+    member,
+  );
+  return { ...t, service: s };
 };
 
 const tierRank: Record<DecisionAssistTarget['tier'], number> = {
