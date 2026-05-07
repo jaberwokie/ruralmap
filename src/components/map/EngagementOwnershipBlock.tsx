@@ -10,7 +10,7 @@
  */
 
 import { CheckCircle2, AlertTriangle, Headphones } from 'lucide-react';
-import { countyHasFieldCoverage } from '@/utils/fieldCoverageStatus';
+import { getEngagementOwnership } from '@/utils/engagementOwnership';
 
 interface EngagementOwnershipBlockProps {
   county: string | null | undefined;
