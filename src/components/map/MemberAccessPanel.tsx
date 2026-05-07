@@ -545,7 +545,7 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
         <div className="flex items-start gap-1.5">
           <RecIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: recStyle.color }} />
           <div>
-            <p className="text-[11px] font-semibold" style={{ color: recStyle.color }}>{analysis.recommendation}</p>
+            <p className="text-[11px] font-semibold" style={{ color: recStyle.color }}>{displayedRecommendation}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{recStyle.support}</p>
           </div>
         </div>
