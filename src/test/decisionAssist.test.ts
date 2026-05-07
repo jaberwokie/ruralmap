@@ -2,7 +2,7 @@
  * Pure-helper tests for deriveDecisionAssist. No React, no map.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { deriveDecisionAssist } from '@/components/map/decision-assist/deriveDecisionAssist';
 import type { DecisionAssistContext } from '@/components/map/decision-assist/decisionAssistTypes';
 import type { Facility } from '@/data/facilities';
