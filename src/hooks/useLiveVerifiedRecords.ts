@@ -45,8 +45,12 @@ const mapServiceCategory = (raw: string | null): RuralServiceCategory => {
   return 'Family Services';
 };
 
-const mapBhCategory = (entityType: string | null, serviceType: string | null): RuralServiceCategory => {
-  const t = `${entityType ?? ''} ${serviceType ?? ''}`.toLowerCase();
+const mapBhCategory = (
+  entityType: string | null,
+  serviceType: string | null,
+  categoryMapped?: string | null,
+): RuralServiceCategory => {
+  const t = `${entityType ?? ''} ${serviceType ?? ''} ${categoryMapped ?? ''}`.toLowerCase();
   if (t.includes('sud') || t.includes('substance') || t.includes('detox') || t.includes('mat')) return 'Substance Use';
   return 'Mental Health';
 };
@@ -98,7 +102,7 @@ export const useLiveVerifiedRecords = (): {
           out.push({
             id: `verified-bh-${b.id}`,
             name: b.name,
-            category: mapBhCategory(b.bh_entity_type, b.bh_service_type),
+            category: mapBhCategory(b.bh_entity_type, b.bh_service_type, b.category_mapped),
             county: b.county ?? '',
             city: b.city ?? '',
             address: b.street_address ?? undefined,
@@ -107,6 +111,10 @@ export const useLiveVerifiedRecords = (): {
             notes: b.access_notes ?? b.description ?? undefined,
             lat: b.latitude as number,
             lng: b.longitude as number,
+            bhCategoryMapped: b.category_mapped,
+            bhEntityType: b.bh_entity_type,
+            bhServiceType: b.bh_service_type,
+            serviceTags: b.service_tags,
           });
         });
         setRecords(out);
