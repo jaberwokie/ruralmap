@@ -266,11 +266,41 @@ interface MemberAccessPanelProps {
 }
 
 const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
-  const recStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
+  // Engagement-ownership gating: derive in-person availability from field coverage of the member's county.
+  // Mirrors EngagementOwnershipBlock's two-state model (Primary CHW vs Remote CHW).
+  const memberCountyForRec = getCountyForLocation(analysis.location.lat, analysis.location.lng);
+  const inPersonAvailable = memberCountyForRec ? countyHasFieldCoverage(memberCountyForRec) : false;
+  // Remote support exists whenever a county is resolved (Remote CHW is the fallback ownership state).
+  const remoteSupportAvailable = !!memberCountyForRec;
+
+  const baseRecStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
     color: 'hsl(0, 0%, 55%)',
     support: 'No realistic in-person options were found within the defined access ranges.',
   };
+
+  // If the upstream recommendation claims local in-person viability but in-person engagement
+  // is not actually owned for this county, replace it with the correct ownership-gated guidance.
+  const claimsLocalInPerson = analysis.recommendation === 'Local in-person engagement viable';
+  let displayedRecommendation = analysis.recommendation;
+  let recStyle = baseRecStyle;
+  if (claimsLocalInPerson && !inPersonAvailable) {
+    if (remoteSupportAvailable) {
+      displayedRecommendation = 'Remote coordination support only';
+      recStyle = {
+        icon: AlertTriangle,
+        color: 'hsl(0, 65%, 55%)',
+        support: 'Use remote CHW or telehealth coordination for this area. Do not treat this as local in-person field coverage.',
+      };
+    } else {
+      displayedRecommendation = 'No engagement ownership available';
+      recStyle = {
+        icon: AlertTriangle,
+        color: 'hsl(0, 0%, 55%)',
+        support: 'No assigned in-person or remote engagement ownership is available for this area in the current data.',
+      };
+    }
+  }
   const RecIcon = recStyle.icon;
 
   const handleSelectResource = (r: TaggedResource) => {
@@ -515,7 +545,7 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
         <div className="flex items-start gap-1.5">
           <RecIcon className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" style={{ color: recStyle.color }} />
           <div>
-            <p className="text-[11px] font-semibold" style={{ color: recStyle.color }}>{analysis.recommendation}</p>
+            <p className="text-[11px] font-semibold" style={{ color: recStyle.color }}>{displayedRecommendation}</p>
             <p className="text-[10px] text-muted-foreground mt-0.5 leading-snug">{recStyle.support}</p>
           </div>
         </div>
