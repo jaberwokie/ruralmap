@@ -1350,6 +1350,68 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     };
   }, [mapReady]);
 
+  // Clip the Tribal Nations pane to the Nevada boundary (same approach as
+  // the drive-radii clip above) so sovereign polygons never visually spill
+  // into neighboring states. Pure SVG clip — data, color, opacity, popup,
+  // and pane order are untouched.
+  useEffect(() => {
+    if (!mapReady) return;
+    const map = mapRef.current;
+    if (!map) return;
+
+    const pane = map.getPane(PANE_CONFIG.tribalNations.id);
+    if (!pane) return;
+    const svg = pane.querySelector('svg') as SVGSVGElement | null;
+    if (!svg) return;
+
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const CLIP_ID = 'nevada-tribal-clip';
+
+    let defs = svg.querySelector('defs') as SVGDefsElement | null;
+    let createdDefs = false;
+    if (!defs) {
+      defs = document.createElementNS(SVG_NS, 'defs');
+      svg.insertBefore(defs, svg.firstChild);
+      createdDefs = true;
+    }
+    const clipPath = document.createElementNS(SVG_NS, 'clipPath');
+    clipPath.setAttribute('id', CLIP_ID);
+    clipPath.setAttribute('clipPathUnits', 'userSpaceOnUse');
+    const clipPathEl = document.createElementNS(SVG_NS, 'path');
+    clipPath.appendChild(clipPathEl);
+    defs.appendChild(clipPath);
+
+    const overlayG = svg.querySelector('g') as SVGGElement | null;
+    const prevClip = overlayG?.getAttribute('clip-path') ?? null;
+    if (overlayG) overlayG.setAttribute('clip-path', `url(#${CLIP_ID})`);
+
+    const coords = nevadaBoundaryGeoJSON.coordinates[0] as [number, number][];
+
+    const updateClip = () => {
+      let d = '';
+      for (let i = 0; i < coords.length; i++) {
+        const [lng, lat] = coords[i];
+        const pt = map.latLngToLayerPoint([lat, lng]);
+        d += (i === 0 ? 'M' : 'L') + pt.x + ',' + pt.y;
+      }
+      d += 'Z';
+      clipPathEl.setAttribute('d', d);
+    };
+
+    updateClip();
+    map.on('zoomend moveend viewreset zoom', updateClip);
+
+    return () => {
+      map.off('zoomend moveend viewreset zoom', updateClip);
+      if (overlayG) {
+        if (prevClip) overlayG.setAttribute('clip-path', prevClip);
+        else overlayG.removeAttribute('clip-path');
+      }
+      clipPath.remove();
+      if (createdDefs && defs && defs.childNodes.length === 0) defs.remove();
+    };
+  }, [mapReady]);
+
   // Draw state boundary + inverse mask to visually clip content outside Nevada
   useEffect(() => {
     if (!stateBoundaryRef.current) return;
