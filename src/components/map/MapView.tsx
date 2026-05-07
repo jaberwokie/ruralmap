@@ -1389,6 +1389,8 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
 
     const coords = nevadaBoundaryGeoJSON.coordinates[0] as [number, number][];
 
+    let lastD = '';
+
     const buildD = () => {
       let d = '';
       for (let i = 0; i < coords.length; i++) {
@@ -1404,10 +1406,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     // pan/zoom, so we re-apply on every relevant event.
     const apply = () => {
       const svgs = pane.querySelectorAll('svg');
+      const d = buildD();
+      const dChanged = d !== lastD;
+      if (dChanged) lastD = d;
       svgs.forEach((svg) => {
         const pathEl = ensureClipPath(svg as SVGSVGElement);
-        pathEl.setAttribute('d', buildD());
-        // Apply to overlay <g> children and any rendered <path> elements.
+        if (dChanged || pathEl.getAttribute('d') !== d) {
+          pathEl.setAttribute('d', d);
+        }
         svg.querySelectorAll('g, path').forEach((el) => {
           if ((el as Element).closest('clipPath')) return;
           if (el.getAttribute('clip-path') !== CLIP_URL) {
@@ -1417,16 +1423,29 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     };
 
+    let rafId: number | null = null;
+    const scheduleApply = () => {
+      if (rafId != null) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = null;
+        apply();
+      });
+    };
+
     apply();
-    map.on('zoomend moveend viewreset zoom zoomstart movestart', apply);
+    map.on('zoomend moveend viewreset zoom zoomstart movestart', scheduleApply);
 
     // Watch for Leaflet adding/removing tribal SVG nodes after re-renders.
-    const observer = new MutationObserver(() => apply());
+    const observer = new MutationObserver(() => scheduleApply());
     observer.observe(pane, { childList: true, subtree: true });
 
     return () => {
-      map.off('zoomend moveend viewreset zoom zoomstart movestart', apply);
+      map.off('zoomend moveend viewreset zoom zoomstart movestart', scheduleApply);
       observer.disconnect();
+      if (rafId != null) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
       pane.querySelectorAll('svg').forEach((svg) => {
         svg.querySelectorAll('g, path').forEach((el) => {
           if ((el as Element).closest('clipPath')) return;
