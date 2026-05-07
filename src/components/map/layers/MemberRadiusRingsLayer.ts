@@ -28,9 +28,9 @@ interface RingStyle {
 }
 
 export const MEMBER_DISTANCE_RING_STYLES: Record<RingKey, RingStyle> = {
-  local:        { mi: 10, hslVar: '--service-presence',  strokeAlpha: 0.55, fillAlpha: 0.04,  weight: 2,   dash: '' },
-  managed:      { mi: 25, hslVar: '--tier1',             strokeAlpha: 0.45, fillAlpha: 0.025, weight: 1.5, dash: '6 4' },
-  highFriction: { mi: 40, hslVar: '--access-gap-border', strokeAlpha: 0.40, fillAlpha: 0.02,  weight: 1.25, dash: '4 4' },
+  local:        { mi: 10, hslVar: '--service-presence', strokeAlpha: 0.55, fillAlpha: 0.04,  weight: 2,    dash: '' },
+  managed:      { mi: 25, hslVar: '--tier1',            strokeAlpha: 0.45, fillAlpha: 0.025, weight: 1.5,  dash: '6 4' },
+  highFriction: { mi: 40, hslVar: '--destructive',      strokeAlpha: 0.40, fillAlpha: 0.02,  weight: 1.25, dash: '4 4' },
 };
 
 /** Back-compat export — array form preserves prior consumers. */
