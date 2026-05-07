@@ -23,6 +23,7 @@ import PublicSafeDisclaimer from '@/components/map/PublicSafeDisclaimer';
 import EmptyStateOverlay from '@/components/map/EmptyStateOverlay';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
