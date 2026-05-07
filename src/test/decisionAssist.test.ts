@@ -88,6 +88,31 @@ describe('deriveDecisionAssist', () => {
     ]));
   });
 
+
+  it('does not use generic Community Behavioral Health site records as Therapy targets', () => {
+    const tonopahMember = { lat: 38.1000, lng: -117.2250 };
+    const ctx: DecisionAssistContext = {
+      member: tonopahMember,
+      facilities: [],
+      services: [mkService({
+        id: 'verified-bh-tonopah-rural-clinics',
+        name: 'State of Nevada Rural Clinics - Tonopah',
+        category: 'Mental Health',
+        city: 'Tonopah',
+        county: 'Nye',
+        lat: 38.100063,
+        lng: -117.2250609,
+        bhCategoryMapped: 'Community Behavioral Health',
+        bhEntityType: null,
+        bhServiceType: null,
+        serviceTags: null,
+      })],
+    };
+
+    const r = deriveDecisionAssist(ctx, 'behavioral', 'therapy');
+    expect(r.primaryTargets).toHaveLength(0);
+  });
+
   it('warns in development when Therapy receives a Pahrump-named target at Tonopah', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     try {
