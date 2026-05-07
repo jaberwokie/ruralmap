@@ -254,7 +254,7 @@ const Index = () => {
           memberManualMode={member.manualPlacementMode}
           focusBounds={focusBounds}
           presentationIsPresenting={presentation.isPresenting}
-          decisionAssistOpen={decisionAssistOpen}
+          decisionAssistVisible={decisionAssistVisible}
           presentationPhase={presentation.phase}
           onPresentationToggle={presentation.toggle}
           onPresentationPhaseChange={presentation.setPhase}
