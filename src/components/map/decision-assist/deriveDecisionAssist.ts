@@ -52,25 +52,79 @@ const tierOf = (mi: number): DecisionAssistTarget['tier'] => {
   return 'Non-Viable';
 };
 
+const hasValidCoords = (lat: unknown, lng: unknown): lat is number => {
+  return (
+    typeof lat === 'number' &&
+    typeof lng === 'number' &&
+    Number.isFinite(lat) &&
+    Number.isFinite(lng) &&
+    !(lat === 0 && lng === 0) &&
+    Math.abs(lat) <= 90 &&
+    Math.abs(lng as number) <= 180
+  );
+};
+
 const facilityToTarget = (f: Facility, member: { lat: number; lng: number }): DecisionAssistTarget => {
+  if (!hasValidCoords(f.lat, f.lng)) {
+    return {
+      id: f.id,
+      name: f.name,
+      kind: 'facility',
+      tier: 'N/A',
+      distanceMi: null,
+      facility: f,
+    };
+  }
   const mi = haversineMi(member.lat, member.lng, f.lat, f.lng);
+  const tier = tierOf(mi);
+  if (import.meta.env.DEV && tier === 'Local Access' && mi > 10) {
+    // eslint-disable-next-line no-console
+    console.warn('[DecisionAssist] Local Access label assigned beyond 10 mi', {
+      member,
+      target: f.name,
+      county: (f as { county?: string }).county ?? null,
+      distanceMi: mi,
+      tier,
+    });
+  }
   return {
     id: f.id,
     name: f.name,
     kind: 'facility',
-    tier: tierOf(mi),
+    tier,
     distanceMi: Math.round(mi * 10) / 10,
     facility: f,
   };
 };
 
 const serviceToTarget = (s: RuralService, member: { lat: number; lng: number }): DecisionAssistTarget => {
+  if (!hasValidCoords(s.lat, s.lng)) {
+    return {
+      id: s.id,
+      name: s.name,
+      kind: 'service',
+      tier: 'N/A',
+      distanceMi: null,
+      service: s,
+    };
+  }
   const mi = haversineMi(member.lat, member.lng, s.lat, s.lng);
+  const tier = tierOf(mi);
+  if (import.meta.env.DEV && tier === 'Local Access' && mi > 10) {
+    // eslint-disable-next-line no-console
+    console.warn('[DecisionAssist] Local Access label assigned beyond 10 mi', {
+      member,
+      target: s.name,
+      county: (s as { county?: string }).county ?? null,
+      distanceMi: mi,
+      tier,
+    });
+  }
   return {
     id: s.id,
     name: s.name,
     kind: 'service',
-    tier: tierOf(mi),
+    tier,
     distanceMi: Math.round(mi * 10) / 10,
     service: s,
   };
