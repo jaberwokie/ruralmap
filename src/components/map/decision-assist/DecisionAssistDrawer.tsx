@@ -17,7 +17,7 @@
  *           <DecisionAssistDrawer /> mount block (and its import) in Index.tsx.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronUp, ChevronDown, X, Stethoscope } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import type { Facility } from '@/data/facilities';
@@ -59,6 +59,30 @@ const DecisionAssistDrawer = ({
   };
   const [selectedDomain, setSelectedDomain] = useState<Domain | null>(null);
   const [selectedNeed, setSelectedNeed] = useState<Need | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Measure drawer card height and publish as `--decision-assist-height` on
+  // the nearest map shell so siblings (legend) can offset above the drawer
+  // without z-index stacking. Cleared when the component unmounts.
+  useEffect(() => {
+    const card = cardRef.current;
+    const container = containerRef.current;
+    if (!card || !container) return;
+    const shell = container.parentElement as HTMLElement | null;
+    if (!shell) return;
+    const write = () => {
+      const h = card.getBoundingClientRect().height;
+      shell.style.setProperty('--decision-assist-height', `${Math.round(h)}px`);
+    };
+    write();
+    const ro = new ResizeObserver(write);
+    ro.observe(card);
+    return () => {
+      ro.disconnect();
+      shell.style.removeProperty('--decision-assist-height');
+    };
+  }, [isOpen, memberLocation, isPresenting, isMobile]);
 
   // Reset all selections when the member context goes away.
   useEffect(() => {
@@ -89,8 +113,12 @@ const DecisionAssistDrawer = ({
 
   // right offset clears the 16rem (w-64) Details panel + its right-3 gutter.
   return (
-    <div className="absolute bottom-0 left-0 right-[17.5rem] z-[1300] pointer-events-none">
-      <div className="pointer-events-auto mx-2 mb-2 rounded-md border border-border bg-card shadow-lg overflow-hidden">
+    <div
+      ref={containerRef}
+      data-decision-assist-open={isOpen ? 'true' : 'false'}
+      className="absolute bottom-0 left-0 right-[17.5rem] z-[1300] pointer-events-none"
+    >
+      <div ref={cardRef} className="pointer-events-auto mx-2 mb-2 rounded-md border border-border bg-card shadow-lg overflow-hidden">
         {/* Header / collapsed tab */}
         <button
           type="button"

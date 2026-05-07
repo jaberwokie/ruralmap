@@ -5,8 +5,12 @@ interface MapLegendProps {
   /** Used to detect a meaningful operational state. County-only stays minimal. */
   hasAccessGaps?: boolean;
   hasTier1?: boolean;
-  /** Hide legend while the Decision Assist drawer is expanded. */
-  hidden?: boolean;
+  /**
+   * When true, the Decision Assist drawer is expanded. The legend stays
+   * visible but lifts above the drawer using the `--decision-assist-height`
+   * CSS variable published by the drawer (ResizeObserver-driven).
+   */
+  decisionAssistOpen?: boolean;
 }
 
 interface Section {
@@ -29,8 +33,10 @@ const square = (style: React.CSSProperties) => (
  * `LayerState` — no extra calculation. Replaces the prior connectivity-only
  * floating block.
  */
-const MapLegend = ({ layers, hasAccessGaps, hasTier1, hidden }: MapLegendProps) => {
-  if (hidden) return null;
+const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistOpen }: MapLegendProps) => {
+  const liftStyle: React.CSSProperties = decisionAssistOpen
+    ? { bottom: 'calc(var(--decision-assist-height, 96px) + 20px)' }
+    : {};
 
   const sections: Section[] = [];
 
@@ -149,14 +155,20 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, hidden }: MapLegendProps) 
   if (sections.length === 0) {
     if (!layers.counties) return null;
     return (
-      <div className="pointer-events-none absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
+      <div
+        style={liftStyle}
+        className="pointer-events-none absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur-sm transition-[bottom] duration-150"
+      >
         <p className="text-[10px] text-muted-foreground">Reference boundaries</p>
       </div>
     );
   }
 
   return (
-    <div className="pointer-events-none absolute bottom-4 left-4 z-[800] max-w-[180px] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2">
+    <div
+      style={liftStyle}
+      className="pointer-events-none absolute bottom-4 left-4 z-[800] max-w-[180px] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2 transition-[bottom] duration-150"
+    >
       {sections.map((section, i) => (
         <div key={section.key}>
           {i > 0 && <div className="-mt-1 mb-1.5 border-t border-border/50" />}
