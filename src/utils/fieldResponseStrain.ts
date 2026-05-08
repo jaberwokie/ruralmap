@@ -325,7 +325,7 @@ export function getStrainTier(strain: FieldResponseStrain): StrainTier {
 // ── Mixed-reach guard for large counties ───────────────────────────────────
 // A county has "mixed" field reach when at least one field FTE anchors part
 // of it, but a meaningful share of the county area falls outside any active
-// FTE drive-time zone. In that case, generalising one FTE to the whole
+// FTE fixed-distance zone. In that case, generalising one FTE to the whole
 // county misleads the operator (e.g. Pahrump FTE for northern/central Nye).
 // Geometry-only — reuses the existing breakdown. No new thresholds for
 // classification; this is a display gate.

@@ -10,7 +10,7 @@ export const RESPONSE_CAPABILITY_META: Record<ResponseCapabilityCategory, {
 }> = {
   active: {
     label: 'Same-Day Field Response Available',
-    description: 'In-person response is feasible within current FTE drive-time reach.',
+    description: 'In-person response is feasible within current FTE active coverage approximation.',
     markerSize: 18,
     titleClassName: 'text-foreground/85',
   },
