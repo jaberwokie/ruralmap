@@ -1603,7 +1603,7 @@ const Sidebar = ({
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
                         subtitle: 'Local transit operators · approximate service footprints',
                       })}
-                      {renderLayerToggleRow({
+                      {!isPublicSafe && renderLayerToggleRow({
                         label: 'SilverSummit Rural Catchments',
                         icon: MapPin,
                         iconClassName: 'text-muted-foreground',
