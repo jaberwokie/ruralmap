@@ -145,12 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // PUBLIC_SAFE_MODE: force a viewer-equivalent permission set regardless of
     // actual role, so admin UI cannot appear in public-shared screenshots.
     // Does not touch the underlying session / role state.
-    const isPublicSafe =
-      typeof window !== 'undefined' &&
-      (() => {
-        const params = new URLSearchParams(window.location.search);
-        return params.get('public') === '1' || params.get('publicSafe') === '1';
-      })();
+    const isPublicSafe = isPublicSafeModeActive();
 
     const effectiveRole: AppRole = isPublicSafe ? 'viewer' : role;
     const isAdmin = effectiveRole === 'admin';
