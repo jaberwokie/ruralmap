@@ -2559,13 +2559,17 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   }, [mapReady, layers.localTransitZones, selectedTransitProviderId]);
 
   // ── SilverSummit Rural Catchments overlay (informational payer pathway) ──
-  // STRICTLY ADDITIVE: does not affect any other layer, gap, or scoring.
-  // Renders soft directional polylines between origin and destination anchors
-  // in the coverage pane (zIndex 300), well below all marker panes.
-  // Degrades silently on any data error.
+  // STRICTLY ADDITIVE & NON-AUTHORITATIVE. Does not feed any access-gap, FTE,
+  // coverage, Decision Assistant, or clustering calculation. Renders soft
+  // directional polylines in a dedicated non-interactive pane (zIndex 460),
+  // above county polygons but well below provider marker panes so it cannot
+  // intercept marker clicks, member pin clicks, or spiderfy expansion.
+  // Degrades silently on any data error. Toggling OFF removes all polylines,
+  // tooltips, and event listeners (clearLayers unbinds attached tooltips).
   useEffect(() => {
     if (!mapReady || !sshpCatchmentLayerRef.current) return;
-    sshpCatchmentLayerRef.current.clearLayers();
+    const layer = sshpCatchmentLayerRef.current;
+    layer.clearLayers();
     if (!layers.sshpCatchments) {
       if (import.meta.env.DEV) console.info('[SSHP] toggle=OFF; overlay cleared');
       return;
@@ -2578,20 +2582,23 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         const line = L.polyline(
           [[r.origin.lat, r.origin.lng], [r.destination.lat, r.destination.lng]],
           {
-            pane: PANE_CONFIG.coverage.id,
+            pane: PANE_CONFIG.sshpCatchment.id,
             color,
             weight: 1.5,
             opacity: 0.55,
             dashArray: '5 5',
             interactive: false,
+            bubblingMouseEvents: false,
             smoothFactor: 1,
           },
         );
         line.bindTooltip(
-          `${r.origin.name} → ${r.destination.name} · ${r.category} (SSHP, informational)`,
+          `${r.origin.name} → ${r.destination.name} · ${r.category}`
+            + ' — SSHP workbook references a potential referral/catchment relationship.'
+            + ' Informational only · Non-authoritative · Does not change operational scoring.',
           { sticky: true, opacity: 0.9, className: 'rail-corridor-tooltip' },
         );
-        sshpCatchmentLayerRef.current!.addLayer(line);
+        layer.addLayer(line);
         drawn++;
       });
       if (import.meta.env.DEV) {
@@ -2601,6 +2608,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       // Degrade silently — overlay is non-authoritative.
       if (import.meta.env.DEV) console.warn('[SSHP] overlay failed to load; ignored', err);
     }
+    return () => {
+      // Defensive cleanup: remove all polylines + bound tooltips when toggle
+      // changes or component unmounts. Prevents orphaned listeners.
+      layer.clearLayers();
+    };
   }, [mapReady, layers.sshpCatchments]);
 
 

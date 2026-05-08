@@ -10,6 +10,10 @@ export const PANE_CONFIG = {
   countyInteractive: { id: 'county-interactive-pane', zIndex: 350, interactive: true },
   // Tribal Nation polygons — interactive, ABOVE county layer
   tribalNations:   { id: 'tribal-nations-pane',    zIndex: 450, interactive: true },
+  // SSHP catchment overlay — informational, non-authoritative.
+  // Above county polygons (350) and tribal polygons (450); below provider markers (660).
+  // Strictly non-interactive; must never block marker clicks or spiderfy.
+  sshpCatchment:   { id: 'sshp-catchment-pane',    zIndex: 460, interactive: false },
   // Provider radius circles — above gap overlays and tribal polygons,
   // below state mask and all marker panes. Non-interactive.
   driveRadiiAbove: { id: 'drive-radii-above-pane', zIndex: 500, interactive: false },
