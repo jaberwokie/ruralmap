@@ -25,6 +25,7 @@ import { mobilityManagers } from '@/data/mobility-managers';
 import { computeFieldResponseStrain, getCountyReachShape } from '@/utils/fieldResponseStrain';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 import { isNearNevadaPlace } from '@/utils/nevadaPlaceNameValidation';
+import { getSshpPayerPathwayContext } from '@/data/sshpCatchments';
 import { findNeed } from './decisionAssistTaxonomy';
 import type {
   Confidence,
@@ -429,9 +430,6 @@ export const deriveDecisionAssist = (
   // Informational payer-pathway context (non-scoring).
   let payerPathwayContext: string | null = null;
   try {
-    // Lazy require avoided — static import is safe (small static module).
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { getSshpPayerPathwayContext } = await import('@/data/sshpCatchments');
     payerPathwayContext = getSshpPayerPathwayContext(county ?? null);
   } catch {
     payerPathwayContext = null;
