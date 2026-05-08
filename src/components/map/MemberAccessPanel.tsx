@@ -18,6 +18,7 @@ import { getCountyForLocation } from '@/utils/countyLookup';
 import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
+import { getSshpTagsForCounty, SSHP_CATEGORY_COLOR } from '@/data/sshpCatchments';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -544,9 +545,28 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
       {(() => {
         const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
         if (!memberCounty) return null;
+        const sshpTags = getSshpTagsForCounty(memberCounty);
         return (
           <div className="mt-3">
             <EngagementOwnershipBlock county={memberCounty} compact />
+            {sshpTags.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap gap-1" aria-label="SSHP catchment context">
+                {sshpTags.map((t) => (
+                  <span
+                    key={`${t.label}-${t.category}`}
+                    className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full border"
+                    style={{
+                      color: SSHP_CATEGORY_COLOR[t.category],
+                      borderColor: SSHP_CATEGORY_COLOR[t.category],
+                      background: 'transparent',
+                    }}
+                    title="SilverSummit Rural Catchments — informational only"
+                  >
+                    {t.label}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         );
       })()}

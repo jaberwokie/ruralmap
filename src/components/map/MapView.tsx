@@ -66,6 +66,7 @@ import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAcce
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
+import { getValidSshpRoutes, SSHP_CATEGORY_COLOR } from '@/data/sshpCatchments';
 import { localTransitZones } from '@/data/local-transit-zones';
 import { getProviderForZoneId } from '@/data/local-transit-providers';
 import type { PresentationPhase } from '@/hooks/usePresentationMode';
@@ -92,6 +93,8 @@ interface MapViewProps {
     localTransitZones?: boolean;
     /** Tier 1 Providers highlight on existing clinic pins — defaults to false. */
     tier1Highlight?: boolean;
+    /** SilverSummit Rural Catchments payer-pathway overlay — informational, defaults to false. */
+    sshpCatchments?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -519,6 +522,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const memberRingsRef = useRef<L.LayerGroup | null>(null);
   const railLayerRef = useRef<L.LayerGroup | null>(null);
   const localTransitLayerRef = useRef<L.LayerGroup | null>(null);
+  const sshpCatchmentLayerRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
@@ -1254,6 +1258,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     memberPinRef.current = L.layerGroup().addTo(map);
     railLayerRef.current = L.layerGroup().addTo(map);
     localTransitLayerRef.current = L.layerGroup().addTo(map);
+    sshpCatchmentLayerRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
@@ -2552,6 +2557,52 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       });
     }
   }, [mapReady, layers.localTransitZones, selectedTransitProviderId]);
+
+  // ── SilverSummit Rural Catchments overlay (informational payer pathway) ──
+  // STRICTLY ADDITIVE: does not affect any other layer, gap, or scoring.
+  // Renders soft directional polylines between origin and destination anchors
+  // in the coverage pane (zIndex 300), well below all marker panes.
+  // Degrades silently on any data error.
+  useEffect(() => {
+    if (!mapReady || !sshpCatchmentLayerRef.current) return;
+    sshpCatchmentLayerRef.current.clearLayers();
+    if (!layers.sshpCatchments) {
+      if (import.meta.env.DEV) console.info('[SSHP] toggle=OFF; overlay cleared');
+      return;
+    }
+    try {
+      const routes = getValidSshpRoutes();
+      let drawn = 0;
+      routes.forEach((r) => {
+        const color = SSHP_CATEGORY_COLOR[r.category] ?? 'hsl(220, 20%, 50%)';
+        const line = L.polyline(
+          [[r.origin.lat, r.origin.lng], [r.destination.lat, r.destination.lng]],
+          {
+            pane: PANE_CONFIG.coverage.id,
+            color,
+            weight: 1.5,
+            opacity: 0.55,
+            dashArray: '5 5',
+            interactive: false,
+            smoothFactor: 1,
+          },
+        );
+        line.bindTooltip(
+          `${r.origin.name} → ${r.destination.name} · ${r.category} (SSHP, informational)`,
+          { sticky: true, opacity: 0.9, className: 'rail-corridor-tooltip' },
+        );
+        sshpCatchmentLayerRef.current!.addLayer(line);
+        drawn++;
+      });
+      if (import.meta.env.DEV) {
+        console.info('[SSHP] overlay loaded', { toggle: 'ON', routes: drawn });
+      }
+    } catch (err) {
+      // Degrade silently — overlay is non-authoritative.
+      if (import.meta.env.DEV) console.warn('[SSHP] overlay failed to load; ignored', err);
+    }
+  }, [mapReady, layers.sshpCatchments]);
+
 
   // Additive: fit map to externally requested bounds (e.g., transit provider click).
   useEffect(() => {
