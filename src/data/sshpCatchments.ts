@@ -184,13 +184,11 @@ export const getSshpPayerPathwayContext = (
     // Anchor in this county itself?
     const anchor = SSHP_ANCHORS.find(a => a.county === county);
     if (anchor) {
-      return `SSHP workbook references ${anchor.name} as a payer-pathway anchor (${anchor.category}).`
-        + ' Informational only · Non-authoritative · Does not change operational scoring.';
+      return `SSHP workbook references ${anchor.name} as a payer-pathway anchor (${anchor.category}).`;
     }
     return 'No SSHP pathway context identified.';
   }
   // Group destinations.
   const dests = Array.from(new Set(outbound.map(r => r.destination.name))).slice(0, 3);
-  return `SSHP workbook indicates a potential referral/catchment relationship toward ${dests.join(' / ')} for this county.`
-    + ' Informational only · Non-authoritative · Does not change operational scoring.';
+  return `SSHP workbook indicates a potential referral/catchment relationship toward ${dests.join(' / ')} for this county.`;
 };
