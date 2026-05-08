@@ -1,8 +1,10 @@
 /**
  * FTE-Centered Coverage Zone Computation
  *
- * Generates continuous drive-time coverage zones from FTE base locations,
- * merges overlapping zones, and clips to Nevada state boundary.
+ * Generates continuous fixed-distance coverage zones from FTE base locations,
+ * merges overlapping zones, and clips to Nevada state boundary. This is not
+ * route-network drive-time geometry; it is the exact fixed-distance polygon
+ * source rendered by the teal Active field coverage layer.
  * All functions accept a radiusKm parameter for configurable thresholds.
  */
 import buffer from '@turf/buffer';
@@ -29,10 +31,10 @@ const nevadaFeature: Feature<Polygon> = {
   geometry: nevadaBoundaryGeoJSON,
 };
 
-// ── FTE drive-time zones (active + scheduled-outreach ring) ──
-// Active zone  = merged FTE buffers at the configured radius (~0–90 min).
+// ── FTE fixed-distance zones (active + scheduled-outreach ring) ──
+// Active zone  = merged FTE buffers at the configured radius.
 // Scheduled zone = merged FTE buffers at radius * SCHEDULED_RADIUS_MULT
-//                  (~90–150 min reachable with planning), minus the active zone.
+//                  (outer planned-outreach approximation), minus the active zone.
 // Anything outside both → remote-only territory.
 
 const SCHEDULED_RADIUS_MULT = 1.5;
@@ -77,7 +79,62 @@ export function getActiveCoverageZone(radiusKm: number): Feature<Polygon | Multi
   return result;
 }
 
-/** Outer drive-time zone (~90–150 min). Includes active core; subtract active for ring. */
+const pointOnSegment = (
+  lng: number,
+  lat: number,
+  a: number[],
+  b: number[],
+): boolean => {
+  const [x1, y1] = a;
+  const [x2, y2] = b;
+  const cross = (lat - y1) * (x2 - x1) - (lng - x1) * (y2 - y1);
+  if (Math.abs(cross) > 1e-10) return false;
+  return lng >= Math.min(x1, x2) - 1e-10 &&
+    lng <= Math.max(x1, x2) + 1e-10 &&
+    lat >= Math.min(y1, y2) - 1e-10 &&
+    lat <= Math.max(y1, y2) + 1e-10;
+};
+
+const ringContainsPoint = (lng: number, lat: number, ring: number[][]): boolean => {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const pi = ring[i];
+    const pj = ring[j];
+    if (pointOnSegment(lng, lat, pj, pi)) return true;
+    const intersects = ((pi[1] > lat) !== (pj[1] > lat)) &&
+      (lng < ((pj[0] - pi[0]) * (lat - pi[1])) / (pj[1] - pi[1]) + pi[0]);
+    if (intersects) inside = !inside;
+  }
+  return inside;
+};
+
+const polygonContainsPoint = (lng: number, lat: number, coordinates: Polygon['coordinates']): boolean => {
+  if (!ringContainsPoint(lng, lat, coordinates[0] as number[][])) return false;
+  return !coordinates.slice(1).some((hole) => ringContainsPoint(lng, lat, hole as number[][]));
+};
+
+/**
+ * Point membership for the exact teal Active field coverage geometry.
+ * This intentionally consumes getActiveCoverageZone(radiusKm), the same fixed-
+ * distance polygon rendered in MapView, rather than creating a second distance
+ * model for detail-panel classification.
+ */
+export function isPointInsideActiveCoverageZone(
+  lat: number,
+  lng: number,
+  radiusKm: number,
+): boolean {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  const zone = getActiveCoverageZone(radiusKm);
+  if (!zone) return false;
+  const { geometry } = zone;
+  if (geometry.type === 'Polygon') {
+    return polygonContainsPoint(lng, lat, geometry.coordinates);
+  }
+  return geometry.coordinates.some((polygon) => polygonContainsPoint(lng, lat, polygon));
+}
+
+/** Outer fixed-distance zone. Includes active core; subtract active for ring. */
 export function getScheduledCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
   if (_scheduledZoneCache.has(radiusKm)) return _scheduledZoneCache.get(radiusKm)!;
   const result = buildMergedBufferZone(Math.round(radiusKm * SCHEDULED_RADIUS_MULT));
