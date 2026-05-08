@@ -2570,8 +2570,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!mapReady || !sshpCatchmentLayerRef.current) return;
     const layer = sshpCatchmentLayerRef.current;
     layer.clearLayers();
-    if (!layers.sshpCatchments) {
-      if (import.meta.env.DEV) console.info('[SSHP] toggle=OFF; overlay cleared');
+    // Public Safe Mode hard-disables the SSHP overlay regardless of toggle —
+    // SilverSummit/payer-pathway content is internal and must not appear on
+    // public-shared pages.
+    if (!layers.sshpCatchments || isPublicSafe) {
+      if (import.meta.env.DEV) console.info('[SSHP] overlay cleared', { toggle: layers.sshpCatchments, isPublicSafe });
       return;
     }
     try {
