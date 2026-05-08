@@ -92,6 +92,8 @@ interface MapViewProps {
     localTransitZones?: boolean;
     /** Tier 1 Providers highlight on existing clinic pins — defaults to false. */
     tier1Highlight?: boolean;
+    /** SilverSummit Rural Catchments payer-pathway overlay — informational, defaults to false. */
+    sshpCatchments?: boolean;
   };
   typeFilters?: Set<string>;
   countyFilters?: Set<string>;
@@ -519,6 +521,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   const memberRingsRef = useRef<L.LayerGroup | null>(null);
   const railLayerRef = useRef<L.LayerGroup | null>(null);
   const localTransitLayerRef = useRef<L.LayerGroup | null>(null);
+  const sshpCatchmentLayerRef = useRef<L.LayerGroup | null>(null);
   const [tribalBoundariesReady, setTribalBoundariesReady] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [mapZoom, setMapZoom] = useState(7);
@@ -1254,6 +1257,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     memberPinRef.current = L.layerGroup().addTo(map);
     railLayerRef.current = L.layerGroup().addTo(map);
     localTransitLayerRef.current = L.layerGroup().addTo(map);
+    sshpCatchmentLayerRef.current = L.layerGroup().addTo(map);
 
     mapRef.current = map;
     setMapZoom(map.getZoom());
