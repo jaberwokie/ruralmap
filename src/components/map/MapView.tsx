@@ -2616,7 +2616,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       // changes or component unmounts. Prevents orphaned listeners.
       layer.clearLayers();
     };
-  }, [mapReady, layers.sshpCatchments]);
+  }, [mapReady, layers.sshpCatchments, isPublicSafe]);
 
 
   // Additive: fit map to externally requested bounds (e.g., transit provider click).
