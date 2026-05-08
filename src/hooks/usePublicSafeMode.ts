@@ -3,8 +3,9 @@
  * shareable URLs (LinkedIn, decks, etc.), and external demos.
  *
  * Activate by adding `?public=1` to the URL.
- * accepted for backward compatibility with previously-shared links).
- * Session-only (no persistence).
+ * Session-only (no persistence). This module is the single source of truth
+ * for public-mode detection — other modules must call `isPublicSafeModeActive()`
+ * rather than parsing `window.location.search` themselves.
  *
  * Intent:
  * - Hide member / engagement counts ENTIRELY (no bucketing).
