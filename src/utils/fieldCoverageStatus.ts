@@ -48,3 +48,36 @@ export function countyHasFieldCoverage(county: string | null | undefined): boole
   if (!county) return false;
   return getFieldCoverageStatus(county).hasFieldCoverage;
 }
+
+/**
+ * Point-based field coverage — true when the given lat/lng is within the
+ * active drive-time reach of at least one field FTE (matches the merged-buffer
+ * geometry used to render the active coverage zone). This is the operational
+ * source of truth for whether a *specific member point* is inside same-day
+ * in-person field coverage, independent of any county-level rollup.
+ */
+const haversineKm = (aLat: number, aLng: number, bLat: number, bLng: number): number => {
+  const R = 6371;
+  const dLat = (bLat - aLat) * Math.PI / 180;
+  const dLng = (bLng - aLng) * Math.PI / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(aLat * Math.PI / 180) * Math.cos(bLat * Math.PI / 180) *
+    Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
+};
+
+export function isPointInActiveFieldCoverage(
+  lat: number,
+  lng: number,
+  radiusKm: number = ACTIVE_COVERAGE_RADIUS_KM,
+): boolean {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;
+  for (const f of fteCapacityData) {
+    if (!f.hubLocation) continue;
+    if (haversineKm(lat, lng, f.hubLocation.lat, f.hubLocation.lng) <= radiusKm) {
+      return true;
+    }
+  }
+  return false;
+}

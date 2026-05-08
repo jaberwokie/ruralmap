@@ -10,12 +10,16 @@
  */
 
 import { CheckCircle2, AlertTriangle, Headphones } from 'lucide-react';
-import { getEngagementOwnership } from '@/utils/engagementOwnership';
+import { getEngagementOwnership, type MemberPointContext } from '@/utils/engagementOwnership';
 
 interface EngagementOwnershipBlockProps {
   county: string | null | undefined;
   /** Compact rendering for tight panels (e.g. member panel). */
   compact?: boolean;
+  /** Optional member point — when set, in-person availability is derived
+   *  from the member point's position relative to active FTE coverage
+   *  geometry (operational source of truth) instead of the county rollup. */
+  memberPoint?: MemberPointContext | null;
 }
 
 const REMOTE_NOTE =
@@ -51,9 +55,9 @@ const Row = ({
   </div>
 );
 
-const EngagementOwnershipBlock = ({ county, compact = false }: EngagementOwnershipBlockProps) => {
+const EngagementOwnershipBlock = ({ county, compact = false, memberPoint }: EngagementOwnershipBlockProps) => {
   if (!county) return null;
-  const isPrimary = getEngagementOwnership(county).inPersonAvailable;
+  const isPrimary = getEngagementOwnership(county, memberPoint).inPersonAvailable;
 
   const headerLabel = isPrimary ? 'Primary CHW Coverage' : 'Remote CHW Coverage';
 
