@@ -2557,6 +2557,55 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     }
   }, [mapReady, layers.localTransitZones, selectedTransitProviderId]);
 
+  // ── SilverSummit Rural Catchments overlay (informational payer pathway) ──
+  // STRICTLY ADDITIVE: does not affect any other layer, gap, or scoring.
+  // Renders soft directional polylines between origin and destination anchors
+  // in the coverage pane (zIndex 300), well below all marker panes.
+  // Degrades silently on any data error.
+  useEffect(() => {
+    if (!mapReady || !sshpCatchmentLayerRef.current) return;
+    sshpCatchmentLayerRef.current.clearLayers();
+    if (!layers.sshpCatchments) {
+      if (import.meta.env.DEV) console.info('[SSHP] toggle=OFF; overlay cleared');
+      return;
+    }
+    try {
+      // Lazy-imported style/data refs to avoid pulling into hot paths.
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const mod = require('@/data/sshpCatchments') as typeof import('@/data/sshpCatchments');
+      const routes = mod.getValidSshpRoutes();
+      let drawn = 0;
+      routes.forEach((r) => {
+        const color = mod.SSHP_CATEGORY_COLOR[r.category] ?? 'hsl(220, 20%, 50%)';
+        const line = L.polyline(
+          [[r.origin.lat, r.origin.lng], [r.destination.lat, r.destination.lng]],
+          {
+            pane: PANE_CONFIG.coverage.id,
+            color,
+            weight: 1.5,
+            opacity: 0.55,
+            dashArray: '5 5',
+            interactive: false,
+            smoothFactor: 1,
+          },
+        );
+        line.bindTooltip(
+          `${r.origin.name} → ${r.destination.name} · ${r.category} (SSHP, informational)`,
+          { sticky: true, opacity: 0.9, className: 'rail-corridor-tooltip' },
+        );
+        sshpCatchmentLayerRef.current!.addLayer(line);
+        drawn++;
+      });
+      if (import.meta.env.DEV) {
+        console.info('[SSHP] overlay loaded', { toggle: 'ON', routes: drawn });
+      }
+    } catch (err) {
+      // Degrade silently — overlay is non-authoritative.
+      if (import.meta.env.DEV) console.warn('[SSHP] overlay failed to load; ignored', err);
+    }
+  }, [mapReady, layers.sshpCatchments]);
+
+
   // Additive: fit map to externally requested bounds (e.g., transit provider click).
   useEffect(() => {
     if (!mapReady || !mapRef.current || !focusBounds) return;
