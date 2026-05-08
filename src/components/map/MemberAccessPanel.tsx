@@ -561,7 +561,7 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
           .filter(t => !isPublicSafe || !isInternalSshpTag(t));
         return (
           <div className="mt-3">
-            <EngagementOwnershipBlock county={memberCounty} compact />
+            <EngagementOwnershipBlock county={memberCounty} compact memberPoint={memberPointCtx} />
             {sshpTags.length > 0 && (
               <>
                 <div className="mt-1.5 flex flex-wrap gap-1" aria-label="SSHP catchment context (informational only)">
