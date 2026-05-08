@@ -268,6 +268,7 @@ interface MemberAccessPanelProps {
 }
 
 const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
+  const { isPublicSafe } = usePublicSafeMode();
   // Engagement-ownership gating — uses the SAME source of truth as the
   // Engagement Ownership card (getEngagementOwnership) so the two surfaces
   // cannot disagree.
