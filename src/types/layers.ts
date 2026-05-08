@@ -31,6 +31,13 @@ export interface LayerState {
   providerUtilizationReach: boolean;
   /** Append tribal utilization block to tribal/county detail panel (requires tribalNations on). */
   tribalUtilization: boolean;
+  /**
+   * SilverSummit Rural Catchments — payer-pathway overlay (informational only).
+   * Renders soft directional corridor lines between origin and destination
+   * anchor communities. NOT used in coverage, gap, FTE, clustering, or
+   * Decision Assistant scoring. Default OFF.
+   */
+  sshpCatchments: boolean;
 }
 
 export interface CoverageState {
