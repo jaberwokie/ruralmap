@@ -17,6 +17,7 @@ import { ArrowRight, AlertTriangle, CheckCircle2, Info, Copy } from 'lucide-reac
 import { toast } from 'sonner';
 import type { Facility } from '@/data/facilities';
 import type { DecisionAssistResult } from './decisionAssistTypes';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
 interface Props {
   result: DecisionAssistResult;
