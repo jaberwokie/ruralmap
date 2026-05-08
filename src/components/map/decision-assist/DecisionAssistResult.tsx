@@ -169,6 +169,18 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
         </div>
       )}
 
+      {/* Payer Pathway Context — informational, non-scoring */}
+      {result.payerPathwayContext && (
+        <div className="rounded-md border border-border/60 bg-muted/40 px-2 py-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
+            Payer Pathway Context
+          </p>
+          <p className="text-[11px] leading-snug text-foreground/90">
+            {result.payerPathwayContext}
+          </p>
+        </div>
+      )}
+
       {/* Copy Plan */}
       <div className="pt-1">
         <button
