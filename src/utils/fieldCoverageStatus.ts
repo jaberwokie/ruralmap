@@ -16,13 +16,13 @@ import { fteCapacityData } from '@/data/fte-capacity';
 import { countyHasFieldResponseUnavailable, getCountyCoverageBreakdown, isPointInsideActiveCoverageZone } from '@/utils/coverageZones';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
-/** Minimum % of county area inside the active FTE drive-time zone for the
+/** Minimum % of county area inside the active FTE fixed-distance zone for the
  *  county to be treated as field-covered for display purposes. */
 const FIELD_COVERAGE_MIN_ACTIVE_PERCENT = 25;
 
 export interface FieldCoverageStatus {
   /** A meaningful portion of the county is within an active field FTE
-   *  drive-time zone (≥ FIELD_COVERAGE_MIN_ACTIVE_PERCENT). */
+   *  fixed-distance zone (≥ FIELD_COVERAGE_MIN_ACTIVE_PERCENT). */
   hasFieldCoverage: boolean;
   /** At least one remote-only FTE is assigned to this county. */
   hasRemoteCoverage: boolean;
