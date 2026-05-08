@@ -2570,8 +2570,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     if (!mapReady || !sshpCatchmentLayerRef.current) return;
     const layer = sshpCatchmentLayerRef.current;
     layer.clearLayers();
-    if (!layers.sshpCatchments) {
-      if (import.meta.env.DEV) console.info('[SSHP] toggle=OFF; overlay cleared');
+    // Public Safe Mode hard-disables the SSHP overlay regardless of toggle —
+    // SilverSummit/payer-pathway content is internal and must not appear on
+    // public-shared pages.
+    if (!layers.sshpCatchments || isPublicSafe) {
+      if (import.meta.env.DEV) console.info('[SSHP] overlay cleared', { toggle: layers.sshpCatchments, isPublicSafe });
       return;
     }
     try {
@@ -2613,7 +2616,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       // changes or component unmounts. Prevents orphaned listeners.
       layer.clearLayers();
     };
-  }, [mapReady, layers.sshpCatchments]);
+  }, [mapReady, layers.sshpCatchments, isPublicSafe]);
 
 
   // Additive: fit map to externally requested bounds (e.g., transit provider click).

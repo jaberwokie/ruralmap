@@ -17,6 +17,7 @@ import { ArrowRight, AlertTriangle, CheckCircle2, Info, Copy } from 'lucide-reac
 import { toast } from 'sonner';
 import type { Facility } from '@/data/facilities';
 import type { DecisionAssistResult } from './decisionAssistTypes';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
 interface Props {
   result: DecisionAssistResult;
@@ -81,6 +82,7 @@ const buildPlanText = (
 };
 
 const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySelect }: Props) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const conf = CONFIDENCE_STYLE[result.confidence];
   const ConfIcon = conf.Icon;
 
@@ -170,7 +172,7 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
       )}
 
       {/* Payer Pathway Context — informational, non-authoritative, non-scoring */}
-      {result.payerPathwayContext && (
+      {!isPublicSafe && result.payerPathwayContext && (
         <div className="rounded-md border border-border/60 bg-muted/40 px-2 py-1.5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
             Payer Pathway Context

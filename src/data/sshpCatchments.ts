@@ -170,6 +170,22 @@ export const getSshpTagsForCounty = (county: string | null | undefined): SshpInf
 };
 
 /**
+ * True for tags that expose internal payer/partnership intelligence and
+ * must be hidden in Public Safe Mode. Generic clinical-pathway labels
+ * (CCBHC Pathway, Psych IP Pathway, Residential Tx/PT Pathway) are NOT
+ * internal and remain visible.
+ */
+export const isInternalSshpTag = (tag: SshpInfoTag): boolean => {
+  const l = tag.label.trim();
+  if (/^SSHP\b/i.test(l)) return true;
+  if (/silversummit/i.test(l)) return true;
+  if (/catchment/i.test(l)) return true;
+  if (/payer[\s-]?pathway/i.test(l)) return true;
+  if (/^Potential Novum Partner$/i.test(l)) return true; // internal partnership strategy
+  return false;
+};
+
+/**
  * Decision Assistant — payer pathway context.
  * NON-SCORING. Returns a short sentence or null.
  */
