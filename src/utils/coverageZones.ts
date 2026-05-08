@@ -49,13 +49,8 @@ export function countyHasFieldResponseUnavailable(county: string): boolean {
 }
 
 function buildMergedBufferZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
-  const fieldFtes = fteCapacityData.filter(f => f.hubLocation);
-  if (fieldFtes.length === 0) return null;
-
-  const buffers = fieldFtes.map(f => {
-    const pt = turfPoint([f.hubLocation!.lng, f.hubLocation!.lat]);
-    return buffer(pt, radiusKm, { units: 'kilometers' }) as Feature<Polygon>;
-  });
+  const buffers = buildFieldFteBuffers(radiusKm).map(({ zone }) => zone);
+  if (buffers.length === 0) return null;
 
   const merged = (union(featureCollection(buffers) as any) as Feature<Polygon | MultiPolygon> | null)
     ?? ({
@@ -70,6 +65,19 @@ function buildMergedBufferZone(radiusKm: number): Feature<Polygon | MultiPolygon
   const fc = featureCollection([merged, nevadaFeature]);
   const clipped = intersect(fc as any);
   return (clipped as Feature<Polygon | MultiPolygon>) ?? null;
+}
+
+function buildFieldFteBuffers(radiusKm: number): Array<{ label: string; zone: Feature<Polygon> }> {
+  return fteCapacityData
+    .filter(f => f.hubLocation)
+    .map(f => ({
+      label: f.label,
+      zone: buffer(
+        turfPoint([f.hubLocation!.lng, f.hubLocation!.lat]),
+        radiusKm,
+        { units: 'kilometers' },
+      ) as Feature<Polygon>,
+    }));
 }
 
 export function getActiveCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
