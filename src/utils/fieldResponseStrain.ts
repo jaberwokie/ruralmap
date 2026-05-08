@@ -178,7 +178,7 @@ export function computeFieldResponseStrain(
   const ranked = fieldFtes
     .map(f => ({
       fte: f,
-      km: haversineKm(target.lat, target.lng, f.hubLocation!.lat, f.hubLocation!.lng),
+      km: distanceMi(target.lat, target.lng, f.hubLocation!.lat, f.hubLocation!.lng) * 1.609344,
     }))
     .sort((a, b) => a.km - b.km);
 
@@ -188,17 +188,17 @@ export function computeFieldResponseStrain(
   const oneWayMi = Math.round(kmToMiles(primary.km));
   const oneWayMin = kmToDriveMinutes(primary.km);
 
-  const withinActive = primary.km <= coverageRadiusKm;
   const beyondSameDay = primary.km > coverageRadiusKm * 1.5;
 
   // Anchoring FTEs: prefer existing county breakdown when available, else
-  // derive from per-FTE radius proximity using the same coverageRadiusKm.
+  // derive from the exact active coverage polygons rendered by MapView.
   let anchoringFtes: string[];
   if (options?.county) {
     anchoringFtes = getCountyCoverageBreakdown(options.county, coverageRadiusKm).anchoringFtes;
   } else {
-    anchoringFtes = ranked.filter(r => r.km <= coverageRadiusKm).map(r => r.fte.label);
+    anchoringFtes = getActiveCoverageAnchorsForPoint(target.lat, target.lng, coverageRadiusKm);
   }
+  const withinActive = anchoringFtes.length > 0;
 
   let coverage: StrainCoverageState;
   let coverageLabel: string;
