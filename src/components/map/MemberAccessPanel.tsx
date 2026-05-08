@@ -259,7 +259,7 @@ const TierSection = ({ label, rangeLabel, tierKey, facilities, services, onSelec
 
 interface MemberAccessPanelProps {
   analysis: MemberAccessAnalysis;
-  /** Active drive-time radius from sidebar slider — feeds Field Response Strain. */
+  /** Active fixed-distance coverage radius from sidebar state — feeds Field Response Strain. */
   coverageRadiusKm?: number;
   /** Open a facility's detail view, preserving member context. */
   onFacilitySelect?: (facility: Facility) => void;
@@ -272,8 +272,8 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
   // Engagement-ownership gating — uses the SAME source of truth as the
   // Engagement Ownership card (getEngagementOwnership). When a member point
   // is supplied, the operational source of truth is the point's position
-  // relative to the active FTE drive-time geometry (matches rendered
-  // coverage circles), not the county rollup. This prevents claiming
+  // inside the active FTE fixed-distance polygon (matches rendered teal
+  // coverage geometry), not the county rollup. This prevents claiming
   // "Local in-person engagement viable" for a point outside active reach.
   const memberCountyForRec = getCountyForLocation(analysis.location.lat, analysis.location.lng);
   const memberPointCtx = {

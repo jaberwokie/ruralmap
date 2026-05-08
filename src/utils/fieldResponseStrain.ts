@@ -10,7 +10,8 @@
  * No new entity types, no new map layers, no routing API.
  */
 import { fteCapacityData, type FTECapacity } from '@/data/fte-capacity';
-import { kmToMiles, kmToDriveMinutes, getCountyCoverageBreakdown, countyHasFieldResponseUnavailable } from '@/utils/coverageZones';
+import { kmToMiles, kmToDriveMinutes, getCountyCoverageBreakdown, countyHasFieldResponseUnavailable, getActiveCoverageAnchorsForPoint } from '@/utils/coverageZones';
+import { distanceMi } from '@/utils/scheduledCorridorViability';
 
 // ── County-level response classification ──────────────────────────────────
 // Reuses the same anchored-FTE coverage breakdown the rest of the app uses.
@@ -150,26 +151,17 @@ export interface FieldResponseStrain {
   oneWayMin: number;
   roundTripMi: number;
   roundTripMin: number;
-  /** True when target is within the configured active drive-time radius. */
+  /** True when target is inside the shared active fixed-distance coverage geometry. */
   withinActive: boolean;
   /** Coverage condition for the target point. */
   coverage: StrainCoverageState;
   /** Friendly label for the coverage condition. */
   coverageLabel: string;
-  /** Names of every field FTE whose drive-time zone contains this point.
+  /** Names of every field FTE whose fixed-distance zone contains this point.
    *  When `county` is supplied, derived from anchoringFtes (existing logic).
-   *  Otherwise derived from per-FTE radius proximity. */
+   *  Otherwise derived from the same active coverage polygons MapView renders. */
   anchoringFtes: string[];
 }
-
-const haversineKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
 
 /**
  * Compute strain for an arbitrary lat/lng (e.g. member pin) or, when `county`
@@ -186,7 +178,7 @@ export function computeFieldResponseStrain(
   const ranked = fieldFtes
     .map(f => ({
       fte: f,
-      km: haversineKm(target.lat, target.lng, f.hubLocation!.lat, f.hubLocation!.lng),
+      km: distanceMi(target.lat, target.lng, f.hubLocation!.lat, f.hubLocation!.lng) * 1.609344,
     }))
     .sort((a, b) => a.km - b.km);
 
@@ -196,17 +188,17 @@ export function computeFieldResponseStrain(
   const oneWayMi = Math.round(kmToMiles(primary.km));
   const oneWayMin = kmToDriveMinutes(primary.km);
 
-  const withinActive = primary.km <= coverageRadiusKm;
   const beyondSameDay = primary.km > coverageRadiusKm * 1.5;
 
   // Anchoring FTEs: prefer existing county breakdown when available, else
-  // derive from per-FTE radius proximity using the same coverageRadiusKm.
+  // derive from the exact active coverage polygons rendered by MapView.
   let anchoringFtes: string[];
   if (options?.county) {
     anchoringFtes = getCountyCoverageBreakdown(options.county, coverageRadiusKm).anchoringFtes;
   } else {
-    anchoringFtes = ranked.filter(r => r.km <= coverageRadiusKm).map(r => r.fte.label);
+    anchoringFtes = getActiveCoverageAnchorsForPoint(target.lat, target.lng, coverageRadiusKm);
   }
+  const withinActive = anchoringFtes.length > 0;
 
   let coverage: StrainCoverageState;
   let coverageLabel: string;
@@ -333,7 +325,7 @@ export function getStrainTier(strain: FieldResponseStrain): StrainTier {
 // ── Mixed-reach guard for large counties ───────────────────────────────────
 // A county has "mixed" field reach when at least one field FTE anchors part
 // of it, but a meaningful share of the county area falls outside any active
-// FTE drive-time zone. In that case, generalising one FTE to the whole
+// FTE fixed-distance zone. In that case, generalising one FTE to the whole
 // county misleads the operator (e.g. Pahrump FTE for northern/central Nye).
 // Geometry-only — reuses the existing breakdown. No new thresholds for
 // classification; this is a display gate.

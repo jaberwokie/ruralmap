@@ -2,9 +2,9 @@
 
 ## County Classification
 
-A county is only classified as **Active** or **Scheduled** when there is at least one real, anchored FTE whose active drive-time buffer actually touches the county.
+A county is only classified as **Active** or **Scheduled** when there is at least one real, anchored FTE whose active fixed-distance buffer actually touches the county.
 
-- **Active** — the county's anchoring FTEs cover ≥60% of its area with same-day drive-time reach, and the county centroid falls within the active radius.
+- **Active** — the county's anchoring FTEs cover ≥60% of its area with active field coverage, and the county centroid falls within the active radius.
 - **Scheduled** — the county's anchoring FTEs provide meaningful combined active + scheduled coverage (≥40% total, ≥15% scheduled ring), and a viable highway corridor exists between the nearest field anchor and the county.
 
 ## Remote Default
@@ -27,7 +27,7 @@ Geometric reach alone (scheduled ring overlap, corridor reach, or distance proxi
 
 The single source of truth for this logic is `getCountyCoverageBreakdown` in `src/utils/coverageZones.ts`, which computes:
 
-- `activePercent` — share of county area inside the active FTE drive-time zone.
+- `activePercent` — share of county area inside the active FTE fixed-distance zone.
 - `scheduledPercent` — share in the outer scheduled ring (excluding active).
 - `anchoringFtes` — list of FTEs whose active buffer actually intersects the county polygon.
 - `primaryType` — the final classification, gated by `hasAnchoringFte`.

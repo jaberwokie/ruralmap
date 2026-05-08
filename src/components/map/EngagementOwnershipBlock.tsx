@@ -17,8 +17,8 @@ interface EngagementOwnershipBlockProps {
   /** Compact rendering for tight panels (e.g. member panel). */
   compact?: boolean;
   /** Optional member point — when set, in-person availability is derived
-   *  from the member point's position relative to active FTE coverage
-   *  geometry (operational source of truth) instead of the county rollup. */
+   *  from the same active FTE fixed-distance polygon rendered by the teal
+   *  coverage layer instead of the county rollup. */
   memberPoint?: MemberPointContext | null;
 }
 

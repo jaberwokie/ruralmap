@@ -139,7 +139,7 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
   );
 };
 
-/** Coverage Breakdown badge for county-based entities (FTE drive-time model) */
+/** Coverage Breakdown badge for county-based entities (FTE fixed-distance model) */
 const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
 
