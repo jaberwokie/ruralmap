@@ -66,6 +66,7 @@ import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAcce
 import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
+import { getValidSshpRoutes, SSHP_CATEGORY_COLOR } from '@/data/sshpCatchments';
 import { localTransitZones } from '@/data/local-transit-zones';
 import { getProviderForZoneId } from '@/data/local-transit-providers';
 import type { PresentationPhase } from '@/hooks/usePresentationMode';
