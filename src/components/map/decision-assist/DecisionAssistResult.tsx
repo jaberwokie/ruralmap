@@ -172,7 +172,7 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
       )}
 
       {/* Payer Pathway Context — informational, non-authoritative, non-scoring */}
-      {result.payerPathwayContext && (
+      {!isPublicSafe && result.payerPathwayContext && (
         <div className="rounded-md border border-border/60 bg-muted/40 px-2 py-1.5">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
             Payer Pathway Context
