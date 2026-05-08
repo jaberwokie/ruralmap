@@ -308,11 +308,11 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
       });
     }
     if (remoteSupportAvailable) {
-      displayedRecommendation = 'Remote coordination support only';
+      displayedRecommendation = 'Remote coordination with possible scheduled outreach';
       recStyle = {
         icon: AlertTriangle,
         color: 'hsl(0, 65%, 55%)',
-        support: 'Use remote CHW or telehealth coordination for this area. Do not treat this as local in-person field coverage.',
+        support: 'This member point is outside active field coverage. Use remote CHW/telehealth coordination, with scheduled outreach if feasible. Do not treat this as local in-person field coverage.',
       };
     } else {
       displayedRecommendation = 'No engagement ownership available';
