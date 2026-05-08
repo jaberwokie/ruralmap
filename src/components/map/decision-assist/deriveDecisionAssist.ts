@@ -426,6 +426,17 @@ export const deriveDecisionAssist = (
     backup = null;
   }
 
+  // Informational payer-pathway context (non-scoring).
+  let payerPathwayContext: string | null = null;
+  try {
+    // Lazy require avoided — static import is safe (small static module).
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { getSshpPayerPathwayContext } = await import('@/data/sshpCatchments');
+    payerPathwayContext = getSshpPayerPathwayContext(county ?? null);
+  } catch {
+    payerPathwayContext = null;
+  }
+
   return {
     pathway: need.pathway,
     orderOfOperations: steps,
@@ -435,5 +446,6 @@ export const deriveDecisionAssist = (
     primaryTargets,
     primary,
     backup,
+    payerPathwayContext,
   };
 };
