@@ -142,6 +142,17 @@ export function isPointInsideActiveCoverageZone(
   return geometry.coordinates.some((polygon) => polygonContainsPoint(lng, lat, polygon));
 }
 
+export function getActiveCoverageAnchorsForPoint(
+  lat: number,
+  lng: number,
+  radiusKm: number,
+): string[] {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return [];
+  return buildFieldFteBuffers(radiusKm)
+    .filter(({ zone }) => polygonContainsPoint(lng, lat, zone.geometry.coordinates))
+    .map(({ label }) => label);
+}
+
 /** Outer fixed-distance zone. Includes active core; subtract active for ring. */
 export function getScheduledCoverageZone(radiusKm: number): Feature<Polygon | MultiPolygon> | null {
   if (_scheduledZoneCache.has(radiusKm)) return _scheduledZoneCache.get(radiusKm)!;
