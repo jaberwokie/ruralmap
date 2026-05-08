@@ -82,6 +82,7 @@ const buildPlanText = (
 };
 
 const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySelect }: Props) => {
+  const { isPublicSafe } = usePublicSafeMode();
   const conf = CONFIDENCE_STYLE[result.confidence];
   const ConfIcon = conf.Icon;
 
