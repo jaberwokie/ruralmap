@@ -18,6 +18,7 @@ import { getCountyForLocation } from '@/utils/countyLookup';
 import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
+import { getSshpTagsForCounty, SSHP_CATEGORY_COLOR } from '@/data/sshpCatchments';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -544,9 +545,6 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
       {(() => {
         const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
         if (!memberCounty) return null;
-        // Informational SSHP catchment tags — non-authoritative.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const { getSshpTagsForCounty, SSHP_CATEGORY_COLOR } = require('@/data/sshpCatchments') as typeof import('@/data/sshpCatchments');
         const sshpTags = getSshpTagsForCounty(memberCounty);
         return (
           <div className="mt-3">
