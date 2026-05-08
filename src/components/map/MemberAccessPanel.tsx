@@ -555,13 +555,15 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
                   {sshpTags.map((t) => (
                     <span
                       key={`${t.label}-${t.category}`}
-                      className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full border"
+                      role="note"
+                      aria-disabled="true"
+                      tabIndex={-1}
+                      className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-sm border-l-2 select-none pointer-events-none cursor-default shadow-none hover:shadow-none hover:bg-transparent focus:outline-none"
                       style={{
                         color: SSHP_CATEGORY_COLOR[t.category],
-                        borderColor: SSHP_CATEGORY_COLOR[t.category],
+                        borderLeftColor: SSHP_CATEGORY_COLOR[t.category],
                         background: 'transparent',
                       }}
-                      title="SilverSummit Rural Catchments — Informational only · Non-authoritative · Does not change operational scoring."
                     >
                       {t.label}
                     </span>
