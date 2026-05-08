@@ -270,10 +270,18 @@ interface MemberAccessPanelProps {
 const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
   const { isPublicSafe } = usePublicSafeMode();
   // Engagement-ownership gating — uses the SAME source of truth as the
-  // Engagement Ownership card (getEngagementOwnership) so the two surfaces
-  // cannot disagree.
+  // Engagement Ownership card (getEngagementOwnership). When a member point
+  // is supplied, the operational source of truth is the point's position
+  // relative to the active FTE drive-time geometry (matches rendered
+  // coverage circles), not the county rollup. This prevents claiming
+  // "Local in-person engagement viable" for a point outside active reach.
   const memberCountyForRec = getCountyForLocation(analysis.location.lat, analysis.location.lng);
-  const ownership = getEngagementOwnership(memberCountyForRec);
+  const memberPointCtx = {
+    lat: analysis.location.lat,
+    lng: analysis.location.lng,
+    radiusKm: coverageRadiusKm,
+  };
+  const ownership = getEngagementOwnership(memberCountyForRec, memberPointCtx);
   const inPersonAvailable = ownership.inPersonAvailable;
   const remoteSupportAvailable = ownership.telehealthAvailable;
 
