@@ -147,6 +147,29 @@ export interface SshpInfoTag {
   category: SshpCategory;
 }
 
+/**
+ * Returns true if anchor notes signal low operational confidence —
+ * suspended, unverified, informational/workbook/routing-context-only,
+ * or otherwise needs validation. Used to suppress pathway pills that
+ * would imply operational availability we cannot defend.
+ */
+const notesIndicateLowConfidence = (notes: string | undefined): boolean => {
+  if (!notes) return false;
+  const n = notes.toLowerCase();
+  return (
+    n.includes('suspend') ||
+    n.includes('unverified') ||
+    n.includes('not verified') ||
+    n.includes('needs validation') ||
+    n.includes('not usable') ||
+    n.includes('informational') ||
+    n.includes('workbook') ||
+    n.includes('routing context') ||
+    n.includes('pathway context only') ||
+    n.includes('context only')
+  );
+};
+
 export const getSshpTagsForCounty = (county: string | null | undefined): SshpInfoTag[] => {
   if (!county) return [];
   const tags: SshpInfoTag[] = [];
@@ -158,13 +181,17 @@ export const getSshpTagsForCounty = (county: string | null | undefined): SshpInf
     tags.push({ label, category });
   };
   for (const a of SSHP_ANCHORS) {
-    if (a.county === county) {
-      pushTag('SSHP Catchment Anchor', a.category);
-      if (a.category === 'Potential Novum Partner') pushTag('Potential Novum Partner', a.category);
-      if (a.category === 'Residential Tx/PT')       pushTag('Residential Tx/PT Pathway', a.category);
-      if (a.category === 'Psychiatric IP')          pushTag('Psych IP Pathway', a.category);
-      if (a.category === 'CCBHC')                   pushTag('CCBHC Pathway', a.category);
-    }
+    if (a.county !== county) continue;
+    // Anchor pill is metadata about workbook membership — always allowed.
+    pushTag('SSHP Catchment Anchor', a.category);
+    // Pathway pills imply operational availability; require defensible confidence.
+    const lowConfidence =
+      a.fit === 'Low' || a.fit === 'Mixed' || notesIndicateLowConfidence(a.notes);
+    if (lowConfidence) continue;
+    if (a.category === 'Potential Novum Partner') pushTag('Potential Novum Partner', a.category);
+    if (a.category === 'Residential Tx/PT')       pushTag('Residential Tx/PT Pathway', a.category);
+    if (a.category === 'Psychiatric IP')          pushTag('Psych IP Pathway', a.category);
+    if (a.category === 'CCBHC')                   pushTag('CCBHC Pathway', a.category);
   }
   return tags;
 };
