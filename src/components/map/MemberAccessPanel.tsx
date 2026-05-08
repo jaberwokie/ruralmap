@@ -550,22 +550,27 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
           <div className="mt-3">
             <EngagementOwnershipBlock county={memberCounty} compact />
             {sshpTags.length > 0 && (
-              <div className="mt-1.5 flex flex-wrap gap-1" aria-label="SSHP catchment context">
-                {sshpTags.map((t) => (
-                  <span
-                    key={`${t.label}-${t.category}`}
-                    className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full border"
-                    style={{
-                      color: SSHP_CATEGORY_COLOR[t.category],
-                      borderColor: SSHP_CATEGORY_COLOR[t.category],
-                      background: 'transparent',
-                    }}
-                    title="SilverSummit Rural Catchments — informational only"
-                  >
-                    {t.label}
-                  </span>
-                ))}
-              </div>
+              <>
+                <div className="mt-1.5 flex flex-wrap gap-1" aria-label="SSHP catchment context (informational only)">
+                  {sshpTags.map((t) => (
+                    <span
+                      key={`${t.label}-${t.category}`}
+                      className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-full border"
+                      style={{
+                        color: SSHP_CATEGORY_COLOR[t.category],
+                        borderColor: SSHP_CATEGORY_COLOR[t.category],
+                        background: 'transparent',
+                      }}
+                      title="SilverSummit Rural Catchments — Informational only · Non-authoritative · Does not change operational scoring."
+                    >
+                      {t.label}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-1 text-[9px] italic text-muted-foreground leading-snug">
+                  Informational only · Non-authoritative · Does not change operational scoring.
+                </p>
+              </>
             )}
           </div>
         );
