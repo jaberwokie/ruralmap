@@ -1603,6 +1603,14 @@ const Sidebar = ({
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
                         subtitle: 'Local transit operators · approximate service footprints',
                       })}
+                      {renderLayerToggleRow({
+                        label: 'SilverSummit Rural Catchments',
+                        icon: MapPin,
+                        iconClassName: 'text-muted-foreground',
+                        checked: layers.sshpCatchments,
+                        onCheckedChange: () => onToggleLayer('sshpCatchments'),
+                        subtitle: 'Payer-pathway overlay · informational only',
+                      })}
 
                       {/* Transit Providers — additive utility list (not a facility/provider/service) */}
                       <div className="mt-1 px-2">
