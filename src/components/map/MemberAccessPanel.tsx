@@ -18,7 +18,8 @@ import { getCountyForLocation } from '@/utils/countyLookup';
 import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
-import { getSshpTagsForCounty, SSHP_CATEGORY_COLOR } from '@/data/sshpCatchments';
+import { getSshpTagsForCounty, SSHP_CATEGORY_COLOR, isInternalSshpTag } from '@/data/sshpCatchments';
+import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
