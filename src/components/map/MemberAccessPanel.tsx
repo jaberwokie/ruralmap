@@ -547,7 +547,10 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
       {(() => {
         const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
         if (!memberCounty) return null;
-        const sshpTags = getSshpTagsForCounty(memberCounty);
+        // In Public Safe Mode, hide internal SSHP/payer/partnership tags
+        // but allow generic clinical-pathway labels through.
+        const sshpTags = getSshpTagsForCounty(memberCounty)
+          .filter(t => !isPublicSafe || !isInternalSshpTag(t));
         return (
           <div className="mt-3">
             <EngagementOwnershipBlock county={memberCounty} compact />
