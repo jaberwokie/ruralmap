@@ -2571,13 +2571,10 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       return;
     }
     try {
-      // Lazy-imported style/data refs to avoid pulling into hot paths.
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const mod = require('@/data/sshpCatchments') as typeof import('@/data/sshpCatchments');
-      const routes = mod.getValidSshpRoutes();
+      const routes = getValidSshpRoutes();
       let drawn = 0;
       routes.forEach((r) => {
-        const color = mod.SSHP_CATEGORY_COLOR[r.category] ?? 'hsl(220, 20%, 50%)';
+        const color = SSHP_CATEGORY_COLOR[r.category] ?? 'hsl(220, 20%, 50%)';
         const line = L.polyline(
           [[r.origin.lat, r.origin.lng], [r.destination.lat, r.destination.lng]],
           {
