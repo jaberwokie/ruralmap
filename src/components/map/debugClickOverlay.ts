@@ -3,16 +3,14 @@
  * Provides visual + console feedback for marker/county/clear events.
  */
 
+import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
+
 const isDebugEnabled = (): boolean => {
   try {
+    // Public Safe Mode hard-disables all debug tooling, even if
+    // ?debugClicks=1 is also present. Source of truth is the shared helper.
+    if (isPublicSafeModeActive()) return false;
     const params = new URLSearchParams(window.location.search);
-    // Public Safe Mode (?public=1 or ?publicSafe=1) hard-disables all debug
-    // tooling, even if ?debugClicks=1 is also present in the URL. This keeps
-    // internal QA panels, geometry warnings, click pulses, and the
-    // Ctrl+Shift+D shortcut out of any public-shared pageview.
-    if (params.get('public') === '1' || params.get('publicSafe') === '1') {
-      return false;
-    }
     return params.get('debugClicks') === '1';
   } catch {
     return false;

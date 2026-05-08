@@ -2,9 +2,10 @@
  * PUBLIC_SAFE_MODE — non-destructive presentation layer for public screenshots,
  * shareable URLs (LinkedIn, decks, etc.), and external demos.
  *
- * Activate by adding `?public=1` to the URL (legacy `?publicSafe=1` also
- * accepted for backward compatibility with previously-shared links).
- * Session-only (no persistence).
+ * Activate by adding `?public=1` to the URL.
+ * Session-only (no persistence). This module is the single source of truth
+ * for public-mode detection — other modules must call `isPublicSafeModeActive()`
+ * rather than parsing `window.location.search` themselves.
  *
  * Intent:
  * - Hide member / engagement counts ENTIRELY (no bucketing).
@@ -41,7 +42,7 @@ const readFlag = (): boolean => {
   if (typeof window === 'undefined') return false;
   try {
     const params = new URLSearchParams(window.location.search);
-    return params.get('public') === '1' || params.get('publicSafe') === '1';
+    return params.get('public') === '1';
   } catch {
     return false;
   }
