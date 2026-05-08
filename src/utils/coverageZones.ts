@@ -145,11 +145,11 @@ export function getScheduledCoverageZone(radiusKm: number): Feature<Polygon | Mu
 // ── Per-county coverage breakdown ──
 
 export interface CountyCoverageBreakdown {
-  /** % of county area within the active (~same-day) drive-time zone. */
+  /** % of county area within the active fixed-distance coverage zone. */
   activePercent: number;
   /** % of county area in the outer (~planned-outreach) ring, excluding active. */
   scheduledPercent: number;
-  /** % of county area outside any FTE drive-time reach. */
+  /** % of county area outside any FTE fixed-distance reach. */
   remotePercent: number;
   /** Field FTEs whose active buffer touches this county. */
   anchoringFtes: string[];
@@ -226,9 +226,9 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
 
       // Conservative classification — bias toward operational reality.
       // Active (same-day) requires:
-      //   - meaningful majority of county area inside the active drive-time zone
+      //   - meaningful majority of county area inside the active fixed-distance zone
       //   - an anchoring field FTE
-      //   - the nearest field anchor's hub is within the active drive-time
+      //   - the nearest field anchor's hub is within the active fixed-distance
       //     radius of the county centroid (i.e. the county's operational
       //     center — not just an edge sliver — is reachable same-day).
       // This prevents large counties (e.g. Churchill) from being marked
@@ -254,7 +254,7 @@ function computeAllBreakdowns(radiusKm: number): Map<string, CountyCoverageBreak
 
       // Hard anchor gate: a county can only be classified as active or scheduled
       // when at least one real, non-planned FTE hub anchors it (its active
-      // drive-time buffer actually touches the county). Geometric overlap
+      // fixed-distance buffer actually touches the county). Geometric overlap
       // from the outer scheduled ring alone is not enough.
       const hasAnchoringFte = anchoringFtes.length > 0;
 
