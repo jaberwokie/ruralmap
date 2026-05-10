@@ -258,6 +258,29 @@ const Platform = () => {
             </div>
           </Section>
 
+          {/* 4.75 Operational Architecture */}
+          <Section heading="Operational architecture">
+            <p>
+              The platform is structured as decision infrastructure, not a standalone visualization.
+              Data moves through verification, operational modeling, decision support, and
+              publication-safe presentation.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {ARCHITECTURE.map((a) => (
+                <Card key={a.title} className="h-full">
+                  <CardHeader className="space-y-1.5 p-4">
+                    <CardTitle className="text-[14px] font-semibold leading-tight">
+                      {a.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-[13px] leading-relaxed text-foreground/80">{a.body}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </Section>
+
           {/* 5. Audience Framing */}
           <Section heading="Built for operational stakeholders">
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
