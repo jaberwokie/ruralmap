@@ -794,6 +794,15 @@ const Sidebar = ({
           </button>
         </div>
 
+        <div className="mt-1.5 flex justify-end">
+          <Link
+            to="/platform"
+            className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
+          >
+            Platform
+          </Link>
+        </div>
+
         <MapExplainerModal open={explainerOpen} onClose={() => setExplainerOpen(false)} />
       </div>
 
