@@ -98,11 +98,11 @@ interface SidebarProps {
 }
 
 const LAYER_CONFIG = [
-  { key: 'counties' as const, label: 'County Boundaries', colorClassName: 'text-muted-foreground', icon: MapIcon },
-  { key: 'tribalNations' as const, label: 'Tribal Nations', colorClassName: 'text-tribal-nation', icon: Landmark },
-  { key: 'services' as const, label: 'Services', colorClassName: 'text-service-presence', icon: Layers3 },
-  { key: 'behavioralHealth' as const, label: 'Behavioral Health', colorClassName: 'text-behavioral-health', icon: Brain },
-  { key: 'serviceLocations' as const, label: 'Provider Locations', colorClassName: 'text-foreground', icon: MapPin },
+  { key: 'counties' as const, label: 'County Operating Boundaries', colorClassName: 'text-muted-foreground', icon: MapIcon },
+  { key: 'tribalNations' as const, label: 'Tribal Jurisdiction Context', colorClassName: 'text-tribal-nation', icon: Landmark },
+  { key: 'services' as const, label: 'Community Service Access Network', colorClassName: 'text-service-presence', icon: Layers3 },
+  { key: 'behavioralHealth' as const, label: 'Behavioral Health Capacity Network', colorClassName: 'text-behavioral-health', icon: Brain },
+  { key: 'serviceLocations' as const, label: 'Provider Access Infrastructure', colorClassName: 'text-foreground', icon: MapPin },
   { key: 'operationalCoverage' as const, label: 'Response Capability', colorClassName: 'text-response-active', icon: Radio },
   { key: 'fteCapacity' as const, label: 'Staffing Capacity & Load', colorClassName: 'text-staffing-medium', icon: Users },
   { key: 'utilizationIntensity' as const, label: 'Service Utilization Intensity', colorClassName: 'text-utilization-mid', icon: Activity },
@@ -753,7 +753,7 @@ const Sidebar = ({
                   className="font-normal transition-colors hover:text-foreground"
                   title="All ingestion, mapping, verification, and audit workflows"
                 >
-                  Manage Map Data
+                  Manage Operational Data
                 </Link>
               ) : null}
               {isAdmin && isAuthenticated ? (
@@ -1584,11 +1584,11 @@ const Sidebar = ({
                 {!isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
 
                 <div data-tutorial="section-transit">
-                  {renderSectionHeader('TRANSIT PROVIDERS', transitOpen, toggleTransit)}
+                  {renderSectionHeader('TRANSPORTATION ACCESS', transitOpen, toggleTransit)}
                   {transitOpen && (
                     <div className="mt-0.5 space-y-0.5">
                       {renderLayerToggleRow({
-                        label: 'Rail Corridor (Amtrak)',
+                        label: 'Transportation Corridor Context (Amtrak)',
                         icon: TrainFront,
                         iconClassName: 'text-muted-foreground',
                         checked: layers.railCorridor,
@@ -1596,12 +1596,12 @@ const Sidebar = ({
                         subtitle: 'Northern corridor only · 4 stations',
                       })}
                       {renderLayerToggleRow({
-                        label: 'Local Transit Zones',
+                        label: 'Local Transportation Feasibility',
                         icon: MapPin,
                         iconClassName: 'text-muted-foreground',
                         checked: layers.localTransitZones,
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
-                        subtitle: 'Local transit operators · approximate service footprints',
+                        subtitle: 'Local operators · approximate service footprints',
                       })}
                       {!isPublicSafe && renderLayerToggleRow({
                         label: 'SilverSummit Rural Catchments',
@@ -1612,10 +1612,10 @@ const Sidebar = ({
                         subtitle: 'Payer-pathway overlay · informational only',
                       })}
 
-                      {/* Transit Providers — additive utility list (not a facility/provider/service) */}
+                      {/* Transportation access providers — additive utility list (not a facility/provider/service) */}
                       <div className="mt-1 px-2">
                         <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/80 mb-1">
-                          Transit Providers
+                          Transportation Access Providers
                         </div>
                         {(() => {
                           // Operational ordering (UI-only). Not alphabetical.
@@ -1717,7 +1717,7 @@ const Sidebar = ({
                     <div className="mt-0.5 space-y-0.5">
                       {/* connectivity intro removed for cleanup */}
                       {renderLayerToggleRow({
-                        label: 'Broadband Access',
+                        label: 'Digital Access Feasibility',
                         icon: Wifi,
                         iconClassName: 'text-broadband-served',
                         checked: layers.broadbandAccess,
@@ -1757,7 +1757,7 @@ const Sidebar = ({
                         );
                       })()}
                       {renderLayerToggleRow({
-                        label: 'Cellular Coverage',
+                        label: 'Mobile Connectivity Feasibility',
                         icon: Signal,
                         iconClassName: 'text-cellular-strong',
                         checked: layers.cellularCoverage,
