@@ -117,14 +117,14 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
       'The red shaded sample shows the overlay used for areas outside the selected provider coverage reach. It indicates operationally constrained geography based on the current reach setting.',
   },
   cellularCoverage: {
-    label: 'Cellular Coverage',
+    label: 'Mobile Connectivity Feasibility',
     explanation:
-      'Displays LTE and 5G coverage by county using FCC availability data. High: LTE >80% and 5G present with a major population center. Mixed: LTE 50–80% or uneven geographic distribution. Low: LTE <50% or mostly rural coverage gaps. Coverage reflects geographic availability, not signal quality. Large rural counties may appear lower despite strong coverage in populated areas.',
+      'Aggregate county-level mobile connectivity feasibility derived from FCC LTE/5G availability. High: LTE >80% with 5G present and a major population center. Mixed: LTE 50–80% or uneven distribution. Low: LTE <50% or mostly rural connectivity gaps. Reflects geographic availability, not signal quality. Large rural counties may appear lower despite strong service in populated areas.',
   },
   broadbandAccess: {
-    label: 'Broadband Access',
+    label: 'Digital Access Feasibility',
     explanation:
-      'Broadband Access is an aggregate county-level grading based on available broadband service distribution. It is not a direct address-level guarantee of connectivity. It is intended to show broad access patterns across the county, not exact household service availability.',
+      'Aggregate county-level digital access feasibility based on broadband service distribution. Not an address-level guarantee of connectivity. Indicates broad access patterns across the county, not exact household service availability.',
   },
   tier1Legend: {
     label: 'Tier 1',
