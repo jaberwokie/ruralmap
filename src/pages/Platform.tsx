@@ -97,6 +97,25 @@ const WORKFLOWS: { title: string; body: string; steps: string[] }[] = [
   },
 ];
 
+const ARCHITECTURE: { title: string; body: string }[] = [
+  {
+    title: 'Verified access data',
+    body: 'Provider, behavioral health, service, transportation, tribal jurisdiction, and connectivity data are organized as operational inputs rather than static reference points.',
+  },
+  {
+    title: 'Operational modeling',
+    body: 'Coverage reach, response capability, access constraints, transportation feasibility, and field deployment conditions are evaluated together to support real-world coordination decisions.',
+  },
+  {
+    title: 'Decision support environment',
+    body: 'Operational overlays, search, member-location review, and routing context help teams evaluate what is actionable under current rural access conditions.',
+  },
+  {
+    title: 'Publication-safe presentation',
+    body: 'External-facing views can communicate access context while protecting internal operational controls, staffing details, and administrative workflows.',
+  },
+];
+
 const Section = ({
   heading,
   children,
