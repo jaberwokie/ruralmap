@@ -111,12 +111,12 @@ const LAYER_CONFIG = [
 
 const ACCESS_LAYER_CONFIG = {
   coverageRadius: {
-    label: 'Provider Coverage Radius',
+    label: 'Provider Operational Coverage Reach',
     colorClassName: 'text-primary',
     icon: Circle,
   },
   coverageGaps: {
-    label: 'Access Gaps (Outside Coverage Radius)',
+    label: 'Operational Access Constraints (Outside Coverage Reach)',
     colorClassName: 'text-destructive',
     icon: TriangleAlert,
   },
@@ -726,7 +726,7 @@ const Sidebar = ({
           className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
-        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: '#064f88' }}>Rural Operations Map</h1>
+        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: '#064f88' }}>Rural Access Operations</h1>
         <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
           Search by facility, city, county, or enter a member address.
         </p>
@@ -790,7 +790,7 @@ const Sidebar = ({
             onClick={() => setExplainerOpen(true)}
             className={`inline-flex h-8 items-center justify-center rounded-md border border-[hsl(var(--brand-health)/0.35)] bg-card px-3 text-xs font-medium text-foreground shadow-sm transition-colors hover:border-[hsl(var(--brand-health)/0.55)] hover:bg-secondary/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--brand-health)/0.3)] ${authReady && isAuthenticated ? 'col-span-2' : ''}`}
           >
-            Map Explainer
+            Operational Guide
           </button>
         </div>
 
@@ -1561,7 +1561,7 @@ const Sidebar = ({
                       </div>
 
                       {renderLayerToggleRow({
-                        label: 'Access Gaps (Outside Coverage Radius)',
+                        label: 'Operational Access Constraints (Outside Coverage Reach)',
                         icon: ACCESS_LAYER_CONFIG.coverageGaps.icon,
                         iconClassName: ACCESS_LAYER_CONFIG.coverageGaps.colorClassName,
                         checked: coverageGaps,
@@ -1569,7 +1569,7 @@ const Sidebar = ({
                         helpKey: 'coverageGaps',
                         disabled: !hasAccessGapSources,
                         disabledHint: !hasAccessGapSources
-                          ? 'Enable Provider Locations or Behavioral Health to use Access Gaps.'
+                          ? 'Enable Provider Locations or Behavioral Health to use Operational Access Constraints.'
                           : undefined,
                       })}
                       {coverageGaps && hasAccessGapSources && (

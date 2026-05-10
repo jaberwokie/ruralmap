@@ -76,21 +76,22 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
       case 'overview':
         return (
           <Lead>
-            This map provides an operational view of rural Nevada access. It brings together
-            provider locations, behavioral health resources, community services, county
-            boundaries, tribal lands, transit context, and selected utilization signals to
-            support coverage analysis, routing decisions, and coordination planning.
+            This is an operational decision environment for rural Nevada access coordination.
+            It brings together provider access infrastructure, behavioral health capacity,
+            community services, county and tribal boundaries, transportation feasibility,
+            and selected utilization signals to support response capability review, routing
+            decisions, and field coordination planning.
           </Lead>
         );
       case 'how-to-use':
         return (
           <Bullets
             items={[
-              'Start with core layers to understand what exists in a region',
+              'Start with core operational overlays to understand what exists in a region',
               'Use filters to narrow by provider type or service need',
               'Enter a member address to evaluate distance and travel friction',
               'Use access and verification signals to prioritize options',
-              'Treat the map as a coordination tool, not proof of real-time availability',
+              'Treat this environment as coordination infrastructure, not proof of real-time availability',
             ]}
           />
         );
@@ -190,7 +191,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border bg-card px-5 py-4">
           <h2 className="text-base font-semibold text-foreground tracking-tight">
-            Map Guide
+            Operational Guide
           </h2>
           <button
             type="button"
@@ -205,7 +206,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         {/* Tabs */}
         <div
           role="tablist"
-          aria-label="Map Guide sections"
+          aria-label="Operational Guide sections"
           className="flex w-full items-stretch overflow-x-auto border-b border-border bg-card whitespace-nowrap scrollbar-thin"
         >
           {TABS.map((tab) => {
