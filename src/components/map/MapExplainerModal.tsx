@@ -19,10 +19,10 @@ type TabKey =
 const ALL_TABS: { key: TabKey; label: string }[] = [
   { key: 'overview', label: 'Overview' },
   { key: 'how-to-use', label: 'How to Use' },
-  { key: 'layers', label: 'Layers' },
+  { key: 'layers', label: 'Operational Overlays' },
   { key: 'access', label: 'Access' },
   { key: 'verification', label: 'Verification' },
-  { key: 'transit', label: 'Transit' },
+  { key: 'transit', label: 'Transportation' },
   { key: 'limits', label: 'Limits' },
 ];
 
@@ -99,11 +99,11 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         return (
           <Bullets
             items={[
-              <><Term>County Boundaries:</Term> geographic reference for county-level review</>,
-              <><Term>Tribal Nations:</Term> tribal land context and tribally operated services</>,
-              <><Term>Provider Locations:</Term> hospitals and clinics</>,
-              <><Term>Behavioral Health:</Term> behavioral health-specific locations</>,
-              <><Term>Services:</Term> community-based and support services</>,
+              <><Term>County Operating Boundaries:</Term> geographic reference for county-level review</>,
+              <><Term>Tribal Jurisdiction Context:</Term> tribal land context and tribally operated services</>,
+              <><Term>Provider Access Infrastructure:</Term> hospitals and clinics as verified access points</>,
+              <><Term>Behavioral Health Capacity Network:</Term> behavioral health access points</>,
+              <><Term>Community Service Access Network:</Term> community-based and support services</>,
             ]}
           />
         );
@@ -147,15 +147,15 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
         return (
           <div className="space-y-3">
             <Lead>
-              Transit and rail layers provide mobility context but do not guarantee trip
+              Transportation overlays provide mobility context but do not guarantee trip
               completion.
             </Lead>
             <Bullets
               items={[
-                <><Term>Rail Corridor</Term> shows long-distance corridor presence</>,
-                <><Term>Local Transit Zones</Term> indicate possible local mobility</>,
-                <><Term>Transit Providers</Term> identify operators, not reliability</>,
-                'Transit supports planning, not guaranteed transportation',
+                <><Term>Transportation Corridor Context</Term> shows long-distance corridor presence</>,
+                <><Term>Local Transportation Feasibility</Term> indicates possible local mobility</>,
+                <><Term>Transportation Access Providers</Term> identify operators, not reliability</>,
+                'Transportation context supports planning, not guaranteed transportation',
               ]}
             />
           </div>

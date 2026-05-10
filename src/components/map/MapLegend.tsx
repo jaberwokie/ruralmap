@@ -45,7 +45,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (layers.serviceLocations) {
     sections.push({
       key: 'providers',
-      title: 'Provider Locations',
+      title: 'Provider Access Infrastructure',
       rows: [
         { swatch: dot('bg-hospital'), label: 'Hospital' },
         { swatch: dot('bg-clinic'), label: 'Clinic' },
@@ -96,7 +96,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (layers.behavioralHealth) {
     sections.push({
       key: 'bh',
-      title: 'Behavioral Health',
+      title: 'Behavioral Health Capacity Network',
       rows: [{ swatch: dot('bg-behavioral-health'), label: 'Behavioral health access points' }],
     });
   }
@@ -105,7 +105,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (layers.services) {
     sections.push({
       key: 'services',
-      title: 'Services',
+      title: 'Community Service Access Network',
       rows: [{ swatch: dot('bg-service-presence'), label: 'Community services' }],
     });
   }
@@ -114,7 +114,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (layers.broadbandAccess) {
     sections.push({
       key: 'broadband',
-      title: 'Broadband',
+      title: 'Digital Access Feasibility',
       rows: [
         { swatch: square({ background: 'hsla(160, 50%, 45%, 0.35)' }), label: 'Served' },
         { swatch: square({ background: 'hsla(38, 85%, 52%, 0.35)' }), label: 'Underserved' },
@@ -125,7 +125,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (layers.cellularCoverage) {
     sections.push({
       key: 'cellular',
-      title: 'Cellular',
+      title: 'Mobile Connectivity Feasibility',
       rows: [
         { swatch: square({ background: 'hsla(160, 55%, 40%, 0.35)' }), label: 'High' },
         { swatch: square({ background: 'hsla(44, 90%, 50%, 0.35)' }), label: 'Mixed' },
@@ -138,7 +138,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (layers.tribalNations) {
     sections.push({
       key: 'tribal',
-      title: 'Tribal Nations',
+      title: 'Tribal Jurisdiction Context',
       rows: [
         { swatch: square({ background: 'hsla(280, 40%, 55%, 0.25)', border: '1px solid hsla(280,40%,40%,0.6)' }), label: 'Sovereign boundaries' },
       ],
@@ -160,7 +160,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
         style={liftStyle}
         className="pointer-events-none absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur-sm transition-[bottom] duration-150"
       >
-        <p className="text-[10px] text-muted-foreground">Reference boundaries</p>
+        <p className="text-[10px] text-muted-foreground">County operating boundaries</p>
       </div>
     );
   }

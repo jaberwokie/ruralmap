@@ -8,61 +8,61 @@ export interface HelpTooltip {
 
 export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   counties: {
-    label: 'County Boundaries',
+    label: 'County Operating Boundaries',
     explanation:
-      'Shows Nevada county boundaries for geographic reference. This helps users orient the map by county and understand where operational conditions are occurring.',
+      'Shows Nevada county operating boundaries for geographic reference. Helps orient review by county and frame where operational conditions are occurring.',
   },
   tribalNations: {
-    label: 'Tribal Nations',
+    label: 'Tribal Jurisdiction Context',
     explanation:
-      'Displays Nevada\'s federally recognized Tribal Nations as land areas on the map. Click a Tribal Nation area to view details including contact information, tribal programs, and tribally operated services. Data sourced from the Nevada Department of Native American Affairs.',
+      "Displays Nevada's federally recognized Tribal Nations as sovereign jurisdiction context. Click an area to review contact information, tribal programs, and tribally operated services. Data sourced from the Nevada Department of Native American Affairs.",
   },
   countiesLegend: {
-    label: 'County Boundaries Legend',
+    label: 'County Operating Boundaries Legend',
     explanation:
-      'The thin line sample shows the county outline styling used on the map. It marks county borders only and is not a route, boundary buffer, or coverage area.',
+      'The thin line sample shows the styling used to mark county operating boundaries. It marks county borders only and is not a route, buffer, or coverage reach.',
   },
   serviceLocations: {
-    label: 'Provider Locations',
+    label: 'Provider Access Infrastructure',
     explanation:
-      'Shows mapped provider locations across the rural network. Includes hospitals (red) and clinics (blue). These points show where clinical provider sites are located on the map, not where field engagement coverage is assigned.',
+      'Shows verified provider access infrastructure across the rural network — hospitals (red) and clinics (blue). These are clinical access points, not field engagement coverage assignments.',
   },
   serviceLocationsLegend: {
-    label: 'Provider Locations Legend',
+    label: 'Provider Access Infrastructure Legend',
     explanation:
-      'The Provider Locations legend groups both provider types in one row: red pins represent hospitals and blue pins represent clinics. Both symbols mark clinical provider sites at their mapped positions.',
+      'Groups both provider types in one row: red marks hospitals, blue marks clinics. Both represent verified clinical access points.',
   },
   services: {
-    label: 'Service',
+    label: 'Community Service Access Network',
     explanation:
-      'Represents general community support locations from the service provider database. These green points are separate from clinical provider sites and separate from behavioral health locations.',
-    shortExplanation: 'Shows general community support locations as separate green points.',
+      'Verified community support access points from the service provider directory. Distinct from clinical provider sites and from behavioral health access points.',
+    shortExplanation: 'Community support access points (green), separate from clinical and behavioral health access points.',
   },
   servicesLegend: {
-    label: 'Service Legend',
+    label: 'Community Service Access Network Legend',
     explanation:
-      'The green marker sample shows the symbol used for general community support locations. It is distinct from both clinical provider locations and behavioral health locations.',
+      'The green sample marks the styling used for community support access points. Distinct from clinical provider access and behavioral health access points.',
   },
   behavioralHealth: {
-    label: 'Behavioral Health',
+    label: 'Behavioral Health Capacity Network',
     explanation:
-      'Shows behavioral health-related locations from the service provider database. These purple points are identified using source categories such as Mental Health and Substance Use, and are shown separately from general community support locations.',
-    shortExplanation: 'Shows behavioral health-related locations as separate purple points.',
+      'Verified behavioral health access points from the service provider directory. Identified using source categories such as Mental Health and Substance Use, and shown separately from community service access points.',
+    shortExplanation: 'Behavioral health access points (purple), separate from community service access points.',
   },
   behavioralHealthLegend: {
-    label: 'Behavioral Health Legend',
+    label: 'Behavioral Health Capacity Network Legend',
     explanation:
-      'The purple marker sample shows the symbol used for behavioral health locations. It marks behavioral health-related infrastructure from the service provider database and is intentionally separate from general service locations.',
+      'The purple sample marks the styling used for behavioral health access points. Represents behavioral health capacity infrastructure and is intentionally separate from community service access points.',
   },
   operationalCoverage: {
     label: 'Response Capability',
     explanation:
-      "Shows where same-day field response, planned field response, and remote-only support are available based on staff deployment and travel-time coverage. This visual explains operational response reach, not provider site presence.",
+      'Shows where same-day field response, planned field response, and remote-only support are available based on staff deployment and travel-time reach. Reflects operational response reach, not provider site presence.',
   },
   operationalCoverageLegend: {
     label: 'Response Capability Legend',
     explanation:
-      'The three sample boxes show the map treatment for same-day field response, planned field response, and remote-only support. Solid and dashed styles indicate different response conditions, not point locations.',
+      'The three sample boxes show the styling for same-day field response, planned field response, and remote-only support. Solid and dashed styles indicate response conditions, not point locations.',
   },
   fteCapacity: {
     label: 'Staffing Capacity & Load',
