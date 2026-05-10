@@ -1576,7 +1576,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         const hasField = countyHasFieldCoverage(county);
         const note = getBroadbandOperationalNote(bb, hasField);
         return (
-          <DetailSection title="Broadband Access" isOpen={isOpen('broadband')} onToggle={() => toggle('broadband')}>
+          <DetailSection title="Digital Access Feasibility" isOpen={isOpen('broadband')} onToggle={() => toggle('broadband')}>
             <div className="space-y-1.5">
               <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                 <div className="flex items-center gap-1.5 mb-1">
@@ -1665,7 +1665,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         const note = getCellularOperationalNote(cell);
         const reliability = getReliabilityCategory(cell);
         return (
-          <DetailSection title="Cellular Coverage" isOpen={isOpen('cellular')} onToggle={() => toggle('cellular')}>
+          <DetailSection title="Mobile Connectivity Feasibility" isOpen={isOpen('cellular')} onToggle={() => toggle('cellular')}>
             <div className="space-y-1.5">
               <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
                 <div className="flex items-center gap-1.5 mb-1">

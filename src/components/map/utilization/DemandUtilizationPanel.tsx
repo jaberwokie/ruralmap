@@ -220,7 +220,7 @@ const DemandUtilizationPanel = ({ layers, onToggleLayer }: Props) => {
             onCheckedChange={() => onToggleLayer('tribalUtilization')}
             icon={Landmark}
             iconClass="text-tribal-nation"
-            subtitle="Requires Tribal Nations layer"
+            subtitle="Requires Tribal Jurisdiction Context overlay"
           />
         </div>
       )}
