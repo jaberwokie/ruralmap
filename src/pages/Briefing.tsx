@@ -1,0 +1,391 @@
+import { useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+
+const CAPABILITIES: { title: string; body: string }[] = [
+  {
+    title: 'Access Viability Modeling',
+    body: 'Evaluates whether nearby resources can realistically be used given distance, verification, and field conditions.',
+  },
+  {
+    title: 'Response Capability Visibility',
+    body: 'Surfaces where field response is strong, conditional, or remote-only across rural geography.',
+  },
+  {
+    title: 'Transportation Feasibility Context',
+    body: 'Combines corridor presence and local mobility signals to flag transportation friction.',
+  },
+  {
+    title: 'Field Coordination Support',
+    body: 'Provides operational context for staff deployment, hub reach, and outreach planning.',
+  },
+  {
+    title: 'Operational Access Constraint Detection',
+    body: 'Identifies regions where operational reach is limited or unavailable under current conditions.',
+  },
+  {
+    title: 'Publication-Safe Operational Visibility',
+    body: 'External-facing operational view that preserves framing without exposing internal controls.',
+  },
+];
+
+const TRADITIONAL: string[] = [
+  'Show resource locations',
+  'Emphasize visualization',
+  'Static coverage assumptions',
+  'Limited operational context',
+];
+
+const OPERATIONAL: string[] = [
+  'Evaluates operational viability',
+  'Models response conditions',
+  'Supports routing and coordination',
+  'Incorporates staffing and field reach realities',
+  'Supports external-facing coordination',
+];
+
+const WORKFLOW_STEPS: string[] = [
+  'Review response capability',
+  'Evaluate transportation feasibility',
+  'Review provider access infrastructure',
+  'Assess connectivity conditions',
+  'Determine actionable coordination path',
+];
+
+const ARCHITECTURE_STAGES: string[] = [
+  'Verified access data',
+  'Operational overlays',
+  'Access viability modeling',
+  'Coordination and routing support',
+  'Publication-safe stakeholder visibility',
+];
+
+const PUBLIC_SAFE_POINTS: string[] = [
+  'External-facing operational review without exposing internal administrative tooling',
+  'Supports stakeholder coordination while preserving governance boundaries',
+  'Separates operational visibility from internal control systems',
+  'Enables safer public and partner-facing operational context review',
+];
+
+const AUDIENCES: string[] = [
+  'Medicaid agencies',
+  'Managed care organizations',
+  'Rural behavioral health operations',
+  'Crisis response coordination',
+  'Housing and outreach systems',
+  'Rural field deployment planning',
+];
+
+const PROBLEM_POINTS: string[] = [
+  'Rural access is not purely geographic.',
+  'Distance alone does not determine viability.',
+  'Theoretical network adequacy differs from operational access.',
+  'Transportation, staffing reach, response capability, and connectivity constraints shape coordination reality.',
+  'Most systems show locations. Few show operational conditions.',
+];
+
+const SectionHeader = ({
+  eyebrow,
+  heading,
+}: {
+  eyebrow?: string;
+  heading: string;
+}) => (
+  <div className="space-y-2">
+    {eyebrow ? (
+      <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+        {eyebrow}
+      </p>
+    ) : null}
+    <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-[28px]">
+      {heading}
+    </h2>
+  </div>
+);
+
+const ScreenshotPlaceholder = ({ label }: { label: string }) => (
+  <div className="flex h-40 w-full items-center justify-center rounded-md border border-dashed border-border bg-muted/30 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+    {label}
+  </div>
+);
+
+const Briefing = () => {
+  useEffect(() => {
+    const prevTitle = document.title;
+    document.title = 'Operational Briefing — Nevada Rural Access Operations';
+    return () => {
+      document.title = prevTitle;
+    };
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto max-w-4xl px-5 py-16 md:py-20">
+        {/* Section 1 — Cover */}
+        <section className="space-y-6 border-b border-border pb-16">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            Operational briefing
+          </p>
+          <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-foreground md:text-5xl">
+            Nevada Rural Access Operations
+          </h1>
+          <p className="text-[16px] font-medium leading-relaxed text-foreground/85 md:text-[18px]">
+            Operational Decision Infrastructure for Rural Medicaid Access
+          </p>
+          <p className="max-w-2xl text-[14px] leading-relaxed text-foreground/70">
+            Supporting operational access decisions across rural healthcare, behavioral health,
+            crisis response, and field coordination environments.
+          </p>
+        </section>
+
+        <div className="space-y-20 pt-16">
+          {/* Section 2 — The operational problem */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 02" heading="The operational problem" />
+            <ul className="space-y-2.5">
+              {PROBLEM_POINTS.map((p) => (
+                <li
+                  key={p}
+                  className="flex gap-3 text-[14px] leading-relaxed text-foreground/85"
+                >
+                  <span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-foreground/50" />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="border-l-2 border-border pl-4 text-[14px] font-medium italic leading-relaxed text-foreground/80">
+              Coverage on paper is not the same as access in practice.
+            </p>
+            <ScreenshotPlaceholder label="Screenshot — response capability overlays (placeholder)" />
+          </section>
+
+          {/* Section 3 — What this platform is */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 03" heading="What this platform is" />
+            <p className="max-w-3xl text-[14px] leading-relaxed text-foreground/85">
+              Nevada Rural Access Operations is operational decision infrastructure for evaluating
+              what can be coordinated under current rural access conditions.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {CAPABILITIES.map((c) => (
+                <Card key={c.title} className="h-full">
+                  <CardHeader className="space-y-1.5 p-4">
+                    <CardTitle className="text-[14px] font-semibold leading-tight">
+                      {c.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-[13px] leading-relaxed text-foreground/80">{c.body}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* Section 4 — Category distinction */}
+          <section className="space-y-6">
+            <SectionHeader
+              eyebrow="Section 04"
+              heading="What makes this different from traditional mapping and directory systems"
+            />
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              <Card className="h-full">
+                <CardHeader className="space-y-1.5 p-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Traditional
+                  </p>
+                  <CardTitle className="text-[14px] font-semibold leading-tight">
+                    Mapping and directory systems
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <ul className="space-y-2">
+                    {TRADITIONAL.map((t) => (
+                      <li key={t} className="flex gap-2 text-[13px] leading-relaxed text-foreground/80">
+                        <span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+              <Card className="h-full">
+                <CardHeader className="space-y-1.5 p-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    This environment
+                  </p>
+                  <CardTitle className="text-[14px] font-semibold leading-tight">
+                    Operational decision infrastructure
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <ul className="space-y-2">
+                    {OPERATIONAL.map((o) => (
+                      <li key={o} className="flex gap-2 text-[13px] leading-relaxed text-foreground/80">
+                        <span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-foreground/40" />
+                        <span>{o}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </section>
+
+          {/* Section 5 — Operational workflow */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 05" heading="Operational workflow example" />
+            <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              Scenario · Remote rural behavioral health coordination
+            </p>
+            <ol className="space-y-2">
+              {WORKFLOW_STEPS.map((step, i) => (
+                <li
+                  key={step}
+                  className="flex items-start gap-3 rounded-md border border-border bg-card px-3 py-2.5"
+                >
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-secondary text-[11px] font-medium text-foreground">
+                    {i + 1}
+                  </span>
+                  <span className="text-[13px] leading-relaxed text-foreground/85">{step}</span>
+                </li>
+              ))}
+            </ol>
+            <ScreenshotPlaceholder label="Screenshot — county detail with response + transportation context (placeholder)" />
+          </section>
+
+          {/* Section 6 — Operational architecture */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 06" heading="Operational architecture" />
+            <div className="rounded-md border border-border bg-card p-5">
+              <ol className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
+                {ARCHITECTURE_STAGES.map((stage, i, arr) => (
+                  <li key={stage} className="flex items-center gap-2">
+                    <span className="text-[13px] font-medium leading-tight text-foreground/85">
+                      {stage}
+                    </span>
+                    {i < arr.length - 1 ? (
+                      <span aria-hidden className="text-muted-foreground">→</span>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              The system is structured as operational infrastructure rather than a standalone
+              visualization environment.
+            </p>
+          </section>
+
+          {/* Section 7 — Publication-safe operational visibility */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 07" heading="Publication-safe operational visibility" />
+            <ul className="space-y-2.5">
+              {PUBLIC_SAFE_POINTS.map((p) => (
+                <li
+                  key={p}
+                  className="flex gap-3 text-[14px] leading-relaxed text-foreground/85"
+                >
+                  <span aria-hidden className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-foreground/50" />
+                  <span>{p}</span>
+                </li>
+              ))}
+            </ul>
+            <ScreenshotPlaceholder label="Screenshot — publication-safe operational view (placeholder)" />
+          </section>
+
+          {/* Section 8 — Operational use environments */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 08" heading="Operational use environments" />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+              {AUDIENCES.map((a) => (
+                <Card key={a} className="h-full">
+                  <CardContent className="p-4">
+                    <p className="text-[13px] font-medium leading-tight text-foreground/85">{a}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* Section 9 — Core distinction */}
+          <section className="space-y-8 border-y border-border py-16 text-center">
+            <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+              Core distinction
+            </p>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  A normal map asks
+                </p>
+                <p className="text-2xl font-semibold leading-snug tracking-tight text-foreground/70 md:text-[28px]">
+                  &ldquo;Where are resources located?&rdquo;
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                  Nevada Rural Access Operations asks
+                </p>
+                <p className="text-2xl font-semibold leading-snug tracking-tight text-foreground md:text-[28px]">
+                  &ldquo;What is operationally actionable under current conditions?&rdquo;
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Section 10 — Launch environment */}
+          <section className="space-y-6">
+            <SectionHeader eyebrow="Section 10" heading="Nevada Rural Access Operations" />
+            <p className="max-w-2xl text-[14px] leading-relaxed text-foreground/80">
+              Operational decision infrastructure for rural Medicaid access coordination.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <Card className="h-full">
+                <CardContent className="space-y-2 p-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    QR code
+                  </p>
+                  <div className="flex h-24 items-center justify-center rounded-sm border border-dashed border-border bg-muted/30 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                    Placeholder
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="h-full">
+                <CardContent className="space-y-2 p-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    URL
+                  </p>
+                  <p className="text-[13px] font-medium leading-tight text-foreground/80">
+                    [ environment URL ]
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="h-full">
+                <CardContent className="space-y-2 p-4">
+                  <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                    Contact
+                  </p>
+                  <p className="text-[13px] font-medium leading-tight text-foreground/80">
+                    [ operational contact ]
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="flex flex-col items-start gap-3 pt-4">
+              <Button asChild size="lg">
+                <Link to="/">Launch Rural Access Operations</Link>
+              </Button>
+              <p className="text-[12px] text-muted-foreground">
+                Operational reach is contextual. This environment supports coordination decisions;
+                it does not guarantee access, availability, or transportation continuity.
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+};
+
+export default Briefing;
