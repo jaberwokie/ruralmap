@@ -95,9 +95,8 @@ const Platform = () => {
             Operational Decision Infrastructure for Rural Medicaid Access
           </h1>
           <p className="text-[14px] leading-relaxed text-foreground/80">
-            The Nevada Rural Access Operations environment is not a map product. The spatial
-            interface is only the operational surface. The underlying system is decision
-            infrastructure for evaluating rural access, response capability, field reach,
+            The spatial interface is not the product. It is the operational surface of a decision
+            infrastructure system built to evaluate rural access, response capability, field reach,
             transportation feasibility, service capacity, and coordination constraints.
           </p>
         </header>
@@ -105,20 +104,23 @@ const Platform = () => {
         <div className="space-y-12">
           {/* 1. Category Definition */}
           <Section heading="What this system is">
-            <p>Operational decision infrastructure for rural Medicaid access.</p>
+            <p className="font-medium text-foreground">
+              Operational decision infrastructure for rural Medicaid access.
+            </p>
             <p>
-              It helps teams evaluate what is realistically actionable across rural geography by
-              combining verified access points, field response reach, transportation feasibility,
-              connectivity context, access constraints, and operational routing support.
+              It helps teams move beyond theoretical coverage by evaluating what is realistically
+              actionable across rural geography, verified access points, field response reach,
+              transportation feasibility, connectivity context, access constraints, and operational
+              routing conditions.
             </p>
           </Section>
 
           {/* 2. What It Is Not */}
-          <Section heading="Not a GIS demo. Not a dashboard toy.">
+          <Section heading="What this system is not">
             <p>
-              Traditional mapping tools show where resources are located. This environment supports
-              decisions about what can actually be coordinated under real-world operational
-              constraints.
+              It is not a GIS demo, dashboard toy, or static visualization project. Traditional
+              mapping tools show where resources are located. This environment supports decisions
+              about what can actually be coordinated under real-world operational constraints.
             </p>
           </Section>
 
@@ -141,7 +143,7 @@ const Platform = () => {
           </Section>
 
           {/* 4. Decision Hierarchy */}
-          <Section heading="From data to action">
+          <Section heading="From data to operational decision">
             <ol className="space-y-2">
               {[
                 'Verified access data',
@@ -164,6 +166,10 @@ const Platform = () => {
                 </li>
               ))}
             </ol>
+            <p className="text-[13px] leading-relaxed text-muted-foreground">
+              The system is designed to support action under constraint, not simply display
+              information.
+            </p>
           </Section>
 
           {/* 5. Audience Framing */}
