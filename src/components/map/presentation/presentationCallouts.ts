@@ -27,7 +27,7 @@ export const PRESENTATION_CALLOUTS: PresentationCallout[] = [
     id: 'p1-operational',
     phase: 1,
     zone: 'map-tl',
-    title: 'Operational Map, Not a Directory',
+    title: 'Operational Environment, Not a Directory',
     body: 'Built for field deployment and care coordination — not a searchable provider list.',
   },
   {
@@ -35,7 +35,7 @@ export const PRESENTATION_CALLOUTS: PresentationCallout[] = [
     phase: 1,
     zone: 'sidebar',
     title: 'Listed Resources ≠ Usable Options',
-    body: 'A pin on the map does not mean a member can actually be served there today.',
+    body: 'A verified access point in the operational environment does not mean a member can actually be served there today.',
   },
   {
     id: 'p1-geography',

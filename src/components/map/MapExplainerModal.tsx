@@ -119,7 +119,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
               items={[
                 'Shorter distance generally means lower travel friction',
                 'Longer distance increases coordination difficulty',
-                'A mapped resource is not the same as a usable placement',
+                'A verified access point is not the same as a usable placement',
                 'Access improves when distance, verification, and transportation align',
               ]}
             />
