@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index.tsx";
+import Platform from "./pages/Platform.tsx";
 import Auth from "./pages/Auth.tsx";
 import AdminHome from "./pages/AdminHome.tsx";
 import AdminUsers from "./pages/AdminUsers.tsx";
@@ -53,6 +54,7 @@ const App = () => {
             <AuthProvider>
               <Routes>
                 <Route path="/" element={<Index />} />
+                <Route path="/platform" element={<Platform />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
