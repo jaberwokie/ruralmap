@@ -80,7 +80,7 @@ const Auth = () => {
             Staff Sign In
           </h1>
           <p className="mt-1 text-[12px] text-muted-foreground leading-snug">
-            The Rural Operations Map is read-only for the public. Sign in with an authorized staff account to access write controls.
+            The Rural Access Operations environment is read-only for the public. Sign in with an authorized staff account to access write controls.
           </p>
         </div>
 

@@ -15,7 +15,7 @@ export const PublicSafeDisclaimer = () => {
       aria-hidden="true"
       className="pointer-events-none absolute bottom-3 left-1/2 z-[1200] -translate-x-1/2 select-none rounded-md border border-border bg-background/90 px-3 py-1.5 text-[10px] leading-snug text-muted-foreground shadow-sm backdrop-blur-sm max-w-[90vw] text-center"
     >
-      Coverage reflects estimated travel-time reach from current field staff locations, not full county coverage.
+      Publication-safe operational view. Coverage reflects estimated travel-time reach from current field staff locations, not full county coverage.
     </div>
   );
 };

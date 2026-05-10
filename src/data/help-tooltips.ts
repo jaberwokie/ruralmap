@@ -96,25 +96,25 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
       'The color ramp shows increasing engagement concern across counties. The visual gradient moves from lower concern to higher unmet engagement risk.',
   },
   coverageRadius: {
-    label: 'Provider Coverage Radius',
+    label: 'Provider Operational Coverage Reach',
     explanation:
-      'Shows a geographic radius around mapped provider locations to illustrate approximate access reach. This visual represents distance-based coverage, not confirmed appointment availability or operational engagement assignment.',
-    shortExplanation: 'Shows the current estimated reach around each provider based on the selected radius.',
+      'Shows the operational coverage reach around mapped provider access points to illustrate approximate access viability. This represents distance-based reach, not confirmed appointment availability or field engagement assignment.',
+    shortExplanation: 'Shows the current estimated operational reach around each provider based on the selected radius.',
   },
   coverageRadiusLegend: {
-    label: 'Provider Coverage Radius Legend',
+    label: 'Provider Operational Coverage Reach Legend',
     explanation:
-      'The outlined circle sample shows the map treatment for the active provider reach radius around a location. It represents approximate distance coverage, not a fixed service boundary.',
+      'The outlined circle sample shows the styling for the active provider operational reach around a location. It represents approximate distance-based reach, not a fixed service boundary.',
   },
   coverageGaps: {
-    label: 'Access Gaps (Outside Coverage Radius)',
+    label: 'Operational Access Constraints (Outside Coverage Reach)',
     explanation:
-      'Highlights areas outside the configured provider coverage radius. These are geographic access gaps based on mapped provider locations and radius logic.',
+      'Highlights areas outside the configured provider coverage reach. These are operational access constraints derived from provider access infrastructure and the selected coverage reach.',
   },
   coverageGapsLegend: {
-    label: 'Access Gaps Legend',
+    label: 'Operational Access Constraints Legend',
     explanation:
-      'The red shaded sample shows the overlay used for areas outside the selected provider coverage radius. It indicates uncovered geography based on the current radius setting.',
+      'The red shaded sample shows the overlay used for areas outside the selected provider coverage reach. It indicates operationally constrained geography based on the current reach setting.',
   },
   cellularCoverage: {
     label: 'Cellular Coverage',

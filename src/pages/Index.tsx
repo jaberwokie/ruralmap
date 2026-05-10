@@ -167,7 +167,7 @@ const Index = () => {
       */}
       <div className="md:hidden relative z-50 flex shrink-0 items-center justify-between p-3 bg-card border-b border-border">
         <div className="min-w-0 flex-1 pr-2">
-          <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Operations Map</h1>
+          <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Access Operations</h1>
           <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
           <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
         </div>
@@ -267,9 +267,9 @@ const Index = () => {
                 Nevada Behavioral Health
               </div>
               <div className="space-y-2">
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-4xl">Rural Operations Map</h1>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-4xl">Rural Access Operations</h1>
                 <p className="mx-auto max-w-md text-sm leading-6 text-muted-foreground md:text-base">
-                  County-level operational visibility for outreach, staffing coverage, and rural care coordination.
+                  Operational decision infrastructure for rural Medicaid access coordination, response capability, and field deployment conditions.
                 </p>
               </div>
             </div>

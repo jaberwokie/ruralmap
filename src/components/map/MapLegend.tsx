@@ -82,7 +82,7 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
   if (hasAccessGaps) {
     sections.push({
       key: 'gaps',
-      title: 'Access Gaps',
+      title: 'Operational Access Constraints',
       rows: [
         {
           swatch: square({ background: 'hsla(0, 65%, 55%, 0.25)', border: '1px dashed hsla(0,65%,40%,0.7)' }),
