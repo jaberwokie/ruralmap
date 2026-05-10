@@ -61,6 +61,42 @@ const AUDIENCES: { title: string; body: string }[] = [
   },
 ];
 
+const WORKFLOWS: { title: string; body: string; steps: string[] }[] = [
+  {
+    title: 'Rural behavioral health coordination',
+    body: 'A coordination team reviews verified behavioral health access points, transportation feasibility, response capability, and field reach to determine what support options are realistically actionable for a member in a remote county.',
+    steps: [
+      'Review operational overlays',
+      'Evaluate response capability',
+      'Assess transportation feasibility',
+      'Review provider access infrastructure',
+      'Coordinate routing approach',
+    ],
+  },
+  {
+    title: 'Field outreach deployment review',
+    body: 'Operations teams evaluate same-day response reach, scheduled outreach viability, and remote-support conditions before assigning field engagement resources across rural geography.',
+    steps: [
+      'Review field response reach',
+      'Identify operational access constraints',
+      'Evaluate staffing reach',
+      'Assess connectivity feasibility',
+      'Determine deployment conditions',
+    ],
+  },
+  {
+    title: 'Public-safe stakeholder coordination',
+    body: 'External stakeholders review publication-safe operational conditions without exposing internal operational controls, staffing logic, or administrative tooling.',
+    steps: [
+      'Enable publication-safe operational view',
+      'Review operational conditions',
+      'Assess access visibility',
+      'Coordinate external planning discussions',
+      'Preserve operational governance boundaries',
+    ],
+  },
+];
+
 const Section = ({
   heading,
   children,
@@ -170,6 +206,37 @@ const Platform = () => {
               The system is designed to support action under constraint, not simply display
               information.
             </p>
+          </Section>
+
+          {/* 4.5 Operational Workflow Examples */}
+          <Section heading="Operational workflow examples">
+            <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
+              How operational teams use the environment
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {WORKFLOWS.map((w) => (
+                <Card key={w.title} className="h-full">
+                  <CardHeader className="space-y-1.5 p-4">
+                    <CardTitle className="text-[14px] font-semibold leading-tight">
+                      {w.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 p-4 pt-0">
+                    <p className="text-[13px] leading-relaxed text-foreground/80">{w.body}</p>
+                    <ol className="space-y-1.5">
+                      {w.steps.map((step, i) => (
+                        <li key={step} className="flex items-start gap-2 text-[12px] text-foreground/70">
+                          <span className="mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-secondary text-[10px] font-medium text-foreground">
+                            {i + 1}
+                          </span>
+                          <span>{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </Section>
 
           {/* 5. Audience Framing */}
