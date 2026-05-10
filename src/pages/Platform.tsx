@@ -97,6 +97,25 @@ const WORKFLOWS: { title: string; body: string; steps: string[] }[] = [
   },
 ];
 
+const ARCHITECTURE: { title: string; body: string }[] = [
+  {
+    title: 'Verified access data',
+    body: 'Provider, behavioral health, service, transportation, tribal jurisdiction, and connectivity data are organized as operational inputs rather than static reference points.',
+  },
+  {
+    title: 'Operational modeling',
+    body: 'Coverage reach, response capability, access constraints, transportation feasibility, and field deployment conditions are evaluated together to support real-world coordination decisions.',
+  },
+  {
+    title: 'Decision support environment',
+    body: 'Operational overlays, search, member-location review, and routing context help teams evaluate what is actionable under current rural access conditions.',
+  },
+  {
+    title: 'Publication-safe presentation',
+    body: 'External-facing views can communicate access context while protecting internal operational controls, staffing details, and administrative workflows.',
+  },
+];
+
 const Section = ({
   heading,
   children,
@@ -233,6 +252,29 @@ const Platform = () => {
                         </li>
                       ))}
                     </ol>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </Section>
+
+          {/* 4.75 Operational Architecture */}
+          <Section heading="Operational architecture">
+            <p>
+              The platform is structured as decision infrastructure, not a standalone visualization.
+              Data moves through verification, operational modeling, decision support, and
+              publication-safe presentation.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {ARCHITECTURE.map((a) => (
+                <Card key={a.title} className="h-full">
+                  <CardHeader className="space-y-1.5 p-4">
+                    <CardTitle className="text-[14px] font-semibold leading-tight">
+                      {a.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-4 pt-0">
+                    <p className="text-[13px] leading-relaxed text-foreground/80">{a.body}</p>
                   </CardContent>
                 </Card>
               ))}
