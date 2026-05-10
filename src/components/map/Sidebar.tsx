@@ -486,10 +486,10 @@ const Sidebar = ({
 
   const coreMapCounts: Record<string, string> = {
     counties: `${countyCount} Counties`,
-    tribalNations: `${tribalNationCount} Tribal Nations`,
-    services: `${serviceCount} Services`,
-    behavioralHealth: `${bhCount} Locations`,
-    serviceLocations: `${providerCount} Locations`,
+    tribalNations: `${tribalNationCount} Tribal Jurisdictions`,
+    services: `${serviceCount} Access Points`,
+    behavioralHealth: `${bhCount} Access Points`,
+    serviceLocations: `${providerCount} Access Points`,
   };
 
   // Unique counties from all facilities
@@ -1125,8 +1125,8 @@ const Sidebar = ({
                                     checked: layers.tier1Highlight,
                                     onCheckedChange: () => onToggleLayer('tier1Highlight'),
                                     subtitle: providersOff
-                                      ? `${tier1Count} Tier 1 · shown alone when Provider Locations is off`
-                                      : `${tier1Count} Tier 1 · highlighted among provider pins`,
+                                      ? `${tier1Count} Tier 1 · shown alone when Provider Access Infrastructure is off`
+                                      : `${tier1Count} Tier 1 · highlighted among provider access points`,
                                     helpKey: 'tier1Providers',
                                   })}
                                 </div>
@@ -1569,7 +1569,7 @@ const Sidebar = ({
                         helpKey: 'coverageGaps',
                         disabled: !hasAccessGapSources,
                         disabledHint: !hasAccessGapSources
-                          ? 'Enable Provider Locations or Behavioral Health to use Operational Access Constraints.'
+                          ? 'Enable Provider Access Infrastructure or Behavioral Health Capacity Network to use Operational Access Constraints.'
                           : undefined,
                       })}
                       {coverageGaps && hasAccessGapSources && (
