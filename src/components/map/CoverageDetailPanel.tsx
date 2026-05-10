@@ -861,7 +861,7 @@ const UtilizationEngagementSection = ({ county }: { county: string }) => {
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
           <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Utilization Metrics</div>
           {providers === 0 ? (
-            <p className="text-[10px] text-muted-foreground italic">No active providers mapped for this county</p>
+            <p className="text-[10px] text-muted-foreground italic">No active provider access points verified for this county</p>
           ) : (
             <div className="space-y-0.5">
               <div className="flex justify-between text-[10px]">
@@ -1279,7 +1279,7 @@ const LocalResourcesSection = ({
     return (
       <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 mb-2">
         <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-0.5">Local Resource Network</div>
-        <p className="text-[11px] text-muted-foreground italic">No known community resources mapped for this county.</p>
+        <p className="text-[11px] text-muted-foreground italic">No verified community resources for this county.</p>
       </div>
     );
   }
@@ -1355,7 +1355,7 @@ const LocalResourcesSection = ({
                   <div className="flex flex-col min-w-0 flex-1 basis-0">
                     <div className="text-[11px] font-medium text-foreground leading-snug" style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}>{service.name}</div>
                     {service.city && <div className="text-[10px] text-muted-foreground" style={{ overflowWrap: 'break-word', wordBreak: 'normal' }}>{service.city}</div>}
-                    {!isMappable && <div className="text-[9px] text-muted-foreground italic">List-only (no map pin)</div>}
+                    {!isMappable && <div className="text-[9px] text-muted-foreground italic">List-only (no operational coordinates)</div>}
                   </div>
                   {(() => {
                     if (!service.phone) return null;

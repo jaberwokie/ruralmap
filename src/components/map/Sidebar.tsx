@@ -158,7 +158,7 @@ const getProviderAccessTierTextClassName = (km: number) => {
 const SECTION_META = {
   coreMap: {
     question: 'What exists here?',
-    helper: 'Base geography and mapped network locations for fast orientation.',
+    helper: 'Base geography and verified network access points for fast orientation.',
   },
   operations: {
     question: 'How can teams respond?',
@@ -169,8 +169,8 @@ const SECTION_META = {
     helper: 'County-level intensity to show where demand is concentrating.',
   },
   access: {
-    question: 'Where does geographic reach fall short?',
-    helper: 'Distance-based provider access and the uncovered areas outside that range.',
+    question: 'Where does operational reach fall short?',
+    helper: 'Operational coverage reach and access constraints outside that reach.',
   },
 } as const;
 
@@ -1059,11 +1059,11 @@ const Sidebar = ({
         <div className="space-y-1.5">
               <div className="space-y-1">
                 <div data-tutorial="section-core-map">
-                  {renderSectionHeader('CORE MAP', coreMapOpen, toggleCoreMap)}
+                  {renderSectionHeader('CORE OPERATIONAL OVERLAYS', coreMapOpen, toggleCoreMap)}
                   {coreMapOpen && (
                     <div className="mt-0.5 space-y-0.5">
                       <p className="px-2 py-1 text-[10px] leading-snug text-muted-foreground/80">
-                        Start with coverage and field reach. Turn on analysis layers as needed.
+                        Start with coverage and field reach. Activate operational overlays as needed.
                       </p>
                       {(['counties', 'tribalNations', 'serviceLocations', 'behavioralHealth', 'services'] as const).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);

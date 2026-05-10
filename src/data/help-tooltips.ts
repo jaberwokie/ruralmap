@@ -87,19 +87,19 @@ export const HELP_TOOLTIPS: Record<string, HelpTooltip> = {
   engagementGap: {
     label: 'Engagement Gap',
     explanation:
-      'Highlights where members are not being reached by behavioral health services. This layer compares total Medicaid members to those with at least one behavioral health encounter, showing where large unengaged populations exist. It helps identify counties where outreach and engagement efforts should be prioritized.',
+      'Highlights where members are not being reached by behavioral health services. This overlay compares total Medicaid members to those with at least one behavioral health encounter, surfacing counties with large unengaged populations and where outreach should be prioritized.',
     shortExplanation: 'Shows where members are not being reached relative to available services.',
   },
   engagementGapLegend: {
     label: 'Engagement Gap Legend',
     explanation:
-      'The color ramp shows increasing engagement concern across counties. The visual gradient moves from lower concern to higher unmet engagement risk.',
+      'The color ramp shows increasing engagement concern across counties, moving from lower concern to higher unmet engagement risk.',
   },
   coverageRadius: {
     label: 'Provider Operational Coverage Reach',
     explanation:
-      'Shows the operational coverage reach around mapped provider access points to illustrate approximate access viability. This represents distance-based reach, not confirmed appointment availability or field engagement assignment.',
-    shortExplanation: 'Shows the current estimated operational reach around each provider based on the selected radius.',
+      'Shows the operational coverage reach around verified provider access points to illustrate approximate access viability. Represents distance-based reach, not confirmed appointment availability or field engagement assignment.',
+    shortExplanation: 'Current estimated operational reach around each provider access point based on the selected radius.',
   },
   coverageRadiusLegend: {
     label: 'Provider Operational Coverage Reach Legend',
