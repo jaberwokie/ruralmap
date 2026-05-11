@@ -329,25 +329,25 @@ const Briefing = () => {
             </div>
           </section>
 
-          {/* Section 9 — Core distinction */}
-          <section className="space-y-8 border-y border-border py-16 text-center">
+          {/* Core distinction */}
+          <section className="space-y-6 border-y border-border py-10 text-center">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Core distinction
             </p>
-            <div className="space-y-6">
-              <div className="space-y-2">
+            <div className="space-y-5">
+              <div className="space-y-1.5">
                 <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                   A normal map asks
                 </p>
-                <p className="text-2xl font-semibold leading-snug tracking-tight text-foreground/70 md:text-[28px]">
+                <p className="text-xl font-semibold leading-snug tracking-tight text-foreground/70 md:text-2xl">
                   &ldquo;Where are resources located?&rdquo;
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                   Nevada Rural Access Operations asks
                 </p>
-                <p className="text-2xl font-semibold leading-snug tracking-tight text-foreground md:text-[28px]">
+                <p className="text-xl font-semibold leading-snug tracking-tight text-foreground md:text-2xl">
                   &ldquo;What is operationally actionable under current conditions?&rdquo;
                 </p>
               </div>
