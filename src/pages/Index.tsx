@@ -168,11 +168,14 @@ const Index = () => {
       <div className="md:hidden relative z-50 flex shrink-0 items-center justify-between p-3 bg-card border-b border-border">
         <div className="min-w-0 flex-1 pr-2">
           <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Access Operations</h1>
-          <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
-          <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
+          <p className="text-[10px] text-muted-foreground leading-tight">Operational decision infrastructure</p>
+          <p className="text-[10px] text-muted-foreground/80 leading-tight">Nevada Behavioral Health</p>
+          {!isPublicSafeModeActive() && (
+            <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
+          )}
         </div>
         <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium">
-          {mobileSidebarOpen ? 'Map' : 'Filters'}
+          {mobileSidebarOpen ? 'Operations' : 'Controls'}
         </button>
       </div>
 
