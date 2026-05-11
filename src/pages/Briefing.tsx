@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import OperationalReachDisclaimer from '@/components/OperationalReachDisclaimer';
 import qrLaunchImage from '@/assets/nevada_rural_access_operations_qr.png';
-import opsframeLogo from '@/assets/opsframe-logo.svg';
 
 const CAPABILITIES: { title: string; body: string }[] = [
   {
