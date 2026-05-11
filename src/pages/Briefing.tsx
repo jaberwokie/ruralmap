@@ -180,7 +180,7 @@ const Briefing = () => {
             <p className="border-l-2 border-border pl-4 text-[14px] font-medium italic leading-relaxed text-foreground/80">
               Coverage on paper is not the same as access in practice.
             </p>
-            <PendingCapture label="Capture needed: response capability + operational access constraints" />
+            <PendingCapture label="Operational context view pending — response capability and access constraints" />
           </section>
 
           {/* Section 3 — What this platform is */}
