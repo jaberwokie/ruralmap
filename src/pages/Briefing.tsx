@@ -123,6 +123,22 @@ const Briefing = () => {
   return (
     <main className="min-h-screen bg-background">
       <div className="mx-auto max-w-4xl px-5 py-16 md:py-20">
+        {/* Persistent return-to-operations link */}
+        <div className="mb-6 flex items-center justify-between text-[11px]">
+          <Link
+            to="/"
+            className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            ← Return to Operations
+          </Link>
+          <Link
+            to="/platform"
+            className="text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          >
+            View platform overview →
+          </Link>
+        </div>
+
         {/* Section 1 — Cover */}
         <section className="space-y-6 border-b border-border pb-16">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
