@@ -190,6 +190,9 @@ const Index = () => {
         keeps both panels inside the actual viewport rect.
       */}
       <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-72 lg:w-80 flex-1 md:flex-none min-h-0 md:h-full`}>
+        <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
+          Decision support is available on tablet and desktop views for member-location review and routing context.
+        </div>
         <Sidebar
           layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView, zoneFilters, onToggleResponseCapabilityCategory: toggleResponseCapabilityCategory }}
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
