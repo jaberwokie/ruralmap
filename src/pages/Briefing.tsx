@@ -408,11 +408,21 @@ const Briefing = () => {
                   </p>
                   <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] font-medium leading-tight text-foreground/85">
                     <span>Maurice Cloutier ·</span>
-                    <img
-                      src={opsframeLogo}
-                      alt="OpsFrame.io"
-                      className="inline-block h-[20px] w-auto translate-y-[1px]"
-                    />
+                    <a
+                      href="https://www.opsframe.io"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      aria-label="OpsFrame.io"
+                      className="inline-flex items-center gap-1.5 text-foreground/85 no-underline hover:text-foreground"
+                    >
+                      <img
+                        src={opsframeLogo}
+                        alt=""
+                        aria-hidden="true"
+                        className="inline-block h-[22px] w-[22px] shrink-0 rounded-[3px]"
+                      />
+                      <span className="font-semibold tracking-tight">OpsFrame<span className="text-foreground/55">.io</span></span>
+                    </a>
                   </p>
                   <a
                     href="mailto:maurice@opsframe.io"
