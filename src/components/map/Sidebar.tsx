@@ -794,12 +794,18 @@ const Sidebar = ({
           </button>
         </div>
 
-        <div className="mt-1.5 flex justify-end">
+        <div className="mt-1.5 flex justify-end gap-3">
           <Link
             to="/platform"
             className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
           >
             Platform
+          </Link>
+          <Link
+            to="/briefing"
+            className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
+          >
+            Briefing
           </Link>
         </div>
 
