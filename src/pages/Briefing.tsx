@@ -121,8 +121,11 @@ const Briefing = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-5 py-12 md:py-14">
+    <main
+      className="min-h-screen bg-background"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
+      <div className="mx-auto max-w-4xl px-5 pb-12 pt-8 md:py-14">
         {/* Persistent return-to-operations link */}
         <div className="mb-6 flex items-center justify-between text-[11px]">
           <Link
@@ -367,7 +370,7 @@ const Briefing = () => {
                     QR code
                   </p>
                   <div className="flex h-24 items-center justify-center rounded-sm border border-border bg-muted/20 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-                    QR needed: live operational environment URL
+                    Operational QR code pending
                   </div>
                 </CardContent>
               </Card>
@@ -392,13 +395,19 @@ const Briefing = () => {
                     Contact
                   </p>
                   <p className="text-[13px] font-medium leading-tight text-foreground/85">
-                    Maurice Cloutier · OpsFrame
+                    Maurice Cloutier · <span className="text-[hsl(var(--primary-active))]">OpsFrame.io</span>
                   </p>
+                  <a
+                    href="mailto:maurice@opsframe.io"
+                    className="block text-[12px] leading-tight text-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    maurice@opsframe.io
+                  </a>
                 </CardContent>
               </Card>
             </div>
             <div className="flex flex-col items-start gap-3 pt-4">
-              <Button asChild size="lg">
+              <Button asChild size="lg" variant="outline">
                 <Link to="/">Launch Rural Access Operations</Link>
               </Button>
               <OperationalReachDisclaimer />
