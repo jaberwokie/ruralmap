@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import OperationalReachDisclaimer from '@/components/OperationalReachDisclaimer';
 import qrLaunchImage from '@/assets/nevada_rural_access_operations_qr.png';
+import opsframeLogo from '@/assets/opsframe-logo.svg';
 
 const CAPABILITIES: { title: string; body: string }[] = [
   {
@@ -405,8 +406,13 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Contact
                   </p>
-                  <p className="text-[13px] font-medium leading-tight text-foreground/85">
-                    Maurice Cloutier · <span className="text-[hsl(var(--primary-active))]">OpsFrame.io</span>
+                  <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] font-medium leading-tight text-foreground/85">
+                    <span>Maurice Cloutier ·</span>
+                    <img
+                      src={opsframeLogo}
+                      alt="OpsFrame.io"
+                      className="inline-block h-[20px] w-auto translate-y-[1px]"
+                    />
                   </p>
                   <a
                     href="mailto:maurice@opsframe.io"
