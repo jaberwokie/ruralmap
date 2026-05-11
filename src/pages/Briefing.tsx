@@ -272,7 +272,7 @@ const Briefing = () => {
                 </li>
               ))}
             </ol>
-            <PendingCapture label="Operational capture pending — county detail (response + transportation)" />
+            <PendingCapture label="Capture needed: county detail with transportation and connectivity context" />
           </section>
 
           {/* Section 6 — Operational architecture */}
