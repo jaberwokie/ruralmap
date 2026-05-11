@@ -93,13 +93,13 @@ const SectionHeader = ({
   eyebrow?: string;
   heading: string;
 }) => (
-  <div className="space-y-2">
+  <div className="space-y-1.5">
     {eyebrow ? (
       <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {eyebrow}
       </p>
     ) : null}
-    <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-[28px]">
+    <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
       {heading}
     </h2>
   </div>
@@ -122,7 +122,7 @@ const Briefing = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-5 py-16 md:py-20">
+      <div className="mx-auto max-w-4xl px-5 py-12 md:py-14">
         {/* Persistent return-to-operations link */}
         <div className="mb-6 flex items-center justify-between text-[11px]">
           <Link
@@ -139,27 +139,30 @@ const Briefing = () => {
           </Link>
         </div>
 
-        {/* Section 1 — Cover */}
-        <section className="space-y-6 border-b border-border pb-16">
+        {/* Cover */}
+        <section className="space-y-4 border-b border-border pb-10">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Operational briefing
           </p>
-          <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-foreground md:text-5xl">
+          <h1 className="text-3xl font-semibold leading-[1.15] tracking-tight text-foreground md:text-4xl">
             Nevada Rural Access Operations
           </h1>
-          <p className="text-[16px] font-medium leading-relaxed text-foreground/85 md:text-[18px]">
+          <p className="text-[15px] font-medium leading-relaxed text-foreground/85 md:text-[16px]">
             Operational Decision Infrastructure for Rural Medicaid Access
           </p>
           <p className="max-w-2xl text-[14px] leading-relaxed text-foreground/70">
             Supporting operational access decisions across rural healthcare, behavioral health,
             crisis response, and field coordination environments.
           </p>
+          <p className="text-[11px] text-muted-foreground/80">
+            Operational captures to be added before external distribution.
+          </p>
         </section>
 
-        <div className="space-y-20 pt-16">
+        <div className="space-y-12 pt-10">
           {/* Section 2 — The operational problem */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 02" heading="The operational problem" />
+            <SectionHeader heading="The operational problem" />
             <ul className="space-y-2.5">
               {PROBLEM_POINTS.map((p) => (
                 <li
@@ -179,7 +182,7 @@ const Briefing = () => {
 
           {/* Section 3 — What this platform is */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 03" heading="What this platform is" />
+            <SectionHeader heading="What this platform is" />
             <p className="max-w-3xl text-[14px] leading-relaxed text-foreground/85">
               Nevada Rural Access Operations is operational decision infrastructure for evaluating
               what can be coordinated under current rural access conditions.
@@ -203,7 +206,7 @@ const Briefing = () => {
           {/* Section 4 — Category distinction */}
           <section className="space-y-6">
             <SectionHeader
-              eyebrow="Section 04"
+              
               heading="What makes this different from traditional mapping and directory systems"
             />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -252,7 +255,7 @@ const Briefing = () => {
 
           {/* Section 5 — Operational workflow */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 05" heading="Operational workflow example" />
+            <SectionHeader heading="Operational workflow example" />
             <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               Scenario · Remote rural behavioral health coordination
             </p>
@@ -274,7 +277,7 @@ const Briefing = () => {
 
           {/* Section 6 — Operational architecture */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 06" heading="Operational architecture" />
+            <SectionHeader heading="Operational architecture" />
             <div className="rounded-md border border-border bg-card p-5">
               <ol className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
                 {ARCHITECTURE_STAGES.map((stage, i, arr) => (
@@ -297,7 +300,7 @@ const Briefing = () => {
 
           {/* Section 7 — Publication-safe operational visibility */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 07" heading="Publication-safe operational visibility" />
+            <SectionHeader heading="Publication-safe operational visibility" />
             <ul className="space-y-2.5">
               {PUBLIC_SAFE_POINTS.map((p) => (
                 <li
@@ -314,7 +317,7 @@ const Briefing = () => {
 
           {/* Section 8 — Operational use environments */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 08" heading="Operational use environments" />
+            <SectionHeader heading="Operational use environments" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               {AUDIENCES.map((a) => (
                 <Card key={a} className="h-full">
@@ -326,25 +329,25 @@ const Briefing = () => {
             </div>
           </section>
 
-          {/* Section 9 — Core distinction */}
-          <section className="space-y-8 border-y border-border py-16 text-center">
+          {/* Core distinction */}
+          <section className="space-y-6 border-y border-border py-10 text-center">
             <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
               Core distinction
             </p>
-            <div className="space-y-6">
-              <div className="space-y-2">
+            <div className="space-y-5">
+              <div className="space-y-1.5">
                 <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                   A normal map asks
                 </p>
-                <p className="text-2xl font-semibold leading-snug tracking-tight text-foreground/70 md:text-[28px]">
+                <p className="text-xl font-semibold leading-snug tracking-tight text-foreground/70 md:text-2xl">
                   &ldquo;Where are resources located?&rdquo;
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <p className="text-[12px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                   Nevada Rural Access Operations asks
                 </p>
-                <p className="text-2xl font-semibold leading-snug tracking-tight text-foreground md:text-[28px]">
+                <p className="text-xl font-semibold leading-snug tracking-tight text-foreground md:text-2xl">
                   &ldquo;What is operationally actionable under current conditions?&rdquo;
                 </p>
               </div>
@@ -353,7 +356,7 @@ const Briefing = () => {
 
           {/* Section 10 — Launch environment */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 10" heading="Nevada Rural Access Operations" />
+            <SectionHeader heading="Nevada Rural Access Operations" />
             <p className="max-w-2xl text-[14px] leading-relaxed text-foreground/80">
               Operational decision infrastructure for rural Medicaid access coordination.
             </p>
