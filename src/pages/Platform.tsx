@@ -333,10 +333,13 @@ const Platform = () => {
             <Button asChild size="lg">
               <Link to="/">Launch Rural Access Operations</Link>
             </Button>
-            <p className="text-[12px] text-muted-foreground">
-              Operational reach is contextual. This environment supports coordination decisions; it
-              does not guarantee access, availability, or transportation continuity.
-            </p>
+            <OperationalReachDisclaimer />
+            <Link
+              to="/briefing"
+              className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
+              View operational briefing
+            </Link>
           </div>
         </div>
       </div>
