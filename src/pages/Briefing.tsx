@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import OperationalReachDisclaimer from '@/components/OperationalReachDisclaimer';
+import qrLaunchImage from '@/assets/nevada_rural_access_operations_qr.png';
 
 const CAPABILITIES: { title: string; body: string }[] = [
   {
@@ -369,8 +370,18 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     QR code
                   </p>
-                  <div className="flex h-24 items-center justify-center rounded-sm border border-border bg-muted/20 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-                    Operational QR code pending
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src={qrLaunchImage}
+                      alt="QR code linking to the live Nevada Rural Access Operations environment"
+                      width={140}
+                      height={140}
+                      className="h-auto w-[140px] max-w-full rounded-sm border border-border bg-background"
+                      style={{ imageRendering: 'pixelated' }}
+                    />
+                    <p className="text-[11px] leading-tight text-muted-foreground">
+                      Launch operational environment
+                    </p>
                   </div>
                 </CardContent>
               </Card>
