@@ -169,16 +169,21 @@ const Index = () => {
         never visually buried after auth resolves and the layout reflows.
       */}
       <div className="md:hidden relative z-50 shrink-0 bg-card border-b border-border">
-        <div className="flex items-start justify-between p-3">
-          <div className="min-w-0 flex-1 pr-2">
-            <h1 className="text-sm font-semibold text-foreground tracking-tight leading-tight">Nevada Rural Access Operations</h1>
-            <p className="text-[10px] text-muted-foreground leading-tight">Operational decision infrastructure</p>
+        <div className="flex items-start justify-between px-3 pt-3 pb-2.5 gap-2">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-sm font-semibold text-foreground tracking-tight leading-snug">Nevada Rural Access Operations</h1>
+            <p className="mt-0.5 text-[10px] text-muted-foreground leading-tight">Operational decision infrastructure</p>
             <p className="text-[10px] text-muted-foreground/80 leading-tight">Nevada Behavioral Health</p>
+            {isPublicSafeModeActive() && (
+              <span className="mt-1.5 inline-block rounded-sm border border-border/40 bg-background/60 px-1.5 py-px text-[9px] font-normal tracking-normal text-muted-foreground/80">
+                Publication-safe operational view
+              </span>
+            )}
             {!isPublicSafeModeActive() && (
               <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
             )}
           </div>
-          <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium">
+          <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="shrink-0 self-start p-2 rounded-md bg-secondary text-foreground text-xs font-medium">
             {mobileSidebarOpen ? 'Operations' : 'Controls'}
           </button>
         </div>
