@@ -14,7 +14,7 @@ export const PublicSafeDisclaimer = () => {
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none absolute bottom-3 left-1/2 z-[1200] -translate-x-1/2 select-none rounded-md border border-border bg-background/90 px-3 py-1.5 text-[10px] leading-snug text-muted-foreground shadow-sm backdrop-blur-sm max-w-[90vw] text-center"
+      className="pointer-events-none absolute bottom-3 left-1/2 z-[1200] hidden -translate-x-1/2 select-none rounded-md border border-border bg-background/90 px-3 py-1.5 text-[10px] leading-snug text-muted-foreground shadow-sm backdrop-blur-sm max-w-[90vw] text-center md:block"
     >
       Publication-safe operational view. Reach reflects estimated travel-time from current field staff positions and is not a guarantee of full county coverage.
     </div>
