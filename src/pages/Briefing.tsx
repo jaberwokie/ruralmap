@@ -158,7 +158,7 @@ const Briefing = () => {
             crisis response, and field coordination environments.
           </p>
           <p className="text-[11px] text-muted-foreground/80">
-            Operational captures to be added before external distribution.
+            Operational views to be included before external distribution.
           </p>
         </section>
 
