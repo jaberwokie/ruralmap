@@ -794,17 +794,17 @@ const Sidebar = ({
           </button>
         </div>
 
-        <div className="mt-1.5 flex items-center justify-center gap-2 whitespace-nowrap text-[11px] text-muted-foreground">
+        <div className="mt-1.5 flex items-center justify-center gap-2 whitespace-nowrap text-[11px] text-foreground/70">
           <Link
             to="/platform"
-            className="underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
+            className="cursor-pointer underline decoration-border decoration-dotted underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground/60 focus-visible:outline-none focus-visible:text-foreground focus-visible:decoration-foreground/70"
           >
-            Platform
+            Platform Overview
           </Link>
-          <span aria-hidden="true" className="text-muted-foreground/60">·</span>
+          <span aria-hidden="true" className="text-muted-foreground/50">·</span>
           <Link
             to="/briefing"
-            className="underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
+            className="cursor-pointer underline decoration-border decoration-dotted underline-offset-[3px] transition-colors hover:text-foreground hover:decoration-foreground/60 focus-visible:outline-none focus-visible:text-foreground focus-visible:decoration-foreground/70"
           >
             Briefing
           </Link>
