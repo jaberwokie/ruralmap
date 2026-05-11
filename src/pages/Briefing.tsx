@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import OperationalReachDisclaimer from '@/components/OperationalReachDisclaimer';
 import qrLaunchImage from '@/assets/nevada_rural_access_operations_qr.png';
-import opsframeLogo from '@/assets/opsframe-logo.svg';
 
 const CAPABILITIES: { title: string; body: string }[] = [
   {
@@ -413,14 +412,8 @@ const Briefing = () => {
                       target="_blank"
                       rel="noreferrer noopener"
                       aria-label="OpsFrame.io"
-                      className="inline-flex items-center gap-1.5 text-foreground/85 no-underline hover:text-foreground"
+                      className="text-foreground/85 no-underline hover:text-foreground"
                     >
-                      <img
-                        src={opsframeLogo}
-                        alt=""
-                        aria-hidden="true"
-                        className="inline-block h-[22px] w-[22px] shrink-0 rounded-[3px]"
-                      />
                       <span className="font-semibold tracking-tight">OpsFrame<span className="text-foreground/55">.io</span></span>
                     </a>
                   </p>
