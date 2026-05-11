@@ -315,7 +315,7 @@ const Briefing = () => {
                 </li>
               ))}
             </ul>
-            <PendingCapture label="Capture needed: publication-safe operational view" />
+            <PendingCapture label="Publication-safe operational view pending" />
           </section>
 
           {/* Section 8 — Operational use environments */}
