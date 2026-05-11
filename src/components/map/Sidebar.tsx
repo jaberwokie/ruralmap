@@ -794,16 +794,17 @@ const Sidebar = ({
           </button>
         </div>
 
-        <div className="mt-1.5 flex justify-end gap-3">
+        <div className="mt-1.5 flex items-center justify-center gap-2 whitespace-nowrap text-[11px] text-muted-foreground">
           <Link
             to="/platform"
-            className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
+            className="underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
           >
             Platform
           </Link>
+          <span aria-hidden="true" className="text-muted-foreground/60">·</span>
           <Link
             to="/briefing"
-            className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
+            className="underline-offset-2 hover:text-foreground hover:underline focus-visible:outline-none focus-visible:underline"
           >
             Briefing
           </Link>

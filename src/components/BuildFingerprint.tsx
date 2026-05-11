@@ -34,7 +34,7 @@ export const BuildFingerprint = () => {
       aria-hidden="true"
       data-build-id={buildId}
       data-build-time={buildTime}
-      className="pointer-events-none fixed bottom-1 left-1 z-[9999] select-none rounded bg-background/60 px-1.5 py-0.5 text-[9px] font-mono leading-none tracking-tight text-muted-foreground/70 tabular-nums"
+      className="pointer-events-none fixed bottom-1 left-1 z-[9999] hidden select-none rounded bg-background/60 px-1.5 py-0.5 text-[9px] font-mono leading-none tracking-tight text-muted-foreground/70 tabular-nums md:block"
     >
       {label}
     </div>
