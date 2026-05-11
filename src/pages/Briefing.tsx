@@ -406,7 +406,6 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Contact
                   </p>
-                  <p className="text-[13px] font-medium leading-tight text-foreground/85">
                   <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[13px] font-medium leading-tight text-foreground/85">
                     <span>Maurice Cloutier ·</span>
                     <img
