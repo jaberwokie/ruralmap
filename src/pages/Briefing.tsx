@@ -105,8 +105,8 @@ const SectionHeader = ({
   </div>
 );
 
-const ScreenshotPlaceholder = ({ label }: { label: string }) => (
-  <div className="flex h-40 w-full items-center justify-center rounded-md border border-dashed border-border bg-muted/30 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+const PendingCapture = ({ label }: { label: string }) => (
+  <div className="flex h-40 w-full items-center justify-center rounded-md border border-border bg-muted/20 text-[11px] uppercase tracking-[0.14em] text-muted-foreground/70">
     {label}
   </div>
 );
