@@ -413,9 +413,9 @@ const Briefing = () => {
                       target="_blank"
                       rel="noreferrer noopener"
                       aria-label="OpsFrame.io"
-                      className="inline-flex items-center text-foreground/85 no-underline hover:text-foreground"
+                      className="inline-flex items-center no-underline"
                     >
-                      <img src={opsframeLogo} alt="OpsFrame.io" className="h-[14px] w-auto" />
+                      <span className="font-semibold tracking-tight text-foreground">OpsFrame</span><span className="font-medium tracking-tight text-[#3B82F6]">.io</span>
                     </a>
                   </p>
                   <a

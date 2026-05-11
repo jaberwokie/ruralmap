@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 165 32" width="165" height="32">
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600&amp;display=swap');
-  </style>
-  <text x="82.5" y="24" text-anchor="middle" font-family="Inter, sans-serif" font-size="24" letter-spacing="-0.01em">
-    <tspan font-weight="600" fill="#E5E7EB">OpsFrame</tspan><tspan font-weight="500" fill="#3B82F6">.io</tspan>
-  </text>
-</svg>
