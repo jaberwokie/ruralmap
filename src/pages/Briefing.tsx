@@ -363,8 +363,8 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     QR code
                   </p>
-                  <div className="flex h-24 items-center justify-center rounded-sm border border-dashed border-border bg-muted/30 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-                    Placeholder
+                  <div className="flex h-24 items-center justify-center rounded-sm border border-border bg-muted/20 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
+                    QR capture pending
                   </div>
                 </CardContent>
               </Card>
@@ -373,8 +373,8 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     URL
                   </p>
-                  <p className="text-[13px] font-medium leading-tight text-foreground/80">
-                    [ environment URL ]
+                  <p className="text-[13px] font-medium leading-tight text-muted-foreground/80">
+                    Operational environment URL
                   </p>
                 </CardContent>
               </Card>
@@ -383,8 +383,8 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Contact
                   </p>
-                  <p className="text-[13px] font-medium leading-tight text-foreground/80">
-                    [ operational contact ]
+                  <p className="text-[13px] font-medium leading-tight text-muted-foreground/80">
+                    Operational contact pending
                   </p>
                 </CardContent>
               </Card>
@@ -393,10 +393,13 @@ const Briefing = () => {
               <Button asChild size="lg">
                 <Link to="/">Launch Rural Access Operations</Link>
               </Button>
-              <p className="text-[12px] text-muted-foreground">
-                Operational reach is contextual. This environment supports coordination decisions;
-                it does not guarantee access, availability, or transportation continuity.
-              </p>
+              <OperationalReachDisclaimer />
+              <Link
+                to="/platform"
+                className="text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                View platform overview
+              </Link>
             </div>
           </section>
         </div>
