@@ -370,7 +370,7 @@ const Briefing = () => {
                     QR code
                   </p>
                   <div className="flex h-24 items-center justify-center rounded-sm border border-border bg-muted/20 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-                    QR needed: live operational environment URL
+                    Operational QR code pending
                   </div>
                 </CardContent>
               </Card>
