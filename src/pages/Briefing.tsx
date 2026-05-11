@@ -367,7 +367,7 @@ const Briefing = () => {
                     QR code
                   </p>
                   <div className="flex h-24 items-center justify-center rounded-sm border border-border bg-muted/20 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/70">
-                    QR capture pending
+                    QR needed: live operational environment URL
                   </div>
                 </CardContent>
               </Card>
@@ -376,9 +376,14 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     URL
                   </p>
-                  <p className="text-[13px] font-medium leading-tight text-muted-foreground/80">
-                    Operational environment URL
-                  </p>
+                  <a
+                    href="https://ruralmap.opsframe.io"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-[13px] font-medium leading-tight text-foreground/85 underline-offset-2 hover:underline"
+                  >
+                    ruralmap.opsframe.io
+                  </a>
                 </CardContent>
               </Card>
               <Card className="h-full">
@@ -386,8 +391,8 @@ const Briefing = () => {
                   <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
                     Contact
                   </p>
-                  <p className="text-[13px] font-medium leading-tight text-muted-foreground/80">
-                    Operational contact pending
+                  <p className="text-[13px] font-medium leading-tight text-foreground/85">
+                    Maurice Cloutier · OpsFrame
                   </p>
                 </CardContent>
               </Card>
