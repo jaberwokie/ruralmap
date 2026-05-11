@@ -395,8 +395,14 @@ const Briefing = () => {
                     Contact
                   </p>
                   <p className="text-[13px] font-medium leading-tight text-foreground/85">
-                    Maurice Cloutier · OpsFrame
+                    Maurice Cloutier · <span className="text-[hsl(var(--primary-active))]">OpsFrame.io</span>
                   </p>
+                  <a
+                    href="mailto:maurice@opsframe.io"
+                    className="block text-[12px] leading-tight text-foreground/70 underline-offset-2 hover:text-foreground hover:underline"
+                  >
+                    maurice@opsframe.io
+                  </a>
                 </CardContent>
               </Card>
             </div>
