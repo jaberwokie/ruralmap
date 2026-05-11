@@ -407,7 +407,7 @@ const Briefing = () => {
               </Card>
             </div>
             <div className="flex flex-col items-start gap-3 pt-4">
-              <Button asChild size="lg">
+              <Button asChild size="lg" variant="outline">
                 <Link to="/">Launch Rural Access Operations</Link>
               </Button>
               <OperationalReachDisclaimer />
