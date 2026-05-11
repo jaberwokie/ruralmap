@@ -121,8 +121,11 @@ const Briefing = () => {
   }, []);
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-5 py-12 md:py-14">
+    <main
+      className="min-h-screen bg-background"
+      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+    >
+      <div className="mx-auto max-w-4xl px-5 pb-12 pt-8 md:py-14">
         {/* Persistent return-to-operations link */}
         <div className="mb-6 flex items-center justify-between text-[11px]">
           <Link
