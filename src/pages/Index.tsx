@@ -20,7 +20,9 @@ import type { RuralService } from '@/data/rural-services';
 import { normalizeProviderExact, normalizeProviderForMatch } from '@/utils/providerNameFormat';
 import AdminVersionBadge from '@/components/AdminVersionBadge';
 import PublicSafeDisclaimer from '@/components/map/PublicSafeDisclaimer';
+import PublicSafeBadge from '@/components/PublicSafeBadge';
 import EmptyStateOverlay from '@/components/map/EmptyStateOverlay';
+import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -159,6 +161,7 @@ const Index = () => {
 
   return (
     <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+      <PublicSafeBadge />
       {/*
         Mobile chrome header. Always rendered on <md viewports regardless of
         auth state. `relative z-50` keeps the header above the Leaflet map
@@ -168,11 +171,14 @@ const Index = () => {
       <div className="md:hidden relative z-50 flex shrink-0 items-center justify-between p-3 bg-card border-b border-border">
         <div className="min-w-0 flex-1 pr-2">
           <h1 className="text-sm font-semibold text-foreground tracking-tight">Rural Access Operations</h1>
-          <p className="text-[10px] text-muted-foreground">Nevada Behavioral Health</p>
-          <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
+          <p className="text-[10px] text-muted-foreground leading-tight">Operational decision infrastructure</p>
+          <p className="text-[10px] text-muted-foreground/80 leading-tight">Nevada Behavioral Health</p>
+          {!isPublicSafeModeActive() && (
+            <AdminVersionBadge className="mt-0.5 block truncate max-w-[55vw] text-[9px]" />
+          )}
         </div>
         <button onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)} className="p-2 rounded-md bg-secondary text-foreground text-xs font-medium">
-          {mobileSidebarOpen ? 'Map' : 'Filters'}
+          {mobileSidebarOpen ? 'Operations' : 'Controls'}
         </button>
       </div>
 
@@ -183,7 +189,7 @@ const Index = () => {
         an auth-driven reflow and can hide controls. Using flex-1 + min-h-0
         keeps both panels inside the actual viewport rect.
       */}
-      <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-80 flex-1 md:flex-none min-h-0 md:h-full`}>
+      <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-72 lg:w-80 flex-1 md:flex-none min-h-0 md:h-full`}>
         <Sidebar
           layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView, zoneFilters, onToggleResponseCapabilityCategory: toggleResponseCapabilityCategory }}
           filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}

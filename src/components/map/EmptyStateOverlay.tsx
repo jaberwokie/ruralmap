@@ -49,17 +49,17 @@ const EmptyStateOverlay = ({
   return (
     <div className="pointer-events-none absolute inset-0 z-[650] flex items-center justify-center">
       <div className="pointer-events-none mx-6 max-w-xs rounded-md border border-border bg-card/85 px-4 py-3 text-center shadow-sm backdrop-blur-sm">
-        <p className="text-xs font-semibold text-foreground">No visible operational data</p>
+        <p className="text-xs font-semibold text-foreground">No operational context selected</p>
         <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-          Current overlay and filter selections are hiding operational results.
+          Enable operational overlays or access infrastructure to surface results.
         </p>
         <ul className="mt-2 space-y-0.5 text-[11px] leading-snug text-muted-foreground">
-          <li>• Turn on Provider Access Infrastructure</li>
-          <li>• Clear county filters</li>
-          <li>• Activate operational overlays</li>
+          <li>• Enable operational overlays</li>
+          <li>• Review provider access infrastructure</li>
+          <li>• Adjust operational filters</li>
         </ul>
         <p className="mt-2 text-[10px] leading-snug text-muted-foreground/80">
-          Search only affects the results list, not operational visibility.
+          Search affects the results list, not operational visibility.
         </p>
       </div>
     </div>
