@@ -162,7 +162,7 @@ const Briefing = () => {
         <div className="space-y-12 pt-10">
           {/* Section 2 — The operational problem */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 02" heading="The operational problem" />
+            <SectionHeader heading="The operational problem" />
             <ul className="space-y-2.5">
               {PROBLEM_POINTS.map((p) => (
                 <li
@@ -182,7 +182,7 @@ const Briefing = () => {
 
           {/* Section 3 — What this platform is */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 03" heading="What this platform is" />
+            <SectionHeader heading="What this platform is" />
             <p className="max-w-3xl text-[14px] leading-relaxed text-foreground/85">
               Nevada Rural Access Operations is operational decision infrastructure for evaluating
               what can be coordinated under current rural access conditions.
@@ -206,7 +206,7 @@ const Briefing = () => {
           {/* Section 4 — Category distinction */}
           <section className="space-y-6">
             <SectionHeader
-              eyebrow="Section 04"
+              
               heading="What makes this different from traditional mapping and directory systems"
             />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -255,7 +255,7 @@ const Briefing = () => {
 
           {/* Section 5 — Operational workflow */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 05" heading="Operational workflow example" />
+            <SectionHeader heading="Operational workflow example" />
             <p className="text-[12px] font-medium uppercase tracking-[0.12em] text-muted-foreground">
               Scenario · Remote rural behavioral health coordination
             </p>
@@ -277,7 +277,7 @@ const Briefing = () => {
 
           {/* Section 6 — Operational architecture */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 06" heading="Operational architecture" />
+            <SectionHeader heading="Operational architecture" />
             <div className="rounded-md border border-border bg-card p-5">
               <ol className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
                 {ARCHITECTURE_STAGES.map((stage, i, arr) => (
@@ -300,7 +300,7 @@ const Briefing = () => {
 
           {/* Section 7 — Publication-safe operational visibility */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 07" heading="Publication-safe operational visibility" />
+            <SectionHeader heading="Publication-safe operational visibility" />
             <ul className="space-y-2.5">
               {PUBLIC_SAFE_POINTS.map((p) => (
                 <li
@@ -317,7 +317,7 @@ const Briefing = () => {
 
           {/* Section 8 — Operational use environments */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 08" heading="Operational use environments" />
+            <SectionHeader heading="Operational use environments" />
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
               {AUDIENCES.map((a) => (
                 <Card key={a} className="h-full">
@@ -356,7 +356,7 @@ const Briefing = () => {
 
           {/* Section 10 — Launch environment */}
           <section className="space-y-6">
-            <SectionHeader eyebrow="Section 10" heading="Nevada Rural Access Operations" />
+            <SectionHeader heading="Nevada Rural Access Operations" />
             <p className="max-w-2xl text-[14px] leading-relaxed text-foreground/80">
               Operational decision infrastructure for rural Medicaid access coordination.
             </p>
