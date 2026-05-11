@@ -155,7 +155,7 @@ const MapExplainerModal = ({ open, onClose }: MapExplainerModalProps) => {
                 <><Term>Transportation Corridor Context</Term> shows long-distance corridor presence</>,
                 <><Term>Local Transportation Feasibility</Term> indicates possible local mobility</>,
                 <><Term>Transportation Access Providers</Term> identify operators, not reliability</>,
-                'Transportation context supports planning, not guaranteed transportation',
+                <><Term>Transportation Context</Term> supports operational planning, not guaranteed transportation continuity</>,
               ]}
             />
           </div>
