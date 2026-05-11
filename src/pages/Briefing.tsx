@@ -158,7 +158,7 @@ const Briefing = () => {
             <p className="border-l-2 border-border pl-4 text-[14px] font-medium italic leading-relaxed text-foreground/80">
               Coverage on paper is not the same as access in practice.
             </p>
-            <ScreenshotPlaceholder label="Screenshot — response capability overlays (placeholder)" />
+            <PendingCapture label="Operational capture pending — response capability overlays" />
           </section>
 
           {/* Section 3 — What this platform is */}
@@ -253,7 +253,7 @@ const Briefing = () => {
                 </li>
               ))}
             </ol>
-            <ScreenshotPlaceholder label="Screenshot — county detail with response + transportation context (placeholder)" />
+            <PendingCapture label="Operational capture pending — county detail (response + transportation)" />
           </section>
 
           {/* Section 6 — Operational architecture */}
@@ -293,7 +293,7 @@ const Briefing = () => {
                 </li>
               ))}
             </ul>
-            <ScreenshotPlaceholder label="Screenshot — publication-safe operational view (placeholder)" />
+            <PendingCapture label="Operational capture pending — publication-safe operational view" />
           </section>
 
           {/* Section 8 — Operational use environments */}
