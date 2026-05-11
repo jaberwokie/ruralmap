@@ -93,13 +93,13 @@ const SectionHeader = ({
   eyebrow?: string;
   heading: string;
 }) => (
-  <div className="space-y-2">
+  <div className="space-y-1.5">
     {eyebrow ? (
       <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
         {eyebrow}
       </p>
     ) : null}
-    <h2 className="text-2xl font-semibold tracking-tight text-foreground md:text-[28px]">
+    <h2 className="text-xl font-semibold tracking-tight text-foreground md:text-2xl">
       {heading}
     </h2>
   </div>
