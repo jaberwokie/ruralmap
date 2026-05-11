@@ -122,7 +122,7 @@ const Briefing = () => {
 
   return (
     <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-4xl px-5 py-16 md:py-20">
+      <div className="mx-auto max-w-4xl px-5 py-12 md:py-14">
         {/* Persistent return-to-operations link */}
         <div className="mb-6 flex items-center justify-between text-[11px]">
           <Link
@@ -139,24 +139,27 @@ const Briefing = () => {
           </Link>
         </div>
 
-        {/* Section 1 — Cover */}
-        <section className="space-y-6 border-b border-border pb-16">
+        {/* Cover */}
+        <section className="space-y-4 border-b border-border pb-10">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             Operational briefing
           </p>
-          <h1 className="text-4xl font-semibold leading-[1.1] tracking-tight text-foreground md:text-5xl">
+          <h1 className="text-3xl font-semibold leading-[1.15] tracking-tight text-foreground md:text-4xl">
             Nevada Rural Access Operations
           </h1>
-          <p className="text-[16px] font-medium leading-relaxed text-foreground/85 md:text-[18px]">
+          <p className="text-[15px] font-medium leading-relaxed text-foreground/85 md:text-[16px]">
             Operational Decision Infrastructure for Rural Medicaid Access
           </p>
           <p className="max-w-2xl text-[14px] leading-relaxed text-foreground/70">
             Supporting operational access decisions across rural healthcare, behavioral health,
             crisis response, and field coordination environments.
           </p>
+          <p className="text-[11px] text-muted-foreground/80">
+            Operational captures to be added before external distribution.
+          </p>
         </section>
 
-        <div className="space-y-20 pt-16">
+        <div className="space-y-12 pt-10">
           {/* Section 2 — The operational problem */}
           <section className="space-y-6">
             <SectionHeader eyebrow="Section 02" heading="The operational problem" />
