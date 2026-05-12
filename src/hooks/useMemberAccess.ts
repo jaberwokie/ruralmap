@@ -75,6 +75,15 @@ export interface UseMemberAccessReturn {
   setManualPlacementMode: (v: boolean) => void;
 }
 
+const NV_HIGHWAY_ALIASES: Record<string, string> = {
+  'schurz hwy': 'US-95',
+  'schurz highway': 'US-95',
+  'pyramid hwy': 'US-445',
+  'pyramid highway': 'US-445',
+  'winnemucca ranch rd': 'NV-796',
+  'battle mountain hwy': 'NV-305',
+};
+
 export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn => {
   const [memberLocation, setMemberLocation] = useState<MemberLocation | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
