@@ -30,12 +30,12 @@ describe("index.html public metadata", () => {
     expect(url).not.toContain("lovable.dev");
   });
 
-  it("title spells out Nevada Behavioral Health (no NBH shorthand)", () => {
+  it("title uses NovumHealth Rural Access Operations framing", () => {
     const titleMatch = html.match(/<title>([^<]+)<\/title>/);
     expect(titleMatch).toBeTruthy();
     const title = titleMatch![1];
-    expect(title).toContain("Nevada Behavioral Health");
-    expect(title).not.toMatch(/\bNBH\b/);
+    expect(title).toBe("NovumHealth Rural Access Operations");
+    expect(title).not.toContain("Nevada Behavioral Health");
   });
 
   it("does not embed admin/debug language in head metadata", () => {

@@ -133,7 +133,7 @@ const Section = ({
 const Platform = () => {
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'Operational Decision Infrastructure for Rural Medicaid Access';
+    document.title = 'NovumHealth Rural Access Operations — Platform';
     return () => {
       document.title = prevTitle;
     };
