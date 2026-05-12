@@ -35,10 +35,10 @@ const ADMIN_HINTS = [
   "fingerprint",
 ];
 
-describe("Public Sharing mode (?public=1) smoke", () => {
+describe("Public Sharing mode (/public) smoke", () => {
   beforeAll(() => {
-    // Set URL before App mounts — usePublicSafeMode reads window.location.search
-    window.history.replaceState({}, "", "/?public=1");
+    // Set URL before App mounts — usePublicSafeMode reads window.location.pathname
+    window.history.replaceState({}, "", "/public");
   });
 
   afterAll(() => {
@@ -46,7 +46,7 @@ describe("Public Sharing mode (?public=1) smoke", () => {
     cleanup();
   });
 
-  it("renders without throwing under ?public=1", () => {
+  it("renders without throwing under /public", () => {
     expect(() => render(<App />)).not.toThrow();
   });
 
