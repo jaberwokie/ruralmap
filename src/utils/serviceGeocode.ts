@@ -25,7 +25,7 @@
  */
 import type { StagingServiceRow, VerifiedServiceRow } from '@/types/mappingPipeline';
 
-export type GeocodeStrategy = 'address_full' | 'city_county_fallback' | 'failed';
+export type GeocodeStrategy = 'address_full' | 'city_county_fallback' | 'census_onelineaddress' | 'failed';
 export type GeocodeConfidence = 'high' | 'medium' | 'low';
 
 export interface GeocodeOutcome {
@@ -575,7 +575,7 @@ export const geocodeOne = async (r: GeocodeCandidate): Promise<GeocodeOutcome> =
     return {
       id: r.id,
       status: 'geocoded',
-      strategy: 'city_county_fallback',
+      strategy: 'census_onelineaddress',
       confidence: 'low',
       latitude: censusResult.lat,
       longitude: censusResult.lng,
