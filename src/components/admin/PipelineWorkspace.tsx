@@ -137,6 +137,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [reviewFilter, setReviewFilter] = useState<'all' | ReviewStatus>('pending');
   const [severityFilter, setSeverityFilter] = useState<'all' | ValidationSeverity>('all');
+  const [geocodeFilter, setGeocodeFilter] = useState<'all' | 'high' | 'low' | 'failed' | 'none'>('all');
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
