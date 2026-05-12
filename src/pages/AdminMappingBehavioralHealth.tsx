@@ -258,6 +258,22 @@ export default function AdminMappingBehavioralHealth() {
           org: r.organization_name ?? '—',
           city: r.city ?? '—',
           county: r.county ?? '—',
+          geocode_confidence: (() => {
+            const tag = parseGeocodeTag(r.access_notes);
+            if (isGeocodeFailed(r.access_notes)) {
+              return <span style={{ color: '#ef4444', fontWeight: 600 }}>● Failed</span>;
+            }
+            if (!tag) {
+              return <span style={{ color: '#9ca3af' }}>○ None</span>;
+            }
+            if (tag.confidence === 'high' && tag.strategy === 'address_full') {
+              return <span style={{ color: '#22c55e', fontWeight: 600 }}>● High</span>;
+            }
+            if (tag.strategy === 'census_onelineaddress') {
+              return <span style={{ color: '#f59e0b', fontWeight: 600 }}>● Census</span>;
+            }
+            return <span style={{ color: '#f59e0b', fontWeight: 600 }}>● Low</span>;
+          })(),
           caps: formatCaps(r),
           density: (
             <span className="inline-flex items-center gap-1 text-muted-foreground tabular-nums">
