@@ -353,6 +353,16 @@ export default function AdminMappingBehavioralHealth() {
       title="Behavioral Health Mapping"
       description="Operational pipeline for behavioral health providers, facilities, and service locations. Promoted records appear on the Behavioral Health map layer."
     >
+      <div className="mb-3 flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRevalidate}
+          title="Re-geocode failed, low-confidence, and stale records"
+        >
+          Re-validate Geocodes
+        </Button>
+      </div>
       <PipelineWorkspace
         title="Behavioral health pipeline"
         purpose="Therapists, psychiatrists, BH clinics, IOP/PHP, crisis stabilization, mobile crisis, detox, residential, SUD, MAT-capable locations. Marked Draft until admin sign-off — functionality is complete."
