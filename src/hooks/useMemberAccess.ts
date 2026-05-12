@@ -225,6 +225,25 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
             return;
           }
         }
+
+        // Stage 4b — alias without house number (highway milepost addresses)
+        const noNumberQuery = aliasQuery.replace(/^\d+\s+/, '');
+        if (noNumberQuery !== aliasQuery) {
+          const noNumUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(noNumberQuery + ', Nevada')}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}`;
+          const noNumRes = await fetch(noNumUrl);
+          if (noNumRes.ok) {
+            const noNumData = await noNumRes.json();
+            const hit = noNumData.find((r: { lat: string; lon: string }) => {
+              const lat = parseFloat(r.lat);
+              const lng = parseFloat(r.lon);
+              return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
+            });
+            if (hit) {
+              placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
+              return;
+            }
+          }
+        }
       }
 
       // All stages failed
