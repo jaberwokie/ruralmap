@@ -41,6 +41,8 @@ export interface PublicSafeMode {
 const readFlag = (): boolean => {
   if (typeof window === 'undefined') return false;
   try {
+    const path = window.location.pathname || '';
+    if (path === '/public' || path.startsWith('/public/')) return true;
     const params = new URLSearchParams(window.location.search);
     return params.get('public') === '1';
   } catch {
