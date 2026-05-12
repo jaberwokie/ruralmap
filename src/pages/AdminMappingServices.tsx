@@ -419,6 +419,17 @@ export default function AdminMappingServices() {
         ) : null}
       </div>
 
+      <div className="mb-3 flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRevalidate}
+          title="Re-geocode failed, low-confidence, and stale records"
+        >
+          Re-validate Geocodes
+        </Button>
+      </div>
+
       <PipelineWorkspace
         title="Service location pipeline"
         purpose="Food, shelter, transportation, employment, recovery, peer support, case management, outreach, hygiene, and benefits navigation locations. Clinical providers belong in Provider Mapping."
