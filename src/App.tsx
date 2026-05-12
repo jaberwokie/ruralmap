@@ -30,6 +30,17 @@ const queryClient = new QueryClient();
 
 const APP_VERSION = 'public-sharing-v2';
 
+// Bare /share has no static raw-HTML representation on Lovable's host
+// (SPA fallback intercepts extensionless paths before directory-index
+// resolution). Force a hard browser navigation to /share.html so the
+// static file actually loads instead of falling through to NotFound.
+const ShareHardRedirect = () => {
+  useEffect(() => {
+    window.location.replace('/share.html');
+  }, []);
+  return null;
+};
+
 const App = () => {
   useEffect(() => {
     if (!isPublicSafeModeActive()) return;
@@ -56,6 +67,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/public" element={<Index />} />
+                <Route path="/share" element={<ShareHardRedirect />} />
                 <Route path="/platform" element={<Platform />} />
                 <Route path="/briefing" element={<Briefing />} />
                 <Route path="/auth" element={<Auth />} />
