@@ -7,7 +7,7 @@ import { componentTagger } from "lovable-tagger";
 const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/public";
 
 /**
- * Emit a route-specific static HTML file at `dist/public/index.html` so that
+ * Emit a route-specific static HTML file at `dist/public` so that
  * crawlers (LinkedIn, Twitter, etc.) hitting `/public` receive a canonical /
  * og:url / twitter:url pointing at `/public` instead of inheriting the root
  * SPA fallback's canonical. Same SPA bootstrap; metadata is the only diff.
@@ -37,9 +37,11 @@ const emitPublicRouteHtml = (): Plugin => ({
       `<meta name="twitter:url" content="${PUBLIC_CANONICAL}" />`
     );
 
-    const outDir = path.join(distDir, "public");
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(path.join(outDir, "index.html"), html, "utf8");
+    const publicRouteHtml = path.join(distDir, "public");
+    if (fs.existsSync(publicRouteHtml) && fs.statSync(publicRouteHtml).isDirectory()) {
+      fs.rmSync(publicRouteHtml, { recursive: true, force: true });
+    }
+    fs.writeFileSync(publicRouteHtml, html, "utf8");
   },
 });
 
