@@ -25,7 +25,7 @@ import {
 } from '@/utils/importedFacilitiesStore';
 import { findProviderMatch } from '@/utils/providerMatchKey';
 import {
-  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
+  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure, spotCheckCoordinate,
   type GeocodeOutcome, type GeocodeRunSummary,
 } from '@/utils/serviceGeocode';
 import type { Facility, FacilityType } from '@/data/facilities';
@@ -381,14 +381,55 @@ export const geocodeStagingProvidersBulk = async (
     const row = targets[i];
     if (!row) continue;
     if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' = oc.strategy === 'address_full' ? 'high' : 'low';
-      const stamped = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      const publicConfidence: 'high' | 'low' =
+        oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
       await editProviderStaging(row.id, {
-        latitude: oc.latitude, longitude: oc.longitude, access_notes: stamped,
+        latitude: oc.latitude,
+        longitude: oc.longitude,
+        access_notes: stampedNotes,
       });
-    } else if (oc.status === 'failed') {
-      const stamped = stampGeocodeFailure(row.access_notes);
-      await editProviderStaging(row.id, { access_notes: stamped });
+
+      // Reverse geocode spot-check
+      const spotCheck = await spotCheckCoordinate(
+        oc.latitude,
+        oc.longitude,
+        row.zip,
+        row.street_address,
+      );
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await editProviderStaging(row.id, {
+          access_notes: downgradedNotes,
+        });
+      }
+
+      await writeAudit({
+        pipeline: 'providers',
+        action: 'record_edited',
+        target_table: 'staging_providers',
+        target_row_id: row.id,
+        details: {
+          geocode: true,
+          strategy: oc.strategy,
+          confidence: publicConfidence,
+          latitude: oc.latitude,
+          longitude: oc.longitude,
+          spotCheck,
+        },
+      });
+    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
+      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
+      await editProviderStaging(row.id, {
+        access_notes: stampedNotes,
+      });
+      await writeAudit({
+        pipeline: 'providers',
+        action: 'record_edited',
+        target_table: 'staging_providers',
+        target_row_id: row.id,
+        details: { geocode: true, status: 'none', reason: oc.reason },
+      });
     }
   }
   return summarizeGeocodeRun(outcomes);
