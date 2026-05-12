@@ -2,10 +2,10 @@
  * PUBLIC_SAFE_MODE — non-destructive presentation layer for public screenshots,
  * shareable URLs (LinkedIn, decks, etc.), and external demos.
  *
- * Activate by adding `?public=1` to the URL.
+ * Activated by the `/public` route (and any path under it).
  * Session-only (no persistence). This module is the single source of truth
  * for public-mode detection — other modules must call `isPublicSafeModeActive()`
- * rather than parsing `window.location.search` themselves.
+ * rather than parsing `window.location` themselves.
  *
  * Intent:
  * - Hide member / engagement counts ENTIRELY (no bucketing).
@@ -16,7 +16,7 @@
  * - Force a visible disclaimer on coverage interpretation.
  *
  * This hook does NOT mutate state, does NOT change business logic, and does
- * NOT persist. Every call re-reads `window.location.search`.
+ * NOT persist. Every call re-reads `window.location.pathname`.
  */
 import { useMemo } from 'react';
 
@@ -42,9 +42,7 @@ const readFlag = (): boolean => {
   if (typeof window === 'undefined') return false;
   try {
     const path = window.location.pathname || '';
-    if (path === '/public' || path.startsWith('/public/')) return true;
-    const params = new URLSearchParams(window.location.search);
-    return params.get('public') === '1';
+    return path === '/public' || path.startsWith('/public/');
   } catch {
     return false;
   }
