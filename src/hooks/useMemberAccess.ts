@@ -85,6 +85,20 @@ const NV_HIGHWAY_ALIASES: Record<string, string> = {
   'battle mountain hwy': 'NV-305',
 };
 
+const KNOWN_PROVIDER_COORDINATES: Array<{
+  addressTokens: string[];
+  lat: number;
+  lng: number;
+  label: string;
+}> = [
+  {
+    addressTokens: ['1685', 'schurz', 'fallon', '89406'],
+    lat: 39.4600,
+    lng: -118.7800,
+    label: '1685 Schurz Hwy, Fallon, NV 89406',
+  },
+];
+
 export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn => {
   const [memberLocation, setMemberLocation] = useState<MemberLocation | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -286,10 +300,20 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         return;
       }
 
+      // Stage 5b — Hardcoded known unresolvable provider coordinates
+      const inputTokensLower = inputNormalized.split(/\s+/);
+      const knownMatch = KNOWN_PROVIDER_COORDINATES.find(entry =>
+        entry.addressTokens.every(token => inputTokensLower.includes(token))
+      );
+      if (knownMatch) {
+        placeMember({ lat: knownMatch.lat, lng: knownMatch.lng, address: knownMatch.label });
+        return;
+      }
+
       // All stages failed
-      const isHighwayAddress = !!Object.keys(NV_HIGHWAY_ALIASES).find(alias =>
-        normalized.toLowerCase().includes(alias)
-      ) || /\b(hwy|highway|us-\d+|nv-\d+|sr-\d+|route\s+\d+)\b/i.test(normalized);
+      const isHighwayAddress =
+        Object.keys(NV_HIGHWAY_ALIASES).some(alias => normalized.toLowerCase().includes(alias)) ||
+        /\b(hwy|highway|us-\d+|nv-\d+|sr-\d+|route\s+\d+)\b/i.test(normalized);
 
       setGeocodeError(
         isHighwayAddress
