@@ -127,18 +127,59 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
   const geocodeAddress = useCallback(async (address: string) => {
     setIsGeocoding(true);
     setGeocodeError(null);
-    setMemberLocation(null); // Clear previous pin immediately on new search
+    setMemberLocation(null);
     try {
-      const q = encodeURIComponent(address + ', Nevada');
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1&countrycodes=us`);
-      const data = await res.json();
-      if (data.length === 0) {
-        setGeocodeError('Address not found. Refine the address or click the map to place member location.');
-        setManualPlacementMode(true);
-        return;
+      // Normalize input — strip suite/unit tokens before geocoding
+      const normalized = address
+        .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?|#)\s*[\w-]*/gi, '')
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+
+      const query = normalized.includes('Nevada') || /,\s*NV\b/i.test(normalized)
+        ? normalized
+        : `${normalized}, Nevada`;
+
+      // Nevada bounding box
+      const NV_WEST = -120.0064, NV_EAST = -114.0396, NV_SOUTH = 35.0019, NV_NORTH = 42.0022;
+
+      const isInNevada = (lat: number, lng: number) =>
+        lat >= NV_SOUTH && lat <= NV_NORTH && lng >= NV_WEST && lng <= NV_EAST;
+
+      // Stage 1 — Nominatim with Nevada bounding and multiple candidates
+      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}&bounded=1`;
+      const nominatimRes = await fetch(nominatimUrl);
+      if (nominatimRes.ok) {
+        const nominatimData = await nominatimRes.json();
+        const hit = nominatimData.find((r: { lat: string; lon: string }) => {
+          const lat = parseFloat(r.lat);
+          const lng = parseFloat(r.lon);
+          return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
+        });
+        if (hit) {
+          placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
+          return;
+        }
       }
-      const { lat, lon, display_name } = data[0];
-      placeMember({ lat: parseFloat(lat), lng: parseFloat(lon), address: display_name });
+
+      // Stage 2 — Census Geocoder fallback
+      const censusUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(query)}&benchmark=2020&format=json`;
+      const censusRes = await fetch(censusUrl, { signal: AbortSignal.timeout(8000) });
+      if (censusRes.ok) {
+        const censusData = await censusRes.json();
+        const match = censusData?.result?.addressMatches?.[0];
+        if (match) {
+          const lat = match.coordinates?.y;
+          const lng = match.coordinates?.x;
+          if (Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng)) {
+            placeMember({ lat, lng, address: match.matchedAddress });
+            return;
+          }
+        }
+      }
+
+      // Both stages failed
+      setGeocodeError('Address not found. Refine the address or click the map to place member location.');
+      setManualPlacementMode(true);
     } catch {
       setGeocodeError('Address not found. Refine the address or click the map to place member location.');
       setManualPlacementMode(true);
