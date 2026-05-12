@@ -37,11 +37,17 @@ const emitPublicRouteHtml = (): Plugin => ({
       `<meta name="twitter:url" content="${PUBLIC_CANONICAL}" />`
     );
 
-    const publicRouteHtml = path.join(distDir, "public");
-    if (fs.existsSync(publicRouteHtml) && fs.statSync(publicRouteHtml).isDirectory()) {
-      fs.rmSync(publicRouteHtml, { recursive: true, force: true });
+    // Emit dist/public/index.html so the static host serves it for `/public`
+    // requests. Do NOT delete the dist/public directory — Vite copies the
+    // source `public/` assets (data/, og-image.jpg, favicons, etc.) there and
+    // wiping it breaks runtime fetches and the OG image, which is what was
+    // causing `/public` to fail (500) for crawlers.
+    const publicRouteDir = path.join(distDir, "public");
+    if (fs.existsSync(publicRouteDir) && !fs.statSync(publicRouteDir).isDirectory()) {
+      fs.rmSync(publicRouteDir, { force: true });
     }
-    fs.writeFileSync(publicRouteHtml, html, "utf8");
+    fs.mkdirSync(publicRouteDir, { recursive: true });
+    fs.writeFileSync(path.join(publicRouteDir, "index.html"), html, "utf8");
   },
 });
 
