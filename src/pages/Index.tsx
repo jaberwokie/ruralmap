@@ -46,6 +46,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
 const Index = () => {
+  const location = useLocation();
+  useEffect(() => { syncRouteCanonical(location.pathname); }, [location.pathname]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   // Lifted Decision Assist open-state so the bottom-left Broadband/Cellular
   // legend can deterministically offset above the drawer instead of visually
