@@ -84,6 +84,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isPublicMode = (() => {
       if (typeof window === 'undefined') return false;
       try {
+        const path = window.location.pathname || '';
+        if (path === '/public' || path.startsWith('/public/')) return true;
         return new URLSearchParams(window.location.search).get('public') === '1';
       } catch {
         return false;
