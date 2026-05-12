@@ -150,6 +150,12 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
     const filtered = stagingRows.filter((r) => {
       if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
       if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
+      if (geocodeFilter !== 'all') {
+        if (geocodeFilter === 'failed' && r.geocode_status !== 'failed') return false;
+        if (geocodeFilter === 'none' && (r.geocode_status === 'geocoded' || r.geocode_status === 'failed')) return false;
+        if (geocodeFilter === 'high' && r.geocode_confidence !== 'high') return false;
+        if (geocodeFilter === 'low' && r.geocode_confidence !== 'low') return false;
+      }
       return true;
     });
     if (!sort) return filtered;
