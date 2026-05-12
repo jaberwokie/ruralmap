@@ -124,8 +124,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
     setManualPlacementMode(false);
   }, []);
 
-  const geocodeAddress = geocodeAddressImpl;
-  // placeholder to satisfy hook ordering — real definition below
+  const geocodeAddress = useCallback(async (address: string) => {
     setIsGeocoding(true);
     setGeocodeError(null);
     setMemberLocation(null);
