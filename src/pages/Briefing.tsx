@@ -116,7 +116,7 @@ const PendingCapture = ({ label }: { label: string }) => (
 const Briefing = () => {
   useEffect(() => {
     const prevTitle = document.title;
-    document.title = 'Operational Briefing — Nevada Rural Access Operations';
+    document.title = 'NovumHealth Rural Access Operations — Briefing';
     return () => {
       document.title = prevTitle;
     };
