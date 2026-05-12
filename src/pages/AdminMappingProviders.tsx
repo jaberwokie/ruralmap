@@ -221,6 +221,22 @@ export default function AdminMappingProviders() {
         coords: r.latitude != null && r.longitude != null
           ? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}`
           : '—',
+        geocode_confidence: (() => {
+          const tag = parseGeocodeTag(r.access_notes);
+          if (isGeocodeFailed(r.access_notes)) {
+            return <span style={{ color: '#ef4444', fontWeight: 600 }}>● Failed</span>;
+          }
+          if (!tag) {
+            return <span style={{ color: '#9ca3af' }}>○ None</span>;
+          }
+          if (tag.confidence === 'high' && tag.strategy === 'address_full') {
+            return <span style={{ color: '#22c55e', fontWeight: 600 }}>● High</span>;
+          }
+          if (tag.strategy === 'census_onelineaddress') {
+            return <span style={{ color: '#f59e0b', fontWeight: 600 }}>● Census</span>;
+          }
+          return <span style={{ color: '#f59e0b', fontWeight: 600 }}>● Low</span>;
+        })(),
         outcome: renderOutcome(r.id, r.review_status),
         source: r.source_file_name ?? '—',
       },
