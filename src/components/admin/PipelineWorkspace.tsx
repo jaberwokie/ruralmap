@@ -137,6 +137,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [reviewFilter, setReviewFilter] = useState<'all' | ReviewStatus>('pending');
   const [severityFilter, setSeverityFilter] = useState<'all' | ValidationSeverity>('all');
+  const [geocodeFilter, setGeocodeFilter] = useState<'all' | 'high' | 'low' | 'failed' | 'none'>('all');
   const [actingId, setActingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
@@ -149,6 +150,12 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
     const filtered = stagingRows.filter((r) => {
       if (reviewFilter !== 'all' && r.review_status !== reviewFilter) return false;
       if (severityFilter !== 'all' && (r.validation_severity ?? 'valid') !== severityFilter) return false;
+      if (geocodeFilter !== 'all') {
+        if (geocodeFilter === 'failed' && r.geocode_status !== 'failed') return false;
+        if (geocodeFilter === 'none' && (r.geocode_status === 'geocoded' || r.geocode_status === 'failed')) return false;
+        if (geocodeFilter === 'high' && r.geocode_confidence !== 'high') return false;
+        if (geocodeFilter === 'low' && r.geocode_confidence !== 'low') return false;
+      }
       return true;
     });
     if (!sort) return filtered;
@@ -163,7 +170,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mult;
       return String(av).localeCompare(String(bv)) * mult;
     });
-  }, [stagingRows, reviewFilter, severityFilter, sort]);
+  }, [stagingRows, reviewFilter, severityFilter, geocodeFilter, sort]);
 
   // Drop selection ids that are no longer visible after filter changes.
   const visibleIds = useMemo(() => new Set(filteredStaging.map((r) => r.id)), [filteredStaging]);
@@ -398,6 +405,12 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             <FilterChip active={severityFilter === 'all'} onClick={() => setSeverityFilter('all')}>Any severity</FilterChip>
             <FilterChip active={severityFilter === 'error'} onClick={() => setSeverityFilter('error')}>Errors</FilterChip>
             <FilterChip active={severityFilter === 'warning'} onClick={() => setSeverityFilter('warning')}>Warnings</FilterChip>
+            <span className="mx-1 h-3 w-px bg-border" />
+            <FilterChip active={geocodeFilter === 'all'} onClick={() => setGeocodeFilter('all')}>All geocodes</FilterChip>
+            <FilterChip active={geocodeFilter === 'high'} onClick={() => setGeocodeFilter('high')}>● High</FilterChip>
+            <FilterChip active={geocodeFilter === 'low'} onClick={() => setGeocodeFilter('low')}>● Low</FilterChip>
+            <FilterChip active={geocodeFilter === 'failed'} onClick={() => setGeocodeFilter('failed')}>● Failed</FilterChip>
+            <FilterChip active={geocodeFilter === 'none'} onClick={() => setGeocodeFilter('none')}>○ None</FilterChip>
           </div>
         </div>
 
