@@ -28,6 +28,31 @@
     <meta name="twitter:url" content="https://ruralmap.opsframe.io/" />
     <meta name="twitter:image" content="https://ruralmap.opsframe.io/og-image.jpg?v=4">
 
+    <script>
+      // Route-aware canonical / og:url / twitter:url. Runs synchronously in
+      // <head> before the body parses, so JS-rendering crawlers (LinkedIn,
+      // Twitter, Slack) see the correct per-route URL. The `/public` route
+      // is the only canonicalized non-root surface; everything else inherits
+      // the root canonical. Kept in static HTML (no React Helmet, no build
+      // plugin, no static dist/public.html) per architectural constraints.
+      (function () {
+        try {
+          var ORIGIN = "https://ruralmap.opsframe.io";
+          var path = window.location.pathname.replace(/\/+$/, "") || "/";
+          var canonicalPath = path === "/public" ? "/public" : "/";
+          var url = ORIGIN + (canonicalPath === "/" ? "/" : canonicalPath);
+          var setAttr = function (sel, attr, value) {
+            var el = document.querySelector(sel);
+            if (el) el.setAttribute(attr, value);
+          };
+          setAttr('link[rel="canonical"]', "href", url);
+          setAttr('meta[property="og:url"]', "content", url);
+          setAttr('meta[name="twitter:url"]', "content", url);
+        } catch (e) {
+          // Non-fatal: leave static root metadata in place.
+        }
+      })();
+    </script>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
