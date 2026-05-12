@@ -70,6 +70,44 @@ const Index = () => {
     return () => window.clearTimeout(timeoutId);
   }, []);
 
+  // Metadata isolation for /public: ensure share crawlers (LinkedIn, Twitter,
+  // etc.) see /public as the canonical URL rather than collapsing to /. The
+  // static index.html points at "/", so we override at runtime when the route
+  // is /public. Restored on unmount so other routes keep the static defaults.
+  useEffect(() => {
+    const path = typeof window !== 'undefined' ? window.location.pathname : '';
+    const isPublicRoute = path === '/public' || path.startsWith('/public/');
+    if (!isPublicRoute) return;
+
+    const PUBLIC_URL = 'https://ruralmap.opsframe.io/public';
+
+    const setMeta = (selector: string, attr: string, value: string): (() => void) => {
+      const el = document.head.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null;
+      if (!el) return () => {};
+      const prev = el.getAttribute(attr);
+      el.setAttribute(attr, value);
+      return () => { if (prev !== null) el.setAttribute(attr, prev); };
+    };
+
+    const restorers = [
+      setMeta('link[rel="canonical"]', 'href', PUBLIC_URL),
+      setMeta('meta[property="og:url"]', 'content', PUBLIC_URL),
+      setMeta('meta[name="twitter:url"]', 'content', PUBLIC_URL),
+    ];
+
+    // twitter:url may not exist in static head — create it if missing.
+    if (!document.head.querySelector('meta[name="twitter:url"]')) {
+      const m = document.createElement('meta');
+      m.setAttribute('name', 'twitter:url');
+      m.setAttribute('content', PUBLIC_URL);
+      m.setAttribute('data-public-route', 'true');
+      document.head.appendChild(m);
+      restorers.push(() => { m.remove(); });
+    }
+
+    return () => { restorers.forEach((r) => r()); };
+  }, []);
+
   const onEntity = useCallback((e: MapEntity | null) => selection.actions.selectEntity(e), [selection.actions]);
   /**
    * Map background tap handler. Clears every selection source so the detail
