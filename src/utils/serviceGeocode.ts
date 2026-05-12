@@ -25,7 +25,7 @@
  */
 import type { StagingServiceRow, VerifiedServiceRow } from '@/types/mappingPipeline';
 
-export type GeocodeStrategy = 'address_full' | 'city_county_fallback';
+export type GeocodeStrategy = 'address_full' | 'city_county_fallback' | 'failed';
 export type GeocodeConfidence = 'high' | 'medium' | 'low';
 
 export interface GeocodeOutcome {
