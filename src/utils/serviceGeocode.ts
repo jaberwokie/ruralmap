@@ -6,13 +6,18 @@
  *
  * Strategy:
  *   1. Primary query: street_address + city + state + zip
+ *      → Nevada-bounded, addressdetails=1, limit=5, validated against the
+ *        source record (state/city/ZIP/house number/road, class/type).
  *   2. Fallback query: city + county + state
- *   3. If both fail → record stays active (list-only context), no pin.
+ *      → Nevada-bounded, addressdetails=1, limit=5, validated against the
+ *        source city/county. Accepts place/admin types intentionally.
+ *   3. If neither produces a valid candidate → record stays active
+ *      (list-only context), no pin.
  *
  * Confidence is derived from:
- *   - Nominatim result `class`/`type` (building/place/amenity → high)
- *   - Whether the primary or fallback strategy succeeded
- *   - Result importance score
+ *   - Strategy used (address_full = high, fallback = low; collapsed by the
+ *     store before persistence).
+ *   - Whether validation actually matched the source address.
  *
  * Source + confidence are persisted in `access_notes` as a structured
  * suffix tag so we don't need a schema migration. The bus broadcasts
@@ -52,6 +57,10 @@ export type GeocodeCandidate = Pick<
 export const GEOCODE_TAG_PREFIX = '[geocode:';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 
+// Nevada bounding box (approx.). Nominatim viewbox format: lon1,lat1,lon2,lat2
+// (any two opposite corners). Pair with bounded=1 to make it a hard filter.
+const NV_VIEWBOX = '-120.0064,42.0022,-114.0396,35.0019';
+
 const buildAddressQuery = (r: GeocodeCandidate): string | null => {
   const parts = [r.street_address, r.city, r.state, r.zip].filter((p) => !!p && String(p).trim() !== '');
   if (parts.length < 2) return null;
@@ -68,6 +77,24 @@ const buildFallbackQuery = (r: GeocodeCandidate): string | null => {
   return parts.join(', ');
 };
 
+interface NominatimAddress {
+  house_number?: string;
+  road?: string;
+  neighbourhood?: string;
+  suburb?: string;
+  hamlet?: string;
+  village?: string;
+  town?: string;
+  city?: string;
+  municipality?: string;
+  county?: string;
+  state?: string;
+  postcode?: string;
+  country?: string;
+  country_code?: string;
+  'ISO3166-2-lvl4'?: string;
+}
+
 interface NominatimResult {
   lat: string;
   lon: string;
@@ -75,39 +102,266 @@ interface NominatimResult {
   class?: string;
   type?: string;
   display_name?: string;
+  address?: NominatimAddress;
+  boundingbox?: string[];
 }
 
-const fetchNominatim = async (query: string): Promise<NominatimResult | null> => {
-  const url = `${NOMINATIM_URL}?format=json&limit=1&addressdetails=0&countrycodes=us&q=${encodeURIComponent(query)}`;
+const fetchNominatim = async (
+  query: string,
+  opts?: { limit?: number; bounded?: boolean },
+): Promise<NominatimResult[]> => {
+  const limit = opts?.limit ?? 5;
+  const bounded = opts?.bounded !== false;
+  const url =
+    `${NOMINATIM_URL}?format=json&limit=${limit}&addressdetails=1&countrycodes=us` +
+    `&viewbox=${encodeURIComponent(NV_VIEWBOX)}` +
+    (bounded ? `&bounded=1` : '') +
+    `&q=${encodeURIComponent(query)}`;
   try {
-    const res = await fetch(url, {
-      headers: { 'Accept': 'application/json' },
-    });
-    if (!res.ok) return null;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return [];
     const data = (await res.json()) as NominatimResult[];
-    return data?.[0] ?? null;
+    return Array.isArray(data) ? data : [];
   } catch {
-    return null;
+    return [];
   }
 };
 
-const scoreConfidence = (
-  strategy: GeocodeStrategy,
-  result: NominatimResult,
-): GeocodeConfidence => {
-  const cls = (result.class ?? '').toLowerCase();
-  const typ = (result.type ?? '').toLowerCase();
-  const importance = result.importance ?? 0;
+// ── Normalization & comparison helpers ────────────────────────────────
 
-  if (strategy === 'address_full') {
-    if (cls === 'building' || typ === 'house' || typ === 'building') return 'high';
-    if (cls === 'amenity' || cls === 'shop' || cls === 'office') return 'high';
-    if (importance >= 0.5) return 'high';
-    return 'medium';
+const norm = (s: string | null | undefined): string =>
+  (s ?? '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[.,#'"()/\\]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const STREET_TOKEN_ALIASES: Record<string, string> = {
+  street: 'st', st: 'st',
+  avenue: 'ave', ave: 'ave', av: 'ave',
+  road: 'rd', rd: 'rd',
+  boulevard: 'blvd', blvd: 'blvd',
+  drive: 'dr', dr: 'dr',
+  lane: 'ln', ln: 'ln',
+  highway: 'hwy', hwy: 'hwy',
+  parkway: 'pkwy', pkwy: 'pkwy',
+  court: 'ct', ct: 'ct',
+  circle: 'cir', cir: 'cir',
+  place: 'pl', pl: 'pl',
+  terrace: 'ter', ter: 'ter',
+  trail: 'trl', trl: 'trl',
+  north: 'n', south: 's', east: 'e', west: 'w',
+  northeast: 'ne', northwest: 'nw',
+  southeast: 'se', southwest: 'sw',
+};
+
+const tokenizeStreet = (s: string | null | undefined): string[] =>
+  norm(s)
+    .split(' ')
+    .filter(Boolean)
+    .map((t) => STREET_TOKEN_ALIASES[t] ?? t);
+
+const extractStreetParts = (full: string | null | undefined): { houseNumber: string | null; road: string } => {
+  const t = norm(full);
+  const m = t.match(/^(\d+[a-z]?)\s+(.+)$/);
+  if (m) return { houseNumber: m[1], road: m[2] };
+  return { houseNumber: null, road: t };
+};
+
+const jaccard = (a: string[], b: string[]): number => {
+  if (a.length === 0 || b.length === 0) return 0;
+  const setA = new Set(a);
+  const setB = new Set(b);
+  let inter = 0;
+  setA.forEach((tok) => { if (setB.has(tok)) inter += 1; });
+  const union = new Set([...a, ...b]).size;
+  return union === 0 ? 0 : inter / union;
+};
+
+const resultCity = (addr: NominatimAddress | undefined): string | null => {
+  if (!addr) return null;
+  return addr.city ?? addr.town ?? addr.village ?? addr.hamlet ?? addr.municipality ?? addr.suburb ?? null;
+};
+
+const resultStateIsNevada = (addr: NominatimAddress | undefined): boolean => {
+  if (!addr) return false;
+  if (addr.state && norm(addr.state) === 'nevada') return true;
+  if (addr['ISO3166-2-lvl4'] === 'US-NV') return true;
+  return false;
+};
+
+// Class/type acceptance for a street-level rooftop-style match.
+const STREET_ALLOWED_CLASSES = new Set([
+  'building', 'amenity', 'shop', 'office', 'tourism',
+  'healthcare', 'leisure', 'craft', 'historic', 'man_made',
+]);
+const STREET_ALLOWED_TYPES = new Set(['house', 'building', 'premise', 'yes']);
+
+const isStreetLevelClass = (cls?: string, type?: string): boolean => {
+  const c = (cls ?? '').toLowerCase();
+  const t = (type ?? '').toLowerCase();
+  if (STREET_ALLOWED_CLASSES.has(c)) return true;
+  if (STREET_ALLOWED_TYPES.has(t)) return true;
+  if (c === 'place' && (t === 'house' || t === 'farm' || t === 'isolated_dwelling')) return true;
+  return false;
+};
+
+// Class/type acceptance for the fallback (city/county) strategy.
+const FALLBACK_ALLOWED_PLACE_TYPES = new Set([
+  'city', 'town', 'village', 'hamlet', 'municipality', 'suburb', 'locality',
+]);
+
+const isPlaceLevelClass = (cls?: string, type?: string): boolean => {
+  const c = (cls ?? '').toLowerCase();
+  const t = (type ?? '').toLowerCase();
+  if (c === 'place' && FALLBACK_ALLOWED_PLACE_TYPES.has(t)) return true;
+  if (c === 'boundary' && t === 'administrative') return true;
+  return false;
+};
+
+interface ValidationResult {
+  ok: boolean;
+  reason?: string;
+  score: number;
+}
+
+/**
+ * Validate a Nominatim candidate against the input record for a
+ * street-level (address_full) lookup. Returns a score so the caller can
+ * pick the best valid candidate from `limit=5`.
+ *
+ * Hard rejects (return ok=false):
+ *  - State is not Nevada.
+ *  - Class/type is not a building/premise/amenity-style match.
+ *  - Input ZIP provided AND result postcode differs (first 5 digits).
+ *  - Input house number provided AND result house_number exists AND differs.
+ *  - Both city and county mismatch the input.
+ *  - Road token similarity is too low AND no other strong signal exists.
+ */
+const validateStreetCandidate = (
+  r: GeocodeCandidate,
+  hit: NominatimResult,
+): ValidationResult => {
+  const addr = hit.address;
+
+  if (!resultStateIsNevada(addr)) {
+    return { ok: false, reason: 'state ≠ Nevada', score: 0 };
   }
-  // fallback (city/county) is inherently approximate
-  if (importance >= 0.6) return 'medium';
-  return 'low';
+
+  if (!isStreetLevelClass(hit.class, hit.type)) {
+    return { ok: false, reason: `class/type not address-level (${hit.class}/${hit.type})`, score: 0 };
+  }
+
+  const inputZip = (r.zip ?? '').replace(/\D/g, '').slice(0, 5);
+  const resZip = (addr?.postcode ?? '').replace(/\D/g, '').slice(0, 5);
+  if (inputZip && resZip && inputZip !== resZip) {
+    return { ok: false, reason: `ZIP mismatch (${inputZip} vs ${resZip})`, score: 0 };
+  }
+
+  const street = extractStreetParts(r.street_address);
+  const resHouse = norm(addr?.house_number);
+  if (street.houseNumber && resHouse && street.houseNumber !== resHouse) {
+    return { ok: false, reason: `house number mismatch (${street.houseNumber} vs ${resHouse})`, score: 0 };
+  }
+
+  const inputCity = norm(r.city);
+  const resCityRaw = resultCity(addr);
+  const resCity = norm(resCityRaw);
+  const cityMatch = !!inputCity && !!resCity && (inputCity === resCity || inputCity.includes(resCity) || resCity.includes(inputCity));
+
+  const inputCounty = norm(r.county).replace(/\s+county$/, '');
+  const resCounty = norm(addr?.county).replace(/\s+county$/, '');
+  const countyMatch = !!inputCounty && !!resCounty && inputCounty === resCounty;
+
+  if (inputCity && resCity && !cityMatch && !countyMatch) {
+    return { ok: false, reason: `city & county mismatch (${inputCity}/${inputCounty} vs ${resCity}/${resCounty})`, score: 0 };
+  }
+
+  const roadTokens = tokenizeStreet(street.road);
+  const resRoadTokens = tokenizeStreet(addr?.road);
+  const roadJaccard = jaccard(roadTokens, resRoadTokens);
+
+  const houseExactMatch = !!street.houseNumber && street.houseNumber === resHouse;
+
+  // Severe road mismatch: if neither the house number nor the road tokens
+  // line up, treat as wrong building even when city/zip happen to match.
+  if (!houseExactMatch && roadTokens.length > 0 && resRoadTokens.length > 0 && roadJaccard < 0.34) {
+    return { ok: false, reason: `street name mismatch (jaccard=${roadJaccard.toFixed(2)})`, score: 0 };
+  }
+
+  // If the input has a house number but the result has none and the road
+  // tokens don't overlap, we cannot verify it's the right building.
+  if (street.houseNumber && !resHouse && roadTokens.length > 0 && roadJaccard < 0.5) {
+    return { ok: false, reason: 'no house number on result and weak road match', score: 0 };
+  }
+
+  let score = 0;
+  score += 3; // state NV (passed)
+  if (cityMatch) score += 2;
+  if (countyMatch) score += 1;
+  if (inputZip && resZip && inputZip === resZip) score += 2;
+  if (houseExactMatch) score += 4;
+  if (roadJaccard >= 0.5) score += 2;
+  else if (roadJaccard >= 0.34) score += 1;
+  if (STREET_ALLOWED_CLASSES.has((hit.class ?? '').toLowerCase())) score += 2;
+  if ((hit.type ?? '').toLowerCase() === 'house' || (hit.type ?? '').toLowerCase() === 'building') score += 1;
+  score += Math.min(hit.importance ?? 0, 1);
+
+  return { ok: true, score };
+};
+
+/**
+ * Validate a Nominatim candidate for the city/county fallback strategy.
+ * Different acceptance: place/admin types are intentionally expected.
+ */
+const validateFallbackCandidate = (
+  r: GeocodeCandidate,
+  hit: NominatimResult,
+): ValidationResult => {
+  const addr = hit.address;
+
+  if (!resultStateIsNevada(addr)) {
+    return { ok: false, reason: 'state ≠ Nevada', score: 0 };
+  }
+
+  if (!isPlaceLevelClass(hit.class, hit.type) && !isStreetLevelClass(hit.class, hit.type)) {
+    return { ok: false, reason: `class/type not place-level (${hit.class}/${hit.type})`, score: 0 };
+  }
+
+  const inputCity = norm(r.city);
+  const resCity = norm(resultCity(addr) ?? hit.display_name?.split(',')[0]);
+  const inputCounty = norm(r.county).replace(/\s+county$/, '');
+  const resCounty = norm(addr?.county).replace(/\s+county$/, '');
+
+  const cityMatch = !!inputCity && !!resCity && (inputCity === resCity || resCity.includes(inputCity) || inputCity.includes(resCity));
+  const countyMatch = !!inputCounty && !!resCounty && inputCounty === resCounty;
+
+  if (!cityMatch && !countyMatch) {
+    return { ok: false, reason: `neither city nor county match (${inputCity}/${inputCounty} vs ${resCity}/${resCounty})`, score: 0 };
+  }
+
+  let score = 1;
+  if (cityMatch) score += 2;
+  if (countyMatch) score += 2;
+  score += Math.min(hit.importance ?? 0, 1);
+  return { ok: true, score };
+};
+
+const pickBestCandidate = (
+  hits: NominatimResult[],
+  validate: (h: NominatimResult) => ValidationResult,
+): { hit: NominatimResult; validation: ValidationResult } | null => {
+  let best: { hit: NominatimResult; validation: ValidationResult } | null = null;
+  for (const hit of hits) {
+    const v = validate(hit);
+    if (!v.ok) continue;
+    if (!best || v.score > best.validation.score) {
+      best = { hit, validation: v };
+    }
+  }
+  return best;
 };
 
 /**
@@ -123,7 +377,6 @@ export const stampGeocodeTag = (
   strategy: GeocodeStrategy,
   confidence: 'high' | 'low',
 ): string => {
-  // Strip any existing geocode tag (success or failure) wherever it sits.
   const base = (notes ?? '')
     .replace(/\[geocode:[^\]]+\]/gi, '')
     .replace(/[ \t]+\n/g, '\n')
@@ -140,8 +393,6 @@ export const parseGeocodeTag = (
   const m = notes.match(/\[geocode:([^|]+)\|([^|]+)\|([^\]]+)\]/i);
   if (!m) return null;
   const conf = m[2].toLowerCase();
-  // Collapse any legacy 'medium' tags to 'high' so the operator-facing
-  // model stays strictly high|low|none.
   const normalizedConf: 'high' | 'low' = conf === 'low' ? 'low' : 'high';
   return {
     strategy: m[1] as GeocodeStrategy,
@@ -166,30 +417,34 @@ export const isGeocodeFailed = (notes: string | null | undefined): boolean =>
 /**
  * Geocode a single record. Caller is responsible for persistence.
  * Returns the outcome (does NOT call the DB).
+ *
+ * Validation flow:
+ *  - Request limit=5, addressdetails=1, Nevada viewbox + bounded=1.
+ *  - Score every returned candidate against the source record.
+ *  - Pick the best valid candidate; if none pass validation → failed.
  */
 export const geocodeOne = async (r: GeocodeCandidate): Promise<GeocodeOutcome> => {
-  // Guard: must be mappable
   if (r.mappable === false) {
     return { id: r.id, status: 'skipped', reason: 'list-only (mappable=false)' };
   }
-  // Guard: never overwrite existing coords
   if (r.latitude != null && r.longitude != null) {
     return { id: r.id, status: 'skipped', reason: 'already has coordinates' };
   }
 
-  // Strategy 1 — full address
+  // Strategy 1 — full address, validated.
   const addrQ = buildAddressQuery(r);
   if (addrQ) {
-    const hit = await fetchNominatim(addrQ);
-    if (hit) {
-      const lat = parseFloat(hit.lat);
-      const lng = parseFloat(hit.lon);
+    const hits = await fetchNominatim(addrQ, { limit: 5, bounded: true });
+    const best = pickBestCandidate(hits, (h) => validateStreetCandidate(r, h));
+    if (best) {
+      const lat = parseFloat(best.hit.lat);
+      const lng = parseFloat(best.hit.lon);
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         return {
           id: r.id,
           status: 'geocoded',
           strategy: 'address_full',
-          confidence: scoreConfidence('address_full', hit),
+          confidence: 'high',
           latitude: lat,
           longitude: lng,
         };
@@ -197,19 +452,20 @@ export const geocodeOne = async (r: GeocodeCandidate): Promise<GeocodeOutcome> =
     }
   }
 
-  // Strategy 2 — city + county + state fallback
+  // Strategy 2 — city + county + state fallback, validated.
   const fbQ = buildFallbackQuery(r);
   if (fbQ) {
-    const hit = await fetchNominatim(fbQ);
-    if (hit) {
-      const lat = parseFloat(hit.lat);
-      const lng = parseFloat(hit.lon);
+    const hits = await fetchNominatim(fbQ, { limit: 5, bounded: true });
+    const best = pickBestCandidate(hits, (h) => validateFallbackCandidate(r, h));
+    if (best) {
+      const lat = parseFloat(best.hit.lat);
+      const lng = parseFloat(best.hit.lon);
       if (Number.isFinite(lat) && Number.isFinite(lng)) {
         return {
           id: r.id,
           status: 'geocoded',
           strategy: 'city_county_fallback',
-          confidence: scoreConfidence('city_county_fallback', hit),
+          confidence: 'low',
           latitude: lat,
           longitude: lng,
         };
@@ -217,7 +473,7 @@ export const geocodeOne = async (r: GeocodeCandidate): Promise<GeocodeOutcome> =
     }
   }
 
-  return { id: r.id, status: 'failed', reason: 'no geocoder match' };
+  return { id: r.id, status: 'failed', reason: 'no validated geocoder match' };
 };
 
 /**
@@ -234,7 +490,6 @@ export const geocodeMany = async (
     const outcome = await geocodeOne(r);
     outcomes.push(outcome);
     onProgress?.(i + 1, records.length, outcome);
-    // Throttle only when we actually hit the network
     if (outcome.status !== 'skipped' && i < records.length - 1) {
       await new Promise((resolve) => setTimeout(resolve, 1100));
     }
