@@ -94,6 +94,7 @@ const STAGING_COLS: StagingTableColumn[] = [
   { key: 'org', label: 'Organization' },
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
+  { key: 'geocode_confidence', label: 'Geocode', sortable: true },
   { key: 'caps', label: 'Capabilities' },
   { key: 'density', label: 'Site density', sortable: true },
 ];
