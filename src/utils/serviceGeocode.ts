@@ -61,8 +61,33 @@ const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 // (any two opposite corners). Pair with bounded=1 to make it a hard filter.
 const NV_VIEWBOX = '-120.0064,42.0022,-114.0396,35.0019';
 
+const normalizeQueryAddress = (street: string): string => {
+  // Strip secondary unit designators (suite, unit, apt, etc.)
+  let s = street
+    .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?|#)\s*[\w-]*/gi, '')
+    .trim();
+  // Normalize highway tokens
+  s = s
+    .replace(/\bU\.?S\.?-?\s*(\d+)\b/gi, 'US Highway $1')
+    .replace(/\bN\.?V\.?-?\s*(\d+)\b/gi, 'Nevada Route $1')
+    .replace(/\bS\.?R\.?-?\s*(\d+)\b/gi, 'Nevada Route $1')
+    .replace(/\bHwy\.?\b/gi, 'Highway');
+  // Normalize directional abbreviations to full word
+  s = s
+    .replace(/\bN\.\s+/gi, 'North ')
+    .replace(/\bS\.\s+/gi, 'South ')
+    .replace(/\bE\.\s+/gi, 'East ')
+    .replace(/\bW\.\s+/gi, 'West ')
+    .replace(/\bNE\.\s+/gi, 'Northeast ')
+    .replace(/\bNW\.\s+/gi, 'Northwest ')
+    .replace(/\bSE\.\s+/gi, 'Southeast ')
+    .replace(/\bSW\.\s+/gi, 'Southwest ');
+  // Collapse any double spaces left by stripping
+  return s.replace(/\s{2,}/g, ' ').trim();
+};
+
 const buildAddressQuery = (r: GeocodeCandidate): string | null => {
-  const parts = [r.street_address, r.city, r.state, r.zip].filter((p) => !!p && String(p).trim() !== '');
+  const parts = [normalizeQueryAddress(r.street_address ?? ''), r.city, r.state, r.zip].filter((p) => !!p && String(p).trim() !== '');
   if (parts.length < 2) return null;
   if (!r.street_address) return null;
   return parts.join(', ');
