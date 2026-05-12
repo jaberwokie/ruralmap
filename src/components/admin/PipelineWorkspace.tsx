@@ -170,7 +170,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
       if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * mult;
       return String(av).localeCompare(String(bv)) * mult;
     });
-  }, [stagingRows, reviewFilter, severityFilter, sort]);
+  }, [stagingRows, reviewFilter, severityFilter, geocodeFilter, sort]);
 
   // Drop selection ids that are no longer visible after filter changes.
   const visibleIds = useMemo(() => new Set(filteredStaging.map((r) => r.id)), [filteredStaging]);
