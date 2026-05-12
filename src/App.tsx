@@ -56,7 +56,7 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/public" element={<Index />} />
-                <Route path="/share" element={<Navigate to="/share.html" replace />} />
+                <Route path="/share" element={<ShareHardRedirect />} />
                 <Route path="/platform" element={<Platform />} />
                 <Route path="/briefing" element={<Briefing />} />
                 <Route path="/auth" element={<Auth />} />
