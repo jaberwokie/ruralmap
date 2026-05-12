@@ -83,6 +83,7 @@ const STAGING_COLS: StagingTableColumn[] = [
   { key: 'city', label: 'City' },
   { key: 'county', label: 'County' },
   { key: 'coords', label: 'Coords' },
+  { key: 'geocode_confidence', label: 'Geocode', sortable: true },
   { key: 'flags', label: 'Flags' },
   { key: 'source', label: 'Source' },
 ];
@@ -240,6 +241,22 @@ export default function AdminMappingServices() {
       city: r.city ?? '—',
       county: r.county ?? '—',
       coords: r.latitude != null && r.longitude != null ? `${r.latitude.toFixed(4)}, ${r.longitude.toFixed(4)}` : '—',
+      geocode_confidence: (() => {
+        const tag = parseGeocodeTag(r.access_notes);
+        if (isGeocodeFailed(r.access_notes)) {
+          return <span style={{ color: '#ef4444', fontWeight: 600 }}>● Failed</span>;
+        }
+        if (!tag) {
+          return <span style={{ color: '#9ca3af' }}>○ None</span>;
+        }
+        if (tag.confidence === 'high' && tag.strategy === 'address_full') {
+          return <span style={{ color: '#22c55e', fontWeight: 600 }}>● High</span>;
+        }
+        if (tag.strategy === 'census_onelineaddress') {
+          return <span style={{ color: '#f59e0b', fontWeight: 600 }}>● Census</span>;
+        }
+        return <span style={{ color: '#f59e0b', fontWeight: 600 }}>● Low</span>;
+      })(),
       flags: (
         <span className="inline-flex flex-wrap gap-1">
           {r.match_conflict ? (
