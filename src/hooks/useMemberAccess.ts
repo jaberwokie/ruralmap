@@ -178,7 +178,23 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         }
       }
 
-      // Both stages failed
+      // Stage 3 — Nominatim retry without strict bounding (highway/rural fallback)
+      const nominatimUnboundedUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}`;
+      const nominatimUnboundedRes = await fetch(nominatimUnboundedUrl);
+      if (nominatimUnboundedRes.ok) {
+        const nominatimUnboundedData = await nominatimUnboundedRes.json();
+        const hit = nominatimUnboundedData.find((r: { lat: string; lon: string }) => {
+          const lat = parseFloat(r.lat);
+          const lng = parseFloat(r.lon);
+          return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
+        });
+        if (hit) {
+          placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
+          return;
+        }
+      }
+
+      // All stages failed
       setGeocodeError('Address not found. Refine the address or click the map to place member location.');
       setManualPlacementMode(true);
     } catch {
