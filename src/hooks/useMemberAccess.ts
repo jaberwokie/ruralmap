@@ -132,6 +132,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       // Normalize input — strip suite/unit tokens before geocoding
       const normalized = address
         .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?|#)\s*[\w-]*/gi, '')
+        .replace(/\s+,/g, ',')
         .replace(/\s{2,}/g, ' ')
         .trim();
 
