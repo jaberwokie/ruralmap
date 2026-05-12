@@ -114,26 +114,29 @@ describe('active field coverage — radius isolation', () => {
 });
 
 describe('public mode — SSHP gating vs coverage geometry', () => {
-  it('?public=1 activates Public Safe Mode (single source of truth)', () => {
-    setSearch('');
+  it('/public route activates Public Safe Mode (single source of truth)', () => {
+    setPath('/');
     expect(isPublicSafeModeActive()).toBe(false);
 
-    setSearch('?public=1');
+    setPath('/public');
     expect(isPublicSafeModeActive()).toBe(true);
 
-    // Legacy alias must not silently activate public mode.
-    setSearch('?publicSafe=1');
+    // Legacy query-param activation must no longer trigger public mode.
+    const url = new URL(window.location.href);
+    url.pathname = '/';
+    url.search = '?public=1';
+    window.history.replaceState({}, '', url.toString());
     expect(isPublicSafeModeActive()).toBe(false);
   });
 
   it('public mode does not alter active coverage classification', () => {
-    setSearch('');
+    setPath('/');
     const baseHawthorne = isPointInActiveFieldCoverage(HAWTHORNE.lat, HAWTHORNE.lng);
     const baseCarson = isPointInActiveFieldCoverage(CARSON.lat, CARSON.lng);
     const baseOwnershipHawthorne = getEngagementOwnership('Mineral', HAWTHORNE).ownershipLabel;
     const baseOwnershipCarson = getEngagementOwnership('Carson City', CARSON).ownershipLabel;
 
-    setSearch('?public=1');
+    setPath('/public');
     expect(isPublicSafeModeActive()).toBe(true);
     expect(isPointInActiveFieldCoverage(HAWTHORNE.lat, HAWTHORNE.lng)).toBe(baseHawthorne);
     expect(isPointInActiveFieldCoverage(CARSON.lat, CARSON.lng)).toBe(baseCarson);
