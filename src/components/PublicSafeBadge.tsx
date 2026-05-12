@@ -1,6 +1,6 @@
 /**
  * Subtle chrome chip indicating that the current pageview is rendered in
- * publication-safe mode (`?public=1`). Non-interactive, low-contrast, and
+ * publication-safe mode (the `/public` route). Non-interactive, low-contrast, and
  * positioned to be visible in any screenshot of the operational environment
  * without competing with operational chrome.
  *
