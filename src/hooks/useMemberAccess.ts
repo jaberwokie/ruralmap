@@ -247,7 +247,15 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       }
 
       // All stages failed
-      setGeocodeError('Address not found. Refine the address or click the map to place member location.');
+      const isHighwayAddress = !!Object.keys(NV_HIGHWAY_ALIASES).find(alias =>
+        normalized.toLowerCase().includes(alias)
+      ) || /\b(hwy|highway|us-\d+|nv-\d+|sr-\d+|route\s+\d+)\b/i.test(normalized);
+
+      setGeocodeError(
+        isHighwayAddress
+          ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
+          : 'Address not found. Refine the address or click the map to place member location.'
+      );
       setManualPlacementMode(true);
     } catch {
       setGeocodeError('Address not found. Refine the address or click the map to place member location.');
