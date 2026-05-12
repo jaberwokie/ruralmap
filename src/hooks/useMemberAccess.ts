@@ -311,7 +311,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
 
       // Stage 5b — Hardcoded known unresolvable provider coordinates
       const inputTokensLower = inputNormalized.split(/\s+/);
-      console.log('[Stage5b debug]', { normalized, inputNormalized, inputTokensLower });
+      
       const knownMatch = KNOWN_PROVIDER_COORDINATES.find(entry =>
         entry.addressTokens.every(token => inputTokensLower.includes(token))
       );
