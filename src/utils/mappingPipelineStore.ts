@@ -24,7 +24,7 @@ import { controlledAppend, normalizeTags } from './serviceNormalize';
 import { isServiceCategory } from './serviceCategoryMap';
 import { isBHCategory } from './bhCategoryMap';
 import {
-  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure, spotCheckCoordinate,
+  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, spotCheckCoordinate,
   type GeocodeOutcome, type GeocodeRunSummary, type GeocodeCandidate,
 } from './serviceGeocode';
 import { parseBhAccessTags } from './bhAccessTags';
