@@ -24,13 +24,14 @@ import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 const CARSON = { lat: 39.16204, lng: -119.75747 };
 const HAWTHORNE = { lat: 38.5246, lng: -118.6256 };
 
-const setSearch = (search: string) => {
+const setPath = (pathname: string) => {
   const url = new URL(window.location.href);
-  url.search = search;
+  url.pathname = pathname || '/';
+  url.search = '';
   window.history.replaceState({}, '', url.toString());
 };
 
-afterEach(() => setSearch(''));
+afterEach(() => setPath('/'));
 
 describe('active field coverage — Hawthorne / Mineral', () => {
   it('is outside active coverage and resolves to Remote CHW Coverage', () => {
