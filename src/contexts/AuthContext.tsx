@@ -79,14 +79,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Public mode: ?public=1 forces a logged-out, read-only experience for shared links.
+    // Public mode: the `/public` route forces a logged-out, read-only experience for shared links.
     // Clears any cached session and skips hydration entirely.
     const isPublicMode = (() => {
       if (typeof window === 'undefined') return false;
       try {
         const path = window.location.pathname || '';
-        if (path === '/public' || path.startsWith('/public/')) return true;
-        return new URLSearchParams(window.location.search).get('public') === '1';
+        return path === '/public' || path.startsWith('/public/');
       } catch {
         return false;
       }
