@@ -15,8 +15,11 @@ const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/public";
 const emitPublicRouteHtml = (): Plugin => ({
   name: "emit-public-route-html",
   apply: "build",
+  configResolved(config) {
+    this.publicRouteOutDir = path.resolve(config.root, config.build.outDir);
+  },
   closeBundle() {
-    const distDir = path.resolve(__dirname, "dist");
+    const distDir = this.publicRouteOutDir ?? path.resolve(__dirname, "dist");
     const rootHtml = path.join(distDir, "index.html");
     if (!fs.existsSync(rootHtml)) return;
     let html = fs.readFileSync(rootHtml, "utf8");
@@ -47,6 +50,7 @@ const emitPublicRouteHtml = (): Plugin => ({
       fs.rmSync(publicRouteDir, { force: true });
     }
     fs.mkdirSync(publicRouteDir, { recursive: true });
+    fs.writeFileSync(path.join(distDir, "public.html"), html, "utf8");
     fs.writeFileSync(path.join(publicRouteDir, "index.html"), html, "utf8");
   },
 });
