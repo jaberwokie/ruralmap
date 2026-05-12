@@ -1,4 +1,20 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
+
+const ORIGIN = 'https://ruralmap.opsframe.io';
+const syncRouteCanonical = (pathname: string) => {
+  if (typeof document === 'undefined') return;
+  const path = pathname.replace(/\/+$/, '') || '/';
+  const canonicalPath = path === '/public' ? '/public' : '/';
+  const url = canonicalPath === '/' ? `${ORIGIN}/` : `${ORIGIN}${canonicalPath}`;
+  const set = (sel: string, attr: string) => {
+    const el = document.querySelector(sel);
+    if (el) el.setAttribute(attr, url);
+  };
+  set('link[rel="canonical"]', 'href');
+  set('meta[property="og:url"]', 'content');
+  set('meta[name="twitter:url"]', 'content');
+};
 import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
