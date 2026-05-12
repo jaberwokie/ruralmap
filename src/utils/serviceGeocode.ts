@@ -56,6 +56,7 @@ export type GeocodeCandidate = Pick<
 
 export const GEOCODE_TAG_PREFIX = '[geocode:';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+const CENSUS_GEOCODER_URL = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
 
 // Nevada bounding box (approx.). Nominatim viewbox format: lon1,lat1,lon2,lat2
 // (any two opposite corners). Pair with bounded=1 to make it a hard filter.
@@ -439,6 +440,31 @@ export const stampGeocodeFailure = (notes: string | null | undefined): string =>
 export const isGeocodeFailed = (notes: string | null | undefined): boolean =>
   !!notes && /\[geocode:failed\]/i.test(notes);
 
+const fetchCensusGeocode = async (
+  r: GeocodeCandidate,
+): Promise<{ lat: number; lng: number } | null> => {
+  try {
+    const q = [r.street_address, r.city, r.state, r.zip]
+      .filter((p) => p && String(p).trim() !== '')
+      .join(', ');
+    if (!q) return null;
+    const url = `${CENSUS_GEOCODER_URL}?address=${encodeURIComponent(q)}&benchmark=2020&format=json`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const match = data?.result?.addressMatches?.[0];
+    if (!match) return null;
+    const lat = match.coordinates?.y;
+    const lng = match.coordinates?.x;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    // Nevada bounding box check — reject if outside Nevada
+    if (lat < 35.0019 || lat > 42.0022 || lng < -120.0064 || lng > -114.0396) return null;
+    return { lat, lng };
+  } catch {
+    return null;
+  }
+};
+
 /**
  * Geocode a single record. Caller is responsible for persistence.
  * Returns the outcome (does NOT call the DB).
@@ -496,6 +522,19 @@ export const geocodeOne = async (r: GeocodeCandidate): Promise<GeocodeOutcome> =
         };
       }
     }
+  }
+
+  // Strategy 3 — Census Geocoder fallback for rural/highway/tribal addresses.
+  const censusResult = await fetchCensusGeocode(r);
+  if (censusResult) {
+    return {
+      id: r.id,
+      status: 'geocoded',
+      strategy: 'city_county_fallback',
+      confidence: 'low',
+      latitude: censusResult.lat,
+      longitude: censusResult.lng,
+    };
   }
 
   return { id: r.id, status: 'failed', reason: 'no validated geocoder match' };
