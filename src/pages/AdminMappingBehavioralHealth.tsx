@@ -326,7 +326,6 @@ export default function AdminMappingBehavioralHealth() {
 
     const targetIds = allRows
       .filter((r) => {
-        if (r.mappable === false) return false;
         if (r.review_status === 'rejected') return false;
         const tag = parseGeocodeTag(r.access_notes);
         if (!tag) return true;
