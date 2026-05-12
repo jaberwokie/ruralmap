@@ -405,6 +405,12 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
             <FilterChip active={severityFilter === 'all'} onClick={() => setSeverityFilter('all')}>Any severity</FilterChip>
             <FilterChip active={severityFilter === 'error'} onClick={() => setSeverityFilter('error')}>Errors</FilterChip>
             <FilterChip active={severityFilter === 'warning'} onClick={() => setSeverityFilter('warning')}>Warnings</FilterChip>
+            <span className="mx-1 h-3 w-px bg-border" />
+            <FilterChip active={geocodeFilter === 'all'} onClick={() => setGeocodeFilter('all')}>All geocodes</FilterChip>
+            <FilterChip active={geocodeFilter === 'high'} onClick={() => setGeocodeFilter('high')}>● High</FilterChip>
+            <FilterChip active={geocodeFilter === 'low'} onClick={() => setGeocodeFilter('low')}>● Low</FilterChip>
+            <FilterChip active={geocodeFilter === 'failed'} onClick={() => setGeocodeFilter('failed')}>● Failed</FilterChip>
+            <FilterChip active={geocodeFilter === 'none'} onClick={() => setGeocodeFilter('none')}>○ None</FilterChip>
           </div>
         </div>
 
