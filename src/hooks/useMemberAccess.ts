@@ -186,20 +186,29 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         }
       }
 
-      // Stage 2 — Census Geocoder fallback
-      const censusUrl = `https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?address=${encodeURIComponent(query)}&benchmark=2020&format=json`;
-      const censusRes = await fetch(censusUrl, { signal: AbortSignal.timeout(8000) });
-      if (censusRes.ok) {
-        const censusData = await censusRes.json();
-        const match = censusData?.result?.addressMatches?.[0];
-        if (match) {
-          const lat = match.coordinates?.y;
-          const lng = match.coordinates?.x;
-          if (Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng)) {
-            placeMember({ lat, lng, address: match.matchedAddress });
-            return;
+      // Stage 2 — Census Geocoder fallback (via Supabase Edge Function proxy to avoid CORS)
+      try {
+        const censusProxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/census-geocode`;
+        const censusRes = await fetch(censusProxyUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ address: query }),
+          signal: AbortSignal.timeout(8000),
+        });
+        if (censusRes.ok) {
+          const censusData = await censusRes.json();
+          const match = censusData?.result?.addressMatches?.[0];
+          if (match) {
+            const lat = match.coordinates?.y;
+            const lng = match.coordinates?.x;
+            if (Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng)) {
+              placeMember({ lat, lng, address: match.matchedAddress });
+              return;
+            }
           }
         }
+      } catch {
+        // Census proxy unavailable — continue to Stage 3
       }
 
       // Stage 3 — Nominatim retry without strict bounding (highway/rural fallback)
