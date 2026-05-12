@@ -56,7 +56,63 @@ export type GeocodeCandidate = Pick<
 
 export const GEOCODE_TAG_PREFIX = '[geocode:';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
+const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
 const CENSUS_GEOCODER_URL = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
+
+export const reverseGeocode = async (
+  lat: number,
+  lng: number,
+): Promise<{ road?: string; postcode?: string; state?: string } | null> => {
+  try {
+    const url = `${NOMINATIM_REVERSE_URL}?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      road: data?.address?.road,
+      postcode: data?.address?.postcode,
+      state: data?.address?.state,
+    };
+  } catch {
+    return null;
+  }
+};
+
+export const spotCheckCoordinate = async (
+  lat: number,
+  lng: number,
+  sourceZip: string | null | undefined,
+  sourceRoad: string | null | undefined,
+): Promise<{ passed: boolean; reason?: string }> => {
+  const result = await reverseGeocode(lat, lng);
+  if (!result) return { passed: true }; // Network failure — don't downgrade on timeout
+
+  // State check — must be Nevada
+  if (result.state && !result.state.toLowerCase().includes('nevada')) {
+    return { passed: false, reason: `reverse state mismatch: ${result.state}` };
+  }
+
+  // ZIP check — if both present, first 5 digits must match
+  const srcZip = (sourceZip ?? '').replace(/\D/g, '').slice(0, 5);
+  const revZip = (result.postcode ?? '').replace(/\D/g, '').slice(0, 5);
+  if (srcZip && revZip && srcZip !== revZip) {
+    return { passed: false, reason: `reverse ZIP mismatch: ${srcZip} vs ${revZip}` };
+  }
+
+  // Road check — if both present, at least one token must overlap
+  if (sourceRoad && result.road) {
+    const tokenize = (s: string) =>
+      s.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(Boolean);
+    const srcTokens = new Set(tokenize(sourceRoad));
+    const revTokens = tokenize(result.road);
+    const overlap = revTokens.some(t => srcTokens.has(t));
+    if (!overlap) {
+      return { passed: false, reason: `reverse road mismatch: "${sourceRoad}" vs "${result.road}"` };
+    }
+  }
+
+  return { passed: true };
+};
 
 // Nevada bounding box (approx.). Nominatim viewbox format: lon1,lat1,lon2,lat2
 // (any two opposite corners). Pair with bounded=1 to make it a hard filter.

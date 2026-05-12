@@ -24,7 +24,7 @@ import { controlledAppend, normalizeTags } from './serviceNormalize';
 import { isServiceCategory } from './serviceCategoryMap';
 import { isBHCategory } from './bhCategoryMap';
 import {
-  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure,
+  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure, spotCheckCoordinate,
   type GeocodeOutcome, type GeocodeRunSummary, type GeocodeCandidate,
 } from './serviceGeocode';
 import { parseBhAccessTags } from './bhAccessTags';
@@ -299,6 +299,19 @@ export const geocodeStagingServicesBulk = async (
         longitude: oc.longitude,
         access_notes: stampedNotes,
       } as Partial<StagingServiceRow>);
+      // Reverse geocode spot-check
+      const spotCheck = await spotCheckCoordinate(
+        oc.latitude,
+        oc.longitude,
+        row.zip,
+        row.street_address,
+      );
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await editServiceRecord('staging_services', row.id, {
+          access_notes: downgradedNotes,
+        } as Partial<StagingServiceRow>);
+      }
       await writeAudit({
         pipeline: 'services',
         action: 'record_edited',
@@ -310,6 +323,7 @@ export const geocodeStagingServicesBulk = async (
           confidence: publicConfidence,
           latitude: oc.latitude,
           longitude: oc.longitude,
+          spotCheck,
         },
       });
     } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
@@ -756,6 +770,19 @@ export const geocodeStagingBhBulk = async (
         longitude: oc.longitude,
         access_notes: stampedNotes,
       } as Partial<StagingBhRow>);
+      // Reverse geocode spot-check
+      const spotCheck = await spotCheckCoordinate(
+        oc.latitude,
+        oc.longitude,
+        row.zip,
+        row.street_address,
+      );
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await editBhRecord('staging_bh', row.id, {
+          access_notes: downgradedNotes,
+        } as Partial<StagingBhRow>);
+      }
       await writeAudit({
         pipeline: 'behavioral_health',
         action: 'record_edited',
@@ -767,6 +794,7 @@ export const geocodeStagingBhBulk = async (
           confidence: publicConfidence,
           latitude: oc.latitude,
           longitude: oc.longitude,
+          spotCheck,
         },
       });
     } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
