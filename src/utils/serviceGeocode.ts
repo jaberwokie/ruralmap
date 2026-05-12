@@ -452,7 +452,6 @@ const pickBestCandidate = (
  * own line so it never visually collides with human-written notes.
  *
  * Public confidence values written into the tag are strictly 'high' | 'low'.
- * (Failed lookups use `stampGeocodeFailure` and write a separate marker.)
  */
 export const stampGeocodeTag = (
   notes: string | null | undefined,
@@ -481,16 +480,6 @@ export const parseGeocodeTag = (
     confidence: normalizedConf,
     date: m[3],
   };
-};
-
-const FAILED_TAG = '[geocode:failed]';
-
-export const stampGeocodeFailure = (notes: string | null | undefined): string => {
-  const base = (notes ?? '')
-    .replace(/\[geocode:[^\]]+\]/gi, '')
-    .replace(/[ \t]+\n/g, '\n')
-    .trim();
-  return base.length > 0 ? `${base}\n${FAILED_TAG}` : FAILED_TAG;
 };
 
 export const isGeocodeFailed = (notes: string | null | undefined): boolean =>

@@ -25,7 +25,7 @@ import {
 } from '@/utils/importedFacilitiesStore';
 import { findProviderMatch } from '@/utils/providerMatchKey';
 import {
-  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, stampGeocodeFailure, spotCheckCoordinate,
+  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, spotCheckCoordinate,
   type GeocodeOutcome, type GeocodeRunSummary,
 } from '@/utils/serviceGeocode';
 import type { Facility, FacilityType } from '@/data/facilities';
