@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Facility } from '@/data/facilities';
+import { defaultFacilities } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
@@ -244,6 +245,25 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
             }
           }
         }
+      }
+
+      // Stage 5 — Known provider address lookup
+      const inputNormalized = normalized.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      const facilityMatch = defaultFacilities.find(f => {
+        if (!f.lat || !f.lng || !f.address) return false;
+        const facilityAddr = `${f.address} ${f.city} ${f.county}`.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+        const inputTokens = inputNormalized.split(/\s+/);
+        const facilityTokens = new Set(facilityAddr.split(/\s+/));
+        const matchCount = inputTokens.filter(t => t.length > 2 && facilityTokens.has(t)).length;
+        return matchCount >= 3;
+      });
+      if (facilityMatch) {
+        placeMember({
+          lat: facilityMatch.lat,
+          lng: facilityMatch.lng,
+          address: `${facilityMatch.address}, ${facilityMatch.city}, NV (matched from provider records)`,
+        });
+        return;
       }
 
       // All stages failed
