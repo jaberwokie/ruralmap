@@ -405,7 +405,7 @@ export const geocodeStagingProvidersBulk = async (
       }
 
       await writeAudit({
-        pipeline: 'providers',
+        pipeline: 'provider_mapping',
         action: 'record_edited',
         target_table: 'staging_providers',
         target_row_id: row.id,
@@ -424,7 +424,7 @@ export const geocodeStagingProvidersBulk = async (
         access_notes: stampedNotes,
       });
       await writeAudit({
-        pipeline: 'providers',
+        pipeline: 'provider_mapping',
         action: 'record_edited',
         target_table: 'staging_providers',
         target_row_id: row.id,
