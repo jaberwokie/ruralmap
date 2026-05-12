@@ -75,6 +75,15 @@ export interface UseMemberAccessReturn {
   setManualPlacementMode: (v: boolean) => void;
 }
 
+const NV_HIGHWAY_ALIASES: Record<string, string> = {
+  'schurz hwy': 'US-95',
+  'schurz highway': 'US-95',
+  'pyramid hwy': 'US-445',
+  'pyramid highway': 'US-445',
+  'winnemucca ranch rd': 'NV-796',
+  'battle mountain hwy': 'NV-305',
+};
+
 export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn => {
   const [memberLocation, setMemberLocation] = useState<MemberLocation | null>(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
@@ -191,6 +200,30 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         if (hit) {
           placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
           return;
+        }
+      }
+
+      // Stage 4 — Highway local-name alias retry
+      const lowerQuery = normalized.toLowerCase();
+      const aliasEntry = Object.entries(NV_HIGHWAY_ALIASES).find(([alias]) =>
+        lowerQuery.includes(alias)
+      );
+      if (aliasEntry) {
+        const [alias, canonical] = aliasEntry;
+        const aliasQuery = normalized.replace(new RegExp(alias, 'gi'), canonical);
+        const aliasUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(aliasQuery + ', Nevada')}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}`;
+        const aliasRes = await fetch(aliasUrl);
+        if (aliasRes.ok) {
+          const aliasData = await aliasRes.json();
+          const hit = aliasData.find((r: { lat: string; lon: string }) => {
+            const lat = parseFloat(r.lat);
+            const lng = parseFloat(r.lon);
+            return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
+          });
+          if (hit) {
+            placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
+            return;
+          }
         }
       }
 
