@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    emitPublicRouteHtml(),
+    
   ].filter(Boolean),
   define: {
     __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
