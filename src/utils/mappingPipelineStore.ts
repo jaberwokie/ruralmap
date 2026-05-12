@@ -312,8 +312,8 @@ export const geocodeStagingServicesBulk = async (
           longitude: oc.longitude,
         },
       });
-    } else if (oc.status === 'failed') {
-      const stampedNotes = stampGeocodeFailure(row.access_notes);
+    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
+      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
       await editServiceRecord('staging_services', row.id, {
         access_notes: stampedNotes,
       } as Partial<StagingServiceRow>);
