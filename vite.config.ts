@@ -1,61 +1,16 @@
-import { defineConfig, type Plugin } from "vite";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
-import fs from "fs";
 import { componentTagger } from "lovable-tagger";
 
-const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/public";
-
-let publicRouteOutDir = path.resolve(__dirname, "dist");
-
-/**
- * Emit a route-specific static HTML file at `dist/public` so that
- * crawlers (LinkedIn, Twitter, etc.) hitting `/public` receive a canonical /
- * og:url / twitter:url pointing at `/public` instead of inheriting the root
- * SPA fallback's canonical. Same SPA bootstrap; metadata is the only diff.
- */
-const emitPublicRouteHtml = (): Plugin => ({
-  name: "emit-public-route-html",
-  apply: "build",
-  configResolved(config) {
-    publicRouteOutDir = path.resolve(config.root, config.build.outDir);
-  },
-  closeBundle() {
-    const distDir = publicRouteOutDir;
-    const rootHtml = path.join(distDir, "index.html");
-    if (!fs.existsSync(rootHtml)) return;
-    let html = fs.readFileSync(rootHtml, "utf8");
-
-    // Rewrite canonical
-    html = html.replace(
-      /<link\s+rel="canonical"[^>]*>/i,
-      `<link rel="canonical" href="${PUBLIC_CANONICAL}" />`
-    );
-    // Rewrite og:url
-    html = html.replace(
-      /<meta\s+property="og:url"[^>]*>/i,
-      `<meta property="og:url" content="${PUBLIC_CANONICAL}" />`
-    );
-    // Rewrite twitter:url
-    html = html.replace(
-      /<meta\s+name="twitter:url"[^>]*>/i,
-      `<meta name="twitter:url" content="${PUBLIC_CANONICAL}" />`
-    );
-
-    // Emit dist/public/index.html so the static host serves it for `/public`
-    // requests. Do NOT delete the dist/public directory — Vite copies the
-    // source `public/` assets (data/, og-image.jpg, favicons, etc.) there and
-    // wiping it breaks runtime fetches and the OG image, which is what was
-    // causing `/public` to fail (500) for crawlers.
-    const publicRouteDir = path.join(distDir, "public");
-    if (fs.existsSync(publicRouteDir) && !fs.statSync(publicRouteDir).isDirectory()) {
-      fs.rmSync(publicRouteDir, { force: true });
-    }
-    fs.mkdirSync(publicRouteDir, { recursive: true });
-    fs.writeFileSync(path.join(distDir, "public.html"), html, "utf8");
-    fs.writeFileSync(path.join(publicRouteDir, "index.html"), html, "utf8");
-  },
-});
+// NOTE: Do NOT emit a static `dist/public.html` or `dist/public/index.html`
+// to try to override metadata for the `/public` route. Lovable's static host
+// treats a bare `dist/public` file as `application/octet-stream` (Safari
+// downloads it instead of rendering), and a `dist/public/` directory does
+// not auto-serve `index.html` for the extensionless `/public` URL. Lovable's
+// built-in SPA fallback already serves `index.html` (text/html, 200) for
+// `/public`, `/platform`, `/briefing`, etc. Per-route canonical/OG metadata
+// must be handled inside the React app at runtime, not via build artifacts.
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
