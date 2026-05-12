@@ -355,6 +355,16 @@ export default function AdminMappingProviders() {
       />
 
       <div className="mt-6">
+        <div className="mb-3 flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRevalidate}
+            title="Re-geocode failed, low-confidence, and stale records"
+          >
+            Re-validate Geocodes
+          </Button>
+        </div>
         <PipelineWorkspace
           title="Provider staging pipeline"
           purpose="CSV → staging_providers → validate → geocode → promote. Promoted rows are appended to the imported facilities store as Unverified."
