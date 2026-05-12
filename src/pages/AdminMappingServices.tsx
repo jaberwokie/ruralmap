@@ -278,6 +278,7 @@ export default function AdminMappingServices() {
       ),
       source: r.source_file_name ?? '—',
     },
+    };
   }), [staging]);
 
   const verifiedRows = useMemo(() => verified.map((r) => ({
