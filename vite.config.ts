@@ -6,6 +6,8 @@ import { componentTagger } from "lovable-tagger";
 
 const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/public";
 
+let publicRouteOutDir = path.resolve(__dirname, "dist");
+
 /**
  * Emit a route-specific static HTML file at `dist/public` so that
  * crawlers (LinkedIn, Twitter, etc.) hitting `/public` receive a canonical /
@@ -15,8 +17,11 @@ const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/public";
 const emitPublicRouteHtml = (): Plugin => ({
   name: "emit-public-route-html",
   apply: "build",
+  configResolved(config) {
+    publicRouteOutDir = path.resolve(config.root, config.build.outDir);
+  },
   closeBundle() {
-    const distDir = path.resolve(__dirname, "dist");
+    const distDir = publicRouteOutDir;
     const rootHtml = path.join(distDir, "index.html");
     if (!fs.existsSync(rootHtml)) return;
     let html = fs.readFileSync(rootHtml, "utf8");
@@ -47,6 +52,7 @@ const emitPublicRouteHtml = (): Plugin => ({
       fs.rmSync(publicRouteDir, { force: true });
     }
     fs.mkdirSync(publicRouteDir, { recursive: true });
+    fs.writeFileSync(path.join(distDir, "public.html"), html, "utf8");
     fs.writeFileSync(path.join(publicRouteDir, "index.html"), html, "utf8");
   },
 });
