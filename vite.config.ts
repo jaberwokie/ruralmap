@@ -1,7 +1,47 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import fs from "fs";
 import { componentTagger } from "lovable-tagger";
+
+const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/public";
+
+/**
+ * Emit a route-specific static HTML file at `dist/public/index.html` so that
+ * crawlers (LinkedIn, Twitter, etc.) hitting `/public` receive a canonical /
+ * og:url / twitter:url pointing at `/public` instead of inheriting the root
+ * SPA fallback's canonical. Same SPA bootstrap; metadata is the only diff.
+ */
+const emitPublicRouteHtml = (): Plugin => ({
+  name: "emit-public-route-html",
+  apply: "build",
+  closeBundle() {
+    const distDir = path.resolve(__dirname, "dist");
+    const rootHtml = path.join(distDir, "index.html");
+    if (!fs.existsSync(rootHtml)) return;
+    let html = fs.readFileSync(rootHtml, "utf8");
+
+    // Rewrite canonical
+    html = html.replace(
+      /<link\s+rel="canonical"[^>]*>/i,
+      `<link rel="canonical" href="${PUBLIC_CANONICAL}" />`
+    );
+    // Rewrite og:url
+    html = html.replace(
+      /<meta\s+property="og:url"[^>]*>/i,
+      `<meta property="og:url" content="${PUBLIC_CANONICAL}" />`
+    );
+    // Rewrite twitter:url
+    html = html.replace(
+      /<meta\s+name="twitter:url"[^>]*>/i,
+      `<meta name="twitter:url" content="${PUBLIC_CANONICAL}" />`
+    );
+
+    const outDir = path.join(distDir, "public");
+    fs.mkdirSync(outDir, { recursive: true });
+    fs.writeFileSync(path.join(outDir, "index.html"), html, "utf8");
+  },
+});
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -12,7 +52,11 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+    emitPublicRouteHtml(),
+  ].filter(Boolean),
   define: {
     __APP_BUILD_TIME__: JSON.stringify(new Date().toISOString()),
     __APP_VERSION__: JSON.stringify(process.env.VITE_APP_VERSION ?? ''),
