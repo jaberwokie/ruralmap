@@ -296,6 +296,36 @@ export default function AdminMappingServices() {
     },
   })), [verified]);
 
+  const handleRevalidate = async () => {
+    const allRows = await listStagingServices();
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+    const targetIds = allRows
+      .filter((r) => {
+        if (r.mappable === false) return false;
+        if (r.review_status === 'rejected') return false;
+        const tag = parseGeocodeTag(r.access_notes);
+        if (!tag) return true;
+        if (tag.confidence === 'low') return true;
+        if (isGeocodeFailed(r.access_notes)) return true;
+        const geocodeDate = new Date(tag.date);
+        if (geocodeDate < ninetyDaysAgo) return true;
+        return false;
+      })
+      .map((r) => r.id);
+
+    if (targetIds.length === 0) {
+      toast.info('No records need re-validation.');
+      return;
+    }
+
+    toast.info(`Re-validating ${targetIds.length} records…`);
+    const res = await geocodeStagingServicesBulk(targetIds);
+    toast.success(`Re-validation complete: ${res.geocoded} geocoded, ${res.failed} failed, ${res.skipped} skipped`);
+    await refresh();
+  };
+
   return (
     <AdminMappingLayout
       title="Service Mapping"
@@ -387,6 +417,17 @@ export default function AdminMappingServices() {
             </div>
           </div>
         ) : null}
+      </div>
+
+      <div className="mb-3 flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleRevalidate}
+          title="Re-geocode failed, low-confidence, and stale records"
+        >
+          Re-validate Geocodes
+        </Button>
       </div>
 
       <PipelineWorkspace
