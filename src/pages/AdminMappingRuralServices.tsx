@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
 import type { StagingTableRow } from '@/components/admin/PipelineWorkspace';
 import {
@@ -78,6 +79,7 @@ export default function AdminMappingRuralServices() {
   };
 
   return (
+    <AdminMappingLayout title="Rural Services Mapping" description="Manage rural community service records with geocode validation.">
     <PipelineWorkspace
       title="Rural Services Mapping"
       purpose="Manage rural community service records. These appear as community service pins on the map."
@@ -124,5 +126,6 @@ export default function AdminMappingRuralServices() {
       onRefresh={refresh}
       onGeocodeBulk={handleGeocodeBulk}
     />
+    </AdminMappingLayout>
   );
 }

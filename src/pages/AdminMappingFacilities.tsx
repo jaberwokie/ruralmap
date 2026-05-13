@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
+import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
 import type { StagingTableRow } from '@/components/admin/PipelineWorkspace';
 import {
@@ -78,6 +79,7 @@ export default function AdminMappingFacilities() {
   };
 
   return (
+    <AdminMappingLayout title="Facility Mapping" description="Manage hospital and clinic facility records with geocode validation.">
     <PipelineWorkspace
       title="Facility Mapping"
       purpose="Manage hospital and clinic facility records. These appear as provider pins on the map."
@@ -124,5 +126,6 @@ export default function AdminMappingFacilities() {
       onRefresh={refresh}
       onGeocodeBulk={handleGeocodeBulk}
     />
+    </AdminMappingLayout>
   );
 }
