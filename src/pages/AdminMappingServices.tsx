@@ -20,12 +20,13 @@ import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
   promoteStagingService, promoteStagingServicesBulk, rejectStagingService, deactivateVerifiedService,
   editServiceRecord, upsertStagingServicesControlled, writeHeaderResolutionAudit,
-  geocodeStagingServicesBulk,
+  geocodeStagingServicesBulk, geocodeFacilitiesBulk, geocodeRuralServicesBulk,
 } from '@/utils/mappingPipelineStore';
 import {
   parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
 } from '@/utils/mappingPipelineCsv';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
+import { supabase } from '@/integrations/supabase/client';
 import { seedFacilities, seedRuralServices } from '@/utils/seedStaticData';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
@@ -343,6 +344,26 @@ export default function AdminMappingServices() {
     }
   };
 
+  const handleGeocodeStaticData = async () => {
+    toast.info('Geocoding facilities and rural services — this will take several minutes…');
+    try {
+      const { data: facilityRows } = await supabase.from('facilities').select('id');
+      const { data: ruralRows } = await supabase.from('rural_services').select('id');
+      const facilityIds = (facilityRows ?? []).map(r => r.id);
+      const ruralIds = (ruralRows ?? []).map(r => r.id);
+
+      toast.info(`Geocoding ${facilityIds.length} facilities…`);
+      const facResult = await geocodeFacilitiesBulk(facilityIds);
+      toast.success(`Facilities: ${facResult.geocoded} geocoded, ${facResult.failed} failed, ${facResult.skipped} skipped`);
+
+      toast.info(`Geocoding ${ruralIds.length} rural services…`);
+      const ruralResult = await geocodeRuralServicesBulk(ruralIds);
+      toast.success(`Rural services: ${ruralResult.geocoded} geocoded, ${ruralResult.failed} failed, ${ruralResult.skipped} skipped`);
+    } catch (err) {
+      toast.error(`Geocode failed: ${String(err)}`);
+    }
+  };
+
   return (
     <AdminMappingLayout
       title="Service Mapping"
@@ -444,6 +465,14 @@ export default function AdminMappingServices() {
           title="One-time migration: seed facilities and rural services into database"
         >
           Seed Static Data → DB
+        </Button>
+        <Button
+          onClick={handleGeocodeStaticData}
+          variant="outline"
+          size="sm"
+          title="Geocode all facilities and rural services against validated pipeline"
+        >
+          Geocode Static Data
         </Button>
         <Button
           variant="outline"
