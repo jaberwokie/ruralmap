@@ -396,6 +396,11 @@ export default function AdminMappingServices() {
       }
 
       toast.success(`Rural services: ${totalGeocoded} geocoded, ${totalFailed} failed, ${totalSkipped} skipped`);
+    } catch (err) {
+      toast.error(`Geocode failed: ${String(err)}`);
+    }
+  };
+
   const handleGeocodeUnresolved = async () => {
     toast.info('Geocoding unresolved rural services…');
     try {
