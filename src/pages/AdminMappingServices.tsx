@@ -444,7 +444,8 @@ const handlePatchFailed = async () => {
     toast.success(`Patched ${result.patched} records successfully`);
   }
 };
-    <AdminMappingLayout
+
+  return (
       title="Service Mapping"
       description="Operational pipeline for non-clinical and community resource locations. Promoted records appear on the Services map layer."
     >
