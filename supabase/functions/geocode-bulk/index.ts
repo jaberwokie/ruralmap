@@ -19,7 +19,10 @@ const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
 const normalizeAddress = (street: string): string => {
   return street
-    .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?|#)\s*[\w-]*/gi, '')
+    // Strip suite/unit with optional # and alphanumeric identifier
+    .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?)\s*#?\s*[\w-]*/gi, '')
+    // Strip standalone # followed by identifier
+    .replace(/#\s*[\w-]+/g, '')
     .replace(/\s+,/g, ',')
     .replace(/\s{2,}/g, ' ')
     .trim();
