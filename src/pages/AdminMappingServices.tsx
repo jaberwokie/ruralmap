@@ -538,6 +538,14 @@ export default function AdminMappingServices() {
           Geocode Static Data
         </Button>
         <Button
+          onClick={handleGeocodeUnresolved}
+          variant="outline"
+          size="sm"
+          title="Geocode only rural services missing coordinates"
+        >
+          Geocode Unresolved
+        </Button>
+        <Button
           variant="outline"
           size="sm"
           onClick={handleRevalidate}
