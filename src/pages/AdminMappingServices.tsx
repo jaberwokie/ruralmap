@@ -345,39 +345,57 @@ export default function AdminMappingServices() {
   };
 
   const handleGeocodeStaticData = async () => {
-    toast.info('Starting server-side geocode — this will take several minutes…');
-
+    toast.info('Starting server-side geocode — running in batches…');
     try {
       const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
+      const BATCH_SIZE = 80;
 
       // Clear existing coordinates first
       const { data: facilityRows } = await supabase.from('facilities').select('id');
       const facilityIds = (facilityRows ?? []).map(r => r.id);
-
       await supabase.from('facilities').update({ lat: null, lng: null, access_notes: null }).in('id', facilityIds);
 
       const { data: ruralRows } = await supabase.from('rural_services').select('id');
       const ruralIds = (ruralRows ?? []).map(r => r.id);
-
       await supabase.from('rural_services').update({ lat: null, lng: null, access_notes: null }).in('id', ruralIds);
 
-      toast.info(`Geocoding ${facilityIds.length} facilities server-side…`);
+      // Geocode facilities (53 records — single batch)
+      toast.info(`Geocoding ${facilityIds.length} facilities…`);
       const facRes = await fetch(baseUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table: 'facilities' }),
+        body: JSON.stringify({ table: 'facilities', limit: BATCH_SIZE, offset: 0 }),
       });
       const facResult = await facRes.json();
       toast.success(`Facilities: ${facResult.geocoded} geocoded, ${facResult.failed} failed, ${facResult.skipped} skipped`);
 
-      toast.info(`Geocoding ${ruralIds.length} rural services server-side…`);
-      const ruralRes = await fetch(baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table: 'rural_services' }),
-      });
-      const ruralResult = await ruralRes.json();
-      toast.success(`Rural services: ${ruralResult.geocoded} geocoded, ${ruralResult.failed} failed, ${ruralResult.skipped} skipped`);
+      // Geocode rural services in batches
+      toast.info(`Geocoding ${ruralIds.length} rural services in batches…`);
+      let totalGeocoded = 0, totalFailed = 0, totalSkipped = 0;
+      let offset = 0;
+      let batchNum = 1;
+
+      while (true) {
+        toast.info(`Rural services batch ${batchNum}…`);
+        const ruralRes = await fetch(baseUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ table: 'rural_services', limit: BATCH_SIZE, offset }),
+        });
+        const ruralResult = await ruralRes.json();
+
+        totalGeocoded += ruralResult.geocoded ?? 0;
+        totalFailed += ruralResult.failed ?? 0;
+        totalSkipped += ruralResult.skipped ?? 0;
+
+        // If batch returned fewer than BATCH_SIZE records, we're done
+        if ((ruralResult.total ?? 0) < BATCH_SIZE) break;
+
+        offset += BATCH_SIZE;
+        batchNum++;
+      }
+
+      toast.success(`Rural services: ${totalGeocoded} geocoded, ${totalFailed} failed, ${totalSkipped} skipped`);
     } catch (err) {
       toast.error(`Geocode failed: ${String(err)}`);
     }
