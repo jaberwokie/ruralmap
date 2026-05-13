@@ -952,3 +952,55 @@ export const geocodeRuralServicesBulk = async (
 
   return summary;
 };
+
+// ── facilities ──────────────────────────────────────────────────────────
+export const listFacilities = async (): Promise<any[]> => {
+  const { data } = await supabase
+    .from('facilities')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return data ?? [];
+};
+
+export const editFacilityRecord = async (
+  id: string,
+  changes: Record<string, unknown>,
+): Promise<void> => {
+  await supabase
+    .from('facilities')
+    .update({ ...changes, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_edited',
+    target_table: 'facilities',
+    target_row_id: id,
+    details: changes,
+  });
+};
+
+// ── rural services ──────────────────────────────────────────────────────
+export const listRuralServices = async (): Promise<any[]> => {
+  const { data } = await supabase
+    .from('rural_services')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return data ?? [];
+};
+
+export const editRuralServiceRecord = async (
+  id: string,
+  changes: Record<string, unknown>,
+): Promise<void> => {
+  await supabase
+    .from('rural_services')
+    .update({ ...changes, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_edited',
+    target_table: 'rural_services',
+    target_row_id: id,
+    details: changes,
+  });
+};
