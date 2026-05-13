@@ -27,7 +27,7 @@ import {
 } from '@/utils/mappingPipelineCsv';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import { supabase } from '@/integrations/supabase/client';
-import { seedFacilities, seedRuralServices } from '@/utils/seedStaticData';
+import { seedFacilities, seedRuralServices, patchFailedCoordinates } from '@/utils/seedStaticData';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 import { SERVICE_CATEGORIES } from '@/utils/serviceCategoryMap';
@@ -434,6 +434,17 @@ const handleGeocodeUnresolved = async () => {
   }
 };
 
+const handlePatchFailed = async () => {
+  toast.info('Patching unresolvable records with verified coordinates…');
+  const result = await patchFailedCoordinates();
+  if (result.errors.length > 0) {
+    console.error('Patch errors:', result.errors);
+    toast.warning(`Patched ${result.patched} records with ${result.errors.length} errors — check console`);
+  } else {
+    toast.success(`Patched ${result.patched} records successfully`);
+  }
+};
+
   return (
     <AdminMappingLayout
       title="Service Mapping"
@@ -559,6 +570,14 @@ const handleGeocodeUnresolved = async () => {
           title="Re-geocode failed, low-confidence, and stale records"
         >
           Re-validate Geocodes
+        </Button>
+        <Button
+          onClick={handlePatchFailed}
+          variant="outline"
+          size="sm"
+          title="Write verified coordinates to the 7 unresolvable records"
+        >
+          Patch Failed Records
         </Button>
       </div>
 
