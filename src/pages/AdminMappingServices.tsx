@@ -467,6 +467,14 @@ export default function AdminMappingServices() {
           Seed Static Data → DB
         </Button>
         <Button
+          onClick={handleGeocodeStaticData}
+          variant="outline"
+          size="sm"
+          title="Geocode all facilities and rural services against validated pipeline"
+        >
+          Geocode Static Data
+        </Button>
+        <Button
           variant="outline"
           size="sm"
           onClick={handleRevalidate}
