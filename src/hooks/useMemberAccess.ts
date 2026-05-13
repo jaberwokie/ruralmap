@@ -3,6 +3,7 @@ import type { Facility } from '@/data/facilities';
 import { defaultFacilities } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
+import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 
 export interface MemberLocation {
@@ -105,7 +106,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
   const [geocodeError, setGeocodeError] = useState<string | null>(null);
   const [manualPlacementMode, setManualPlacementMode] = useState(false);
 
-  const allServices = enrichedRuralServices;
+  const { ruralServices: allServices } = useRuralServiceData();
 
   const analysis = useMemo<MemberAccessAnalysis | null>(() => {
     if (!memberLocation) return null;
