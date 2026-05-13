@@ -29,6 +29,8 @@ export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping/verification-queue', label: 'Verification Queue' },
   { to: '/admin/mapping/audit-history', label: 'Audit History' },
   { to: '/admin/mapping/import', label: 'Data Import' },
+  { to: '/admin/mapping/facilities', label: 'Facilities' },
+  { to: '/admin/mapping/rural-services', label: 'Rural Services' },
 ];
 
 interface AdminMappingLayoutProps {
