@@ -38,7 +38,7 @@ export interface PublicSafeMode {
   safeText: (text: string) => string;
 }
 
-let _unauthenticatedPublicSafe = false;
+let _unauthenticatedPublicSafe = true;
 
 /**
  * Called by AuthContext when auth state resolves.
