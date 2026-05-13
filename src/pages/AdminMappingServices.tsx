@@ -446,6 +446,7 @@ const handlePatchFailed = async () => {
 };
 
   return (
+    <AdminMappingLayout
       title="Service Mapping"
       description="Operational pipeline for non-clinical and community resource locations. Promoted records appear on the Services map layer."
     >
