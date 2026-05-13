@@ -165,6 +165,34 @@ export const patchFailedCoordinates = async (): Promise<{
       lng: -114.8580,
       note: 'Nevada Legal Services Ely — 725 Railroad St, Ely NV (city centroid — street not in OSM)',
     },
+    {
+      table: 'facilities',
+      id: 'h16',
+      lat: 38.0647,
+      lng: -117.2277,
+      note: 'Nye Regional Medical Center — 825 S Main St, Tonopah NV 89049 (verified GPS)',
+    },
+    {
+      table: 'facilities',
+      id: 'r7',
+      lat: 40.9600,
+      lng: -117.7100,
+      note: 'Nevada Health Centers Winnemucca — 3780 Morrisey Way, Winnemucca NV 89445 (city centroid)',
+    },
+    {
+      table: 'facilities',
+      id: 'r10',
+      lat: 39.4600,
+      lng: -118.7800,
+      note: 'New Frontier Fallon — 1685 Schurz Hwy, Fallon NV 89406 (known milepost address)',
+    },
+    {
+      table: 'facilities',
+      id: 'r11',
+      lat: 37.9380,
+      lng: -114.4510,
+      note: 'Lincoln County Community Health Nurse — 360 Lincoln St, Pioche NV 89043 (city centroid)',
+    },
   ];
 
   const now = new Date().toISOString().slice(0, 10);
