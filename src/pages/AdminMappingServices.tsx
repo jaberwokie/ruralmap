@@ -396,8 +396,29 @@ export default function AdminMappingServices() {
       }
 
       toast.success(`Rural services: ${totalGeocoded} geocoded, ${totalFailed} failed, ${totalSkipped} skipped`);
+  const handleGeocodeUnresolved = async () => {
+    toast.info('Geocoding unresolved rural services…');
+    try {
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
+      const { data: unresolved } = await supabase
+        .from('rural_services')
+        .select('id')
+        .is('lat', null);
+      const count = (unresolved ?? []).length;
+      if (count === 0) {
+        toast.info('No unresolved rural services found.');
+        return;
+      }
+      toast.info(`Found ${count} unresolved — geocoding now…`);
+      const res = await fetch(baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: 'rural_services', limit: 100, offset: 0 }),
+      });
+      const result = await res.json();
+      toast.success(`Done: ${result.geocoded} geocoded, ${result.failed} failed, ${result.skipped} skipped`);
     } catch (err) {
-      toast.error(`Geocode failed: ${String(err)}`);
+      toast.error(`Failed: ${String(err)}`);
     }
   };
 
