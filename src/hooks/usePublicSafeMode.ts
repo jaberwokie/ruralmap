@@ -38,6 +38,16 @@ export interface PublicSafeMode {
   safeText: (text: string) => string;
 }
 
+let _unauthenticatedPublicSafe = false;
+
+/**
+ * Called by AuthContext when auth state resolves.
+ * When true, forces public-safe mode for unauthenticated users regardless of route.
+ */
+export const setUnauthenticatedPublicSafe = (value: boolean): void => {
+  _unauthenticatedPublicSafe = value;
+};
+
 const readFlag = (): boolean => {
   if (typeof window === 'undefined') return false;
   try {
@@ -51,7 +61,7 @@ const readFlag = (): boolean => {
 export const usePublicSafeMode = (): PublicSafeMode => {
   // Re-evaluate on each render; effectively free and lets the flag flip
   // mid-session without a reload if a user appends it.
-  const isPublicSafe = readFlag();
+  const isPublicSafe = _unauthenticatedPublicSafe || readFlag();
 
   return useMemo<PublicSafeMode>(() => {
     const displayCount = (n: number | null | undefined): string => {
@@ -87,4 +97,7 @@ export const usePublicSafeMode = (): PublicSafeMode => {
  * Module-scope reader for non-React contexts (e.g., `App.tsx` root-level
  * components where hooks aren't convenient). Safe to call during render.
  */
-export const isPublicSafeModeActive = (): boolean => readFlag();
+export const isPublicSafeModeActive = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return _unauthenticatedPublicSafe || readFlag();
+};

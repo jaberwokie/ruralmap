@@ -16,7 +16,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
+import { isPublicSafeModeActive, setUnauthenticatedPublicSafe } from '@/hooks/usePublicSafeMode';
 
 export type AppRole = 'viewer' | 'staff' | 'admin';
 
@@ -101,6 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(null);
       setRole('viewer');
       setReady(true);
+      setUnauthenticatedPublicSafe(true);
       return;
     }
 
@@ -112,6 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const safeSession = expired ? null : nextSession;
 
       setSession(safeSession);
+      setUnauthenticatedPublicSafe(!safeSession?.user);
       if (safeSession?.user) {
         // Defer role fetch so we don't block the auth callback.
         setTimeout(() => { refreshRole(safeSession.user.id); }, 0);
@@ -130,9 +132,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(null);
         setRole('viewer');
         setReady(true);
+        setUnauthenticatedPublicSafe(true);
         return;
       }
       setSession(existing);
+      setUnauthenticatedPublicSafe(!existing?.user);
       if (existing?.user) {
         refreshRole(existing.user.id);
       }
