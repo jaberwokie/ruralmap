@@ -536,3 +536,17 @@
   fill-opacity: 1 !important;
 }
 
+/* iOS safe-area inset handling */
+.safe-area-top {
+  padding-top: max(env(safe-area-inset-top), 0px);
+}
+
+.safe-area-top-margin {
+  margin-top: max(env(safe-area-inset-top), 0px);
+}
+
+.safe-area-inset-top {
+  top: max(env(safe-area-inset-top), 0.5rem);
+}
+
+
