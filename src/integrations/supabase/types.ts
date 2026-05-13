@@ -27,6 +27,7 @@ export type Database = {
           inpatient: Json | null
           lat: number | null
           lng: number | null
+          mappable: boolean
           name: string
           notes: string | null
           operational: Json | null
@@ -56,6 +57,7 @@ export type Database = {
           inpatient?: Json | null
           lat?: number | null
           lng?: number | null
+          mappable?: boolean
           name: string
           notes?: string | null
           operational?: Json | null
@@ -85,6 +87,7 @@ export type Database = {
           inpatient?: Json | null
           lat?: number | null
           lng?: number | null
+          mappable?: boolean
           name?: string
           notes?: string | null
           operational?: Json | null
@@ -171,6 +174,7 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          mappable: boolean
           name: string
           notes: string | null
           operational: Json | null
@@ -197,6 +201,7 @@ export type Database = {
           id: string
           lat?: number | null
           lng?: number | null
+          mappable?: boolean
           name: string
           notes?: string | null
           operational?: Json | null
@@ -223,6 +228,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          mappable?: boolean
           name?: string
           notes?: string | null
           operational?: Json | null
