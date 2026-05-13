@@ -108,3 +108,83 @@ export const seedRuralServices = async (): Promise<{
 
   return results;
 };
+
+export const patchFailedCoordinates = async (): Promise<{
+  patched: number;
+  errors: string[];
+}> => {
+  const results = { patched: 0, errors: [] as string[] };
+
+  const patches = [
+    {
+      table: 'rural_services',
+      id: 'rs-45',
+      lat: 39.4738,
+      lng: -118.7798,
+      note: 'Fallon Youth Club — 324 Pennington Cir, Fallon NV (manual verification)',
+    },
+    {
+      table: 'rural_services',
+      id: 'rs-80',
+      lat: 40.7178,
+      lng: -116.1169,
+      note: 'Carlin Community Health Center — 310 Memory Lane, Carlin NV (Immunize Nevada verified)',
+    },
+    {
+      table: 'rural_services',
+      id: 'rs-112',
+      lat: 40.1794,
+      lng: -118.4730,
+      note: 'Frontier Community Coalition — 1005 W Broadway, Lovelock NV (address corrected E→W)',
+    },
+    {
+      table: 'rural_services',
+      id: 'rs-128',
+      lat: 39.4154,
+      lng: -119.2246,
+      note: 'Lyon County Human Services — 620 Lake Ave, Silver Springs NV (city centroid)',
+    },
+    {
+      table: 'rural_services',
+      id: 'rs-165',
+      lat: 40.1794,
+      lng: -118.4730,
+      note: 'Frontier Community Coalition Pershing — 1005 W Broadway, Lovelock NV (address corrected E→W)',
+    },
+    {
+      table: 'rural_services',
+      id: 'rs-166',
+      lat: 40.1794,
+      lng: -118.4730,
+      note: 'Frontier Community Coalition Family — 1005 W Broadway, Lovelock NV (address corrected E→W)',
+    },
+    {
+      table: 'rural_services',
+      id: 'rs-174',
+      lat: 39.2540,
+      lng: -114.8580,
+      note: 'Nevada Legal Services Ely — 725 Railroad St, Ely NV (city centroid — street not in OSM)',
+    },
+  ];
+
+  const now = new Date().toISOString().slice(0, 10);
+
+  for (const patch of patches) {
+    const { error } = await (supabase as any)
+      .from(patch.table)
+      .update({
+        lat: patch.lat,
+        lng: patch.lng,
+        access_notes: `[geocode:manual|low|${now}] ${patch.note}`,
+      })
+      .eq('id', patch.id);
+
+    if (error) {
+      results.errors.push(`${patch.id}: ${error.message}`);
+    } else {
+      results.patched++;
+    }
+  }
+
+  return results;
+};
