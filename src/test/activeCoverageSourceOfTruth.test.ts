@@ -18,7 +18,7 @@ import { isPointInsideActiveCoverageZone } from '@/utils/coverageZones';
 import { isPointInActiveFieldCoverage } from '@/utils/fieldCoverageStatus';
 import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
-import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
+import { isPublicSafeModeActive, setUnauthenticatedPublicSafe } from '@/hooks/usePublicSafeMode';
 
 // Hub anchors (mirrors src/data/fte-capacity.ts)
 const CARSON = { lat: 39.16204, lng: -119.75747 };
@@ -116,6 +116,7 @@ describe('active field coverage — radius isolation', () => {
 describe('public mode — SSHP gating vs coverage geometry', () => {
   it('/public route activates Public Safe Mode (single source of truth)', () => {
     setPath('/');
+    setUnauthenticatedPublicSafe(false);
     expect(isPublicSafeModeActive()).toBe(false);
 
     setPath('/public');
