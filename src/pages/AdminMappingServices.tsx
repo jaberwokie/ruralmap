@@ -26,6 +26,7 @@ import {
   parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
 } from '@/utils/mappingPipelineCsv';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
+import { seedFacilities, seedRuralServices } from '@/utils/seedStaticData';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 import { SERVICE_CATEGORIES } from '@/utils/serviceCategoryMap';
