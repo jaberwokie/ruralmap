@@ -111,5 +111,5 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     }
   }, [facilities]);
 
-  return { facilities, filteredFacilities, addFacilities };
+  return { facilities, filteredFacilities, addFacilities, dbLoaded };
 };
