@@ -57,7 +57,7 @@ export type GeocodeCandidate = Pick<
 export const GEOCODE_TAG_PREFIX = '[geocode:';
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const NOMINATIM_REVERSE_URL = 'https://nominatim.openstreetmap.org/reverse';
-const CENSUS_GEOCODER_URL = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
+const CENSUS_GEOCODER_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/census-geocode`;
 
 export const reverseGeocode = async (
   lat: number,
@@ -493,8 +493,12 @@ const fetchCensusGeocode = async (
       .filter((p) => p && String(p).trim() !== '')
       .join(', ');
     if (!q) return null;
-    const url = `${CENSUS_GEOCODER_URL}?address=${encodeURIComponent(q)}&benchmark=2020&format=json`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const res = await fetch(CENSUS_GEOCODER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ address: q }),
+      signal: AbortSignal.timeout(8000),
+    });
     if (!res.ok) return null;
     const data = await res.json();
     const match = data?.result?.addressMatches?.[0];
