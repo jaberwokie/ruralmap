@@ -98,6 +98,12 @@ const KNOWN_PROVIDER_COORDINATES: Array<{
     lng: -118.7800,
     label: '1685 Schurz Hwy, Fallon, NV 89406',
   },
+  {
+    addressTokens: ['mine', 'round', 'mountain'],
+    lat: 38.6943,
+    lng: -117.1614,
+    label: '1 Mine Rd, Round Mountain, NV (matched from provider records)',
+  },
 ];
 
 export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn => {
