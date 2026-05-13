@@ -14,6 +14,96 @@ export type Database = {
   }
   public: {
     Tables: {
+      facilities: {
+        Row: {
+          access_notes: string | null
+          access_type: string | null
+          city: string | null
+          classification: string | null
+          county: string | null
+          created_at: string
+          data_confidence: string | null
+          id: string
+          inpatient: Json | null
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          operational: Json | null
+          phone: string | null
+          psychiatric: Json | null
+          review_status: string
+          service: string | null
+          state: string | null
+          street_address: string | null
+          tier: string | null
+          type: string
+          updated_at: string
+          verification_status: string
+          volume: number | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          access_type?: string | null
+          city?: string | null
+          classification?: string | null
+          county?: string | null
+          created_at?: string
+          data_confidence?: string | null
+          id: string
+          inpatient?: Json | null
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          operational?: Json | null
+          phone?: string | null
+          psychiatric?: Json | null
+          review_status?: string
+          service?: string | null
+          state?: string | null
+          street_address?: string | null
+          tier?: string | null
+          type: string
+          updated_at?: string
+          verification_status?: string
+          volume?: number | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          access_type?: string | null
+          city?: string | null
+          classification?: string | null
+          county?: string | null
+          created_at?: string
+          data_confidence?: string | null
+          id?: string
+          inpatient?: Json | null
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          operational?: Json | null
+          phone?: string | null
+          psychiatric?: Json | null
+          review_status?: string
+          service?: string | null
+          state?: string | null
+          street_address?: string | null
+          tier?: string | null
+          type?: string
+          updated_at?: string
+          verification_status?: string
+          volume?: number | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       mapping_audit_log: {
         Row: {
           action: string
@@ -65,6 +155,87 @@ export type Database = {
         Update: {
           created_at?: string
           email?: string
+        }
+        Relationships: []
+      }
+      rural_services: {
+        Row: {
+          access_notes: string | null
+          bh_category_mapped: string | null
+          bh_entity_type: string | null
+          bh_service_type: string | null
+          category: string
+          city: string | null
+          county: string | null
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          notes: string | null
+          operational: Json | null
+          operational_service_class: string | null
+          phone: string | null
+          review_status: string
+          service_tags: string | null
+          state: string | null
+          street_address: string | null
+          updated_at: string
+          verification_status: string
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          bh_category_mapped?: string | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          category: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          id: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          notes?: string | null
+          operational?: Json | null
+          operational_service_class?: string | null
+          phone?: string | null
+          review_status?: string
+          service_tags?: string | null
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string
+          verification_status?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          bh_category_mapped?: string | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          category?: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          notes?: string | null
+          operational?: Json | null
+          operational_service_class?: string | null
+          phone?: string | null
+          review_status?: string
+          service_tags?: string | null
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string
+          verification_status?: string
+          website?: string | null
+          zip?: string | null
         }
         Relationships: []
       }
