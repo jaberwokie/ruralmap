@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag } from 'lucide-react';
+import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag, Building2, Home } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
 import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
@@ -167,6 +167,20 @@ export default function AdminMapping() {
           description="Unified ingestion intake — pick a type, see its schema, then upload."
           icon={<Upload className="h-4 w-4" />}
           pipelineKey="data_import"
+        />
+        <ToolCard
+          to="/admin/mapping/facilities"
+          title="Facility Mapping"
+          description="Manage hospital and clinic facility records with geocode validation."
+          icon={<Building2 className="h-4 w-4" />}
+          pipelineKey="facilities"
+        />
+        <ToolCard
+          to="/admin/mapping/rural-services"
+          title="Rural Services Mapping"
+          description="Manage rural community service records with geocode validation."
+          icon={<Home className="h-4 w-4" />}
+          pipelineKey="rural_services"
         />
       </div>
     </AdminMappingLayout>

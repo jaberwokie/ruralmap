@@ -21,6 +21,8 @@ import AdminMappingBehavioralHealth from "./pages/AdminMappingBehavioralHealth.t
 import AdminMappingVerificationQueue from "./pages/AdminMappingVerificationQueue.tsx";
 import AdminMappingAuditHistory from "./pages/AdminMappingAuditHistory.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
+import AdminMappingFacilities from "./pages/AdminMappingFacilities";
+import AdminMappingRuralServices from "./pages/AdminMappingRuralServices";
 import AdminTraining from "./pages/AdminTraining.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
@@ -84,6 +86,8 @@ const App = () => {
                 <Route path="/admin/mapping/verification-queue" element={<AdminMappingVerificationQueue />} />
                 <Route path="/admin/mapping/audit-history" element={<AdminMappingAuditHistory />} />
                 <Route path="/admin/mapping/import" element={<AdminMappingImport />} />
+                <Route path="/admin/mapping/facilities" element={<AdminMappingFacilities />} />
+                <Route path="/admin/mapping/rural-services" element={<AdminMappingRuralServices />} />
 
                 {/* Admin > Training (additive; rollback by removing this line and src/pages/AdminTraining.tsx + src/pages/admin-training/) */}
                 <Route path="/admin/training" element={<AdminTraining />} />

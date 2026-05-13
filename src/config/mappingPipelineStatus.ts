@@ -20,7 +20,9 @@ export type MappingPipelineKey =
   | 'behavioral_health'
   | 'verification_queue'
   | 'audit_history'
-  | 'data_import';
+  | 'data_import'
+  | 'facilities'
+  | 'rural_services';
 
 export interface MappingPipelineStatusEntry {
   status: MappingPipelineStatus;
@@ -58,6 +60,14 @@ export const MAPPING_PIPELINE_STATUS: Record<MappingPipelineKey, MappingPipeline
     label: 'ACTIVE',
   },
   data_import: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
+  facilities: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
+  rural_services: {
     status: 'active',
     label: 'ACTIVE',
   },
