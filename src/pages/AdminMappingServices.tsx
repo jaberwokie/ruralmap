@@ -20,7 +20,7 @@ import {
   insertStagingServices, listStagingServices, listVerifiedServices, listAudit,
   promoteStagingService, promoteStagingServicesBulk, rejectStagingService, deactivateVerifiedService,
   editServiceRecord, upsertStagingServicesControlled, writeHeaderResolutionAudit,
-  geocodeStagingServicesBulk,
+  geocodeStagingServicesBulk, geocodeFacilitiesBulk, geocodeRuralServicesBulk,
 } from '@/utils/mappingPipelineStore';
 import {
   parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
