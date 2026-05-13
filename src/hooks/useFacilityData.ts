@@ -10,6 +10,7 @@ import {
   getImportedFacilities,
   subscribeToImportedFacilities,
 } from '@/utils/importedFacilitiesStore';
+import { listFacilitiesFromDb } from '@/utils/staticDataStore';
 import type { Filters } from '@/types/filters';
 import {
   matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
@@ -21,17 +22,30 @@ export interface UseFacilityDataReturn {
   facilities: Facility[];
   filteredFacilities: Facility[];
   addFacilities: (newFacilities: Facility[]) => void;
+  dbLoaded: boolean;
 }
 
 export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
   const [importedFacilities, setImportedFacilities] = useState<Facility[]>(() => getImportedFacilities());
+  const [dbFacilities, setDbFacilities] = useState<Facility[]>([]);
+  const [dbLoaded, setDbLoaded] = useState(false);
 
   // Stay in sync with imports performed from any other route (e.g. /admin).
   useEffect(() => subscribeToImportedFacilities(() => setImportedFacilities(getImportedFacilities())), []);
 
+  useEffect(() => {
+    listFacilitiesFromDb().then((rows) => {
+      if (rows.length > 0) setDbFacilities(rows);
+      setDbLoaded(true);
+    });
+  }, []);
+
   const facilities = useMemo(
-    () => enrichFacilities([...defaultFacilities, ...importedFacilities]),
-    [importedFacilities],
+    () => {
+      const base = dbFacilities.length > 0 ? dbFacilities : defaultFacilities;
+      return enrichFacilities([...base, ...importedFacilities]);
+    },
+    [dbFacilities, importedFacilities],
   );
 
   const filteredFacilities = useMemo(() => {
@@ -97,5 +111,5 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     }
   }, [facilities]);
 
-  return { facilities, filteredFacilities, addFacilities };
+  return { facilities, filteredFacilities, addFacilities, dbLoaded };
 };
