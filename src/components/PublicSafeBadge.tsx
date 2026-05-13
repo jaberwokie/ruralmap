@@ -17,7 +17,7 @@ const PublicSafeBadge = () => {
   return (
     <div
       aria-label="Publication-safe operational view"
-      className="pointer-events-none fixed left-2 top-2 z-[1300] hidden select-none rounded-sm border border-border/40 bg-background/70 px-1.5 py-px text-[9px] font-normal tracking-normal text-muted-foreground/80 backdrop-blur-sm md:block"
+      className="pointer-events-none fixed left-2 safe-area-inset-top z-[1300] hidden select-none rounded-sm border border-border/40 bg-background/70 px-1.5 py-px text-[9px] font-normal tracking-normal text-muted-foreground/80 backdrop-blur-sm md:block"
     >
       Publication-safe operational view
     </div>

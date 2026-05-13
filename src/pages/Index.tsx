@@ -224,7 +224,7 @@ const Index = () => {
         panes (which can reach z-index 700+) so the Filters/Map toggle is
         never visually buried after auth resolves and the layout reflows.
       */}
-      <div className="md:hidden relative z-50 shrink-0 bg-card border-b border-border">
+      <div className="md:hidden relative z-50 shrink-0 bg-card border-b border-border safe-area-top">
         <div className="flex items-start justify-between px-3 pt-3 pb-2.5 gap-2">
           <div className="min-w-0 flex-1">
             <h1 className="text-sm font-semibold text-foreground tracking-tight leading-snug">Nevada Rural Access Operations</h1>
