@@ -327,6 +327,22 @@ export default function AdminMappingServices() {
     await refresh();
   };
 
+  const handleSeedStaticData = async () => {
+    toast.info('Seeding facilities and rural services into database…');
+    const [facResult, svcResult] = await Promise.all([
+      seedFacilities(),
+      seedRuralServices(),
+    ]);
+    const facMsg = `Facilities: ${facResult.inserted} inserted, ${facResult.errors.length} errors`;
+    const svcMsg = `Rural services: ${svcResult.inserted} inserted, ${svcResult.errors.length} errors`;
+    if (facResult.errors.length > 0 || svcResult.errors.length > 0) {
+      console.error('Seed errors:', [...facResult.errors, ...svcResult.errors]);
+      toast.warning(`Seed complete with errors — check console. ${facMsg}. ${svcMsg}.`);
+    } else {
+      toast.success(`Seed complete. ${facMsg}. ${svcMsg}.`);
+    }
+  };
+
   return (
     <AdminMappingLayout
       title="Service Mapping"
