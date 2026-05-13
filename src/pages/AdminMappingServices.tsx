@@ -436,7 +436,15 @@ export default function AdminMappingServices() {
         ) : null}
       </div>
 
-      <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex justify-end gap-2">
+        <Button
+          onClick={handleSeedStaticData}
+          variant="outline"
+          size="sm"
+          title="One-time migration: seed facilities and rural services into database"
+        >
+          Seed Static Data → DB
+        </Button>
         <Button
           variant="outline"
           size="sm"
