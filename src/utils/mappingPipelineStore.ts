@@ -814,3 +814,141 @@ export const geocodeStagingBhBulk = async (
 
   return summarizeGeocodeRun(outcomes);
 };
+
+export const geocodeFacilitiesBulk = async (
+  ids: string[],
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
+): Promise<GeocodeRunSummary> => {
+  const { data: allRows } = await supabase.from('facilities').select('*');
+  const byId = new Map((allRows ?? []).map((r) => [r.id, r] as const));
+  const targets = ids
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => ({
+      id: r.id,
+      mappable: r.mappable,
+      latitude: r.lat,
+      longitude: r.lng,
+      street_address: r.street_address,
+      city: r.city,
+      state: r.state,
+      zip: r.zip,
+      county: r.county,
+      access_notes: r.access_notes,
+    }));
+
+  const outcomes = await geocodeMany(targets, options?.onProgress);
+  const summary = summarizeGeocodeRun(outcomes);
+
+  for (let i = 0; i < outcomes.length; i++) {
+    const oc = outcomes[i];
+    const row = targets[i];
+    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
+      const publicConfidence: 'high' | 'low' =
+        oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      await supabase.from('facilities').update({
+        lat: oc.latitude,
+        lng: oc.longitude,
+        access_notes: stampedNotes,
+      }).eq('id', row.id);
+      const spotCheck = await spotCheckCoordinate(
+        oc.latitude, oc.longitude, row.zip, row.street_address,
+      );
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await supabase.from('facilities').update({ access_notes: downgradedNotes }).eq('id', row.id);
+      }
+      await writeAudit({
+        pipeline: 'provider_mapping',
+        action: 'record_edited',
+        target_table: 'facilities',
+        target_row_id: row.id,
+        details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck },
+      });
+    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
+      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
+      await supabase.from('facilities').update({ access_notes: stampedNotes }).eq('id', row.id);
+      await writeAudit({
+        pipeline: 'provider_mapping',
+        action: 'record_edited',
+        target_table: 'facilities',
+        target_row_id: row.id,
+        details: { geocode: true, status: 'none', reason: oc.reason },
+      });
+    }
+  }
+
+  return summary;
+};
+
+export const geocodeRuralServicesBulk = async (
+  ids: string[],
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
+): Promise<GeocodeRunSummary> => {
+  const { data: allRows } = await supabase.from('rural_services').select('*');
+  const byId = new Map((allRows ?? []).map((r) => [r.id, r] as const));
+  const targets = ids
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => ({
+      id: r.id,
+      mappable: r.mappable,
+      latitude: r.lat,
+      longitude: r.lng,
+      street_address: r.street_address,
+      city: r.city,
+      state: r.state,
+      zip: r.zip,
+      county: r.county,
+      access_notes: r.access_notes,
+    }));
+
+  const outcomes = await geocodeMany(targets, options?.onProgress);
+  const summary = summarizeGeocodeRun(outcomes);
+
+  for (let i = 0; i < outcomes.length; i++) {
+    const oc = outcomes[i];
+    const row = targets[i];
+    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
+      const publicConfidence: 'high' | 'low' =
+        oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      await supabase.from('rural_services').update({
+        lat: oc.latitude,
+        lng: oc.longitude,
+        access_notes: stampedNotes,
+      }).eq('id', row.id);
+      const spotCheck = await spotCheckCoordinate(
+        oc.latitude, oc.longitude, row.zip, row.street_address,
+      );
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await supabase.from('rural_services').update({ access_notes: downgradedNotes }).eq('id', row.id);
+      }
+      await writeAudit({
+        pipeline: 'provider_mapping',
+        action: 'record_edited',
+        target_table: 'rural_services',
+        target_row_id: row.id,
+        details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck },
+      });
+    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
+      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
+      await supabase.from('rural_services').update({ access_notes: stampedNotes }).eq('id', row.id);
+      await writeAudit({
+        pipeline: 'provider_mapping',
+        action: 'record_edited',
+        target_table: 'rural_services',
+        target_row_id: row.id,
+        details: { geocode: true, status: 'none', reason: oc.reason },
+      });
+    }
+  }
+
+  return summary;
+};
