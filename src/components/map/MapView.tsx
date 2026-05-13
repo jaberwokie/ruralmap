@@ -21,7 +21,7 @@ import centroid from '@turf/centroid';
 import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel } from '@/data/facilities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { enrichedRuralServices as _baseRuralServices } from '@/data/enriched-rural-services';
+import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { sameCounty } from '@/utils/countyNormalize';
@@ -488,6 +488,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
 const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistVisible = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true } }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
+  const { ruralServices: _baseRuralServices } = useRuralServiceData();
   const { isPublicSafe } = usePublicSafeMode();
   const mapRef = useRef<L.Map | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
