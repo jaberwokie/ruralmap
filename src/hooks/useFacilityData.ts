@@ -10,6 +10,7 @@ import {
   getImportedFacilities,
   subscribeToImportedFacilities,
 } from '@/utils/importedFacilitiesStore';
+import { listFacilitiesFromDb } from '@/utils/staticDataStore';
 import type { Filters } from '@/types/filters';
 import {
   matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
