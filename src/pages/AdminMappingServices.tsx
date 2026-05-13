@@ -26,6 +26,7 @@ import {
   parseCsvText, parseXlsxBuffer, csvToStagingService, resolveHeaders,
 } from '@/utils/mappingPipelineCsv';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
+import { seedFacilities, seedRuralServices } from '@/utils/seedStaticData';
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 import { SERVICE_CATEGORIES } from '@/utils/serviceCategoryMap';
@@ -326,6 +327,22 @@ export default function AdminMappingServices() {
     await refresh();
   };
 
+  const handleSeedStaticData = async () => {
+    toast.info('Seeding facilities and rural services into database…');
+    const [facResult, svcResult] = await Promise.all([
+      seedFacilities(),
+      seedRuralServices(),
+    ]);
+    const facMsg = `Facilities: ${facResult.inserted} inserted, ${facResult.errors.length} errors`;
+    const svcMsg = `Rural services: ${svcResult.inserted} inserted, ${svcResult.errors.length} errors`;
+    if (facResult.errors.length > 0 || svcResult.errors.length > 0) {
+      console.error('Seed errors:', [...facResult.errors, ...svcResult.errors]);
+      toast.warning(`Seed complete with errors — check console. ${facMsg}. ${svcMsg}.`);
+    } else {
+      toast.success(`Seed complete. ${facMsg}. ${svcMsg}.`);
+    }
+  };
+
   return (
     <AdminMappingLayout
       title="Service Mapping"
@@ -419,7 +436,15 @@ export default function AdminMappingServices() {
         ) : null}
       </div>
 
-      <div className="mb-3 flex justify-end">
+      <div className="mb-3 flex justify-end gap-2">
+        <Button
+          onClick={handleSeedStaticData}
+          variant="outline"
+          size="sm"
+          title="One-time migration: seed facilities and rural services into database"
+        >
+          Seed Static Data → DB
+        </Button>
         <Button
           variant="outline"
           size="sm"
