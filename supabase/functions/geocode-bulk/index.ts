@@ -95,7 +95,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { table } = await req.json();
+    const { table, limit = 80, offset = 0 } = await req.json();
     if (table !== 'facilities' && table !== 'rural_services') {
       return new Response(JSON.stringify({ error: 'invalid table' }), {
         status: 400,
@@ -103,8 +103,13 @@ serve(async (req) => {
       });
     }
 
-    const { data: rows } = await supabase.from(table).select('*');
-    const targets = (rows ?? []).filter((r: any) => r.lat == null && r.lng == null);
+    const { data: rows } = await supabase
+      .from(table)
+      .select('*')
+      .is('lat', null)
+      .is('lng', null)
+      .range(offset, offset + limit - 1);
+    const targets = rows ?? [];
 
     let geocoded = 0, failed = 0, skipped = 0;
 
@@ -138,7 +143,7 @@ serve(async (req) => {
       await delay(1100);
     }
 
-    return new Response(JSON.stringify({ geocoded, failed, skipped, total: targets.length }), {
+    return new Response(JSON.stringify({ geocoded, failed, skipped, total: targets.length, offset, limit }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err) {
