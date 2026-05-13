@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
+import type { StagingTableRow } from '@/components/admin/PipelineWorkspace';
 import {
   listFacilities,
   editFacilityRecord,
@@ -30,9 +31,11 @@ export default function AdminMappingFacilities() {
 
   useEffect(() => { refresh(); }, [refresh]);
 
-  const stagingRows = rows.map(r => {
+  const stagingRows: StagingTableRow[] = rows.map(r => {
     const tag = parseGeocodeTag(r.access_notes);
     const failed = isGeocodeFailed(r.access_notes);
+    const geocodeStatus: 'geocoded' | 'failed' | null = failed ? 'failed' : (r.lat != null ? 'geocoded' : null);
+    const geocodeConfidence: 'high' | 'low' | null = tag?.confidence ?? null;
     return {
       id: r.id,
       review_status: r.review_status ?? 'pending',
@@ -40,8 +43,8 @@ export default function AdminMappingFacilities() {
       validation_messages: [],
       mappable: r.mappable ?? true,
       has_coords: r.lat != null && r.lng != null,
-      geocode_status: failed ? 'failed' : (r.lat != null ? 'geocoded' : null),
-      geocode_confidence: tag?.confidence ?? null,
+      geocode_status: geocodeStatus,
+      geocode_confidence: geocodeConfidence,
       cells: {
         name: r.name,
         type: r.type,
@@ -92,7 +95,21 @@ export default function AdminMappingFacilities() {
         },
       ]}
       validationRules={['Name is required']}
-      template={{ filename: 'facilities_template.csv', headers: ['name', 'type', 'city', 'county', 'street_address', 'state', 'zip', 'phone', 'website'] }}
+      template={{
+        filename: 'facilities_template.csv',
+        headers: ['name', 'type', 'city', 'county', 'street_address', 'state', 'zip', 'phone', 'website'],
+        exampleRow: {
+          name: 'Battle Mountain General Hospital',
+          type: 'hospital',
+          city: 'Battle Mountain',
+          county: 'Lander',
+          street_address: '535 S Humboldt St',
+          state: 'NV',
+          zip: '89820',
+          phone: '775-635-2550',
+          website: 'https://battlemountaingeneral.com',
+        },
+      }}
       stagingColumns={STAGING_COLS}
       stagingRows={stagingRows}
       verifiedColumns={[]}
