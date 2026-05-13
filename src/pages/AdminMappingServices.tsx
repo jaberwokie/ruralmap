@@ -345,12 +345,28 @@ export default function AdminMappingServices() {
   };
 
   const handleGeocodeStaticData = async () => {
-    toast.info('Geocoding facilities and rural services — this will take several minutes…');
+    toast.info('Clearing existing coordinates and geocoding from scratch…');
+
     try {
+      // Clear coordinates on all facilities
       const { data: facilityRows } = await supabase.from('facilities').select('id');
-      const { data: ruralRows } = await supabase.from('rural_services').select('id');
       const facilityIds = (facilityRows ?? []).map(r => r.id);
+
+      await supabase.from('facilities').update({
+        lat: null,
+        lng: null,
+        access_notes: null,
+      }).in('id', facilityIds);
+
+      // Clear coordinates on all rural services
+      const { data: ruralRows } = await supabase.from('rural_services').select('id');
       const ruralIds = (ruralRows ?? []).map(r => r.id);
+
+      await supabase.from('rural_services').update({
+        lat: null,
+        lng: null,
+        access_notes: null,
+      }).in('id', ruralIds);
 
       toast.info(`Geocoding ${facilityIds.length} facilities…`);
       const facResult = await geocodeFacilitiesBulk(facilityIds);
