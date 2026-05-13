@@ -345,35 +345,38 @@ export default function AdminMappingServices() {
   };
 
   const handleGeocodeStaticData = async () => {
-    toast.info('Clearing existing coordinates and geocoding from scratch…');
+    toast.info('Starting server-side geocode — this will take several minutes…');
 
     try {
-      // Clear coordinates on all facilities
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
+
+      // Clear existing coordinates first
       const { data: facilityRows } = await supabase.from('facilities').select('id');
       const facilityIds = (facilityRows ?? []).map(r => r.id);
 
-      await supabase.from('facilities').update({
-        lat: null,
-        lng: null,
-        access_notes: null,
-      }).in('id', facilityIds);
+      await supabase.from('facilities').update({ lat: null, lng: null, access_notes: null }).in('id', facilityIds);
 
-      // Clear coordinates on all rural services
       const { data: ruralRows } = await supabase.from('rural_services').select('id');
       const ruralIds = (ruralRows ?? []).map(r => r.id);
 
-      await supabase.from('rural_services').update({
-        lat: null,
-        lng: null,
-        access_notes: null,
-      }).in('id', ruralIds);
+      await supabase.from('rural_services').update({ lat: null, lng: null, access_notes: null }).in('id', ruralIds);
 
-      toast.info(`Geocoding ${facilityIds.length} facilities…`);
-      const facResult = await geocodeFacilitiesBulk(facilityIds);
+      toast.info(`Geocoding ${facilityIds.length} facilities server-side…`);
+      const facRes = await fetch(baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: 'facilities' }),
+      });
+      const facResult = await facRes.json();
       toast.success(`Facilities: ${facResult.geocoded} geocoded, ${facResult.failed} failed, ${facResult.skipped} skipped`);
 
-      toast.info(`Geocoding ${ruralIds.length} rural services…`);
-      const ruralResult = await geocodeRuralServicesBulk(ruralIds);
+      toast.info(`Geocoding ${ruralIds.length} rural services server-side…`);
+      const ruralRes = await fetch(baseUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ table: 'rural_services' }),
+      });
+      const ruralResult = await ruralRes.json();
       toast.success(`Rural services: ${ruralResult.geocoded} geocoded, ${ruralResult.failed} failed, ${ruralResult.skipped} skipped`);
     } catch (err) {
       toast.error(`Geocode failed: ${String(err)}`);
