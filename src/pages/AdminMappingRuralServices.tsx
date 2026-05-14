@@ -3,12 +3,14 @@ import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
 import type { StagingTableRow } from '@/components/admin/PipelineWorkspace';
+import { Button } from '@/components/ui/button';
 import {
   listRuralServices,
   editRuralServiceRecord,
 } from '@/utils/mappingPipelineStore';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import { supabase } from '@/integrations/supabase/client';
+import { exportCsv } from '@/utils/csvExport';
 
 const STAGING_COLS = [
   { key: 'name', label: 'Name', sortable: true },
@@ -78,8 +80,60 @@ export default function AdminMappingRuralServices() {
     await refresh();
   };
 
+  const handleExport = () => {
+    if (rows.length === 0) return;
+    exportCsv(
+      rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        category: r.category ?? '',
+        city: r.city ?? '',
+        county: r.county ?? '',
+        street_address: r.street_address ?? '',
+        state: r.state ?? '',
+        zip: r.zip ?? '',
+        phone: r.phone ?? '',
+        website: r.website ?? '',
+        lat: r.lat ?? '',
+        lng: r.lng ?? '',
+        access_notes: r.access_notes ?? '',
+        review_status: r.review_status ?? '',
+        bh_category_mapped: r.bh_category_mapped ?? '',
+        bh_entity_type: r.bh_entity_type ?? '',
+        bh_service_type: r.bh_service_type ?? '',
+        service_tags: Array.isArray(r.service_tags) ? r.service_tags.join('|') : (r.service_tags ?? ''),
+        created_at: r.created_at ?? '',
+      })),
+      [
+        { key: 'id', header: 'id' },
+        { key: 'name', header: 'name' },
+        { key: 'category', header: 'category' },
+        { key: 'city', header: 'city' },
+        { key: 'county', header: 'county' },
+        { key: 'street_address', header: 'street_address' },
+        { key: 'state', header: 'state' },
+        { key: 'zip', header: 'zip' },
+        { key: 'phone', header: 'phone' },
+        { key: 'website', header: 'website' },
+        { key: 'lat', header: 'lat' },
+        { key: 'lng', header: 'lng' },
+        { key: 'access_notes', header: 'access_notes' },
+        { key: 'review_status', header: 'review_status' },
+        { key: 'bh_category_mapped', header: 'bh_category_mapped' },
+        { key: 'bh_entity_type', header: 'bh_entity_type' },
+        { key: 'bh_service_type', header: 'bh_service_type' },
+        { key: 'service_tags', header: 'service_tags' },
+        { key: 'created_at', header: 'created_at' },
+      ],
+      'rural_services_export.csv',
+    );
+  };
+
   return (
     <AdminMappingLayout title="Rural Services Mapping" description="Manage rural community service records with geocode validation.">
+    <div className="mb-3 flex justify-end">
+      <Button variant="outline" size="sm" onClick={handleExport}>Export CSV</Button>
+    </div>
     <PipelineWorkspace
       title="Rural Services Mapping"
       purpose="Manage rural community service records. These appear as community service pins on the map."
