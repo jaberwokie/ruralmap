@@ -163,9 +163,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isAuthenticated: !isPublicSafe && !!session?.user,
       isAdmin,
       isStaff,
-      // Currently only admins get write access. Staff can be granted later.
-      canImportData: isAdmin,
-      canApplyVerification: isAdmin,
+      // Staff can run pipeline (import + apply verification). Editing raw map records stays admin-only.
+      canImportData: isAdmin || isStaff,
+      canApplyVerification: isAdmin || isStaff,
       canEditMapData: isAdmin,
       signOut: async () => { await supabase.auth.signOut(); },
     };
