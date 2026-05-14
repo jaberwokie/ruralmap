@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag, Building2, Home } from 'lucide-react';
+import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag, Building2, Home, ScrollText } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
 import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
