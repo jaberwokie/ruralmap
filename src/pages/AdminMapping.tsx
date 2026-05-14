@@ -162,6 +162,13 @@ export default function AdminMapping() {
           pipelineKey="audit_history"
         />
         <ToolCard
+          to="/admin/mapping/pipeline-audit"
+          title="Pipeline Audit Log"
+          description="View all pipeline actions — uploads, promotions, rejections, geocode runs, and edits."
+          icon={<ScrollText className="h-4 w-4" />}
+          pipelineKey="pipeline_audit"
+        />
+        <ToolCard
           to="/admin/mapping/import"
           title="Data Import"
           description="Unified ingestion intake — pick a type, see its schema, then upload."
