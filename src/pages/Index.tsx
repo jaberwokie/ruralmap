@@ -28,7 +28,7 @@ import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useStaffingValidation } from '@/hooks/useStaffingValidation';
 import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
-import { enrichedRuralServices as _staticRuralServices } from '@/data/enriched-rural-services';
+import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
