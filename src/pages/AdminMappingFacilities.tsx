@@ -3,12 +3,14 @@ import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
 import type { StagingTableRow } from '@/components/admin/PipelineWorkspace';
+import { Button } from '@/components/ui/button';
 import {
   listFacilities,
   editFacilityRecord,
 } from '@/utils/mappingPipelineStore';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import { supabase } from '@/integrations/supabase/client';
+import { exportCsv } from '@/utils/csvExport';
 
 const STAGING_COLS = [
   { key: 'name', label: 'Name', sortable: true },
@@ -78,8 +80,52 @@ export default function AdminMappingFacilities() {
     await refresh();
   };
 
+  const handleExport = () => {
+    if (rows.length === 0) return;
+    exportCsv(
+      rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        type: r.type ?? '',
+        city: r.city ?? '',
+        county: r.county ?? '',
+        street_address: r.street_address ?? '',
+        state: r.state ?? '',
+        zip: r.zip ?? '',
+        phone: r.phone ?? '',
+        website: r.website ?? '',
+        lat: r.lat ?? '',
+        lng: r.lng ?? '',
+        access_notes: r.access_notes ?? '',
+        review_status: r.review_status ?? '',
+        created_at: r.created_at ?? '',
+      })),
+      [
+        { key: 'id', header: 'id' },
+        { key: 'name', header: 'name' },
+        { key: 'type', header: 'type' },
+        { key: 'city', header: 'city' },
+        { key: 'county', header: 'county' },
+        { key: 'street_address', header: 'street_address' },
+        { key: 'state', header: 'state' },
+        { key: 'zip', header: 'zip' },
+        { key: 'phone', header: 'phone' },
+        { key: 'website', header: 'website' },
+        { key: 'lat', header: 'lat' },
+        { key: 'lng', header: 'lng' },
+        { key: 'access_notes', header: 'access_notes' },
+        { key: 'review_status', header: 'review_status' },
+        { key: 'created_at', header: 'created_at' },
+      ],
+      'facilities_export.csv',
+    );
+  };
+
   return (
     <AdminMappingLayout title="Facility Mapping" description="Manage hospital and clinic facility records with geocode validation.">
+    <div className="mb-3 flex justify-end">
+      <Button variant="outline" size="sm" onClick={handleExport}>Export CSV</Button>
+    </div>
     <PipelineWorkspace
       title="Facility Mapping"
       purpose="Manage hospital and clinic facility records. These appear as provider pins on the map."
