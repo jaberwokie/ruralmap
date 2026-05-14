@@ -408,6 +408,7 @@ const Sidebar = ({
     onFocusBounds,
   },
 }: SidebarProps) => {
+  const { ruralServices } = useRuralServiceData();
   // Access Gaps requires at least one source layer that contributes to gap geometry.
   const hasAccessGapSources = layers.serviceLocations || layers.behavioralHealth;
   useEffect(() => {
