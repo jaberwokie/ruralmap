@@ -60,6 +60,10 @@ export const MAPPING_PIPELINE_STATUS: Record<MappingPipelineKey, MappingPipeline
     status: 'active',
     label: 'ACTIVE',
   },
+  pipeline_audit: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
   data_import: {
     status: 'active',
     label: 'ACTIVE',
