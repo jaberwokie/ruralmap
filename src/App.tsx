@@ -20,6 +20,7 @@ import AdminMappingServices from "./pages/AdminMappingServices.tsx";
 import AdminMappingBehavioralHealth from "./pages/AdminMappingBehavioralHealth.tsx";
 import AdminMappingVerificationQueue from "./pages/AdminMappingVerificationQueue.tsx";
 import AdminMappingAuditHistory from "./pages/AdminMappingAuditHistory.tsx";
+import AdminMappingPipelineAudit from "./pages/AdminMappingPipelineAudit.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
 import AdminMappingFacilities from "./pages/AdminMappingFacilities";
 import AdminMappingRuralServices from "./pages/AdminMappingRuralServices";
