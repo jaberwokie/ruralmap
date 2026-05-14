@@ -61,6 +61,7 @@ const Index = () => {
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
+  const { ruralServices: _staticRuralServices } = useRuralServiceData();
   const presentation = usePresentationMode();
   // Zone overlay visibility filters — temporary UI state, not persisted.
   // Affects only zone overlay rendering; never pin/cluster/calculation logic.
