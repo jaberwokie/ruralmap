@@ -20,6 +20,7 @@ export type MappingPipelineKey =
   | 'behavioral_health'
   | 'verification_queue'
   | 'audit_history'
+  | 'pipeline_audit'
   | 'data_import'
   | 'facilities'
   | 'rural_services';
@@ -56,6 +57,10 @@ export const MAPPING_PIPELINE_STATUS: Record<MappingPipelineKey, MappingPipeline
     label: 'ACTIVE',
   },
   audit_history: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
+  pipeline_audit: {
     status: 'active',
     label: 'ACTIVE',
   },

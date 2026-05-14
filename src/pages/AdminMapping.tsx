@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag, Building2, Home } from 'lucide-react';
+import { ArrowRight, Database, Brain, MapPin, ListChecks, History, Upload, Tag, Building2, Home, ScrollText } from 'lucide-react';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import { MappingStatusChip } from '@/components/admin/MappingStatusChip';
 import type { MappingPipelineKey } from '@/config/mappingPipelineStatus';
@@ -160,6 +160,13 @@ export default function AdminMapping() {
           description="Full history of verification actions and entity changes."
           icon={<History className="h-4 w-4" />}
           pipelineKey="audit_history"
+        />
+        <ToolCard
+          to="/admin/mapping/pipeline-audit"
+          title="Pipeline Audit Log"
+          description="View all pipeline actions — uploads, promotions, rejections, geocode runs, and edits."
+          icon={<ScrollText className="h-4 w-4" />}
+          pipelineKey="pipeline_audit"
         />
         <ToolCard
           to="/admin/mapping/import"
