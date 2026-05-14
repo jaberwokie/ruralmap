@@ -36,7 +36,7 @@ const ToolCard = ({ to, title, description, icon }: ToolCardProps) => (
 export default function AdminHome() {
   const perms = usePermissions();
 
-  if (perms.ready && !perms.isAdmin) {
+  if (perms.ready && !perms.isAdmin && !perms.isStaff) {
     return <Navigate to="/" replace />;
   }
 

@@ -43,7 +43,7 @@ export default function AdminMappingLayout({ title, description, children }: Adm
   const perms = usePermissions();
   const location = useLocation();
 
-  if (perms.ready && !perms.isAdmin) {
+  if (perms.ready && !perms.isAdmin && !perms.isStaff) {
     return <Navigate to="/" replace />;
   }
 
