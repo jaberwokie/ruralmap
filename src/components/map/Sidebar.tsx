@@ -13,7 +13,7 @@ import type { Filters } from '@/types/filters';
 import type { LayerState, EngagementGapView } from '@/types/layers';
 import type { ZoneFilters } from '@/types/zoneFilters';
 import { RURAL_SERVICE_CATEGORIES, type RuralService } from '@/data/rural-services';
-import { enrichedRuralServices as ruralServices } from '@/data/enriched-rural-services';
+import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { localTransitProviders, LOCAL_TRANSIT_SUPPORT_LEVEL_LABELS } from '@/data/local-transit-providers';
 import { isBehavioralHealthService, isCommunitySupportService } from '@/utils/ruralServiceClassification';
 import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
