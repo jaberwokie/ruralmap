@@ -28,7 +28,7 @@ import { useMemberAccess } from '@/hooks/useMemberAccess';
 import { usePresentationMode } from '@/hooks/usePresentationMode';
 import { useStaffingValidation } from '@/hooks/useStaffingValidation';
 import { useLiveVerifiedRecords } from '@/hooks/useLiveVerifiedRecords';
-import { enrichedRuralServices as _staticRuralServices } from '@/data/enriched-rural-services';
+import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { localTransitProviders, getProviderBounds } from '@/data/local-transit-providers';
 import type { MapEntity } from '@/types/entities';
 import type { Facility } from '@/data/facilities';
@@ -61,6 +61,7 @@ const Index = () => {
   const filters = useMapFilters();
   const facility = useFacilityData(filters.filters);
   const member = useMemberAccess(facility.facilities);
+  const { ruralServices: _staticRuralServices } = useRuralServiceData();
   const presentation = usePresentationMode();
   // Zone overlay visibility filters — temporary UI state, not persisted.
   // Affects only zone overlay rendering; never pin/cluster/calculation logic.
