@@ -23,7 +23,9 @@ export type MappingPipelineKey =
   | 'pipeline_audit'
   | 'data_import'
   | 'facilities'
-  | 'rural_services';
+  | 'rural_services'
+  | 'facility_staging'
+  | 'rural_services_staging';
 
 export interface MappingPipelineStatusEntry {
   status: MappingPipelineStatus;
@@ -73,6 +75,14 @@ export const MAPPING_PIPELINE_STATUS: Record<MappingPipelineKey, MappingPipeline
     label: 'ACTIVE',
   },
   rural_services: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
+  facility_staging: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
+  rural_services_staging: {
     status: 'active',
     label: 'ACTIVE',
   },

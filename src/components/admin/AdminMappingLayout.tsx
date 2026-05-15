@@ -26,12 +26,13 @@ export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping/provider-metadata', label: 'Provider Metadata' },
   { to: '/admin/mapping/services', label: 'Service Mapping' },
   { to: '/admin/mapping/behavioral-health', label: 'Behavioral Health' },
+  { to: '/admin/mapping/facilities-staging', label: 'Facility Staging' },
+  { to: '/admin/mapping/rural-services-staging', label: 'Rural Services Staging' },
   { to: '/admin/mapping/verification-queue', label: 'Verification Queue' },
-  { to: '/admin/mapping/audit-history', label: 'Audit History' },
-  { to: '/admin/mapping/pipeline-audit', label: 'Pipeline Audit' },
-  { to: '/admin/mapping/import', label: 'Data Import' },
-  { to: '/admin/mapping/facilities', label: 'Facilities' },
-  { to: '/admin/mapping/rural-services', label: 'Rural Services' },
+  { to: '/admin/mapping/audit-history', label: 'Verification Outreach Log' },
+  { to: '/admin/mapping/pipeline-audit', label: 'Data Pipeline Log' },
+  { to: '/admin/mapping/facilities', label: 'Facilities (Live)' },
+  { to: '/admin/mapping/rural-services', label: 'Rural Services (Live)' },
 ];
 
 interface AdminMappingLayoutProps {

@@ -116,79 +116,115 @@ export default function AdminMapping() {
       title="Mapping"
       description="All ingestion, mapping maintenance, verification, and audit workflows live here. The main map sidebar is read-only — every write action runs from this workspace."
     >
-      <div className="grid gap-2 sm:grid-cols-2">
-        <ToolCard
-          to="/admin/mapping/providers"
-          title="Provider Mapping"
-          description="Upload verified provider/facility locations using the verified_* schema."
-          icon={<MapPin className="h-4 w-4" />}
-          pipelineKey="provider_mapping"
-        />
-        <ToolCard
-          to="/admin/mapping/provider-metadata"
-          title="Provider Metadata Enrichment"
-          description="Attach imported/unverified metadata (phone, NPI, etc.) to existing providers. Never creates pins."
-          icon={<Tag className="h-4 w-4" />}
-          pipelineKey="provider_metadata"
-          footer={formatRelative(enrichmentActivity)}
-        />
-        <ToolCard
-          to="/admin/mapping/services"
-          title="Service Mapping"
-          description="Community service and resource locations for the Services map layer."
-          icon={<Database className="h-4 w-4" />}
-          pipelineKey="services"
-        />
-        <ToolCard
-          to="/admin/mapping/behavioral-health"
-          title="Behavioral Health Mapping"
-          description="BH locations and resources for the Behavioral Health map layer."
-          icon={<Brain className="h-4 w-4" />}
-          pipelineKey="behavioral_health"
-        />
-        <ToolCard
-          to="/admin/mapping/verification-queue"
-          title="Verification Priority Queue"
-          description="Outreach workflow, apply verification, and queue triage."
-          icon={<ListChecks className="h-4 w-4" />}
-          pipelineKey="verification_queue"
-          footer={formatRelative(verificationActivity)}
-        />
-        <ToolCard
-          to="/admin/mapping/audit-history"
-          title="Verification Audit History"
-          description="Full history of verification actions and entity changes."
-          icon={<History className="h-4 w-4" />}
-          pipelineKey="audit_history"
-        />
-        <ToolCard
-          to="/admin/mapping/pipeline-audit"
-          title="Pipeline Audit Log"
-          description="View all pipeline actions — uploads, promotions, rejections, geocode runs, and edits."
-          icon={<ScrollText className="h-4 w-4" />}
-          pipelineKey="pipeline_audit"
-        />
-        <ToolCard
-          to="/admin/mapping/import"
-          title="Data Import"
-          description="Unified ingestion intake — pick a type, see its schema, then upload."
-          icon={<Upload className="h-4 w-4" />}
-          pipelineKey="data_import"
-        />
-        <ToolCard
-          to="/admin/mapping/facilities"
-          title="Facility Mapping"
-          description="Manage hospital and clinic facility records with geocode validation."
-          icon={<Building2 className="h-4 w-4" />}
-          pipelineKey="facilities"
-        />
-        <ToolCard
-          to="/admin/mapping/rural-services"
-          title="Rural Services Mapping"
-          description="Manage rural community service records with geocode validation."
-          icon={<Home className="h-4 w-4" />}
-          pipelineKey="rural_services"
-        />
+      <div className="space-y-6">
+        <section>
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Staging Pipelines
+          </h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Records uploaded here must be promoted before they appear on the map.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <ToolCard
+              to="/admin/mapping/providers"
+              title="Provider Mapping"
+              description="Upload verified provider/facility locations using the verified_* schema."
+              icon={<MapPin className="h-4 w-4" />}
+              pipelineKey="provider_mapping"
+            />
+            <ToolCard
+              to="/admin/mapping/services"
+              title="Service Mapping"
+              description="Community service and resource locations for the Services map layer."
+              icon={<Database className="h-4 w-4" />}
+              pipelineKey="services"
+            />
+            <ToolCard
+              to="/admin/mapping/behavioral-health"
+              title="Behavioral Health Mapping"
+              description="BH locations and resources for the Behavioral Health map layer."
+              icon={<Brain className="h-4 w-4" />}
+              pipelineKey="behavioral_health"
+            />
+            <ToolCard
+              to="/admin/mapping/facilities-staging"
+              title="Facility Staging"
+              description="Stage hospital and clinic facility records before promoting to the live Facilities layer."
+              icon={<Building2 className="h-4 w-4" />}
+              pipelineKey="facility_staging"
+            />
+            <ToolCard
+              to="/admin/mapping/rural-services-staging"
+              title="Rural Services Staging"
+              description="Stage rural community service records before promoting to the live Rural Services layer."
+              icon={<Home className="h-4 w-4" />}
+              pipelineKey="rural_services_staging"
+            />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Live Data
+          </h2>
+          <p className="mb-3 text-xs text-muted-foreground">
+            Direct view of records currently rendered on the map.
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <ToolCard
+              to="/admin/mapping/facilities"
+              title="Facilities (Live)"
+              description="Hospital and clinic facility records currently shown on the map."
+              icon={<Building2 className="h-4 w-4" />}
+              pipelineKey="facilities"
+            />
+            <ToolCard
+              to="/admin/mapping/rural-services"
+              title="Rural Services (Live)"
+              description="Rural community service records currently shown on the map."
+              icon={<Home className="h-4 w-4" />}
+              pipelineKey="rural_services"
+            />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Audit & History
+          </h2>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <ToolCard
+              to="/admin/mapping/audit-history"
+              title="Verification Outreach Log"
+              description="Full history of verification actions and entity changes."
+              icon={<History className="h-4 w-4" />}
+              pipelineKey="audit_history"
+            />
+            <ToolCard
+              to="/admin/mapping/pipeline-audit"
+              title="Data Pipeline Log"
+              description="View all pipeline actions — uploads, promotions, rejections, geocode runs, and edits."
+              icon={<ScrollText className="h-4 w-4" />}
+              pipelineKey="pipeline_audit"
+            />
+            <ToolCard
+              to="/admin/mapping/provider-metadata"
+              title="Provider Metadata Enrichment"
+              description="Attach imported/unverified metadata (phone, NPI, etc.) to existing providers. Never creates pins."
+              icon={<Tag className="h-4 w-4" />}
+              pipelineKey="provider_metadata"
+              footer={formatRelative(enrichmentActivity)}
+            />
+            <ToolCard
+              to="/admin/mapping/verification-queue"
+              title="Verification Priority Queue"
+              description="Outreach workflow, apply verification, and queue triage."
+              icon={<ListChecks className="h-4 w-4" />}
+              pipelineKey="verification_queue"
+              footer={formatRelative(verificationActivity)}
+            />
+          </div>
+        </section>
       </div>
     </AdminMappingLayout>
   );

@@ -24,6 +24,8 @@ import AdminMappingPipelineAudit from "./pages/AdminMappingPipelineAudit.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
 import AdminMappingFacilities from "./pages/AdminMappingFacilities";
 import AdminMappingRuralServices from "./pages/AdminMappingRuralServices";
+import AdminMappingFacilitiesStaging from "./pages/AdminMappingFacilitiesStaging";
+import AdminMappingRuralServicesStaging from "./pages/AdminMappingRuralServicesStaging";
 import AdminTraining from "./pages/AdminTraining.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
@@ -90,6 +92,8 @@ const App = () => {
                 <Route path="/admin/mapping/import" element={<AdminMappingImport />} />
                 <Route path="/admin/mapping/facilities" element={<AdminMappingFacilities />} />
                 <Route path="/admin/mapping/rural-services" element={<AdminMappingRuralServices />} />
+                <Route path="/admin/mapping/facilities-staging" element={<AdminMappingFacilitiesStaging />} />
+                <Route path="/admin/mapping/rural-services-staging" element={<AdminMappingRuralServicesStaging />} />
 
                 {/* Admin > Training (additive; rollback by removing this line and src/pages/AdminTraining.tsx + src/pages/admin-training/) */}
                 <Route path="/admin/training" element={<AdminTraining />} />
