@@ -2678,7 +2678,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm, allFacilit
 
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-        <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+        <GapContextAlerts county={county} serviceCount={localServiceCount} />
         <div className="text-xs text-foreground/80 space-y-1">
           <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         </div>
