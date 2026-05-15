@@ -41,6 +41,14 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
     });
   }, []);
 
+  useEffect(() => {
+    return subscribeFacilitiesChanged(() => {
+      listFacilitiesFromDb().then((rows) => {
+        if (rows.length > 0) setDbFacilities(rows);
+      });
+    });
+  }, []);
+
   const facilities = useMemo(
     () => {
       const base = dbFacilities.length > 0 ? dbFacilities : defaultFacilities;

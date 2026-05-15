@@ -15,6 +15,14 @@ export const useRuralServiceData = () => {
     });
   }, []);
 
+  useEffect(() => {
+    return subscribeRuralServicesChanged(() => {
+      listRuralServicesFromDb().then((rows) => {
+        if (rows.length > 0) setDbServices(rows);
+      });
+    });
+  }, []);
+
   const ruralServices = dbServices.length > 0 ? dbServices : enrichedRuralServices;
 
   return { ruralServices, dbLoaded };
