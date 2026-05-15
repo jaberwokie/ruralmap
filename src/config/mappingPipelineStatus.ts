@@ -23,7 +23,9 @@ export type MappingPipelineKey =
   | 'pipeline_audit'
   | 'data_import'
   | 'facilities'
-  | 'rural_services';
+  | 'rural_services'
+  | 'facility_staging'
+  | 'rural_services_staging';
 
 export interface MappingPipelineStatusEntry {
   status: MappingPipelineStatus;
