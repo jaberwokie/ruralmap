@@ -416,6 +416,120 @@ export type Database = {
         }
         Relationships: []
       }
+      staging_facilities: {
+        Row: {
+          access_notes: string | null
+          access_type: string | null
+          city: string | null
+          classification: string | null
+          county: string | null
+          created_at: string
+          data_confidence: string | null
+          id: string
+          import_batch_id: string | null
+          inpatient: Json | null
+          last_reviewed_at: string | null
+          latitude: number | null
+          longitude: number | null
+          mappable: boolean
+          match_conflict: boolean
+          name: string
+          notes: string | null
+          operational: Json | null
+          phone: string | null
+          psychiatric: Json | null
+          review_status: string
+          service: string | null
+          source_file_name: string | null
+          source_row_number: number | null
+          state: string | null
+          street_address: string | null
+          tier: string | null
+          type: string
+          updated_at: string
+          validation_messages: Json
+          validation_severity: string | null
+          verification_status: string
+          volume: number | null
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          access_type?: string | null
+          city?: string | null
+          classification?: string | null
+          county?: string | null
+          created_at?: string
+          data_confidence?: string | null
+          id?: string
+          import_batch_id?: string | null
+          inpatient?: Json | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          mappable?: boolean
+          match_conflict?: boolean
+          name: string
+          notes?: string | null
+          operational?: Json | null
+          phone?: string | null
+          psychiatric?: Json | null
+          review_status?: string
+          service?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          tier?: string | null
+          type: string
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_status?: string
+          volume?: number | null
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          access_type?: string | null
+          city?: string | null
+          classification?: string | null
+          county?: string | null
+          created_at?: string
+          data_confidence?: string | null
+          id?: string
+          import_batch_id?: string | null
+          inpatient?: Json | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          mappable?: boolean
+          match_conflict?: boolean
+          name?: string
+          notes?: string | null
+          operational?: Json | null
+          phone?: string | null
+          psychiatric?: Json | null
+          review_status?: string
+          service?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          tier?: string | null
+          type?: string
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_status?: string
+          volume?: number | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
       staging_providers: {
         Row: {
           access_notes: string | null
@@ -498,6 +612,111 @@ export type Database = {
           updated_at?: string
           validation_messages?: Json
           validation_severity?: string | null
+          website?: string | null
+          zip?: string | null
+        }
+        Relationships: []
+      }
+      staging_rural_services: {
+        Row: {
+          access_notes: string | null
+          bh_category_mapped: string | null
+          bh_entity_type: string | null
+          bh_service_type: string | null
+          category: string
+          city: string | null
+          county: string | null
+          created_at: string
+          id: string
+          import_batch_id: string | null
+          last_reviewed_at: string | null
+          latitude: number | null
+          longitude: number | null
+          mappable: boolean
+          match_conflict: boolean
+          name: string
+          notes: string | null
+          operational: Json | null
+          operational_service_class: string | null
+          phone: string | null
+          review_status: string
+          service_tags: string | null
+          source_file_name: string | null
+          source_row_number: number | null
+          state: string | null
+          street_address: string | null
+          updated_at: string
+          validation_messages: Json
+          validation_severity: string | null
+          verification_status: string
+          website: string | null
+          zip: string | null
+        }
+        Insert: {
+          access_notes?: string | null
+          bh_category_mapped?: string | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          category: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          import_batch_id?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          mappable?: boolean
+          match_conflict?: boolean
+          name: string
+          notes?: string | null
+          operational?: Json | null
+          operational_service_class?: string | null
+          phone?: string | null
+          review_status?: string
+          service_tags?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_status?: string
+          website?: string | null
+          zip?: string | null
+        }
+        Update: {
+          access_notes?: string | null
+          bh_category_mapped?: string | null
+          bh_entity_type?: string | null
+          bh_service_type?: string | null
+          category?: string
+          city?: string | null
+          county?: string | null
+          created_at?: string
+          id?: string
+          import_batch_id?: string | null
+          last_reviewed_at?: string | null
+          latitude?: number | null
+          longitude?: number | null
+          mappable?: boolean
+          match_conflict?: boolean
+          name?: string
+          notes?: string | null
+          operational?: Json | null
+          operational_service_class?: string | null
+          phone?: string | null
+          review_status?: string
+          service_tags?: string | null
+          source_file_name?: string | null
+          source_row_number?: number | null
+          state?: string | null
+          street_address?: string | null
+          updated_at?: string
+          validation_messages?: Json
+          validation_severity?: string | null
+          verification_status?: string
           website?: string | null
           zip?: string | null
         }
