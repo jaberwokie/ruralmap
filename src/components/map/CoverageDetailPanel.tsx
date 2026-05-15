@@ -346,6 +346,7 @@ const FieldResponseStrainSection = ({
 const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, previousEntity, allFacilities, onFacilitySelect, onServiceSelect, liveServices }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
+  const countyServiceCount = useMemo(() => buildCountyServiceCount(liveServices), [liveServices]);
 
   useEffect(() => {
     if (!isLocked) return;
