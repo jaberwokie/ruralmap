@@ -918,7 +918,7 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         {/* ── Access Reality ── */}
         {(() => {
-          const countyFacs = defaultFacilities.filter(f => f.county === county);
+          const countyFacs = (allFacilities ?? []).filter(f => f.county === county);
           const hasInPerson = countyFacs.some(f => f.type === 'hospital' || f.type === 'clinic');
 
           // Nearest in-person care logic
