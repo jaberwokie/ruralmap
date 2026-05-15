@@ -1553,23 +1553,23 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
 
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
-          <UtilizationEngagementSection county={county} />
+          <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
 
       <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
-        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} countyServiceCount={countyServiceCount} />
       </DetailSection>
 
       {hasLocalResources && (() => {
-        // Live-merged count for this county (falls back to static baseline).
+        // Live-merged count for this county (falls back to baseline map).
         const liveCount = liveServices
           ? liveServices.filter((s) => sameCounty(s.county, county)).length
-          : (COUNTY_SERVICE_COUNT.get(county) ?? 0);
+          : (countyServiceCount.get(county) ?? 0);
         return (
           <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
-            <LocalResourcesSection county={county} services={liveServices} onServiceSelect={onServiceSelect} />
+            <LocalResourcesSection county={county} services={liveServices} liveServices={liveServices} onServiceSelect={onServiceSelect} />
           </DetailSection>
         );
       })()}
