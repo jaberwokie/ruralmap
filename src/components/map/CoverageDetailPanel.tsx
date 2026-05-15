@@ -1734,7 +1734,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
 
       {/* Psychiatric & Inpatient County Summary */}
       {(() => {
-        const countyFacs = defaultFacilities.filter(fac => fac.county === county);
+        const countyFacs = (allFacilities ?? []).filter(fac => fac.county === county);
         const hasHospital = countyHasHospital(county);
         const psychProviders = countyFacs.filter(fac => {
           const p = fac.psychiatric;
