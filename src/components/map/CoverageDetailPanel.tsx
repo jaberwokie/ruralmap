@@ -2692,7 +2692,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm, allFacilit
 
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
-          <UtilizationEngagementSection county={county} />
+          <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
