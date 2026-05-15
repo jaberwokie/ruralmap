@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { subscribeRuralServicesChanged } from '@/utils/verifiedRecordsBus';
 import { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { listRuralServicesFromDb } from '@/utils/staticDataStore';
@@ -11,6 +12,14 @@ export const useRuralServiceData = () => {
     listRuralServicesFromDb().then((rows) => {
       if (rows.length > 0) setDbServices(rows);
       setDbLoaded(true);
+    });
+  }, []);
+
+  useEffect(() => {
+    return subscribeRuralServicesChanged(() => {
+      listRuralServicesFromDb().then((rows) => {
+        if (rows.length > 0) setDbServices(rows);
+      });
     });
   }, []);
 
