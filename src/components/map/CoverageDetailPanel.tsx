@@ -793,7 +793,7 @@ const NBHRoutingSection = ({ county, coverageRadiusKm, countyServiceCount }: { c
 };
 
 // ── Utilization & Engagement Section (county-level) ──
-const UtilizationEngagementSection = ({ county }: { county: string }) => {
+const UtilizationEngagementSection = ({ county, allFacilities }: { county: string; allFacilities?: Facility[] }) => {
   const util = getCountyUtilization(county);
   if (util.activeProviderCount === 0 && util.totalVisits === 0) return null;
 
