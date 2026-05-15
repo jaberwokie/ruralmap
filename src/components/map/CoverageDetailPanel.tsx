@@ -666,9 +666,9 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
 // ActionStep extracted to ./detail/SharedDetailParts.
 
 // ── NBH Routing ──
-const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+const NBHRoutingSection = ({ county, coverageRadiusKm, countyServiceCount }: { county: string; coverageRadiusKm: number; countyServiceCount: Map<string, number> }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
-  const serviceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const serviceCount = countyServiceCount.get(county) ?? 0;
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
 
