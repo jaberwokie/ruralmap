@@ -1002,5 +1002,281 @@ export const editRuralServiceRecord = async (
     target_table: 'rural_services',
     target_row_id: id,
     details: changes,
+};
+
+// ── staging_facilities ──────────────────────────────────────────────────────
+
+export const listStagingFacilities = async (): Promise<any[]> => {
+  const { data } = await supabase
+    .from('staging_facilities')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return (data ?? []).map((r) => ({
+    ...r,
+    validation_messages: (r.validation_messages ?? []) as ValidationMessage[],
+  }));
+};
+
+export const editStagingFacilityRecord = async (
+  id: string,
+  changes: Record<string, unknown>,
+): Promise<void> => {
+  await supabase
+    .from('staging_facilities')
+    .update({ ...changes, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_edited',
+    target_table: 'staging_facilities',
+    target_row_id: id,
+    details: changes,
   });
+};
+
+export const rejectStagingFacility = async (id: string): Promise<void> => {
+  await supabase
+    .from('staging_facilities')
+    .update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id);
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_rejected',
+    target_table: 'staging_facilities',
+    target_row_id: id,
+    details: {},
+  });
+};
+
+export const promoteStagingFacility = async (id: string): Promise<void> => {
+  const { data: stg, error } = await supabase
+    .from('staging_facilities')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error || !stg) throw new Error('Staging facility not found');
+  if (stg.validation_severity === 'error') throw new Error('Cannot promote record with validation errors');
+  if (!stg.name || !stg.type) throw new Error('Name and type are required before promotion');
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Map latitude/longitude back to lat/lng for the live table
+  const { id: _id, validation_severity, validation_messages, source_file_name,
+    source_row_number, import_batch_id, last_reviewed_at, match_conflict,
+    created_at, updated_at, latitude, longitude, ...rest } = stg;
+
+  await supabase.from('facilities').upsert({
+    ...rest,
+    lat: latitude,
+    lng: longitude,
+    review_status: 'approved',
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' });
+
+  await supabase
+    .from('staging_facilities')
+    .update({ review_status: 'approved', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id);
+
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_promoted',
+    target_table: 'facilities',
+    target_row_id: id,
+    details: { name: stg.name, type: stg.type },
+  });
+
+  notifyFacilitiesChanged();
+};
+
+export const promoteStagingFacilitiesBulk = async (ids: string[]): Promise<void> => {
+  for (const id of ids) {
+    try { await promoteStagingFacility(id); } catch { /* skip failed */ }
+  }
+};
+
+export const geocodeStagingFacilitiesBulk = async (
+  ids: string[],
+  options?: { onProgress?: (done: number, total: number, last: GeocodeOutcome) => void },
+): Promise<GeocodeRunSummary> => {
+  const allRows = await listStagingFacilities();
+  const byId = new Map(allRows.map((r) => [r.id, r] as const));
+  const targets = ids
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => ({
+      id: r.id,
+      mappable: r.mappable,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      street_address: r.street_address,
+      city: r.city,
+      state: r.state,
+      zip: r.zip,
+      county: r.county,
+      access_notes: r.access_notes,
+    }));
+
+  const outcomes = await geocodeMany(targets, options?.onProgress);
+  const summary = summarizeGeocodeRun(outcomes);
+
+  for (let i = 0; i < outcomes.length; i++) {
+    const oc = outcomes[i];
+    const row = targets[i];
+    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
+      const publicConfidence: 'high' | 'low' = oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      await supabase.from('staging_facilities').update({
+        latitude: oc.latitude, longitude: oc.longitude, access_notes: stampedNotes,
+      }).eq('id', row.id);
+      const spotCheck = await spotCheckCoordinate(oc.latitude, oc.longitude, row.zip, row.street_address);
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await supabase.from('staging_facilities').update({ access_notes: downgradedNotes }).eq('id', row.id);
+      }
+      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
+    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
+      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
+      await supabase.from('staging_facilities').update({ access_notes: stampedNotes }).eq('id', row.id);
+      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
+    }
+  }
+  return summary;
+};
+
+// ── staging_rural_services ──────────────────────────────────────────────────
+
+export const listStagingRuralServices = async (): Promise<any[]> => {
+  const { data } = await supabase
+    .from('staging_rural_services')
+    .select('*')
+    .order('created_at', { ascending: false });
+  return (data ?? []).map((r) => ({
+    ...r,
+    validation_messages: (r.validation_messages ?? []) as ValidationMessage[],
+  }));
+};
+
+export const editStagingRuralServiceRecord = async (
+  id: string,
+  changes: Record<string, unknown>,
+): Promise<void> => {
+  await supabase
+    .from('staging_rural_services')
+    .update({ ...changes, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_edited',
+    target_table: 'staging_rural_services',
+    target_row_id: id,
+    details: changes,
+  });
+};
+
+export const rejectStagingRuralService = async (id: string): Promise<void> => {
+  await supabase
+    .from('staging_rural_services')
+    .update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id);
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_rejected',
+    target_table: 'staging_rural_services',
+    target_row_id: id,
+    details: {},
+  });
+};
+
+export const promoteStagingRuralService = async (id: string): Promise<void> => {
+  const { data: stg, error } = await supabase
+    .from('staging_rural_services')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error || !stg) throw new Error('Staging rural service not found');
+  if (stg.validation_severity === 'error') throw new Error('Cannot promote record with validation errors');
+  if (!stg.name || !stg.category) throw new Error('Name and category are required before promotion');
+
+  const { id: _id, validation_severity, validation_messages, source_file_name,
+    source_row_number, import_batch_id, last_reviewed_at, match_conflict,
+    created_at, updated_at, latitude, longitude, ...rest } = stg;
+
+  await supabase.from('rural_services').upsert({
+    ...rest,
+    lat: latitude,
+    lng: longitude,
+    review_status: 'approved',
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' });
+
+  await supabase
+    .from('staging_rural_services')
+    .update({ review_status: 'approved', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id);
+
+  await writeAudit({
+    pipeline: 'provider_mapping',
+    action: 'record_promoted',
+    target_table: 'rural_services',
+    target_row_id: id,
+    details: { name: stg.name, category: stg.category },
+  });
+
+  notifyRuralServicesChanged();
+};
+
+export const promoteStagingRuralServicesBulk = async (ids: string[]): Promise<void> => {
+  for (const id of ids) {
+    try { await promoteStagingRuralService(id); } catch { /* skip failed */ }
+  }
+};
+
+export const geocodeStagingRuralServicesBulk = async (
+  ids: string[],
+  options?: { onProgress?: (done: number, total: number, last: GeocodeOutcome) => void },
+): Promise<GeocodeRunSummary> => {
+  const allRows = await listStagingRuralServices();
+  const byId = new Map(allRows.map((r) => [r.id, r] as const));
+  const targets = ids
+    .map((id) => byId.get(id))
+    .filter((r): r is NonNullable<typeof r> => !!r)
+    .map((r) => ({
+      id: r.id,
+      mappable: r.mappable,
+      latitude: r.latitude,
+      longitude: r.longitude,
+      street_address: r.street_address,
+      city: r.city,
+      state: r.state,
+      zip: r.zip,
+      county: r.county,
+      access_notes: r.access_notes,
+    }));
+
+  const outcomes = await geocodeMany(targets, options?.onProgress);
+  const summary = summarizeGeocodeRun(outcomes);
+
+  for (let i = 0; i < outcomes.length; i++) {
+    const oc = outcomes[i];
+    const row = targets[i];
+    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
+      const publicConfidence: 'high' | 'low' = oc.strategy === 'address_full' ? 'high' : 'low';
+      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
+      await supabase.from('staging_rural_services').update({
+        latitude: oc.latitude, longitude: oc.longitude, access_notes: stampedNotes,
+      }).eq('id', row.id);
+      const spotCheck = await spotCheckCoordinate(oc.latitude, oc.longitude, row.zip, row.street_address);
+      if (!spotCheck.passed && publicConfidence === 'high') {
+        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
+        await supabase.from('staging_rural_services').update({ access_notes: downgradedNotes }).eq('id', row.id);
+      }
+      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
+    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
+      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
+      await supabase.from('staging_rural_services').update({ access_notes: stampedNotes }).eq('id', row.id);
+      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
+    }
+  }
+  return summary;
 };
