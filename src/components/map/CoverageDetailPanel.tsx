@@ -1467,12 +1467,12 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void }) => {
+const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect, allFacilities, countyServiceCount }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void; allFacilities?: Facility[]; countyServiceCount: Map<string, number> }) => {
   const { isPublicSafe } = usePublicSafeMode();
   const t = useUtilizationToggles();
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
-  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const localServiceCount = countyServiceCount.get(county) ?? 0;
 
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   const responseClass = getCountyResponseClassification(county, coverageRadiusKm);
@@ -1480,7 +1480,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const util = getCountyUtilization(county);
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
   const hasFte = serving.length > 0;
-  const hasLocalResources = (COUNTY_SERVICE_COUNT.get(county) ?? 0) > 0;
+  const hasLocalResources = localServiceCount > 0;
 
   // Auto-expand Transportation Coordination when transportation is a likely
   // limiting factor: strained / remote-only response, OR sparse local resources.
