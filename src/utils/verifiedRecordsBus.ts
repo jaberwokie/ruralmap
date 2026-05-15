@@ -44,3 +44,51 @@ export const subscribeVerifiedRecordsChanged = (cb: () => void): (() => void) =>
     ch?.removeEventListener('message', chHandler);
   };
 };
+
+// ── facilities-changed ──────────────────────────────────────────────────────
+export const FACILITIES_CHANGED_EVENT = 'facilities-changed';
+
+export const notifyFacilitiesChanged = (): void => {
+  window.dispatchEvent(new CustomEvent(FACILITIES_CHANGED_EVENT));
+  try {
+    new BroadcastChannel(FACILITIES_CHANGED_EVENT).postMessage(FACILITIES_CHANGED_EVENT);
+  } catch { /* Safari private mode */ }
+};
+
+export const subscribeFacilitiesChanged = (cb: () => void): (() => void) => {
+  const onWindow = () => cb();
+  window.addEventListener(FACILITIES_CHANGED_EVENT, onWindow);
+  let bc: BroadcastChannel | null = null;
+  try {
+    bc = new BroadcastChannel(FACILITIES_CHANGED_EVENT);
+    bc.onmessage = () => cb();
+  } catch { /* Safari private mode */ }
+  return () => {
+    window.removeEventListener(FACILITIES_CHANGED_EVENT, onWindow);
+    bc?.close();
+  };
+};
+
+// ── rural-services-changed ──────────────────────────────────────────────────
+export const RURAL_SERVICES_CHANGED_EVENT = 'rural-services-changed';
+
+export const notifyRuralServicesChanged = (): void => {
+  window.dispatchEvent(new CustomEvent(RURAL_SERVICES_CHANGED_EVENT));
+  try {
+    new BroadcastChannel(RURAL_SERVICES_CHANGED_EVENT).postMessage(RURAL_SERVICES_CHANGED_EVENT);
+  } catch { /* Safari private mode */ }
+};
+
+export const subscribeRuralServicesChanged = (cb: () => void): (() => void) => {
+  const onWindow = () => cb();
+  window.addEventListener(RURAL_SERVICES_CHANGED_EVENT, onWindow);
+  let bc: BroadcastChannel | null = null;
+  try {
+    bc = new BroadcastChannel(RURAL_SERVICES_CHANGED_EVENT);
+    bc.onmessage = () => cb();
+  } catch { /* Safari private mode */ }
+  return () => {
+    window.removeEventListener(RURAL_SERVICES_CHANGED_EVENT, onWindow);
+    bc?.close();
+  };
+};
