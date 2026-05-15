@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { PipelineWorkspace } from '@/components/admin/PipelineWorkspace';
+import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
 import {
   listStagingFacilities,
   editStagingFacilityRecord,
