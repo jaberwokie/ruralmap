@@ -78,6 +78,14 @@ export const MAPPING_PIPELINE_STATUS: Record<MappingPipelineKey, MappingPipeline
     status: 'active',
     label: 'ACTIVE',
   },
+  facility_staging: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
+  rural_services_staging: {
+    status: 'active',
+    label: 'ACTIVE',
+  },
 };
 
 export const getMappingPipelineStatus = (key: MappingPipelineKey): MappingPipelineStatusEntry =>
