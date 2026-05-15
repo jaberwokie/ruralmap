@@ -17,7 +17,7 @@ import type {
 } from '@/types/mappingPipeline';
 import { summarizeSeverity, validateServiceRow, validateBhRow } from './mappingPipelineValidation';
 import { getBhSourceTrust, applyTrustToBhMessages } from './bhSourceTrust';
-import { notifyVerifiedRecordsChanged } from '@/utils/verifiedRecordsBus';
+import { notifyVerifiedRecordsChanged, notifyFacilitiesChanged, notifyRuralServicesChanged } from '@/utils/verifiedRecordsBus';
 import type { HeaderResolutionResult } from './serviceHeaderResolver';
 import { decideUpsert, type UpsertCandidate } from './serviceUpsertMatch';
 import { controlledAppend, normalizeTags } from './serviceNormalize';
