@@ -70,6 +70,28 @@ export default function AdminUsers() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('email');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'viewer' | 'staff' | 'admin'>('viewer');
+  const [inviting, setInviting] = useState(false);
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      const { error } = await (supabase.rpc as any)('admin_invite_user', {
+        _email: inviteEmail.trim().toLowerCase(),
+        _role: inviteRole,
+      });
+      if (error) throw error;
+      toast.success(`Invite registered for ${inviteEmail} as ${inviteRole}. They will be assigned this role when they sign up.`);
+      setInviteEmail('');
+      setInviteRole('viewer');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to register invite');
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
