@@ -276,6 +276,39 @@ export default function AdminUsers() {
           </span>
         </div>
 
+        {/* Invite section */}
+        <div className="border border-border rounded-md bg-card p-4 mb-4">
+          <h2 className="text-sm font-semibold">Invite New User</h2>
+          <p className="text-xs text-muted-foreground mt-1 mb-3">
+            Enter an email address and role. When they sign up, they will automatically be assigned this role.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="email"
+              placeholder="email@example.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="flex h-9 flex-1 min-w-[220px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value as 'viewer' | 'staff' | 'admin')}
+              className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="viewer">Viewer</option>
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+            <Button
+              onClick={handleInvite}
+              disabled={inviting || !inviteEmail.trim()}
+              size="sm"
+            >
+              {inviting ? 'Registering…' : 'Register Invite'}
+            </Button>
+          </div>
+        </div>
+
         <div className="border border-border rounded-md overflow-hidden bg-card">
           <table className="w-full text-sm">
             <thead className="bg-muted/40 text-muted-foreground">
