@@ -937,7 +937,7 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
               'Douglas': ['Carson City', 'Lyon', 'Washoe'],
             };
             const adj = ADJACENT[county] ?? [];
-            const adjHasProvider = adj.some(c => defaultFacilities.some(f => f.county === c && (f.type === 'hospital' || f.type === 'clinic')));
+            const adjHasProvider = adj.some(c => (allFacilities ?? []).some(f => f.county === c && (f.type === 'hospital' || f.type === 'clinic')));
             if (adjHasProvider) nearestCare = 'Available in adjacent county';
           }
 
