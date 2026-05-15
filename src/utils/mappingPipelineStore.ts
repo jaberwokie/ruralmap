@@ -1002,6 +1002,7 @@ export const editRuralServiceRecord = async (
     target_table: 'rural_services',
     target_row_id: id,
     details: changes,
+  });
 };
 
 // ── staging_facilities ──────────────────────────────────────────────────────
