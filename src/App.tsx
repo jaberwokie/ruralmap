@@ -24,6 +24,8 @@ import AdminMappingPipelineAudit from "./pages/AdminMappingPipelineAudit.tsx";
 import AdminMappingImport from "./pages/AdminMappingImport.tsx";
 import AdminMappingFacilities from "./pages/AdminMappingFacilities";
 import AdminMappingRuralServices from "./pages/AdminMappingRuralServices";
+import AdminMappingFacilitiesStaging from "./pages/AdminMappingFacilitiesStaging";
+import AdminMappingRuralServicesStaging from "./pages/AdminMappingRuralServicesStaging";
 import AdminTraining from "./pages/AdminTraining.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
