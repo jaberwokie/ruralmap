@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import { subscribeFacilitiesChanged } from '@/utils/verifiedRecordsBus';
 import { Facility, defaultFacilities, auditFacilityClassifications, auditFacilityConfidence } from '@/data/facilities';
 import { buildFacilityValidationIndex } from '@/utils/facilityValidation';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
