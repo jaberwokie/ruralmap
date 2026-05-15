@@ -57,20 +57,21 @@ serve(async (req) => {
       _email: email.toLowerCase().trim(),
       _role: role,
     });
-    if (rpcError) throw rpcError;
+    if (rpcError) throw new Error(rpcError.message ?? JSON.stringify(rpcError));
 
     // Send the magic link invite email via Supabase Auth
     const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
       email.toLowerCase().trim(),
       { data: { invited_role: role } }
     );
-    if (inviteError) throw inviteError;
+    if (inviteError) throw new Error(inviteError.message ?? JSON.stringify(inviteError));
 
     return new Response(JSON.stringify({ success: true, email, role }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+  } catch (err: any) {
+    const message = err?.message ?? err?.error_description ?? err?.msg ?? JSON.stringify(err);
+    return new Response(JSON.stringify({ error: message }), {
       status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
