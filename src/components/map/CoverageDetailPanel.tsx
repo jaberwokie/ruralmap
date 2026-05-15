@@ -2788,7 +2788,7 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, allFacil
 
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
-          <UtilizationEngagementSection county={county} />
+          <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
