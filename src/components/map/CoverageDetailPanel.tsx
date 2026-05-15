@@ -488,8 +488,8 @@ const EntityContent = ({
       />
     );
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
-    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
-    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
+    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} allFacilities={allFacilities} countyServiceCount={countyServiceCount} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} allFacilities={allFacilities} />;
     case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
