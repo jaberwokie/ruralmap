@@ -4,9 +4,8 @@ import { X, MapPin, Building2, Stethoscope, Shield, Map as MapIcon, AlertTriangl
 import { ContactPhoneAction, formatPhone } from '@/components/ContactPhoneAction';
 import { CoverageArea, COVERAGE_AREA_LABELS, RURAL_ACCESS_DEPENDENCE, nevadaCounties, getCountyArea } from '@/data/nevada-counties';
 import { memberVolumeData } from '@/data/member-volume';
-import { Facility, defaultFacilities, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember, countyHasHospital } from '@/data/facilities';
+import { Facility, getFacilityClassification, getFacilityDataConfidence, getFacilityTypeLabel, isCriticalAccessHospital, isNRHPMember, countyHasHospital } from '@/data/facilities';
 import { RuralService } from '@/data/rural-services';
-import { enrichedRuralServices as staticRuralServices } from '@/data/enriched-rural-services';
 import { sameCounty } from '@/utils/countyNormalize';
 import { type TribalNation, getSubEntities, getParentTribe } from '@/data/tribal-nations';
 import type { RailStation } from '@/data/rail-corridors';
@@ -111,14 +110,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Mental Health': 'bg-violet-100 text-violet-700',
 };
 
-// Static structural baseline for GAP_COUNTIES alerts. Uses the static
-// enriched dataset only — does NOT include live verified imports. The
-// dynamic per-county count rendered in the panel header is computed from
-// the live-merged source in LocalResourcesSection below.
-const COUNTY_SERVICE_COUNT = staticRuralServices.reduce((map, service) => {
-  map.set(service.county, (map.get(service.county) ?? 0) + 1);
+/** Build a county→service count map from a live-merged services list. */
+const buildCountyServiceCount = (services: readonly RuralService[] | undefined): Map<string, number> => {
+  const map = new Map<string, number>();
+  (services ?? []).forEach((s) => {
+    if (s.county) map.set(s.county, (map.get(s.county) ?? 0) + 1);
+  });
   return map;
-}, new Map<string, number>());
+};
 
 const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCount: number }) => {
   if (!GAP_COUNTIES.has(county)) return null;
@@ -347,6 +346,7 @@ const FieldResponseStrainSection = ({
 const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, previousEntity, allFacilities, onFacilitySelect, onServiceSelect, liveServices }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
+  const countyServiceCount = useMemo(() => buildCountyServiceCount(liveServices), [liveServices]);
 
   useEffect(() => {
     if (!isLocked) return;
@@ -446,6 +446,7 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
               onFacilitySelect={onFacilitySelect}
               onServiceSelect={onServiceSelect}
               liveServices={liveServices}
+              countyServiceCount={countyServiceCount}
             />
           </div>
         </div>
@@ -464,6 +465,7 @@ const EntityContent = ({
   onFacilitySelect,
   onServiceSelect,
   liveServices,
+  countyServiceCount,
 }: {
   entity: MapEntity;
   coverageRadiusKm: number;
@@ -472,10 +474,11 @@ const EntityContent = ({
   onFacilitySelect?: (f: Facility) => void;
   onServiceSelect?: (s: RuralService) => void;
   liveServices?: RuralService[];
+  countyServiceCount: Map<string, number>;
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
-    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} liveServices={liveServices} onServiceSelect={onServiceSelect} />;
+    case 'county': return <CountyContent county={entity.county} coverageRadiusKm={coverageRadiusKm} liveServices={liveServices} onServiceSelect={onServiceSelect} allFacilities={allFacilities} countyServiceCount={countyServiceCount} />;
     case 'facility': return (
       <FacilityContent
         facility={entity.facility}
@@ -485,8 +488,8 @@ const EntityContent = ({
       />
     );
     case 'coverageGap': return <CoverageGapContent radiusKm={entity.radiusKm} />;
-    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} />;
-    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} />;
+    case 'memberVolume': return <MemberVolumeContent county={entity.county} memberCount={entity.memberCount} coverageRadiusKm={coverageRadiusKm} allFacilities={allFacilities} countyServiceCount={countyServiceCount} />;
+    case 'ruralServiceGroup': return <RuralServiceGroupContent county={entity.county} services={entity.services} coverageRadiusKm={coverageRadiusKm} allFacilities={allFacilities} />;
     case 'ruralService': return <RuralServiceContent service={entity.service} />;
     case 'fteDetail': return <FteDetailContent fteId={entity.fteId} />;
     case 'tribalNation': return <TribalNationContent tribe={entity.tribe} />;
@@ -663,9 +666,9 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
 // ActionStep extracted to ./detail/SharedDetailParts.
 
 // ── NBH Routing ──
-const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
+const NBHRoutingSection = ({ county, coverageRadiusKm, countyServiceCount }: { county: string; coverageRadiusKm: number; countyServiceCount: Map<string, number> }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
-  const serviceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const serviceCount = countyServiceCount.get(county) ?? 0;
   const hasServices = serviceCount > 0;
   const sparseThreshold = 3;
 
@@ -790,7 +793,7 @@ const NBHRoutingSection = ({ county, coverageRadiusKm }: { county: string; cover
 };
 
 // ── Utilization & Engagement Section (county-level) ──
-const UtilizationEngagementSection = ({ county }: { county: string }) => {
+const UtilizationEngagementSection = ({ county, allFacilities }: { county: string; allFacilities?: Facility[] }) => {
   const util = getCountyUtilization(county);
   if (util.activeProviderCount === 0 && util.totalVisits === 0) return null;
 
@@ -915,7 +918,7 @@ const UtilizationEngagementSection = ({ county }: { county: string }) => {
 
         {/* ── Access Reality ── */}
         {(() => {
-          const countyFacs = defaultFacilities.filter(f => f.county === county);
+          const countyFacs = (allFacilities ?? []).filter(f => f.county === county);
           const hasInPerson = countyFacs.some(f => f.type === 'hospital' || f.type === 'clinic');
 
           // Nearest in-person care logic
@@ -934,7 +937,7 @@ const UtilizationEngagementSection = ({ county }: { county: string }) => {
               'Douglas': ['Carson City', 'Lyon', 'Washoe'],
             };
             const adj = ADJACENT[county] ?? [];
-            const adjHasProvider = adj.some(c => defaultFacilities.some(f => f.county === c && (f.type === 'hospital' || f.type === 'clinic')));
+            const adjHasProvider = adj.some(c => (allFacilities ?? []).some(f => f.county === c && (f.type === 'hospital' || f.type === 'clinic')));
             if (adjHasProvider) nearestCare = 'Available in adjacent county';
           }
 
@@ -1247,13 +1250,15 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
 const LocalResourcesSection = ({
   county,
   services: providedServices,
+  liveServices,
   onServiceSelect,
 }: {
   county: string;
   services?: RuralService[];
+  liveServices?: RuralService[];
   onServiceSelect?: (s: RuralService) => void;
 }) => {
-  const sourceServices = providedServices ?? staticRuralServices;
+  const sourceServices = providedServices ?? liveServices ?? [];
   const services = useMemo(
     () => sourceServices.filter(s => sameCounty(s.county, county)),
     [sourceServices, county],
@@ -1462,12 +1467,12 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 };
 
 // ── County ──
-const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void }) => {
+const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect, allFacilities, countyServiceCount }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void; allFacilities?: Facility[]; countyServiceCount: Map<string, number> }) => {
   const { isPublicSafe } = usePublicSafeMode();
   const t = useUtilizationToggles();
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
-  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const localServiceCount = countyServiceCount.get(county) ?? 0;
 
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   const responseClass = getCountyResponseClassification(county, coverageRadiusKm);
@@ -1475,7 +1480,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const util = getCountyUtilization(county);
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
   const hasFte = serving.length > 0;
-  const hasLocalResources = (COUNTY_SERVICE_COUNT.get(county) ?? 0) > 0;
+  const hasLocalResources = localServiceCount > 0;
 
   // Auto-expand Transportation Coordination when transportation is a likely
   // limiting factor: strained / remote-only response, OR sparse local resources.
@@ -1484,7 +1489,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
     responseClass.level === 'strained' ||
     responseClass.level === 'noSameDay' ||
     responseClass.level === 'singleThreaded' ||
-    countyServiceCount < 5;
+    localServiceCount < 5;
 
   const memberVolumeAutoExpand = shouldAutoExpandMemberVolume(county);
 
@@ -1506,7 +1511,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
           </p>
         )}
       </div>
-      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      <GapContextAlerts county={county} serviceCount={localServiceCount} />
       {hasNoLocalTransit(county) && (
         <p
           className="mt-1 mb-1.5 text-[10px] text-muted-foreground"
@@ -1548,23 +1553,23 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
 
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
-          <UtilizationEngagementSection county={county} />
+          <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
 
       <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
-        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} />
+        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} countyServiceCount={countyServiceCount} />
       </DetailSection>
 
       {hasLocalResources && (() => {
-        // Live-merged count for this county (falls back to static baseline).
+        // Live-merged count for this county (falls back to baseline map).
         const liveCount = liveServices
           ? liveServices.filter((s) => sameCounty(s.county, county)).length
-          : (COUNTY_SERVICE_COUNT.get(county) ?? 0);
+          : (countyServiceCount.get(county) ?? 0);
         return (
           <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
-            <LocalResourcesSection county={county} services={liveServices} onServiceSelect={onServiceSelect} />
+            <LocalResourcesSection county={county} services={liveServices} liveServices={liveServices} onServiceSelect={onServiceSelect} />
           </DetailSection>
         );
       })()}
@@ -1729,7 +1734,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
 
       {/* Psychiatric & Inpatient County Summary */}
       {(() => {
-        const countyFacs = defaultFacilities.filter(fac => fac.county === county);
+        const countyFacs = (allFacilities ?? []).filter(fac => fac.county === county);
         const hasHospital = countyHasHospital(county);
         const psychProviders = countyFacs.filter(fac => {
           const p = fac.psychiatric;
@@ -2654,11 +2659,11 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 // CoverageGapContent extracted to ./detail/SharedDetailParts.
 
 // ── Member Volume (clicked from choropleth) ──
-const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
+const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm, allFacilities, countyServiceCount }: { county: string; memberCount: number; coverageRadiusKm: number; allFacilities?: Facility[]; countyServiceCount: Map<string, number> }) => {
   const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const area = getCountyArea(county);
-  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const localServiceCount = countyServiceCount.get(county) ?? 0;
   const util = getCountyUtilization(county);
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
 
@@ -2673,7 +2678,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
-        <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+        <GapContextAlerts county={county} serviceCount={localServiceCount} />
         <div className="text-xs text-foreground/80 space-y-1">
           <div className="flex justify-between"><span>Coverage Area</span><span className="font-medium">{COVERAGE_AREA_LABELS[area]}</span></div>
         </div>
@@ -2687,7 +2692,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
-          <UtilizationEngagementSection county={county} />
+          <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
@@ -2696,7 +2701,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county
 };
 
 // ── Rural Service Group ──
-const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
+const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, allFacilities }: { county: string; services: RuralService[]; coverageRadiusKm: number; allFacilities?: Facility[] }) => {
   const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
@@ -2783,7 +2788,7 @@ const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { coun
 
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
-          <UtilizationEngagementSection county={county} />
+          <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
         </DetailSection>
       )}
