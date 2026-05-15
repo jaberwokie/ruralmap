@@ -465,6 +465,7 @@ const EntityContent = ({
   onFacilitySelect,
   onServiceSelect,
   liveServices,
+  countyServiceCount,
 }: {
   entity: MapEntity;
   coverageRadiusKm: number;
@@ -473,6 +474,7 @@ const EntityContent = ({
   onFacilitySelect?: (f: Facility) => void;
   onServiceSelect?: (s: RuralService) => void;
   liveServices?: RuralService[];
+  countyServiceCount: Map<string, number>;
 }) => {
   switch (entity.type) {
     case 'coverageArea': return <CoverageAreaContent area={entity.area} />;
