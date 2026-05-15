@@ -110,14 +110,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   'Mental Health': 'bg-violet-100 text-violet-700',
 };
 
-// Static structural baseline for GAP_COUNTIES alerts. Uses the static
-// enriched dataset only — does NOT include live verified imports. The
-// dynamic per-county count rendered in the panel header is computed from
-// the live-merged source in LocalResourcesSection below.
-const COUNTY_SERVICE_COUNT = staticRuralServices.reduce((map, service) => {
-  map.set(service.county, (map.get(service.county) ?? 0) + 1);
+/** Build a county→service count map from a live-merged services list. */
+const buildCountyServiceCount = (services: readonly RuralService[] | undefined): Map<string, number> => {
+  const map = new Map<string, number>();
+  (services ?? []).forEach((s) => {
+    if (s.county) map.set(s.county, (map.get(s.county) ?? 0) + 1);
+  });
   return map;
-}, new Map<string, number>());
+};
 
 const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCount: number }) => {
   if (!GAP_COUNTIES.has(county)) return null;
