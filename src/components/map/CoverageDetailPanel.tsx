@@ -1489,7 +1489,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
     responseClass.level === 'strained' ||
     responseClass.level === 'noSameDay' ||
     responseClass.level === 'singleThreaded' ||
-    countyServiceCount < 5;
+    localServiceCount < 5;
 
   const memberVolumeAutoExpand = shouldAutoExpandMemberVolume(county);
 
