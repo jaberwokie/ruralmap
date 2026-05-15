@@ -115,15 +115,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(safeSession);
       setUnauthenticatedPublicSafe(!safeSession?.user);
       if (safeSession?.user) {
-        // Defer role fetch so we don't block the auth callback.
-        setTimeout(() => { refreshRole(safeSession.user.id); }, 0);
+        // Defer role fetch so we don't block the auth callback (Supabase deadlock guard).
+        // Mark ready only AFTER the role resolves so admin guards don't fire as 'viewer'.
+        setTimeout(() => {
+          refreshRole(safeSession.user.id).finally(() => { setReady(true); });
+        }, 0);
       } else {
         setRole('viewer');
+        setReady(true);
       }
-      setReady(true);
     });
 
-    supabase.auth.getSession().then(({ data: { session: existing } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: existing } }) => {
       const expired =
         !!existing?.expires_at && existing.expires_at * 1000 < Date.now();
       if (expired) {
@@ -138,7 +141,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(existing);
       setUnauthenticatedPublicSafe(!existing?.user);
       if (existing?.user) {
-        refreshRole(existing.user.id);
+        // Resolve role before flipping ready, so admin route guards see the
+        // correct role on first render and don't bounce back to '/'.
+        await refreshRole(existing.user.id);
       }
       setReady(true);
     });
