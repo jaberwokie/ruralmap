@@ -1250,13 +1250,15 @@ const FieldCapacitySection = ({ county }: { county: string }) => {
 const LocalResourcesSection = ({
   county,
   services: providedServices,
+  liveServices,
   onServiceSelect,
 }: {
   county: string;
   services?: RuralService[];
+  liveServices?: RuralService[];
   onServiceSelect?: (s: RuralService) => void;
 }) => {
-  const sourceServices = providedServices ?? staticRuralServices;
+  const sourceServices = providedServices ?? liveServices ?? [];
   const services = useMemo(
     () => sourceServices.filter(s => sameCounty(s.county, county)),
     [sourceServices, county],
