@@ -92,6 +92,8 @@ const App = () => {
                 <Route path="/admin/mapping/import" element={<AdminMappingImport />} />
                 <Route path="/admin/mapping/facilities" element={<AdminMappingFacilities />} />
                 <Route path="/admin/mapping/rural-services" element={<AdminMappingRuralServices />} />
+                <Route path="/admin/mapping/facilities-staging" element={<AdminMappingFacilitiesStaging />} />
+                <Route path="/admin/mapping/rural-services-staging" element={<AdminMappingRuralServicesStaging />} />
 
                 {/* Admin > Training (additive; rollback by removing this line and src/pages/AdminTraining.tsx + src/pages/admin-training/) */}
                 <Route path="/admin/training" element={<AdminTraining />} />
