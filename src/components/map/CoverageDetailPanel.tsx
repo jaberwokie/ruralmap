@@ -1511,7 +1511,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
           </p>
         )}
       </div>
-      <GapContextAlerts county={county} serviceCount={countyServiceCount} />
+      <GapContextAlerts county={county} serviceCount={localServiceCount} />
       {hasNoLocalTransit(county) && (
         <p
           className="mt-1 mb-1.5 text-[10px] text-muted-foreground"
