@@ -48,7 +48,7 @@ export default function AdminMappingFacilitiesStaging() {
       validation_messages: r.validation_messages ?? [],
       mappable: r.mappable ?? true,
       has_coords: r.latitude != null && r.longitude != null,
-      geocode_status: failed ? 'failed' : (r.latitude != null ? 'geocoded' : null),
+      geocode_status: (failed ? 'failed' : (r.latitude != null ? 'geocoded' : null)) as 'geocoded' | 'failed' | null,
       geocode_confidence: tag?.confidence ?? null,
       cells: {
         name: r.name,
