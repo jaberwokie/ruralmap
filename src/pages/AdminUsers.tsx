@@ -70,6 +70,28 @@ export default function AdminUsers() {
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<SortKey>('email');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'viewer' | 'staff' | 'admin'>('viewer');
+  const [inviting, setInviting] = useState(false);
+
+  const handleInvite = async () => {
+    if (!inviteEmail.trim()) return;
+    setInviting(true);
+    try {
+      const { error } = await (supabase.rpc as any)('admin_invite_user', {
+        _email: inviteEmail.trim().toLowerCase(),
+        _role: inviteRole,
+      });
+      if (error) throw error;
+      toast.success(`Invite registered for ${inviteEmail} as ${inviteRole}. They will be assigned this role when they sign up.`);
+      setInviteEmail('');
+      setInviteRole('viewer');
+    } catch (e: any) {
+      toast.error(e?.message ?? 'Failed to register invite');
+    } finally {
+      setInviting(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -252,6 +274,39 @@ export default function AdminUsers() {
             <span className="text-muted-foreground">Active admins</span>
             <span className="font-semibold tabular-nums text-primary">{summary.activeAdmins}</span>
           </span>
+        </div>
+
+        {/* Invite section */}
+        <div className="border border-border rounded-md bg-card p-4 mb-4">
+          <h2 className="text-sm font-semibold">Invite New User</h2>
+          <p className="text-xs text-muted-foreground mt-1 mb-3">
+            Enter an email address and role. When they sign up, they will automatically be assigned this role.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="email"
+              placeholder="email@example.com"
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className="flex h-9 flex-1 min-w-[220px] rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+            <select
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value as 'viewer' | 'staff' | 'admin')}
+              className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="viewer">Viewer</option>
+              <option value="staff">Staff</option>
+              <option value="admin">Admin</option>
+            </select>
+            <Button
+              onClick={handleInvite}
+              disabled={inviting || !inviteEmail.trim()}
+              size="sm"
+            >
+              {inviting ? 'Registering…' : 'Register Invite'}
+            </Button>
+          </div>
         </div>
 
         <div className="border border-border rounded-md overflow-hidden bg-card">
