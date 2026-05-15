@@ -78,16 +78,28 @@ export default function AdminUsers() {
     if (!inviteEmail.trim()) return;
     setInviting(true);
     try {
-      const { error } = await (supabase.rpc as any)('admin_invite_user', {
-        _email: inviteEmail.trim().toLowerCase(),
-        _role: inviteRole,
-      });
-      if (error) throw error;
-      toast.success(`Invite registered for ${inviteEmail} as ${inviteRole}. They will be assigned this role when they sign up.`);
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/invite-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session?.access_token ?? ''}`,
+          },
+          body: JSON.stringify({
+            email: inviteEmail.trim().toLowerCase(),
+            role: inviteRole,
+          }),
+        }
+      );
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error ?? 'Invite failed');
+      toast.success(`Invite sent to ${inviteEmail} — they will be assigned the ${inviteRole} role when they accept.`);
       setInviteEmail('');
       setInviteRole('viewer');
     } catch (e: any) {
-      toast.error(e?.message ?? 'Failed to register invite');
+      toast.error(e?.message ?? 'Failed to send invite');
     } finally {
       setInviting(false);
     }
