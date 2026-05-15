@@ -49,11 +49,13 @@ serve(async (req) => {
     }
 
     // Pre-register the role
-    const { error: rpcError } = await adminClient.rpc('admin_invite_user', {
-      _email: email.toLowerCase().trim(),
-      _role: role,
-    });
-    if (rpcError) throw new Error(rpcError.message ?? JSON.stringify(rpcError));
+    const { error: upsertError } = await adminClient
+      .from('pending_admin_emails')
+      .upsert(
+        { email: email.toLowerCase().trim(), role },
+        { onConflict: 'email' }
+      );
+    if (upsertError) throw new Error(upsertError.message ?? JSON.stringify(upsertError));
 
     // Send the magic link invite email via Supabase Auth
     const { error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
