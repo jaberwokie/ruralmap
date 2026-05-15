@@ -2701,7 +2701,7 @@ const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm, allFacilit
 };
 
 // ── Rural Service Group ──
-const RuralServiceGroupContent = ({ county, services, coverageRadiusKm }: { county: string; services: RuralService[]; coverageRadiusKm: number }) => {
+const RuralServiceGroupContent = ({ county, services, coverageRadiusKm, allFacilities }: { county: string; services: RuralService[]; coverageRadiusKm: number; allFacilities?: Facility[] }) => {
   const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('services');
   const grouped = useMemo(() => {
