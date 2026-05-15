@@ -2659,11 +2659,11 @@ const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
 // CoverageGapContent extracted to ./detail/SharedDetailParts.
 
 // ── Member Volume (clicked from choropleth) ──
-const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm }: { county: string; memberCount: number; coverageRadiusKm: number }) => {
+const MemberVolumeContent = ({ county, memberCount, coverageRadiusKm, allFacilities, countyServiceCount }: { county: string; memberCount: number; coverageRadiusKm: number; allFacilities?: Facility[]; countyServiceCount: Map<string, number> }) => {
   const { isPublicSafe } = usePublicSafeMode();
   const { isOpen, toggle } = useAccordion('memberVolume');
   const area = getCountyArea(county);
-  const countyServiceCount = COUNTY_SERVICE_COUNT.get(county) ?? 0;
+  const localServiceCount = countyServiceCount.get(county) ?? 0;
   const util = getCountyUtilization(county);
   const hasUtilization = util.activeProviderCount > 0 || util.totalVisits > 0;
 
