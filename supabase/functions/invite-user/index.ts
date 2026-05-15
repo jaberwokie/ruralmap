@@ -12,22 +12,24 @@ serve(async (req) => {
   }
 
   try {
-    // Verify caller is an active admin using the anon client + their JWT
-    const anonClient = createClient(
+    const authHeader = req.headers.get('Authorization') ?? '';
+    const token = authHeader.replace('Bearer ', '');
+
+    const adminClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
-      { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { data: { user }, error: authError } = await anonClient.auth.getUser();
+    // Verify the caller's JWT and get their user id
+    const { data: { user }, error: authError } = await adminClient.auth.getUser(token);
     if (authError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), {
         status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    // Check admin role
-    const { data: roleRow } = await anonClient
+    // Check admin role using service role (bypasses RLS)
+    const { data: roleRow } = await adminClient
       .from('user_roles')
       .select('role, is_active')
       .eq('user_id', user.id)
@@ -45,12 +47,6 @@ serve(async (req) => {
         status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
-
-    // Use service role client for admin operations
-    const adminClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
 
     // Pre-register the role
     const { error: rpcError } = await adminClient.rpc('admin_invite_user', {
