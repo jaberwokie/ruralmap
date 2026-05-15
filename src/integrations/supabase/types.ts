@@ -150,14 +150,17 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          role: Database["public"]["Enums"]["app_role"]
         }
         Insert: {
           created_at?: string
           email: string
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Update: {
           created_at?: string
           email?: string
+          role?: Database["public"]["Enums"]["app_role"]
         }
         Relationships: []
       }
@@ -1220,6 +1223,13 @@ export type Database = {
     }
     Functions: {
       active_admin_count: { Args: never; Returns: number }
+      admin_invite_user: {
+        Args: {
+          _email: string
+          _role?: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: undefined
+      }
       admin_list_users: {
         Args: never
         Returns: {
