@@ -1152,6 +1152,7 @@ export const listStagingRuralServices = async (): Promise<any[]> => {
     .from('staging_rural_services')
     .select('*')
     .order('created_at', { ascending: false });
+  console.log('[listStagingRuralServices] first row:', data?.[0]);
   return (data ?? []).map((r) => ({
     ...r,
     validation_messages: (r.validation_messages ?? []) as unknown as ValidationMessage[],
