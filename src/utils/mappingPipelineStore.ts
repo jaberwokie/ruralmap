@@ -1014,7 +1014,7 @@ export const listStagingFacilities = async (): Promise<any[]> => {
     .order('created_at', { ascending: false });
   return (data ?? []).map((r) => ({
     ...r,
-    validation_messages: (r.validation_messages ?? []) as ValidationMessage[],
+    validation_messages: (r.validation_messages ?? []) as unknown as ValidationMessage[],
   }));
 };
 
@@ -1066,7 +1066,7 @@ export const promoteStagingFacility = async (id: string): Promise<void> => {
     source_row_number, import_batch_id, last_reviewed_at, match_conflict,
     created_at, updated_at, latitude, longitude, ...rest } = stg;
 
-  await supabase.from('facilities').upsert({
+  await (supabase as any).from('facilities').upsert({
     ...rest,
     lat: latitude,
     lng: longitude,
@@ -1154,7 +1154,7 @@ export const listStagingRuralServices = async (): Promise<any[]> => {
     .order('created_at', { ascending: false });
   return (data ?? []).map((r) => ({
     ...r,
-    validation_messages: (r.validation_messages ?? []) as ValidationMessage[],
+    validation_messages: (r.validation_messages ?? []) as unknown as ValidationMessage[],
   }));
 };
 
@@ -1203,7 +1203,7 @@ export const promoteStagingRuralService = async (id: string): Promise<void> => {
     source_row_number, import_batch_id, last_reviewed_at, match_conflict,
     created_at, updated_at, latitude, longitude, ...rest } = stg;
 
-  await supabase.from('rural_services').upsert({
+  await (supabase as any).from('rural_services').upsert({
     ...rest,
     lat: latitude,
     lng: longitude,
