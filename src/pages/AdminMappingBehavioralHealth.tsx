@@ -14,7 +14,7 @@ import EditRecordDialog, { type EditableField } from '@/components/admin/EditRec
 import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingBh, listStagingBh, listVerifiedBh, listAudit,
-  promoteStagingBh, rejectStagingBh, deactivateVerifiedBh,
+  promoteStagingBh, promoteStagingBhBulk, rejectStagingBh, deactivateVerifiedBh,
   editBhRecord, geocodeStagingBhBulk,
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
@@ -380,22 +380,48 @@ export default function AdminMappingBehavioralHealth() {
         loading={loading}
         uploading={uploading}
         onUpload={handleUpload}
-        onPromote={async (id) => { await promoteStagingBh(id); toast.success('Promoted to verified.'); await refresh(); }}
-        onGeocodeBulk={async (ids) => {
-          const res = await geocodeStagingBhBulk(ids);
-          const parts = [
-            `${res.geocoded} geocoded`,
-            `${res.failed} failed`,
-            `${res.skipped} skipped`,
-          ];
-          if (res.geocoded > 0) {
-            parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
-          }
-          toast.success(`Geocode: ${parts.join(', ')}`);
-          await refresh();
+        onPromote={async (id) => {
+          try {
+            await promoteStagingBh(id);
+            toast.success('Promoted to verified.');
+            await refresh();
+          } catch (e) { toast.error(`Promote failed: ${(e as Error).message}`); }
         }}
-        onReject={async (id) => { await rejectStagingBh(id); toast.success('Rejected.'); await refresh(); }}
-        onDeactivate={async (id) => { await deactivateVerifiedBh(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
+        onPromoteBulk={async (ids) => {
+          try {
+            const res = await promoteStagingBhBulk(ids);
+            const parts: string[] = [`${res.promoted} promoted`];
+            if (res.failed) parts.push(`${res.failed} failed`);
+            toast.success(`Bulk promote: ${parts.join(', ')}`);
+            if (res.failures.length > 0) {
+              toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
+            }
+            await refresh();
+          } catch (e) { toast.error(`Bulk promote failed: ${(e as Error).message}`); }
+        }}
+        onGeocodeBulk={async (ids) => {
+          try {
+            const res = await geocodeStagingBhBulk(ids);
+            const parts = [
+              `${res.geocoded} geocoded`,
+              `${res.failed} failed`,
+              `${res.skipped} skipped`,
+            ];
+            if (res.geocoded > 0) {
+              parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
+            }
+            toast.success(`Geocode: ${parts.join(', ')}`);
+            await refresh();
+          } catch (e) { toast.error(`Geocode failed: ${(e as Error).message}`); }
+        }}
+        onReject={async (id) => {
+          try { await rejectStagingBh(id); toast.success('Rejected.'); await refresh(); }
+          catch (e) { toast.error(`Reject failed: ${(e as Error).message}`); }
+        }}
+        onDeactivate={async (id) => {
+          try { await deactivateVerifiedBh(id); toast.success('Deactivated — removed from map.'); await refresh(); }
+          catch (e) { toast.error(`Deactivate failed: ${(e as Error).message}`); }
+        }}
         onRefresh={() => void refresh()}
         onEditStaging={(id) => {
           const row = staging.find((r) => r.id === id);

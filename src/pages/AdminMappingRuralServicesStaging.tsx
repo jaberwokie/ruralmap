@@ -209,20 +209,28 @@ export default function AdminMappingRuralServicesStaging() {
           }
         }}
         onPromoteBulk={async (ids) => {
-          await promoteStagingRuralServicesBulk(ids);
-          toast.success(`${ids.length} rural services promoted`);
-          await refresh();
+          try {
+            const res = await promoteStagingRuralServicesBulk(ids);
+            const parts: string[] = [`${res.promoted} promoted`];
+            if (res.failed) parts.push(`${res.failed} failed`);
+            toast.success(`Bulk promote: ${parts.join(', ')}`);
+            if (res.failures.length > 0) {
+              toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
+            }
+            await refresh();
+          } catch (e) { toast.error(`Bulk promote failed: ${(e as Error).message}`); }
         }}
         onGeocodeBulk={async (ids) => {
-          toast.info(`Geocoding ${ids.length} rural services…`);
-          const result = await geocodeStagingRuralServicesBulk(ids);
-          toast.success(`Geocoded: ${result.geocoded} success, ${result.failed} failed, ${result.skipped} skipped`);
-          await refresh();
+          try {
+            toast.info(`Geocoding ${ids.length} rural services…`);
+            const result = await geocodeStagingRuralServicesBulk(ids);
+            toast.success(`Geocoded: ${result.geocoded} success, ${result.failed} failed, ${result.skipped} skipped`);
+            await refresh();
+          } catch (e) { toast.error(`Geocode failed: ${(e as Error).message}`); }
         }}
         onReject={async (id) => {
-          await rejectStagingRuralService(id);
-          toast.success('Rural service rejected');
-          await refresh();
+          try { await rejectStagingRuralService(id); toast.success('Rural service rejected'); await refresh(); }
+          catch (e) { toast.error(`Reject failed: ${(e as Error).message}`); }
         }}
         onDeactivate={async () => {}}
         onRefresh={refresh}
