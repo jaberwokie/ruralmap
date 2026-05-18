@@ -14,7 +14,7 @@ import EditRecordDialog, { type EditableField } from '@/components/admin/EditRec
 import { BEHAVIORAL_HEALTH_TEMPLATE } from '@/utils/csvTemplates';
 import {
   insertStagingBh, listStagingBh, listVerifiedBh, listAudit,
-  promoteStagingBh, rejectStagingBh, deactivateVerifiedBh,
+  promoteStagingBh, promoteStagingBhBulk, rejectStagingBh, deactivateVerifiedBh,
   editBhRecord, geocodeStagingBhBulk,
 } from '@/utils/mappingPipelineStore';
 import { parseCsvText, csvToStagingBh } from '@/utils/mappingPipelineCsv';
