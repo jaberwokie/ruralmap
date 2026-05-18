@@ -175,7 +175,10 @@ export default function AdminMappingRuralServices() {
       auditEntries={[]}
       loading={loading}
       uploading={false}
-      onUpload={async () => {}}
+      onUpload={async () => {
+        toast.info('CSV uploads happen in the staging pipeline. Redirecting…');
+        navigate('/admin/mapping/rural-services-staging');
+      }}
       onPromote={async (id) => {
         try {
           await editRuralServiceRecord(id, { review_status: 'approved', verification_status: 'verified' });
