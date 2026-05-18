@@ -121,22 +121,22 @@ export default function AdminUnmappedProviders() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="mx-auto max-w-6xl px-4 py-6">
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/admin"><ArrowLeft className="h-4 w-4 mr-1" />Admin</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/">Back to Map</Link>
+          </Button>
+        </div>
         <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/admin"><ArrowLeft className="h-4 w-4 mr-1" />Admin</Link>
-            </Button>
-            <h1 className="text-xl font-semibold">Unmapped Top Utilized Providers</h1>
-          </div>
+          <h1 className="text-xl font-semibold">Unmapped Top Utilized Providers</h1>
           <div className="flex items-center gap-2">
             <Button asChild size="sm" variant="ghost">
               <Link to="/admin/mapping/providers">Open Import</Link>
             </Button>
             <Button onClick={handleExport} disabled={visibleRows.length === 0} size="sm" variant="outline">
               <Download className="h-4 w-4 mr-1" /> Export for Mapping (CSV)
-            </Button>
-            <Button asChild variant="ghost" size="sm">
-              <Link to="/">Back to Map</Link>
             </Button>
           </div>
         </div>
