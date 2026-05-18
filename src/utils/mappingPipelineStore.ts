@@ -1050,16 +1050,20 @@ export const rejectStagingFacility = async (id: string): Promise<void> => {
 };
 
 export const promoteStagingFacility = async (id: string): Promise<void> => {
+  console.log('[PROMOTE-DEBUG] store.promoteStagingFacility:entry', { id });
+
   const { data: stg, error } = await supabase
     .from('staging_facilities')
     .select('*')
     .eq('id', id)
     .single();
+  console.log('[PROMOTE-DEBUG] store: staging select', { hasRow: !!stg, error });
   if (error || !stg) throw new Error('Staging facility not found');
   if (stg.validation_severity === 'error') throw new Error('Cannot promote record with validation errors');
   if (!stg.name || !stg.type) throw new Error('Name and type are required before promotion');
 
   const { data: { user } } = await supabase.auth.getUser();
+  console.log('[PROMOTE-DEBUG] store: auth user', { userId: user?.id ?? null });
 
   // Map latitude/longitude back to lat/lng for the live table.
   // facilities.id is a NOT NULL text PK with no default — derive a stable
@@ -1069,22 +1073,26 @@ export const promoteStagingFacility = async (id: string): Promise<void> => {
     created_at, updated_at, latitude, longitude, ...rest } = stg;
 
   const liveId = `staged-${_id}`;
-
-  const { error: upsertError } = await (supabase as any).from('facilities').upsert({
+  const upsertPayload = {
     ...rest,
     id: liveId,
     lat: latitude,
     lng: longitude,
     review_status: 'approved',
     updated_at: new Date().toISOString(),
-  }, { onConflict: 'id' });
-  if (upsertError) throw new Error(`Failed to write facility: ${upsertError.message}`);
+  };
+  console.log('[PROMOTE-DEBUG] store: about to upsert facilities', { liveId, payloadKeys: Object.keys(upsertPayload) });
 
-  const { error: stagingErr } = await supabase
+  const upsertRes = await (supabase as any).from('facilities').upsert(upsertPayload, { onConflict: 'id' });
+  console.log('[PROMOTE-DEBUG] store: facilities upsert result', { error: upsertRes.error, status: upsertRes.status, statusText: upsertRes.statusText, data: upsertRes.data });
+  if (upsertRes.error) throw new Error(`Failed to write facility: ${upsertRes.error.message}`);
+
+  const stagingRes = await supabase
     .from('staging_facilities')
     .update({ review_status: 'approved', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id);
-  if (stagingErr) throw new Error(`Promoted but failed to update staging: ${stagingErr.message}`);
+  console.log('[PROMOTE-DEBUG] store: staging update result', { error: stagingRes.error, status: stagingRes.status });
+  if (stagingRes.error) throw new Error(`Promoted but failed to update staging: ${stagingRes.error.message}`);
 
   await writeAudit({
     pipeline: 'provider_mapping',
@@ -1093,8 +1101,10 @@ export const promoteStagingFacility = async (id: string): Promise<void> => {
     target_row_id: id,
     details: { name: stg.name, type: stg.type },
   });
+  console.log('[PROMOTE-DEBUG] store: audit written, notifying');
 
   notifyFacilitiesChanged();
+  console.log('[PROMOTE-DEBUG] store.promoteStagingFacility:exit OK', { id, liveId });
 };
 
 export const promoteStagingFacilitiesBulk = async (ids: string[]): Promise<void> => {
