@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowDown, ArrowUp, ArrowUpDown } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions, type AppRole } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -262,19 +262,17 @@ export default function AdminUsers() {
   return (
     <div className="min-h-screen bg-background text-foreground p-6">
       <div className="max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h1 className="text-xl font-semibold">User Management</h1>
-            <p className="text-xs text-muted-foreground mt-1">Admin only</p>
-          </div>
-          <div className="flex flex-col items-end gap-1">
-            <Link to="/" className="text-sm text-primary hover:underline">
-              ← Back to map
-            </Link>
-            <Link to="/admin" className="text-sm text-primary hover:underline">
-              ← Back to Admin Panels
-            </Link>
-          </div>
+        <div className="flex items-center justify-between mb-4 gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/admin"><ArrowLeft className="h-4 w-4 mr-1" />Admin</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/">Back to Map</Link>
+          </Button>
+        </div>
+        <div className="mb-4">
+          <h1 className="text-xl font-semibold">User Management</h1>
+          <p className="text-xs text-muted-foreground mt-1">Admin only</p>
         </div>
 
         {/* Summary chips */}
