@@ -525,7 +525,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
         ) : null}
         <div className="mt-2 overflow-auto rounded border border-border max-h-[420px]">
           <table className="w-full text-[11px]">
-            <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+            <thead className="text-muted-foreground [&_th]:sticky [&_th]:top-0 [&_th]:bg-muted [&_th]:z-10 [&_th]:shadow-[inset_0_-1px_0_hsl(var(--border))]">
               <tr>
                 {onPromoteBulk ? (
                   <th className="px-2 py-1.5 w-6">
@@ -677,7 +677,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
         </p>
         <div className="mt-2 overflow-auto rounded border border-border max-h-[320px]">
           <table className="w-full text-[11px]">
-            <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+            <thead className="text-muted-foreground [&_th]:sticky [&_th]:top-0 [&_th]:bg-muted [&_th]:z-10 [&_th]:shadow-[inset_0_-1px_0_hsl(var(--border))]">
               <tr>
                 {verifiedColumns.map((c) => (
                   <th key={c.key} className={cn('text-left px-2 py-1.5 whitespace-nowrap', c.className)}>{c.label}</th>
@@ -731,7 +731,7 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
         </h3>
         <div className="mt-2 overflow-auto rounded border border-border max-h-[280px]">
           <table className="w-full text-[11px]">
-            <thead className="sticky top-0 bg-muted/60 text-muted-foreground">
+            <thead className="text-muted-foreground [&_th]:sticky [&_th]:top-0 [&_th]:bg-muted [&_th]:z-10 [&_th]:shadow-[inset_0_-1px_0_hsl(var(--border))]">
               <tr>
                 <th className="text-left px-2 py-1.5 whitespace-nowrap">When</th>
                 <th className="text-left px-2 py-1.5 whitespace-nowrap">Action</th>
