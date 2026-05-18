@@ -382,33 +382,42 @@ export default function AdminMappingProviders() {
           uploading={uploading}
           onUpload={handleStagingUpload}
           onPromote={async (id) => {
-            const out = await promoteStagingProvider(id);
-            if (out === 'created') toast.success('Created — new pin added.');
-            else if (out === 'updated') toast.success('Updated — existing pin refreshed.');
-            else toast.warning('Conflict — left pending. Resolve in staging.');
-            await refresh();
+            try {
+              const out = await promoteStagingProvider(id);
+              if (out === 'created') toast.success('Created — new pin added.');
+              else if (out === 'updated') toast.success('Updated — existing pin refreshed.');
+              else toast.warning('Conflict — left pending. Resolve in staging.');
+              await refresh();
+            } catch (e) { toast.error(`Promote failed: ${(e as Error).message}`); }
           }}
           onPromoteBulk={async (ids) => {
-            const res = await promoteStagingProvidersBulk(ids);
-            const parts: string[] = [
-              `${res.created} created`, `${res.updated} updated`, `${res.conflict} conflict`,
-            ];
-            if (res.skipped) parts.push(`${res.skipped} skipped`);
-            if (res.failed) parts.push(`${res.failed} failed`);
-            toast.success(`Bulk promote: ${parts.join(', ')}`);
-            if (res.failures.length > 0) {
-              toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
-            }
-            await refresh();
+            try {
+              const res = await promoteStagingProvidersBulk(ids);
+              const parts: string[] = [
+                `${res.created} created`, `${res.updated} updated`, `${res.conflict} conflict`,
+              ];
+              if (res.skipped) parts.push(`${res.skipped} skipped`);
+              if (res.failed) parts.push(`${res.failed} failed`);
+              toast.success(`Bulk promote: ${parts.join(', ')}`);
+              if (res.failures.length > 0) {
+                toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
+              }
+              await refresh();
+            } catch (e) { toast.error(`Bulk promote failed: ${(e as Error).message}`); }
           }}
           onGeocodeBulk={async (ids) => {
-            const res = await geocodeStagingProvidersBulk(ids);
-            const parts = [`${res.geocoded} geocoded`, `${res.failed} failed`, `${res.skipped} skipped`];
-            if (res.geocoded > 0) parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
-            toast.success(`Geocode: ${parts.join(', ')}`);
-            await refresh();
+            try {
+              const res = await geocodeStagingProvidersBulk(ids);
+              const parts = [`${res.geocoded} geocoded`, `${res.failed} failed`, `${res.skipped} skipped`];
+              if (res.geocoded > 0) parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
+              toast.success(`Geocode: ${parts.join(', ')}`);
+              await refresh();
+            } catch (e) { toast.error(`Geocode failed: ${(e as Error).message}`); }
           }}
-          onReject={async (id) => { await rejectStagingProvider(id); toast.success('Rejected.'); await refresh(); }}
+          onReject={async (id) => {
+            try { await rejectStagingProvider(id); toast.success('Rejected.'); await refresh(); }
+            catch (e) { toast.error(`Reject failed: ${(e as Error).message}`); }
+          }}
           onDeactivate={async () => { /* no verified table */ }}
           onRefresh={() => void refresh()}
           onEditStaging={(id) => {
