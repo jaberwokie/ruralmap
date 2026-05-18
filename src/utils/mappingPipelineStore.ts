@@ -671,9 +671,10 @@ export const rejectStagingBh = async (id: string, reason?: string): Promise<void
   const { data: stg } = await (supabase.from('staging_bh' as never) as never as {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingBhRow | null }> } };
   }).select('name,source_row_number').eq('id', id).single();
-  await (supabase.from('staging_bh' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('staging_bh' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'behavioral_health', action: 'record_rejected',
     target_table: 'staging_bh', target_row_id: id,
@@ -682,15 +683,36 @@ export const rejectStagingBh = async (id: string, reason?: string): Promise<void
 };
 
 export const deactivateVerifiedBh = async (id: string): Promise<void> => {
-  await (supabase.from('verified_bh' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('verified_bh' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ active_status: false }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'behavioral_health', action: 'verification_changed',
     target_table: 'verified_bh', target_row_id: id,
     details: { active_status: false },
   });
   notifyVerifiedRecordsChanged();
+};
+
+/** Bulk-promote BH staging rows. Returns per-row outcomes. */
+export const promoteStagingBhBulk = async (
+  ids: string[],
+): Promise<{ promoted: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
+  let promoted = 0;
+  let failed = 0;
+  const failures: Array<{ id: string; reason: string }> = [];
+  for (const id of ids) {
+    try {
+      await promoteStagingBh(id);
+      promoted += 1;
+    } catch (e) {
+      failed += 1;
+      failures.push({ id, reason: (e as Error)?.message ?? 'unknown' });
+    }
+  }
+  notifyVerifiedRecordsChanged();
+  return { promoted, failed, failures };
 };
 
 export const editBhRecord = async (
