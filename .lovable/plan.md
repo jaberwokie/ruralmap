@@ -1,42 +1,42 @@
-## Finding
+## Audit results
 
-You are on `/admin/mapping/facilities`, which renders `src/pages/AdminMappingFacilities.tsx`.
+I scanned the admin pages for no-op handlers. Findings:
 
-That page currently passes no-op callbacks into `PipelineWorkspace`:
+### Confirmed unwired (user-visible buttons that do nothing)
 
-```tsx
-onPromote={async () => {}}
-onReject={async () => {}}
-```
+1. **`/admin/mapping/rural-services`** (`src/pages/AdminMappingRuralServices.tsx`)
+   - `onPromote` — no-op. Same bug we just fixed on Facility Mapping.
+   - `onReject` — no-op.
+   - `onUpload` — no-op. The Upload CSV button in PipelineWorkspace is always rendered, so clicking it does nothing.
 
-So the button click is reaching `PipelineWorkspace.wrap()` — confirmed by the console logs — but it resolves immediately because the Facility Mapping page is not bound to any promote/reject store function.
+2. **`/admin/mapping/facilities`** (`src/pages/AdminMappingFacilities.tsx`)
+   - `onUpload` — still no-op. Upload CSV button does nothing. (Promote/Reject were fixed in the last pass.)
 
-## Plan
+### Not actually broken (no-ops by design)
 
-1. Update `src/pages/AdminMappingFacilities.tsx` only.
-2. Import the facility staging actions already available in `mappingPipelineStore`:
-   - `promoteStagingFacility`
-   - `rejectStagingFacility`
-3. Replace the no-op `onPromote` with:
-   - call `promoteStagingFacility(id)`
-   - show success toast
-   - refresh the Facility Mapping rows
-   - catch and toast errors
-4. Replace the no-op `onReject` with:
-   - call `rejectStagingFacility(id)`
-   - show success toast
-   - refresh the Facility Mapping rows
-   - catch and toast errors
-5. Leave the existing instrumentation in place unless you want it removed in the same pass.
+3. **`/admin/mapping/facilities/staging`** and **`/admin/mapping/rural-services/staging`**
+   - `onDeactivate` is a no-op, but these pages pass `verifiedRows={[]}`, so the Deactivate button is never rendered. Safe to leave.
 
-## Expected result
+## Proposed fixes
 
-- Clicking Promote in Facility Mapping will actually call the store function.
-- The staging row should move out of the pending queue after promotion.
-- Success/failure feedback will be visible through toast messages.
-- Reject will mark the row rejected and remove it from the pending queue.
+### A. Wire Rural Services live-management page (mirror of the Facility Mapping fix)
 
-## Validation
+`src/pages/AdminMappingRuralServices.tsx`:
+- `onPromote(id)` → `editRuralServiceRecord(id, { review_status: 'approved', verification_status: 'verified' })`, toast, refresh.
+- `onReject(id)` → `editRuralServiceRecord(id, { review_status: 'rejected' })`, toast, refresh.
 
-- Verify TypeScript via the project’s normal check pipeline.
-- Use the existing `[PROMOTE-DEBUG]` console logs to confirm the click path now reaches the page/store handler instead of only `wrap()`.
+### B. Decide what to do about the Upload CSV button on the live-management pages
+
+These two pages (`/admin/mapping/facilities` and `/admin/mapping/rural-services`) operate on already-live records. The actual CSV upload flow lives on the dedicated staging pipeline pages (`/admin/mapping/facilities/staging`, `/admin/mapping/rural-services/staging`).
+
+Two options — pick one:
+- **Option 1 (recommended):** Route the Upload button on the live page to the staging page. `onUpload` becomes a redirect to `/admin/mapping/facilities/staging` (or rural equivalent) with a toast explaining where uploads happen. Keeps the UI honest without duplicating the pipeline.
+- **Option 2:** Hide the Upload section entirely on these pages. Would require a small `PipelineWorkspace` prop (e.g. `hideUpload`) to suppress that section. More invasive.
+
+### C. Leave staging-page `onDeactivate` alone
+
+Those pages never render the Deactivate button, so no work needed.
+
+## Question for you
+
+Which Upload behavior do you want on the live-management pages — **Option 1 (redirect to staging)** or **Option 2 (hide the upload block)**? I'll wire Promote/Reject on the Rural Services page either way.

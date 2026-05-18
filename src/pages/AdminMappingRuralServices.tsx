@@ -174,8 +174,24 @@ export default function AdminMappingRuralServices() {
       loading={loading}
       uploading={false}
       onUpload={async () => {}}
-      onPromote={async () => {}}
-      onReject={async () => {}}
+      onPromote={async (id) => {
+        try {
+          await editRuralServiceRecord(id, { review_status: 'approved', verification_status: 'verified' });
+          toast.success('Service approved');
+          await refresh();
+        } catch (e: any) {
+          toast.error(e?.message ?? 'Approve failed');
+        }
+      }}
+      onReject={async (id) => {
+        try {
+          await editRuralServiceRecord(id, { review_status: 'rejected' });
+          toast.success('Service rejected');
+          await refresh();
+        } catch (e: any) {
+          toast.error(e?.message ?? 'Reject failed');
+        }
+      }}
       onDeactivate={async () => {}}
       onRefresh={refresh}
       onGeocodeBulk={handleGeocodeBulk}
