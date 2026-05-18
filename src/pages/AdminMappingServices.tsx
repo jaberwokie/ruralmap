@@ -597,33 +597,46 @@ const handlePatchFailed = async () => {
         loading={loading}
         uploading={uploading}
         onUpload={handleUpload}
-        onPromote={async (id) => { await promoteStagingService(id); toast.success('Promoted to verified.'); await refresh(); }}
+        onPromote={async (id) => {
+          try { await promoteStagingService(id); toast.success('Promoted to verified.'); await refresh(); }
+          catch (e) { toast.error(`Promote failed: ${(e as Error).message}`); }
+        }}
         onPromoteBulk={async (ids) => {
-          const res = await promoteStagingServicesBulk(ids);
-          const parts: string[] = [`${res.promoted} promoted`];
-          if (res.skipped) parts.push(`${res.skipped} skipped (errors)`);
-          if (res.failed) parts.push(`${res.failed} failed`);
-          toast.success(`Bulk promote: ${parts.join(', ')}`);
-          if (res.failures.length > 0) {
-            toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
-          }
-          await refresh();
+          try {
+            const res = await promoteStagingServicesBulk(ids);
+            const parts: string[] = [`${res.promoted} promoted`];
+            if (res.skipped) parts.push(`${res.skipped} skipped (errors)`);
+            if (res.failed) parts.push(`${res.failed} failed`);
+            toast.success(`Bulk promote: ${parts.join(', ')}`);
+            if (res.failures.length > 0) {
+              toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
+            }
+            await refresh();
+          } catch (e) { toast.error(`Bulk promote failed: ${(e as Error).message}`); }
         }}
         onGeocodeBulk={async (ids) => {
-          const res = await geocodeStagingServicesBulk(ids);
-          const parts = [
-            `${res.geocoded} geocoded`,
-            `${res.failed} failed`,
-            `${res.skipped} skipped`,
-          ];
-          if (res.geocoded > 0) {
-            parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
-          }
-          toast.success(`Geocode: ${parts.join(', ')}`);
-          await refresh();
+          try {
+            const res = await geocodeStagingServicesBulk(ids);
+            const parts = [
+              `${res.geocoded} geocoded`,
+              `${res.failed} failed`,
+              `${res.skipped} skipped`,
+            ];
+            if (res.geocoded > 0) {
+              parts.push(`(${res.highConf} high · ${res.mediumConf} med · ${res.lowConf} low)`);
+            }
+            toast.success(`Geocode: ${parts.join(', ')}`);
+            await refresh();
+          } catch (e) { toast.error(`Geocode failed: ${(e as Error).message}`); }
         }}
-        onReject={async (id) => { await rejectStagingService(id); toast.success('Rejected.'); await refresh(); }}
-        onDeactivate={async (id) => { await deactivateVerifiedService(id); toast.success('Deactivated — removed from map.'); await refresh(); }}
+        onReject={async (id) => {
+          try { await rejectStagingService(id); toast.success('Rejected.'); await refresh(); }
+          catch (e) { toast.error(`Reject failed: ${(e as Error).message}`); }
+        }}
+        onDeactivate={async (id) => {
+          try { await deactivateVerifiedService(id); toast.success('Deactivated — removed from map.'); await refresh(); }
+          catch (e) { toast.error(`Deactivate failed: ${(e as Error).message}`); }
+        }}
         onRefresh={() => void refresh()}
         onEditStaging={(id) => {
           const row = staging.find((r) => r.id === id);
