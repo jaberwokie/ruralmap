@@ -7,8 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   listFacilities,
   editFacilityRecord,
-  promoteStagingFacility,
-  rejectStagingFacility,
 } from '@/utils/mappingPipelineStore';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import { supabase } from '@/integrations/supabase/client';
