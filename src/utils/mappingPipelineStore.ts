@@ -44,7 +44,7 @@ export const writeAudit = async (input: {
   details?: Json;
 }) => {
   const { data: { user } } = await supabase.auth.getUser();
-  await (auditTable() as { insert: (row: unknown) => Promise<unknown> }).insert({
+  const { error } = await (auditTable() as { insert: (row: unknown) => Promise<{ error: { message: string } | null }> }).insert({
     pipeline: input.pipeline,
     action: input.action,
     target_table: input.target_table ?? null,
@@ -54,6 +54,11 @@ export const writeAudit = async (input: {
     actor_email: user?.email ?? null,
     details: input.details ?? {},
   });
+  if (error) {
+    // Audit insert is admin-gated; non-admins will see this surface as a thrown error
+    // rather than a silent gap. Re-throw so the calling op fails loudly.
+    throw new Error(`Audit write failed: ${error.message}`);
+  }
 };
 
 export const listAudit = async (pipeline?: PipelineKey, limit = 200): Promise<AuditLogRow[]> => {
@@ -351,9 +356,10 @@ export const rejectStagingService = async (id: string, reason?: string): Promise
   const { data: stg } = await (supabase.from('staging_services' as never) as never as {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingServiceRow | null }> } };
   }).select('name,source_row_number').eq('id', id).single();
-  await (supabase.from('staging_services' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('staging_services' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'services', action: 'record_rejected',
     target_table: 'staging_services', target_row_id: id,
@@ -362,9 +368,10 @@ export const rejectStagingService = async (id: string, reason?: string): Promise
 };
 
 export const deactivateVerifiedService = async (id: string): Promise<void> => {
-  await (supabase.from('verified_services' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('verified_services' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ active_status: false }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'services', action: 'verification_changed',
     target_table: 'verified_services', target_row_id: id,
@@ -664,9 +671,10 @@ export const rejectStagingBh = async (id: string, reason?: string): Promise<void
   const { data: stg } = await (supabase.from('staging_bh' as never) as never as {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingBhRow | null }> } };
   }).select('name,source_row_number').eq('id', id).single();
-  await (supabase.from('staging_bh' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('staging_bh' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'behavioral_health', action: 'record_rejected',
     target_table: 'staging_bh', target_row_id: id,
@@ -675,15 +683,36 @@ export const rejectStagingBh = async (id: string, reason?: string): Promise<void
 };
 
 export const deactivateVerifiedBh = async (id: string): Promise<void> => {
-  await (supabase.from('verified_bh' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('verified_bh' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ active_status: false }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'behavioral_health', action: 'verification_changed',
     target_table: 'verified_bh', target_row_id: id,
     details: { active_status: false },
   });
   notifyVerifiedRecordsChanged();
+};
+
+/** Bulk-promote BH staging rows. Returns per-row outcomes. */
+export const promoteStagingBhBulk = async (
+  ids: string[],
+): Promise<{ promoted: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
+  let promoted = 0;
+  let failed = 0;
+  const failures: Array<{ id: string; reason: string }> = [];
+  for (const id of ids) {
+    try {
+      await promoteStagingBh(id);
+      promoted += 1;
+    } catch (e) {
+      failed += 1;
+      failures.push({ id, reason: (e as Error)?.message ?? 'unknown' });
+    }
+  }
+  notifyVerifiedRecordsChanged();
+  return { promoted, failed, failures };
 };
 
 export const editBhRecord = async (
@@ -962,21 +991,55 @@ export const listFacilities = async (): Promise<any[]> => {
   return data ?? [];
 };
 
+/**
+ * Whitelist of columns that may be written into the live `facilities` table.
+ * Anything not on this list (staging-only metadata, etc.) is dropped before
+ * upsert so PostgREST can't reject the call for unknown columns.
+ */
+const FACILITY_LIVE_COLUMNS = new Set([
+  'name', 'type', 'classification', 'data_confidence',
+  'city', 'county', 'street_address', 'state', 'zip',
+  'phone', 'website', 'lat', 'lng', 'access_notes',
+  'inpatient', 'psychiatric', 'operational',
+  'access_type', 'volume', 'service', 'tier', 'notes',
+  'mappable', 'verification_status', 'review_status',
+]);
+
+/** Whitelist of columns writable to the live `rural_services` table. */
+const RURAL_SERVICE_LIVE_COLUMNS = new Set([
+  'name', 'category', 'county', 'city', 'state',
+  'street_address', 'zip', 'phone', 'website',
+  'notes', 'lat', 'lng',
+  'bh_category_mapped', 'bh_entity_type', 'bh_service_type',
+  'service_tags', 'operational', 'operational_service_class',
+  'access_notes', 'review_status', 'verification_status', 'mappable',
+]);
+
+const pickColumns = (source: Record<string, unknown>, allow: Set<string>): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  for (const k of Object.keys(source)) {
+    if (allow.has(k)) out[k] = source[k];
+  }
+  return out;
+};
+
 export const editFacilityRecord = async (
   id: string,
   changes: Record<string, unknown>,
 ): Promise<void> => {
-  await supabase
+  const { error } = await supabase
     .from('facilities')
     .update({ ...changes, updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'facilities',
     action: 'record_edited',
     target_table: 'facilities',
     target_row_id: id,
     details: changes,
   });
+  notifyFacilitiesChanged();
 };
 
 // ── rural services ──────────────────────────────────────────────────────
@@ -992,17 +1055,19 @@ export const editRuralServiceRecord = async (
   id: string,
   changes: Record<string, unknown>,
 ): Promise<void> => {
-  await supabase
+  const { error } = await supabase
     .from('rural_services')
     .update({ ...changes, updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'rural_services',
     action: 'record_edited',
     target_table: 'rural_services',
     target_row_id: id,
     details: changes,
   });
+  notifyRuralServicesChanged();
 };
 
 // ── staging_facilities ──────────────────────────────────────────────────────
@@ -1022,12 +1087,13 @@ export const editStagingFacilityRecord = async (
   id: string,
   changes: Record<string, unknown>,
 ): Promise<void> => {
-  await supabase
+  const { error } = await supabase
     .from('staging_facilities')
     .update({ ...changes, updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'facilities',
     action: 'record_edited',
     target_table: 'staging_facilities',
     target_row_id: id,
@@ -1036,12 +1102,13 @@ export const editStagingFacilityRecord = async (
 };
 
 export const rejectStagingFacility = async (id: string): Promise<void> => {
-  await supabase
+  const { error } = await supabase
     .from('staging_facilities')
     .update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'facilities',
     action: 'record_rejected',
     target_table: 'staging_facilities',
     target_row_id: id,
@@ -1050,67 +1117,71 @@ export const rejectStagingFacility = async (id: string): Promise<void> => {
 };
 
 export const promoteStagingFacility = async (id: string): Promise<void> => {
-  console.log('[PROMOTE-DEBUG] store.promoteStagingFacility:entry', { id });
-
   const { data: stg, error } = await supabase
     .from('staging_facilities')
     .select('*')
     .eq('id', id)
     .single();
-  console.log('[PROMOTE-DEBUG] store: staging select', { hasRow: !!stg, error });
   if (error || !stg) throw new Error('Staging facility not found');
   if (stg.validation_severity === 'error') throw new Error('Cannot promote record with validation errors');
   if (!stg.name || !stg.type) throw new Error('Name and type are required before promotion');
 
-  const { data: { user } } = await supabase.auth.getUser();
-  console.log('[PROMOTE-DEBUG] store: auth user', { userId: user?.id ?? null });
-
-  // Map latitude/longitude back to lat/lng for the live table.
-  // facilities.id is a NOT NULL text PK with no default — derive a stable
+  // facilities.id is NOT NULL text PK with no default — derive a stable
   // id from the staging uuid so re-promotion upserts the same live row.
-  const { id: _id, validation_severity, validation_messages, source_file_name,
-    source_row_number, import_batch_id, last_reviewed_at, match_conflict,
-    created_at, updated_at, latitude, longitude, ...rest } = stg;
+  const liveId = `staged-${stg.id}`;
 
-  const liveId = `staged-${_id}`;
+  // Map latitude/longitude back to lat/lng, then whitelist columns so
+  // staging-only fields (validation_*, source_*, match_conflict, …) never
+  // leak into the upsert payload and trigger PostgREST schema errors.
+  const merged: Record<string, unknown> = {
+    ...stg,
+    lat: stg.latitude,
+    lng: stg.longitude,
+  };
   const upsertPayload = {
-    ...rest,
+    ...pickColumns(merged, FACILITY_LIVE_COLUMNS),
     id: liveId,
-    lat: latitude,
-    lng: longitude,
     review_status: 'approved',
     updated_at: new Date().toISOString(),
   };
-  console.log('[PROMOTE-DEBUG] store: about to upsert facilities', { liveId, payloadKeys: Object.keys(upsertPayload) });
 
   const upsertRes = await (supabase as any).from('facilities').upsert(upsertPayload, { onConflict: 'id' });
-  console.log('[PROMOTE-DEBUG] store: facilities upsert result', { error: upsertRes.error, status: upsertRes.status, statusText: upsertRes.statusText, data: upsertRes.data });
   if (upsertRes.error) throw new Error(`Failed to write facility: ${upsertRes.error.message}`);
 
   const stagingRes = await supabase
     .from('staging_facilities')
     .update({ review_status: 'approved', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id);
-  console.log('[PROMOTE-DEBUG] store: staging update result', { error: stagingRes.error, status: stagingRes.status });
   if (stagingRes.error) throw new Error(`Promoted but failed to update staging: ${stagingRes.error.message}`);
 
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'facilities',
     action: 'record_promoted',
     target_table: 'facilities',
     target_row_id: id,
-    details: { name: stg.name, type: stg.type },
+    details: { name: stg.name, type: stg.type, live_id: liveId },
   });
-  console.log('[PROMOTE-DEBUG] store: audit written, notifying');
 
   notifyFacilitiesChanged();
-  console.log('[PROMOTE-DEBUG] store.promoteStagingFacility:exit OK', { id, liveId });
 };
 
-export const promoteStagingFacilitiesBulk = async (ids: string[]): Promise<void> => {
+export const promoteStagingFacilitiesBulk = async (
+  ids: string[],
+): Promise<{ promoted: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
+  let promoted = 0;
+  let failed = 0;
+  const failures: Array<{ id: string; reason: string }> = [];
   for (const id of ids) {
-    try { await promoteStagingFacility(id); } catch { /* skip failed */ }
+    try {
+      await promoteStagingFacility(id);
+      promoted += 1;
+    } catch (e) {
+      failed += 1;
+      failures.push({ id, reason: (e as Error)?.message ?? 'unknown' });
+    }
   }
+  notifyFacilitiesChanged();
+  return { promoted, failed, failures };
 };
 
 export const geocodeStagingFacilitiesBulk = async (
@@ -1152,11 +1223,11 @@ export const geocodeStagingFacilitiesBulk = async (
         const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
         await supabase.from('staging_facilities').update({ access_notes: downgradedNotes }).eq('id', row.id);
       }
-      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
+      await writeAudit({ pipeline: 'facilities', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
     } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
       const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
       await supabase.from('staging_facilities').update({ access_notes: stampedNotes }).eq('id', row.id);
-      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
+      await writeAudit({ pipeline: 'facilities', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
     }
   }
   return summary;
@@ -1169,7 +1240,7 @@ export const listStagingRuralServices = async (): Promise<any[]> => {
     .from('staging_rural_services')
     .select('*')
     .order('created_at', { ascending: false });
-  
+
   return (data ?? []).map((r) => ({
     ...r,
     validation_messages: (r.validation_messages ?? []) as unknown as ValidationMessage[],
@@ -1180,12 +1251,13 @@ export const editStagingRuralServiceRecord = async (
   id: string,
   changes: Record<string, unknown>,
 ): Promise<void> => {
-  await supabase
+  const { error } = await supabase
     .from('staging_rural_services')
     .update({ ...changes, updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'rural_services',
     action: 'record_edited',
     target_table: 'staging_rural_services',
     target_row_id: id,
@@ -1194,12 +1266,13 @@ export const editStagingRuralServiceRecord = async (
 };
 
 export const rejectStagingRuralService = async (id: string): Promise<void> => {
-  await supabase
+  const { error } = await supabase
     .from('staging_rural_services')
     .update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'rural_services',
     action: 'record_rejected',
     target_table: 'staging_rural_services',
     target_row_id: id,
@@ -1217,21 +1290,22 @@ export const promoteStagingRuralService = async (id: string): Promise<void> => {
   if (stg.validation_severity === 'error') throw new Error('Cannot promote record with validation errors');
   if (!stg.name || !stg.category) throw new Error('Name and category are required before promotion');
 
-  const { id: _id, validation_severity, validation_messages, source_file_name,
-    source_row_number, import_batch_id, last_reviewed_at, match_conflict,
-    created_at, updated_at, latitude, longitude, ...rest } = stg;
-
   // rural_services.id is NOT NULL text PK with no default — derive from staging uuid.
-  const liveId = `staged-${_id}`;
+  const liveId = `staged-${stg.id}`;
 
-  const { error: upsertError } = await (supabase as any).from('rural_services').upsert({
-    ...rest,
+  const merged: Record<string, unknown> = {
+    ...stg,
+    lat: stg.latitude,
+    lng: stg.longitude,
+  };
+  const upsertPayload = {
+    ...pickColumns(merged, RURAL_SERVICE_LIVE_COLUMNS),
     id: liveId,
-    lat: latitude,
-    lng: longitude,
     review_status: 'approved',
     updated_at: new Date().toISOString(),
-  }, { onConflict: 'id' });
+  };
+
+  const { error: upsertError } = await (supabase as any).from('rural_services').upsert(upsertPayload, { onConflict: 'id' });
   if (upsertError) throw new Error(`Failed to write rural service: ${upsertError.message}`);
 
   const { error: stagingErr } = await supabase
@@ -1241,20 +1315,33 @@ export const promoteStagingRuralService = async (id: string): Promise<void> => {
   if (stagingErr) throw new Error(`Promoted but failed to update staging: ${stagingErr.message}`);
 
   await writeAudit({
-    pipeline: 'provider_mapping',
+    pipeline: 'rural_services',
     action: 'record_promoted',
     target_table: 'rural_services',
     target_row_id: id,
-    details: { name: stg.name, category: stg.category },
+    details: { name: stg.name, category: stg.category, live_id: liveId },
   });
 
   notifyRuralServicesChanged();
 };
 
-export const promoteStagingRuralServicesBulk = async (ids: string[]): Promise<void> => {
+export const promoteStagingRuralServicesBulk = async (
+  ids: string[],
+): Promise<{ promoted: number; failed: number; failures: Array<{ id: string; reason: string }> }> => {
+  let promoted = 0;
+  let failed = 0;
+  const failures: Array<{ id: string; reason: string }> = [];
   for (const id of ids) {
-    try { await promoteStagingRuralService(id); } catch { /* skip failed */ }
+    try {
+      await promoteStagingRuralService(id);
+      promoted += 1;
+    } catch (e) {
+      failed += 1;
+      failures.push({ id, reason: (e as Error)?.message ?? 'unknown' });
+    }
   }
+  notifyRuralServicesChanged();
+  return { promoted, failed, failures };
 };
 
 export const geocodeStagingRuralServicesBulk = async (
@@ -1296,12 +1383,157 @@ export const geocodeStagingRuralServicesBulk = async (
         const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
         await supabase.from('staging_rural_services').update({ access_notes: downgradedNotes }).eq('id', row.id);
       }
-      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
+      await writeAudit({ pipeline: 'rural_services', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
     } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
       const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
       await supabase.from('staging_rural_services').update({ access_notes: stampedNotes }).eq('id', row.id);
-      await writeAudit({ pipeline: 'provider_mapping', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
+      await writeAudit({ pipeline: 'rural_services', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
     }
   }
   return summary;
+};
+
+// ── CSV upload helpers for facilities + rural_services ───────────────────
+// Lightweight column-by-name mappers. Both staging tables are flat enough
+// that a header→column copy with type coercion covers the import case.
+
+const numOrNull = (s: string | undefined): number | null => {
+  if (s == null || s === '') return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+};
+const strOrNull = (s: string | undefined): string | null => {
+  if (s == null) return null;
+  const t = s.trim();
+  return t === '' ? null : t;
+};
+
+const STAGING_FACILITY_FIELDS = [
+  'name', 'type', 'classification', 'data_confidence',
+  'city', 'county', 'street_address', 'state', 'zip',
+  'phone', 'website', 'access_notes', 'notes', 'service', 'tier',
+] as const;
+
+const STAGING_RURAL_FIELDS = [
+  'name', 'category', 'city', 'county', 'street_address', 'state', 'zip',
+  'phone', 'website', 'notes', 'access_notes',
+  'bh_category_mapped', 'bh_entity_type', 'bh_service_type', 'service_tags',
+] as const;
+
+export const insertStagingFacilities = async (
+  rows: Record<string, string>[],
+  meta: { fileName: string; importBatchId: string },
+): Promise<{ inserted: number; errors: number; warnings: number }> => {
+  await writeAudit({
+    pipeline: 'facilities', action: 'upload_started',
+    import_batch_id: meta.importBatchId,
+    details: { file: meta.fileName, rows: rows.length },
+  });
+
+  let errors = 0;
+  const prepared = rows.map((r, idx) => {
+    const out: Record<string, unknown> = {
+      source_file_name: meta.fileName,
+      source_row_number: idx + 2,
+      import_batch_id: meta.importBatchId,
+      review_status: 'pending',
+      validation_messages: [] as unknown[],
+      validation_severity: null as string | null,
+    };
+    for (const f of STAGING_FACILITY_FIELDS) {
+      out[f] = strOrNull(r[f]);
+    }
+    out.latitude = numOrNull(r.latitude ?? r.lat);
+    out.longitude = numOrNull(r.longitude ?? r.lng);
+    if (!out.name || !out.type) {
+      errors += 1;
+      out.validation_severity = 'error';
+      out.validation_messages = [{
+        severity: 'error',
+        field: !out.name ? 'name' : 'type',
+        message: !out.name ? 'name is required' : 'type is required',
+      }];
+    }
+    return out;
+  });
+
+  const { data, error } = await supabase
+    .from('staging_facilities')
+    .insert(prepared as never)
+    .select('id');
+  if (error) {
+    await writeAudit({
+      pipeline: 'facilities', action: 'upload_completed',
+      import_batch_id: meta.importBatchId,
+      details: { error: error.message, rows: rows.length },
+    });
+    throw new Error(error.message);
+  }
+
+  await writeAudit({
+    pipeline: 'facilities', action: 'upload_completed',
+    import_batch_id: meta.importBatchId,
+    details: { inserted: data?.length ?? 0, errors },
+  });
+
+  return { inserted: data?.length ?? 0, errors, warnings: 0 };
+};
+
+export const insertStagingRuralServices = async (
+  rows: Record<string, string>[],
+  meta: { fileName: string; importBatchId: string },
+): Promise<{ inserted: number; errors: number; warnings: number }> => {
+  await writeAudit({
+    pipeline: 'rural_services', action: 'upload_started',
+    import_batch_id: meta.importBatchId,
+    details: { file: meta.fileName, rows: rows.length },
+  });
+
+  let errors = 0;
+  const prepared = rows.map((r, idx) => {
+    const out: Record<string, unknown> = {
+      source_file_name: meta.fileName,
+      source_row_number: idx + 2,
+      import_batch_id: meta.importBatchId,
+      review_status: 'pending',
+      validation_messages: [] as unknown[],
+      validation_severity: null as string | null,
+    };
+    for (const f of STAGING_RURAL_FIELDS) {
+      out[f] = strOrNull(r[f]);
+    }
+    out.latitude = numOrNull(r.latitude ?? r.lat);
+    out.longitude = numOrNull(r.longitude ?? r.lng);
+    if (!out.name || !out.category) {
+      errors += 1;
+      out.validation_severity = 'error';
+      out.validation_messages = [{
+        severity: 'error',
+        field: !out.name ? 'name' : 'category',
+        message: !out.name ? 'name is required' : 'category is required',
+      }];
+    }
+    return out;
+  });
+
+  const { data, error } = await supabase
+    .from('staging_rural_services')
+    .insert(prepared as never)
+    .select('id');
+  if (error) {
+    await writeAudit({
+      pipeline: 'rural_services', action: 'upload_completed',
+      import_batch_id: meta.importBatchId,
+      details: { error: error.message, rows: rows.length },
+    });
+    throw new Error(error.message);
+  }
+
+  await writeAudit({
+    pipeline: 'rural_services', action: 'upload_completed',
+    import_batch_id: meta.importBatchId,
+    details: { inserted: data?.length ?? 0, errors },
+  });
+
+  return { inserted: data?.length ?? 0, errors, warnings: 0 };
 };
