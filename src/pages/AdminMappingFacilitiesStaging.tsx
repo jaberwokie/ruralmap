@@ -176,35 +176,35 @@ export default function AdminMappingFacilitiesStaging() {
         uploading={uploading}
         onUpload={handleUpload}
         onPromote={async (id) => {
-          console.log('[PROMOTE-DEBUG] page.onPromote:entry', { id });
           try {
             await promoteStagingFacility(id);
-            console.log('[PROMOTE-DEBUG] page.onPromote:store returned OK', { id });
             toast.success('Facility promoted to live map');
-            console.log('[PROMOTE-DEBUG] page.onPromote:success toast fired');
             await refresh();
-            console.log('[PROMOTE-DEBUG] page.onPromote:refresh done');
-          } catch (e: any) {
-            console.error('[PROMOTE-DEBUG] page.onPromote:caught error', e);
-            toast.error(e?.message ?? 'Promotion failed');
-            console.log('[PROMOTE-DEBUG] page.onPromote:error toast fired');
-          }
+          } catch (e) { toast.error(`Promote failed: ${(e as Error).message}`); }
         }}
         onPromoteBulk={async (ids) => {
-          await promoteStagingFacilitiesBulk(ids);
-          toast.success(`${ids.length} facilities promoted`);
-          await refresh();
+          try {
+            const res = await promoteStagingFacilitiesBulk(ids);
+            const parts: string[] = [`${res.promoted} promoted`];
+            if (res.failed) parts.push(`${res.failed} failed`);
+            toast.success(`Bulk promote: ${parts.join(', ')}`);
+            if (res.failures.length > 0) {
+              toast.error(`Some rows failed: ${res.failures.slice(0, 3).map((f) => f.reason).join(' · ')}`);
+            }
+            await refresh();
+          } catch (e) { toast.error(`Bulk promote failed: ${(e as Error).message}`); }
         }}
         onGeocodeBulk={async (ids) => {
-          toast.info(`Geocoding ${ids.length} facilities…`);
-          const result = await geocodeStagingFacilitiesBulk(ids);
-          toast.success(`Geocoded: ${result.geocoded} success, ${result.failed} failed, ${result.skipped} skipped`);
-          await refresh();
+          try {
+            toast.info(`Geocoding ${ids.length} facilities…`);
+            const result = await geocodeStagingFacilitiesBulk(ids);
+            toast.success(`Geocoded: ${result.geocoded} success, ${result.failed} failed, ${result.skipped} skipped`);
+            await refresh();
+          } catch (e) { toast.error(`Geocode failed: ${(e as Error).message}`); }
         }}
         onReject={async (id) => {
-          await rejectStagingFacility(id);
-          toast.success('Facility rejected');
-          await refresh();
+          try { await rejectStagingFacility(id); toast.success('Facility rejected'); await refresh(); }
+          catch (e) { toast.error(`Reject failed: ${(e as Error).message}`); }
         }}
         onDeactivate={async () => {}}
         onRefresh={refresh}
