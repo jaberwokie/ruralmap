@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
