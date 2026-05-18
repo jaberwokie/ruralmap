@@ -23,6 +23,7 @@ const STAGING_COLS = [
 ];
 
 export default function AdminMappingRuralServices() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
