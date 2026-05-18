@@ -197,8 +197,8 @@ export default function AdminMappingRuralServicesStaging() {
         verifiedRows={[]}
         auditEntries={[]}
         loading={loading}
-        uploading={false}
-        onUpload={async () => { toast.info('CSV upload for rural services coming in next step'); }}
+        uploading={uploading}
+        onUpload={handleUpload}
         onPromote={async (id) => {
           try {
             await promoteStagingRuralService(id);
