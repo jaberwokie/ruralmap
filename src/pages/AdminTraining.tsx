@@ -182,6 +182,9 @@ export default function AdminTraining() {
               <Download className="mr-1 h-4 w-4" />
               {busy === 'docx' ? 'Generating…' : 'Download Training (.docx)'}
             </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/">Back to Map</Link>
+            </Button>
           </div>
         </div>
       </div>

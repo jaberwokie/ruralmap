@@ -135,6 +135,9 @@ export default function AdminUnmappedProviders() {
             <Button onClick={handleExport} disabled={visibleRows.length === 0} size="sm" variant="outline">
               <Download className="h-4 w-4 mr-1" /> Export for Mapping (CSV)
             </Button>
+            <Button asChild variant="ghost" size="sm">
+              <Link to="/">Back to Map</Link>
+            </Button>
           </div>
         </div>
 
