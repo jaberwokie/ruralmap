@@ -11,7 +11,9 @@ import {
   promoteStagingRuralService,
   promoteStagingRuralServicesBulk,
   geocodeStagingRuralServicesBulk,
+  insertStagingRuralServices,
 } from '@/utils/mappingPipelineStore';
+import { parseCsvText } from '@/utils/mappingPipelineCsv';
 import { parseGeocodeTag, isGeocodeFailed } from '@/utils/serviceGeocode';
 import { exportCsv } from '@/utils/csvExport';
 
@@ -28,6 +30,7 @@ export default function AdminMappingRuralServicesStaging() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -37,6 +40,23 @@ export default function AdminMappingRuralServicesStaging() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const text = await file.text();
+      const { rows: parsed } = parseCsvText(text);
+      if (parsed.length === 0) { toast.error('CSV had no data rows.'); return; }
+      const importBatchId = crypto.randomUUID();
+      const res = await insertStagingRuralServices(parsed, { fileName: file.name, importBatchId });
+      toast.success(`Inserted ${res.inserted} rural services (${res.errors} errors)`);
+      await refresh();
+    } catch (e) {
+      toast.error(`Upload failed: ${(e as Error).message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const stagingRows = rows.map((r: any) => {
     const tag = parseGeocodeTag(r.access_notes);
@@ -177,8 +197,8 @@ export default function AdminMappingRuralServicesStaging() {
         verifiedRows={[]}
         auditEntries={[]}
         loading={loading}
-        uploading={false}
-        onUpload={async () => { toast.info('CSV upload for rural services coming in next step'); }}
+        uploading={uploading}
+        onUpload={handleUpload}
         onPromote={async (id) => {
           try {
             await promoteStagingRuralService(id);
