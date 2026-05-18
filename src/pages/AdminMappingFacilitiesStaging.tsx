@@ -157,12 +157,18 @@ export default function AdminMappingFacilitiesStaging() {
         uploading={false}
         onUpload={async () => { toast.info('CSV upload for facilities coming in next step'); }}
         onPromote={async (id) => {
+          console.log('[PROMOTE-DEBUG] page.onPromote:entry', { id });
           try {
             await promoteStagingFacility(id);
+            console.log('[PROMOTE-DEBUG] page.onPromote:store returned OK', { id });
             toast.success('Facility promoted to live map');
+            console.log('[PROMOTE-DEBUG] page.onPromote:success toast fired');
             await refresh();
+            console.log('[PROMOTE-DEBUG] page.onPromote:refresh done');
           } catch (e: any) {
-            toast.error(e.message ?? 'Promotion failed');
+            console.error('[PROMOTE-DEBUG] page.onPromote:caught error', e);
+            toast.error(e?.message ?? 'Promotion failed');
+            console.log('[PROMOTE-DEBUG] page.onPromote:error toast fired');
           }
         }}
         onPromoteBulk={async (ids) => {
