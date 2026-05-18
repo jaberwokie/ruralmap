@@ -246,8 +246,18 @@ export default function PipelineWorkspace(props: PipelineWorkspaceProps) {
   };
 
   const wrap = async (id: string, fn: () => Promise<void>) => {
+    console.log('[PROMOTE-DEBUG] wrap:start', { id });
     setActingId(id);
-    try { await fn(); } finally { setActingId(null); }
+    try {
+      await fn();
+      console.log('[PROMOTE-DEBUG] wrap:fn resolved', { id });
+    } catch (err) {
+      console.error('[PROMOTE-DEBUG] wrap:fn threw', { id, err });
+      throw err;
+    } finally {
+      setActingId(null);
+      console.log('[PROMOTE-DEBUG] wrap:finally (actingId cleared)', { id });
+    }
   };
 
   return (
