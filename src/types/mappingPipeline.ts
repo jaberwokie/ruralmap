@@ -155,7 +155,7 @@ export type AuditAction =
   | 'provider_updated'
   | 'provider_skipped_conflict';
 
-export type PipelineKey = 'services' | 'behavioral_health' | 'provider_mapping';
+export type PipelineKey = 'services' | 'behavioral_health' | 'provider_mapping' | 'facilities' | 'rural_services';
 
 export interface StagingProviderRow {
   id: string;
