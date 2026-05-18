@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
@@ -22,6 +23,7 @@ const STAGING_COLS = [
 ];
 
 export default function AdminMappingRuralServices() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -173,7 +175,10 @@ export default function AdminMappingRuralServices() {
       auditEntries={[]}
       loading={loading}
       uploading={false}
-      onUpload={async () => {}}
+      onUpload={async () => {
+        toast.info('CSV uploads happen in the staging pipeline. Redirecting…');
+        navigate('/admin/mapping/rural-services-staging');
+      }}
       onPromote={async (id) => {
         try {
           await editRuralServiceRecord(id, { review_status: 'approved', verification_status: 'verified' });
