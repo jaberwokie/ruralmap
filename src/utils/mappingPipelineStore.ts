@@ -356,9 +356,10 @@ export const rejectStagingService = async (id: string, reason?: string): Promise
   const { data: stg } = await (supabase.from('staging_services' as never) as never as {
     select: (s: string) => { eq: (c: string, v: string) => { single: () => Promise<{ data: StagingServiceRow | null }> } };
   }).select('name,source_row_number').eq('id', id).single();
-  await (supabase.from('staging_services' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('staging_services' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ review_status: 'rejected', last_reviewed_at: new Date().toISOString() }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'services', action: 'record_rejected',
     target_table: 'staging_services', target_row_id: id,
@@ -367,9 +368,10 @@ export const rejectStagingService = async (id: string, reason?: string): Promise
 };
 
 export const deactivateVerifiedService = async (id: string): Promise<void> => {
-  await (supabase.from('verified_services' as never) as never as {
-    update: (v: unknown) => { eq: (c: string, v: string) => Promise<unknown> };
+  const { error } = await (supabase.from('verified_services' as never) as never as {
+    update: (v: unknown) => { eq: (c: string, v: string) => Promise<{ error: { message: string } | null }> };
   }).update({ active_status: false }).eq('id', id);
+  if (error) throw new Error(error.message);
   await writeAudit({
     pipeline: 'services', action: 'verification_changed',
     target_table: 'verified_services', target_row_id: id,
