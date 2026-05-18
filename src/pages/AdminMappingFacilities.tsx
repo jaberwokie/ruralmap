@@ -167,7 +167,10 @@ export default function AdminMappingFacilities() {
       auditEntries={[]}
       loading={loading}
       uploading={false}
-      onUpload={async () => {}}
+      onUpload={async () => {
+        toast.info('CSV uploads happen in the staging pipeline. Redirecting…');
+        navigate('/admin/mapping/facilities-staging');
+      }}
       onPromote={async (id) => {
         try {
           await editFacilityRecord(id, { review_status: 'approved', verification_status: 'verified' });
