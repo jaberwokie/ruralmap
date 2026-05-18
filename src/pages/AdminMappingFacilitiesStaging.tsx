@@ -173,8 +173,8 @@ export default function AdminMappingFacilitiesStaging() {
         verifiedRows={[]}
         auditEntries={[]}
         loading={loading}
-        uploading={false}
-        onUpload={async () => { toast.info('CSV upload for facilities coming in next step'); }}
+        uploading={uploading}
+        onUpload={handleUpload}
         onPromote={async (id) => {
           console.log('[PROMOTE-DEBUG] page.onPromote:entry', { id });
           try {
