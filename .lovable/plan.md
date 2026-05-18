@@ -1,36 +1,42 @@
-# Fix: Admin pages redirect to home right after login
+## Finding
 
-## Root cause
+You are on `/admin/mapping/facilities`, which renders `src/pages/AdminMappingFacilities.tsx`.
 
-In `src/contexts/AuthContext.tsx`, `setReady(true)` fires before the user's role is fetched.
+That page currently passes no-op callbacks into `PipelineWorkspace`:
 
-- `getSession()` resolves → `setReady(true)` runs immediately, while `refreshRole()` is still in-flight (lines 140–144).
-- `onAuthStateChange` does the same — calls `setReady(true)` synchronously while `refreshRole()` is queued in a `setTimeout` (lines 117–123).
-
-Result: there's a window where `ready === true`, `session.user` exists, but `role === 'viewer'`. During that window, every admin page guard runs:
-
-```ts
-if (perms.ready && !perms.isAdmin && !perms.isStaff) {
-  return <Navigate to="/" replace />;
-}
+```tsx
+onPromote={async () => {}}
+onReject={async () => {}}
 ```
 
-…and kicks the user back to `/`. This affects `AdminHome`, `AdminMappingLayout`, `AdminUsers`, `AdminUnmappedProviders`, `AdminTraining` — anything gated on role.
+So the button click is reaching `PipelineWorkspace.wrap()` — confirmed by the console logs — but it resolves immediately because the Facility Mapping page is not bound to any promote/reject store function.
 
-## Fix (one file)
+## Plan
 
-`src/contexts/AuthContext.tsx` — make `ready` mean "session AND role are resolved" when a user is signed in.
+1. Update `src/pages/AdminMappingFacilities.tsx` only.
+2. Import the facility staging actions already available in `mappingPipelineStore`:
+   - `promoteStagingFacility`
+   - `rejectStagingFacility`
+3. Replace the no-op `onPromote` with:
+   - call `promoteStagingFacility(id)`
+   - show success toast
+   - refresh the Facility Mapping rows
+   - catch and toast errors
+4. Replace the no-op `onReject` with:
+   - call `rejectStagingFacility(id)`
+   - show success toast
+   - refresh the Facility Mapping rows
+   - catch and toast errors
+5. Leave the existing instrumentation in place unless you want it removed in the same pass.
 
-1. In the `getSession()` branch: when `existing?.user` exists, `await refreshRole(existing.user.id)` before calling `setReady(true)`. When no user, set ready immediately as today.
-2. In the `onAuthStateChange` callback: when `safeSession?.user` exists, do not call `setReady(true)` synchronously. Instead, run `refreshRole(...)` (still deferred via `setTimeout` to avoid the documented Supabase deadlock) and call `setReady(true)` from inside the deferred callback after the role resolves. When no user, set ready immediately.
-3. Keep the existing public-mode early return and expired-token paths unchanged — they already set ready correctly.
+## Expected result
 
-No other files change. Guard logic in admin pages stays as-is; once `ready` correctly reflects role resolution, the bounce disappears.
+- Clicking Promote in Facility Mapping will actually call the store function.
+- The staging row should move out of the pending queue after promotion.
+- Success/failure feedback will be visible through toast messages.
+- Reject will mark the row rejected and remove it from the pending queue.
 
-## Verification
+## Validation
 
-- Sign out, sign back in as staff/admin, click "Manage Operational Data" → page loads and stays.
-- Hard refresh on `/admin/mapping` while signed in → no flash redirect to `/`.
-- Signed-out user visiting `/admin` → still redirected to `/` (unchanged).
-- Public mode (`/public`) → unchanged.
-- TypeScript clean.
+- Verify TypeScript via the project’s normal check pipeline.
+- Use the existing `[PROMOTE-DEBUG]` console logs to confirm the click path now reaches the page/store handler instead of only `wrap()`.
