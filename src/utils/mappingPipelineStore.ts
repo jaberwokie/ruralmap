@@ -44,7 +44,7 @@ export const writeAudit = async (input: {
   details?: Json;
 }) => {
   const { data: { user } } = await supabase.auth.getUser();
-  await (auditTable() as { insert: (row: unknown) => Promise<unknown> }).insert({
+  const { error } = await (auditTable() as { insert: (row: unknown) => Promise<{ error: { message: string } | null }> }).insert({
     pipeline: input.pipeline,
     action: input.action,
     target_table: input.target_table ?? null,
@@ -54,6 +54,11 @@ export const writeAudit = async (input: {
     actor_email: user?.email ?? null,
     details: input.details ?? {},
   });
+  if (error) {
+    // Audit insert is admin-gated; non-admins will see this surface as a thrown error
+    // rather than a silent gap. Re-throw so the calling op fails loudly.
+    throw new Error(`Audit write failed: ${error.message}`);
+  }
 };
 
 export const listAudit = async (pipeline?: PipelineKey, limit = 200): Promise<AuditLogRow[]> => {
