@@ -17,6 +17,8 @@ const PIPELINE_LABELS: Record<PipelineKey, string> = {
   services: 'Services',
   behavioral_health: 'Behavioral Health',
   provider_mapping: 'Provider Mapping',
+  facilities: 'Facilities',
+  rural_services: 'Rural Services',
 };
 
 const PIPELINE_FILTERS: Array<{ key: PipelineKey | 'all'; label: string }> = [
@@ -24,6 +26,8 @@ const PIPELINE_FILTERS: Array<{ key: PipelineKey | 'all'; label: string }> = [
   { key: 'services', label: 'Services' },
   { key: 'behavioral_health', label: 'Behavioral Health' },
   { key: 'provider_mapping', label: 'Provider Mapping' },
+  { key: 'facilities', label: 'Facilities' },
+  { key: 'rural_services', label: 'Rural Services' },
 ];
 
 const ACTION_COLORS: Record<string, string> = {
