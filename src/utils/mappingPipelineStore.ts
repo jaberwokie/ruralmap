@@ -1211,18 +1211,24 @@ export const promoteStagingRuralService = async (id: string): Promise<void> => {
     source_row_number, import_batch_id, last_reviewed_at, match_conflict,
     created_at, updated_at, latitude, longitude, ...rest } = stg;
 
-  await (supabase as any).from('rural_services').upsert({
+  // rural_services.id is NOT NULL text PK with no default — derive from staging uuid.
+  const liveId = `staged-${_id}`;
+
+  const { error: upsertError } = await (supabase as any).from('rural_services').upsert({
     ...rest,
+    id: liveId,
     lat: latitude,
     lng: longitude,
     review_status: 'approved',
     updated_at: new Date().toISOString(),
   }, { onConflict: 'id' });
+  if (upsertError) throw new Error(`Failed to write rural service: ${upsertError.message}`);
 
-  await supabase
+  const { error: stagingErr } = await supabase
     .from('staging_rural_services')
     .update({ review_status: 'approved', last_reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
     .eq('id', id);
+  if (stagingErr) throw new Error(`Promoted but failed to update staging: ${stagingErr.message}`);
 
   await writeAudit({
     pipeline: 'provider_mapping',
