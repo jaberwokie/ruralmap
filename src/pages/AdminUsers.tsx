@@ -267,9 +267,14 @@ export default function AdminUsers() {
             <h1 className="text-xl font-semibold">User Management</h1>
             <p className="text-xs text-muted-foreground mt-1">Admin only</p>
           </div>
-          <Link to="/" className="text-sm text-primary hover:underline">
-            ← Back to map
-          </Link>
+          <div className="flex flex-col items-end gap-1">
+            <Link to="/" className="text-sm text-primary hover:underline">
+              ← Back to map
+            </Link>
+            <Link to="/admin" className="text-sm text-primary hover:underline">
+              ← Back to Admin Panels
+            </Link>
+          </div>
         </div>
 
         {/* Summary chips */}
