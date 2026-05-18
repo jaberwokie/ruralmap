@@ -29,6 +29,7 @@ export default function AdminMappingFacilitiesStaging() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -38,6 +39,23 @@ export default function AdminMappingFacilitiesStaging() {
   }, []);
 
   useEffect(() => { refresh(); }, [refresh]);
+
+  const handleUpload = async (file: File) => {
+    setUploading(true);
+    try {
+      const text = await file.text();
+      const { rows: parsed } = parseCsvText(text);
+      if (parsed.length === 0) { toast.error('CSV had no data rows.'); return; }
+      const importBatchId = crypto.randomUUID();
+      const res = await insertStagingFacilities(parsed, { fileName: file.name, importBatchId });
+      toast.success(`Inserted ${res.inserted} facilities (${res.errors} errors)`);
+      await refresh();
+    } catch (e) {
+      toast.error(`Upload failed: ${(e as Error).message}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const stagingRows = rows.map((r: any) => {
     const tag = parseGeocodeTag(r.access_notes);
