@@ -276,29 +276,56 @@ const Index = () => {
         <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
           Decision support is available on tablet and desktop views for member-location review and routing context.
         </div>
-        <Sidebar
-          layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView, zoneFilters, onToggleResponseCapabilityCategory: toggleResponseCapabilityCategory }}
-          filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
-          facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
-          selection={{
-            selectedFteId: selection.activeFteId,
-            activeFteCoverageIds: selection.activeFteCoverageIds,
-            onFteCardClick: selection.actions.handleFteCardClick,
-            onCountySelect: onCounty,
-            onTransitProviderClick,
-            onServiceSelect: onService,
-            onFacilitySelect: onFacility,
-            onTribalNationSelect: (tribe) => {
-              selection.actions.selectEntity({ type: 'tribalNation', tribe });
-              setFocusBounds([
-                [tribe.lat - 0.5, tribe.lng - 0.5],
-                [tribe.lat + 0.5, tribe.lng + 0.5],
-              ]);
-              setMobileSidebarOpen(false);
-            },
-            onFocusBounds: (b) => { setFocusBounds(b); setMobileSidebarOpen(false); },
-          }}
-        />
+        {desktopSidebarCollapsed && !isMobileLayout ? (
+          <div className="hidden md:flex flex-col items-center gap-1 w-full h-full bg-card border-r border-[hsl(var(--brand-health)/0.3)] py-3">
+            {[
+              { Icon: Search, label: 'Search' },
+              { Icon: SlidersHorizontal, label: 'Filters' },
+              { Icon: Layers, label: 'Overlays' },
+              { Icon: MapIcon, label: 'Map' },
+              { Icon: Activity, label: 'Operations' },
+            ].map(({ Icon, label }) => (
+              <button
+                key={label}
+                type="button"
+                onClick={toggleDesktopSidebar}
+                aria-label={`Expand sidebar to ${label}`}
+                title={label}
+                className="flex items-center justify-center h-9 w-9 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+              >
+                <Icon className="h-4 w-4" />
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div
+          className={desktopSidebarCollapsed && !isMobileLayout ? 'hidden' : 'flex flex-col flex-1 min-h-0 w-full'}
+          aria-hidden={desktopSidebarCollapsed && !isMobileLayout}
+        >
+          <Sidebar
+            layer={{ layers: layers.layers, onToggleLayer: layers.actions.toggleLayer, onSetLayers: layers.actions.setLayers, coverageRadius: layers.coverageRadius, coverageGaps: layers.coverageGaps, onCoverageRadiusChange: layers.actions.setCoverageRadius, onCoverageGapsChange: layers.actions.setCoverageGaps, radiusKm: layers.radiusKm, onRadiusChange: layers.actions.setRadiusKm, coverageRadiusKm: layers.coverageRadiusKm, onCoverageRadiusKmChange: layers.actions.setCoverageRadiusKm, engagementGapView: layers.engagementGapView, onEngagementGapViewChange: layers.actions.setEngagementGapView, zoneFilters, onToggleResponseCapabilityCategory: toggleResponseCapabilityCategory }}
+            filter={{ searchQuery: filters.searchQuery, onSearchChange: filters.actions.setSearchQuery, filters: filters.filters, onFiltersChange: filters.actions.setFilters, topProvidersOnly: filters.topProvidersOnly, onTopProvidersOnlyChange: filters.actions.setTopProvidersOnly, engagementRateBelow20Only: filters.engagementRateBelow20Only, onEngagementRateBelow20OnlyChange: filters.actions.setEngagementRateBelow20Only }}
+            facility={{ allFacilities: facility.facilities, facilities: facility.filteredFacilities, onAddFacilities: facility.addFacilities, onFacilityClick: onFacility }}
+            selection={{
+              selectedFteId: selection.activeFteId,
+              activeFteCoverageIds: selection.activeFteCoverageIds,
+              onFteCardClick: selection.actions.handleFteCardClick,
+              onCountySelect: onCounty,
+              onTransitProviderClick,
+              onServiceSelect: onService,
+              onFacilitySelect: onFacility,
+              onTribalNationSelect: (tribe) => {
+                selection.actions.selectEntity({ type: 'tribalNation', tribe });
+                setFocusBounds([
+                  [tribe.lat - 0.5, tribe.lng - 0.5],
+                  [tribe.lat + 0.5, tribe.lng + 0.5],
+                ]);
+                setMobileSidebarOpen(false);
+              },
+              onFocusBounds: (b) => { setFocusBounds(b); setMobileSidebarOpen(false); },
+            }}
+          />
+        </div>
         <button
           type="button"
           onClick={toggleDesktopSidebar}
