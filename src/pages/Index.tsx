@@ -60,6 +60,11 @@ const Index = () => {
       try { localStorage.setItem('sidebarCollapsed', String(next)); } catch { /* ignore */ }
       return next;
     });
+    // After the 250ms width transition completes, force Leaflet (trackResize: true)
+    // to recompute its container size and fetch tiles for the new map width.
+    setTimeout(() => {
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('resize'));
+    }, 260);
   }, []);
   // Lifted Decision Assist open-state so the bottom-left Broadband/Cellular
   // legend can deterministically offset above the drawer instead of visually
