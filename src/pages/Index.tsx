@@ -50,6 +50,17 @@ const Index = () => {
   const location = useLocation();
   useEffect(() => { syncRouteCanonical(location.pathname); }, [location.pathname]);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [desktopSidebarCollapsed, setDesktopSidebarCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    try { return localStorage.getItem('sidebarCollapsed') === 'true'; } catch { return false; }
+  });
+  const toggleDesktopSidebar = useCallback(() => {
+    setDesktopSidebarCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem('sidebarCollapsed', String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
   // Lifted Decision Assist open-state so the bottom-left Broadband/Cellular
   // legend can deterministically offset above the drawer instead of visually
   // jumping when layout flow shifts.
