@@ -229,7 +229,7 @@ const Index = () => {
   }, [liveVerifiedRecords]);
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+    <div className="relative flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
       <PublicSafeBadge />
       {/*
         Mobile chrome header. Always rendered on <md viewports regardless of
@@ -326,20 +326,26 @@ const Index = () => {
             }}
           />
         </div>
-        <button
-          type="button"
-          onClick={toggleDesktopSidebar}
-          aria-label={desktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-expanded={!desktopSidebarCollapsed}
-          className="hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center h-6 w-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground shadow-sm z-30"
-          style={{ right: '-12px' }}
-        >
-          <ChevronLeft
-            className="h-3.5 w-3.5"
-            style={{ transform: desktopSidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms ease' }}
-          />
-        </button>
       </div>
+
+      <button
+        type="button"
+        onClick={toggleDesktopSidebar}
+        aria-label={desktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        aria-expanded={!desktopSidebarCollapsed}
+        className="hidden md:flex absolute top-1/2 items-center justify-center h-6 w-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground shadow-sm"
+        style={{
+          left: `${(desktopSidebarCollapsed ? 56 : 320) - 12}px`,
+          transform: 'translateY(-50%)',
+          zIndex: 1000,
+          transition: 'left 250ms ease',
+        }}
+      >
+        <ChevronLeft
+          className="h-3.5 w-3.5"
+          style={{ transform: desktopSidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms ease' }}
+        />
+      </button>
 
       <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 min-h-0 relative md:h-full`}>
         <MapView
