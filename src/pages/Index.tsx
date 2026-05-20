@@ -42,6 +42,7 @@ import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ChevronLeft } from 'lucide-react';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
