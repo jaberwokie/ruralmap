@@ -265,7 +265,10 @@ const Index = () => {
         an auth-driven reflow and can hide controls. Using flex-1 + min-h-0
         keeps both panels inside the actual viewport rect.
       */}
-      <div className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full md:w-72 lg:w-80 flex-1 md:flex-none min-h-0 md:h-full`}>
+      <div
+        className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full ${desktopSidebarCollapsed ? 'md:w-14' : 'md:w-72 lg:w-80'} flex-1 md:flex-none min-h-0 md:h-full relative overflow-hidden`}
+        style={{ transition: 'width 250ms ease' }}
+      >
         <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
           Decision support is available on tablet and desktop views for member-location review and routing context.
         </div>
@@ -292,6 +295,19 @@ const Index = () => {
             onFocusBounds: (b) => { setFocusBounds(b); setMobileSidebarOpen(false); },
           }}
         />
+        <button
+          type="button"
+          onClick={toggleDesktopSidebar}
+          aria-label={desktopSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!desktopSidebarCollapsed}
+          className="hidden md:flex absolute top-1/2 -translate-y-1/2 items-center justify-center h-6 w-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground shadow-sm z-30"
+          style={{ right: '-12px' }}
+        >
+          <ChevronLeft
+            className="h-3.5 w-3.5"
+            style={{ transform: desktopSidebarCollapsed ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 250ms ease' }}
+          />
+        </button>
       </div>
 
       <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 min-h-0 relative md:h-full`}>
