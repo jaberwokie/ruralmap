@@ -266,8 +266,14 @@ const Index = () => {
         keeps both panels inside the actual viewport rect.
       */}
       <div
-        className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full ${desktopSidebarCollapsed ? 'md:w-14' : 'md:w-72 lg:w-80'} flex-1 md:flex-none min-h-0 md:h-full relative overflow-hidden`}
-        style={{ transition: 'width 250ms ease' }}
+        className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full flex-1 md:flex-none md:flex-shrink-0 min-h-0 md:h-full relative overflow-hidden`}
+        style={{
+          width: undefined,
+          transition: 'width 250ms ease',
+          ...(typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
+            ? { width: desktopSidebarCollapsed ? '56px' : '320px' }
+            : {}),
+        }}
       >
         <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
           Decision support is available on tablet and desktop views for member-location review and routing context.
