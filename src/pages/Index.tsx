@@ -229,7 +229,7 @@ const Index = () => {
   }, [liveVerifiedRecords]);
 
   return (
-    <div className="flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+    <div className="relative flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
       <PublicSafeBadge />
       {/*
         Mobile chrome header. Always rendered on <md viewports regardless of
