@@ -267,13 +267,11 @@ const Index = () => {
       */}
       <div
         className={`${mobileSidebarOpen ? 'flex' : 'hidden'} md:flex flex-col w-full flex-1 md:flex-none md:flex-shrink-0 min-h-0 md:h-full relative overflow-hidden`}
-        style={{
-          width: undefined,
-          transition: 'width 250ms ease',
-          ...(typeof window !== 'undefined' && window.matchMedia('(min-width: 768px)').matches
-            ? { width: desktopSidebarCollapsed ? '56px' : '320px' }
-            : {}),
-        }}
+        style={
+          isMobileLayout
+            ? { transition: 'width 250ms ease' }
+            : { width: desktopSidebarCollapsed ? '56px' : '320px', transition: 'width 250ms ease' }
+        }
       >
         <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
           Decision support is available on tablet and desktop views for member-location review and routing context.
