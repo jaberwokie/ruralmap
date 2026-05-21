@@ -8,16 +8,17 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
 import BuildFingerprint from "./components/BuildFingerprint";
 import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
+import Index from "./pages/Index.tsx";
 
 const queryClient = new QueryClient();
 
 const RouteFallback = () => (
   <div className="min-h-screen bg-background text-foreground flex items-center justify-center" aria-label="Loading page">
-    <div className="text-sm font-medium text-muted-foreground">Loading map…</div>
+    <div className="text-sm font-medium text-muted-foreground">Loading…</div>
   </div>
 );
 
-const Index = lazy(() => import("./pages/Index.tsx"));
+
 const Platform = lazy(() => import("./pages/Platform.tsx"));
 const Briefing = lazy(() => import("./pages/Briefing.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
