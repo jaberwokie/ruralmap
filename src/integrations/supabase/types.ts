@@ -202,11 +202,21 @@ export type Database = {
           bh_service_type: string | null
           category: string
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           id: string
+          last_geocoded_at: string | null
           lat: number | null
           lng: number | null
+          manual_lat: number | null
+          manual_lng: number | null
           mappable: boolean
           name: string
           notes: string | null
@@ -229,11 +239,21 @@ export type Database = {
           bh_service_type?: string | null
           category: string
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id: string
+          last_geocoded_at?: string | null
           lat?: number | null
           lng?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mappable?: boolean
           name: string
           notes?: string | null
@@ -256,11 +276,21 @@ export type Database = {
           bh_service_type?: string | null
           category?: string
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
+          last_geocoded_at?: string | null
           lat?: number | null
           lng?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mappable?: boolean
           name?: string
           notes?: string | null
@@ -290,6 +320,9 @@ export type Database = {
           category_mapped: string | null
           category_raw: string | null
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
           crisis_capable: boolean | null
@@ -297,10 +330,15 @@ export type Database = {
           detox_capable: boolean | null
           facility_type: string | null
           fax: string | null
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           hours_of_operation: string | null
           id: string
           import_batch_id: string | null
           languages_supported: string | null
+          last_geocoded_at: string | null
           last_reviewed_at: string | null
           latitude: number | null
           license_type: string | null
@@ -346,6 +384,9 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
@@ -353,10 +394,15 @@ export type Database = {
           detox_capable?: boolean | null
           facility_type?: string | null
           fax?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           license_type?: string | null
@@ -402,6 +448,9 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
@@ -409,10 +458,15 @@ export type Database = {
           detox_capable?: boolean | null
           facility_type?: string | null
           fax?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           license_type?: string | null
@@ -455,12 +509,20 @@ export type Database = {
           access_type: string | null
           city: string | null
           classification: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
           data_confidence: string | null
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           id: string
           import_batch_id: string | null
           inpatient: Json | null
+          last_geocoded_at: string | null
           last_reviewed_at: string | null
           latitude: number | null
           longitude: number | null
@@ -492,12 +554,20 @@ export type Database = {
           access_type?: string | null
           city?: string | null
           classification?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           data_confidence?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           import_batch_id?: string | null
           inpatient?: Json | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -529,12 +599,20 @@ export type Database = {
           access_type?: string | null
           city?: string | null
           classification?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           data_confidence?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           import_batch_id?: string | null
           inpatient?: Json | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -682,10 +760,18 @@ export type Database = {
           bh_service_type: string | null
           category: string
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           id: string
           import_batch_id: string | null
+          last_geocoded_at: string | null
           last_reviewed_at: string | null
           latitude: number | null
           longitude: number | null
@@ -716,10 +802,18 @@ export type Database = {
           bh_service_type?: string | null
           category: string
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           import_batch_id?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -750,10 +844,18 @@ export type Database = {
           bh_service_type?: string | null
           category?: string
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           import_batch_id?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -787,15 +889,23 @@ export type Database = {
           category_mapped: string | null
           category_raw: string | null
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
           description: string | null
           eligibility_notes: string | null
           email: string | null
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           hours_of_operation: string | null
           id: string
           import_batch_id: string | null
           languages_supported: string | null
+          last_geocoded_at: string | null
           last_reviewed_at: string | null
           latitude: number | null
           longitude: number | null
@@ -835,15 +945,23 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -883,15 +1001,23 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
@@ -968,6 +1094,9 @@ export type Database = {
           category_mapped: string | null
           category_raw: string | null
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
           crisis_capable: boolean | null
@@ -975,14 +1104,21 @@ export type Database = {
           detox_capable: boolean | null
           facility_type: string | null
           fax: string | null
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           hours_of_operation: string | null
           id: string
           import_batch_id: string | null
           languages_supported: string | null
+          last_geocoded_at: string | null
           last_reviewed_at: string | null
           latitude: number | null
           license_type: string | null
           longitude: number | null
+          manual_lat: number | null
+          manual_lng: number | null
           mat_capable: boolean | null
           medicaid_participation_status: string | null
           name: string
@@ -1024,6 +1160,9 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
@@ -1031,14 +1170,21 @@ export type Database = {
           detox_capable?: boolean | null
           facility_type?: string | null
           fax?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           license_type?: string | null
           longitude?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mat_capable?: boolean | null
           medicaid_participation_status?: string | null
           name: string
@@ -1080,6 +1226,9 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
@@ -1087,14 +1236,21 @@ export type Database = {
           detox_capable?: boolean | null
           facility_type?: string | null
           fax?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           license_type?: string | null
           longitude?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mat_capable?: boolean | null
           medicaid_participation_status?: string | null
           name?: string
@@ -1135,18 +1291,28 @@ export type Database = {
           category_mapped: string | null
           category_raw: string | null
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
           description: string | null
           eligibility_notes: string | null
           email: string | null
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           hours_of_operation: string | null
           id: string
           import_batch_id: string | null
           languages_supported: string | null
+          last_geocoded_at: string | null
           last_reviewed_at: string | null
           latitude: number | null
           longitude: number | null
+          manual_lat: number | null
+          manual_lng: number | null
           mappable: boolean
           medicaid_relevance: string | null
           name: string
@@ -1182,18 +1348,28 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mappable?: boolean
           medicaid_relevance?: string | null
           name: string
@@ -1229,18 +1405,28 @@ export type Database = {
           category_mapped?: string | null
           category_raw?: string | null
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           hours_of_operation?: string | null
           id?: string
           import_batch_id?: string | null
           languages_supported?: string | null
+          last_geocoded_at?: string | null
           last_reviewed_at?: string | null
           latitude?: number | null
           longitude?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mappable?: boolean
           medicaid_relevance?: string | null
           name?: string
