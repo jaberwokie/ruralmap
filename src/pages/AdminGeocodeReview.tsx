@@ -201,8 +201,9 @@ export default function AdminGeocodeReview() {
   useEffect(() => {
     if (perms.ready && (perms.isAdmin || perms.isStaff)) {
       void fetchRows();
+      void fetchBackfillCount();
     }
-  }, [perms.ready, perms.isAdmin, perms.isStaff, fetchRows]);
+  }, [perms.ready, perms.isAdmin, perms.isStaff, fetchRows, fetchBackfillCount]);
 
   const filtered = useMemo(
     () => (tableFilter === 'all' ? rows : rows.filter((r) => r.table === tableFilter)),
