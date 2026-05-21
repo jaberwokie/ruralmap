@@ -386,3 +386,53 @@ Before changing any component, verify:
 8. Does this keep the default view understandable?
 9. Does this avoid broad refactors where a surgical fix is safer?
 10. Does the rendered output prove the change worked?
+
+---
+
+## 19. Geocoding Pipeline
+
+Address-to-coordinate enrichment for `facilities` and `staging_providers` records.
+
+### Provider
+- **Google Geocoding API** is the sole provider.
+- API key stored as `GOOGLE_GEOCODING_API_KEY` in Supabase Edge Function secrets.
+- Key is restricted to the Geocoding API only — no other Google services.
+
+### Edge function
+- Path: `supabase/functions/geocode-address/index.ts`
+- Deployed name: `geocode-address`
+- Accepts `POST { table: "facilities" | "staging_providers", id: string, force?: boolean }`
+- Calls Google with Nevada/US component bias, maps `location_type` → `coordinate_confidence` (`rooftop` | `range` | `geometric` | `approximate`).
+
+### Trigger path
+- Helper: `src/utils/triggerGeocode.ts` — fire-and-forget invocation, errors logged but never surfaced to the user.
+- Called from:
+  - `src/utils/mappingPipelineStore.ts` — on facility edit when `street_address` changes, and on promotion upsert when `street_address` is present.
+  - `src/utils/providerStagingStore.ts` — on staging insert for rows with `street_address`, and on staging edit when `street_address` changes.
+- Never called on map load, read, or render.
+
+### Cache-once pattern
+Google is called once per address. Results are stored on the record:
+- `geocoded_lat`, `geocoded_lng` — raw Google result, never overwritten by display logic.
+- `coordinate_source` — `'google'` on success, `'failed'` on no-result.
+- `coordinate_confidence` — mapped from Google's `location_type`.
+- `geocode_match_type` — raw Google `location_type` (or status code on failure).
+- `geocode_provider` — `'google'`.
+- `last_geocoded_at` — ISO timestamp of the last attempt.
+
+Re-geocoding only happens when `street_address` changes (which re-triggers the helper) or when `force: true` is passed explicitly.
+
+### Lock semantics
+- `coordinate_locked = true` prevents any overwrite of display coordinates.
+- Enforced **inside the edge function**: locked records short-circuit before the Google call unless `force: true` is passed, and even on a forced refresh the display columns are not written when locked (only the `geocoded_*` cache columns are updated).
+
+### Display coordinates
+- Facilities: `lat`, `lng`
+- Staging providers: `latitude`, `longitude`
+- These are updated from the Google result on success **unless `coordinate_locked = true`**.
+- Map rendering reads from these display columns, not from `geocoded_*`.
+
+### Manual corrections
+- `manual_lat`, `manual_lng` exist on `facilities` only.
+- Used for human-entered corrections that should survive re-geocoding.
+- Staging providers have no manual override columns — corrections happen at promotion or after live.
