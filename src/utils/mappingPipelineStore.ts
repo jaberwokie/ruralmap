@@ -1152,7 +1152,7 @@ export const promoteStagingFacility = async (id: string): Promise<void> => {
 
   const upsertRes = await (supabase as any).from('facilities').upsert(upsertPayload, { onConflict: 'id' });
   if (upsertRes.error) throw new Error(`Failed to write facility: ${upsertRes.error.message}`);
-  if (upsertPayload.street_address) {
+  if ((upsertPayload as Record<string, unknown>).street_address) {
     triggerGeocodeAddress('facilities', liveId);
   }
 
