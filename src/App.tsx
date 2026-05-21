@@ -80,6 +80,7 @@ const App = () => {
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
+                <Route path="/admin/geocode-review" element={<AdminGeocodeReview />} />
 
                 {/* Admin > Mapping (canonical IA) */}
                 <Route path="/admin/mapping" element={<AdminMapping />} />
