@@ -193,6 +193,14 @@ export const insertStagingProviders = async (
     details: { errors, warnings, valid: (data?.length ?? 0) - errors - warnings },
   });
 
+  // Background geocode each new row that has a street_address.
+  (data ?? []).forEach((row, idx) => {
+    const src = prepared[idx] as { street_address?: string | null };
+    if (row?.id && src?.street_address) {
+      triggerGeocodeAddress('staging_providers', row.id);
+    }
+  });
+
   return { inserted: data?.length ?? 0, errors, warnings };
 };
 
