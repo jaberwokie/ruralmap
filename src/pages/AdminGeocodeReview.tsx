@@ -133,6 +133,7 @@ export default function AdminGeocodeReview() {
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const facilitiesQuery = supabase
         .from('facilities')
