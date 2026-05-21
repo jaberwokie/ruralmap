@@ -20,13 +20,23 @@ export type Database = {
           access_type: string | null
           city: string | null
           classification: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
           data_confidence: string | null
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           id: string
           inpatient: Json | null
+          last_geocoded_at: string | null
           lat: number | null
           lng: number | null
+          manual_lat: number | null
+          manual_lng: number | null
           mappable: boolean
           name: string
           notes: string | null
@@ -50,13 +60,23 @@ export type Database = {
           access_type?: string | null
           city?: string | null
           classification?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           data_confidence?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id: string
           inpatient?: Json | null
+          last_geocoded_at?: string | null
           lat?: number | null
           lng?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mappable?: boolean
           name: string
           notes?: string | null
@@ -80,13 +100,23 @@ export type Database = {
           access_type?: string | null
           city?: string | null
           classification?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
           data_confidence?: string | null
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           inpatient?: Json | null
+          last_geocoded_at?: string | null
           lat?: number | null
           lng?: number | null
+          manual_lat?: number | null
+          manual_lng?: number | null
           mappable?: boolean
           name?: string
           notes?: string | null
@@ -538,10 +568,18 @@ export type Database = {
           access_notes: string | null
           active_status: boolean
           city: string | null
+          coordinate_confidence: string | null
+          coordinate_locked: boolean
+          coordinate_source: string | null
           county: string | null
           created_at: string
+          geocode_match_type: string | null
+          geocode_provider: string | null
+          geocoded_lat: number | null
+          geocoded_lng: number | null
           id: string
           import_batch_id: string | null
+          last_geocoded_at: string | null
           latitude: number | null
           longitude: number | null
           name: string
@@ -566,10 +604,18 @@ export type Database = {
           access_notes?: string | null
           active_status?: boolean
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           import_batch_id?: string | null
+          last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -594,10 +640,18 @@ export type Database = {
           access_notes?: string | null
           active_status?: boolean
           city?: string | null
+          coordinate_confidence?: string | null
+          coordinate_locked?: boolean
+          coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          geocode_match_type?: string | null
+          geocode_provider?: string | null
+          geocoded_lat?: number | null
+          geocoded_lng?: number | null
           id?: string
           import_batch_id?: string | null
+          last_geocoded_at?: string | null
           latitude?: number | null
           longitude?: number | null
           name?: string
