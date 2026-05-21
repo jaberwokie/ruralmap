@@ -35,12 +35,15 @@ serve(async (req) => {
       return json({ error: 'Missing required fields: table, id' }, 400);
     }
     const { table, id, force } = body;
-    if (table !== 'facilities' && table !== 'staging_providers') {
-      return json({ error: 'Invalid table. Must be "facilities" or "staging_providers"' }, 400);
+    const ALLOWED = ['facilities', 'rural_services', 'verified_services', 'verified_bh', 'staging_providers'] as const;
+    if (!ALLOWED.includes(table as typeof ALLOWED[number])) {
+      return json({ error: `Invalid table. Must be one of: ${ALLOWED.join(', ')}` }, 400);
     }
 
-    const latCol = table === 'facilities' ? 'lat' : 'latitude';
-    const lngCol = table === 'facilities' ? 'lng' : 'longitude';
+    // staging_providers uses latitude/longitude; all production tables use lat/lng
+    const usesLatLng = table !== 'staging_providers';
+    const latCol = usesLatLng ? 'lat' : 'latitude';
+    const lngCol = usesLatLng ? 'lng' : 'longitude';
 
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
