@@ -1040,6 +1040,10 @@ export const editFacilityRecord = async (
     target_row_id: id,
     details: changes,
   });
+  // Background re-geocode when the address actually changed.
+  if (Object.prototype.hasOwnProperty.call(changes, 'street_address') && changes.street_address) {
+    triggerGeocodeAddress('facilities', id);
+  }
   notifyFacilitiesChanged();
 };
 
