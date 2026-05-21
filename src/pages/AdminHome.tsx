@@ -6,7 +6,7 @@
  */
 
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Layers, ListChecks, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Layers, ListChecks, MapPin, Users } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -68,6 +68,12 @@ export default function AdminHome() {
             title="Unmapped Top Utilized Providers"
             description="Review high-utilization billing providers not currently mapped."
             icon={<ListChecks className="h-4 w-4" />}
+          />
+          <ToolCard
+            to="/admin/geocode-review"
+            title="Geocode Review"
+            description="Approve, re-geocode, or manually correct low-confidence Google geocoding results."
+            icon={<MapPin className="h-4 w-4" />}
           />
           <ToolCard
             to="/admin/training"

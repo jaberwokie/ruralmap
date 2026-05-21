@@ -27,6 +27,7 @@ import AdminMappingRuralServices from "./pages/AdminMappingRuralServices";
 import AdminMappingFacilitiesStaging from "./pages/AdminMappingFacilitiesStaging";
 import AdminMappingRuralServicesStaging from "./pages/AdminMappingRuralServicesStaging";
 import AdminTraining from "./pages/AdminTraining.tsx";
+import AdminGeocodeReview from "./pages/AdminGeocodeReview.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
 import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
@@ -79,6 +80,7 @@ const App = () => {
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
+                <Route path="/admin/geocode-review" element={<AdminGeocodeReview />} />
 
                 {/* Admin > Mapping (canonical IA) */}
                 <Route path="/admin/mapping" element={<AdminMapping />} />
