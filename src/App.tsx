@@ -6,16 +6,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
-import Index from "./pages/Index.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
 import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
 
 const queryClient = new QueryClient();
 
 const RouteFallback = () => (
-  <div className="min-h-screen bg-background text-foreground" aria-label="Loading page" />
+  <div className="min-h-screen bg-background text-foreground flex items-center justify-center" aria-label="Loading page">
+    <div className="text-sm font-medium text-muted-foreground">Loading map…</div>
+  </div>
 );
 
+const Index = lazy(() => import("./pages/Index.tsx"));
 const Platform = lazy(() => import("./pages/Platform.tsx"));
 const Briefing = lazy(() => import("./pages/Briefing.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
