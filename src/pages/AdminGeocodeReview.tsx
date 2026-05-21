@@ -62,6 +62,7 @@ export default function AdminGeocodeReview() {
   const [backfillPending, setBackfillPending] = useState<number | null>(null);
   const [backfillRunning, setBackfillRunning] = useState(false);
   const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number } | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchBackfillCount = useCallback(async () => {
     const { count, error } = await supabase
@@ -132,6 +133,7 @@ export default function AdminGeocodeReview() {
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
+    setFetchError(null);
     try {
       const facilitiesQuery = supabase
         .from('facilities')
@@ -188,9 +190,12 @@ export default function AdminGeocodeReview() {
 
       setRows([...facRows, ...stgRows].sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err: any) {
+      const msg = err?.message ?? err?.error_description ?? String(err);
+      console.error('[AdminGeocodeReview] fetchRows failed:', err);
+      setFetchError(msg);
       toast({
         title: 'Failed to load geocode review queue',
-        description: err?.message ?? String(err),
+        description: msg,
         variant: 'destructive',
       });
     } finally {
@@ -399,9 +404,30 @@ export default function AdminGeocodeReview() {
           ))}
         </div>
 
-        {loading ? (
+        {/* Diagnostic strip: perms + load state */}
+        <div className="mb-3 rounded border border-border bg-muted/30 px-3 py-1.5 text-[11px] text-muted-foreground">
+          perms.ready=<code>{String(perms.ready)}</code> · isAdmin=<code>{String(perms.isAdmin)}</code> · isStaff=
+          <code>{String(perms.isStaff)}</code> · loading=<code>{String(loading)}</code> · rows=
+          <code>{rows.length}</code>
+        </div>
+
+        {fetchError ? (
+          <div className="mb-4 rounded border border-red-400 bg-red-50 p-3 text-sm text-red-900">
+            <div className="font-semibold">Failed to load geocode review queue</div>
+            <pre className="mt-1 whitespace-pre-wrap break-words text-xs">{fetchError}</pre>
+            <Button size="sm" variant="outline" className="mt-2" onClick={() => void fetchRows()}>
+              Retry
+            </Button>
+          </div>
+        ) : null}
+
+        {!perms.ready ? (
           <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading...
+            <Loader2 className="h-4 w-4 animate-spin" /> Checking permissions…
+          </div>
+        ) : loading ? (
+          <div className="flex items-center gap-2 py-12 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading geocode review queue…
           </div>
         ) : filtered.length === 0 ? (
           <div className="rounded border border-dashed border-border py-12 text-center text-sm text-muted-foreground">
