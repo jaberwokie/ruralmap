@@ -40,8 +40,8 @@ serve(async (req) => {
       return json({ error: `Invalid table. Must be one of: ${ALLOWED.join(', ')}` }, 400);
     }
 
-    // staging_providers uses latitude/longitude; all production tables use lat/lng
-    const usesLatLng = table !== 'staging_providers';
+    // facilities and rural_services use lat/lng; all others use latitude/longitude
+    const usesLatLng = table === 'facilities' || table === 'rural_services';
     const latCol = usesLatLng ? 'lat' : 'latitude';
     const lngCol = usesLatLng ? 'lng' : 'longitude';
 
