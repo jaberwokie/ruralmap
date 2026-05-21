@@ -28,6 +28,7 @@ import {
   type GeocodeOutcome, type GeocodeRunSummary, type GeocodeCandidate,
 } from './serviceGeocode';
 import { parseBhAccessTags } from './bhAccessTags';
+import { triggerGeocodeAddress } from './triggerGeocode';
 
 type Json = Record<string, unknown>;
 
@@ -1039,6 +1040,10 @@ export const editFacilityRecord = async (
     target_row_id: id,
     details: changes,
   });
+  // Background re-geocode when the address actually changed.
+  if (Object.prototype.hasOwnProperty.call(changes, 'street_address') && changes.street_address) {
+    triggerGeocodeAddress('facilities', id);
+  }
   notifyFacilitiesChanged();
 };
 
@@ -1147,6 +1152,9 @@ export const promoteStagingFacility = async (id: string): Promise<void> => {
 
   const upsertRes = await (supabase as any).from('facilities').upsert(upsertPayload, { onConflict: 'id' });
   if (upsertRes.error) throw new Error(`Failed to write facility: ${upsertRes.error.message}`);
+  if ((upsertPayload as Record<string, unknown>).street_address) {
+    triggerGeocodeAddress('facilities', liveId);
+  }
 
   const stagingRes = await supabase
     .from('staging_facilities')

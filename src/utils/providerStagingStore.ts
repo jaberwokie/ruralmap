@@ -29,6 +29,7 @@ import {
   type GeocodeOutcome, type GeocodeRunSummary,
 } from '@/utils/serviceGeocode';
 import type { Facility, FacilityType } from '@/data/facilities';
+import { triggerGeocodeAddress } from '@/utils/triggerGeocode';
 
 type Json = Record<string, unknown>;
 
@@ -192,6 +193,14 @@ export const insertStagingProviders = async (
     details: { errors, warnings, valid: (data?.length ?? 0) - errors - warnings },
   });
 
+  // Background geocode each new row that has a street_address.
+  (data ?? []).forEach((row, idx) => {
+    const src = prepared[idx] as { street_address?: string | null };
+    if (row?.id && src?.street_address) {
+      triggerGeocodeAddress('staging_providers', row.id);
+    }
+  });
+
   return { inserted: data?.length ?? 0, errors, warnings };
 };
 
@@ -219,6 +228,9 @@ export const editProviderStaging = async (
     target_table: 'staging_providers', target_row_id: id,
     details: { changed_fields: Object.keys(changes) },
   });
+  if (Object.prototype.hasOwnProperty.call(changes, 'street_address') && changes.street_address) {
+    triggerGeocodeAddress('staging_providers', id);
+  }
 };
 
 export const rejectStagingProvider = async (id: string): Promise<void> => {
