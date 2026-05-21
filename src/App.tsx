@@ -27,6 +27,7 @@ import AdminMappingRuralServices from "./pages/AdminMappingRuralServices";
 import AdminMappingFacilitiesStaging from "./pages/AdminMappingFacilitiesStaging";
 import AdminMappingRuralServicesStaging from "./pages/AdminMappingRuralServicesStaging";
 import AdminTraining from "./pages/AdminTraining.tsx";
+import AdminGeocodeReview from "./pages/AdminGeocodeReview.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import BuildFingerprint from "./components/BuildFingerprint";
 import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
