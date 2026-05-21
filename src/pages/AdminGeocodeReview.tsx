@@ -1,8 +1,9 @@
 /**
  * Admin > Geocode Review
  *
- * Review queue for facilities and staging_providers records with low-confidence
- * (geometric / approximate) or failed Google geocoding results. Admins can:
+ * Review queue across facilities, rural_services, verified_services, verified_bh,
+ * and staging_providers for low-confidence (geometric / approximate) or failed
+ * Google geocoding results. Admins can:
  *   - Lock & Approve the current geocoded coordinates
  *   - Re-geocode (force) via the geocode-address edge function
  *   - Edit coordinates manually (writes manual_lat/manual_lng + locks)
@@ -19,7 +20,12 @@ import { Label } from '@/components/ui/label';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
-type SourceTable = 'facilities' | 'staging_providers';
+type SourceTable =
+  | 'facilities'
+  | 'rural_services'
+  | 'verified_services'
+  | 'verified_bh'
+  | 'staging_providers';
 type TableFilter = SourceTable | 'all';
 
 interface ReviewRow {
@@ -37,6 +43,30 @@ interface ReviewRow {
   lng: number | null;
 }
 
+// Tables that store coordinates as lat/lng (production). staging_providers uses latitude/longitude.
+const PRODUCTION_TABLES: SourceTable[] = [
+  'facilities',
+  'rural_services',
+  'verified_services',
+  'verified_bh',
+];
+
+const TABLE_LABELS: Record<SourceTable, string> = {
+  facilities: 'Facilities',
+  rural_services: 'Rural Services',
+  verified_services: 'Verified Services',
+  verified_bh: 'Verified BH',
+  staging_providers: 'Staging Providers',
+};
+
+const TABLE_LABELS_SHORT: Record<SourceTable, string> = {
+  facilities: 'facilities',
+  rural_services: 'rural services',
+  verified_services: 'verified services',
+  verified_bh: 'verified BH',
+  staging_providers: 'staging providers',
+};
+
 const CONFIDENCE_STYLES: Record<string, string> = {
   rooftop: 'bg-emerald-100 text-emerald-800 border-emerald-300',
   range: 'bg-yellow-100 text-yellow-800 border-yellow-300',
@@ -44,6 +74,9 @@ const CONFIDENCE_STYLES: Record<string, string> = {
   approximate: 'bg-red-100 text-red-800 border-red-300',
   failed: 'bg-red-200 text-red-950 border-red-500',
 };
+
+const REVIEW_OR_FILTER =
+  'coordinate_source.eq.failed,and(coordinate_source.eq.google,coordinate_confidence.in.(geometric,approximate))';
 
 const confidenceLabel = (row: ReviewRow): string => {
   if (row.coordinate_source === 'failed') return 'failed';
@@ -59,119 +92,76 @@ export default function AdminGeocodeReview() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLat, setEditLat] = useState('');
   const [editLng, setEditLng] = useState('');
-  const [backfillPending, setBackfillPending] = useState<number | null>(null);
+  const [backfillPending, setBackfillPending] = useState<Record<string, number> | null>(null);
   const [backfillRunning, setBackfillRunning] = useState(false);
   const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number } | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchBackfillCount = useCallback(async () => {
-    const { count, error } = await supabase
-      .from('facilities')
-      .select('id', { count: 'exact', head: true })
-      .is('geocoded_lat', null)
-      .not('street_address', 'is', null)
-      .not('coordinate_locked', 'is', true);
-    if (error) {
-      console.warn('[backfill count]', error.message);
-      setBackfillPending(null);
-      return;
-    }
-    setBackfillPending(count ?? 0);
-  }, []);
-
-  const runBackfill = useCallback(async () => {
-    setBackfillRunning(true);
-    try {
-      const { data, error } = await supabase
-        .from('facilities')
-        .select('id')
+    const counts: Record<string, number> = {};
+    for (const t of PRODUCTION_TABLES) {
+      const { count, error } = await supabase
+        .from(t)
+        .select('id', { count: 'exact', head: true })
         .is('geocoded_lat', null)
         .not('street_address', 'is', null)
         .not('coordinate_locked', 'is', true);
-      if (error) throw error;
-      const ids = (data ?? []).map((r: any) => r.id as string);
-      const total = ids.length;
-      setBackfillProgress({ current: 0, total });
-      if (total === 0) {
-        toast({ title: 'Backfill complete', description: 'No facilities need geocoding' });
-        return;
+      if (error) {
+        console.warn(`[backfill count] ${t}`, error.message);
+        counts[t] = 0;
+      } else {
+        counts[t] = count ?? 0;
       }
-      let failures = 0;
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        try {
-          const { error: invokeError } = await supabase.functions.invoke('geocode-address', {
-            body: { table: 'facilities', id },
-          });
-          if (invokeError) {
-            failures += 1;
-            console.warn(`[backfill] facilities/${id} failed:`, invokeError.message ?? invokeError);
-          }
-        } catch (err: any) {
-          failures += 1;
-          console.warn(`[backfill] facilities/${id} threw:`, err?.message ?? err);
-        }
-        setBackfillProgress({ current: i + 1, total });
-        if (i < ids.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 200));
-        }
-      }
-      toast({
-        title: 'Backfill complete',
-        description: `Processed ${total} · ${failures} failed`,
-      });
-    } catch (err: any) {
-      toast({ title: 'Backfill failed', description: err?.message ?? String(err), variant: 'destructive' });
-    } finally {
-      setBackfillRunning(false);
-      setBackfillProgress(null);
-      await fetchBackfillCount();
-      await fetchRows();
     }
+    setBackfillPending(counts);
   }, []);
-
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
     setFetchError(null);
     try {
-      const facilitiesQuery = supabase
-        .from('facilities')
-        .select(
-          'id,name,street_address,city,state,zip,coordinate_source,coordinate_confidence,geocode_match_type,lat,lng',
-        )
-        .or(
-          'coordinate_source.eq.failed,and(coordinate_source.eq.google,coordinate_confidence.in.(geometric,approximate))',
-        );
+      const buildProdQuery = (t: Exclude<SourceTable, 'staging_providers'>) =>
+        supabase
+          .from(t)
+          .select(
+            'id,name,street_address,city,state,zip,coordinate_source,coordinate_confidence,geocode_match_type,lat,lng',
+          )
+          .or(REVIEW_OR_FILTER);
 
       const stagingQuery = supabase
         .from('staging_providers')
         .select(
           'id,name,street_address,city,state,zip,coordinate_source,coordinate_confidence,geocode_match_type,latitude,longitude',
         )
-        .or(
-          'coordinate_source.eq.failed,and(coordinate_source.eq.google,coordinate_confidence.in.(geometric,approximate))',
-        );
+        .or(REVIEW_OR_FILTER);
 
-      const [facResp, stgResp] = await Promise.all([facilitiesQuery, stagingQuery]);
+      const [facResp, rsvResp, vsvResp, vbhResp, stgResp] = await Promise.all([
+        buildProdQuery('facilities'),
+        buildProdQuery('rural_services'),
+        buildProdQuery('verified_services'),
+        buildProdQuery('verified_bh'),
+        stagingQuery,
+      ]);
 
-      if (facResp.error) throw facResp.error;
-      if (stgResp.error) throw stgResp.error;
+      for (const r of [facResp, rsvResp, vsvResp, vbhResp, stgResp]) {
+        if (r.error) throw r.error;
+      }
 
-      const facRows: ReviewRow[] = (facResp.data ?? []).map((r: any) => ({
-        table: 'facilities',
-        id: r.id,
-        name: r.name,
-        street_address: r.street_address,
-        city: r.city,
-        state: r.state,
-        zip: r.zip,
-        coordinate_source: r.coordinate_source,
-        coordinate_confidence: r.coordinate_confidence,
-        geocode_match_type: r.geocode_match_type,
-        lat: r.lat,
-        lng: r.lng,
-      }));
+      const mapProd = (table: SourceTable, data: any[] | null): ReviewRow[] =>
+        (data ?? []).map((r: any) => ({
+          table,
+          id: r.id,
+          name: r.name,
+          street_address: r.street_address,
+          city: r.city,
+          state: r.state,
+          zip: r.zip,
+          coordinate_source: r.coordinate_source,
+          coordinate_confidence: r.coordinate_confidence,
+          geocode_match_type: r.geocode_match_type,
+          lat: r.lat,
+          lng: r.lng,
+        }));
 
       const stgRows: ReviewRow[] = (stgResp.data ?? []).map((r: any) => ({
         table: 'staging_providers',
@@ -188,7 +178,15 @@ export default function AdminGeocodeReview() {
         lng: r.longitude,
       }));
 
-      setRows([...facRows, ...stgRows].sort((a, b) => a.name.localeCompare(b.name)));
+      const all = [
+        ...mapProd('facilities', facResp.data),
+        ...mapProd('rural_services', rsvResp.data),
+        ...mapProd('verified_services', vsvResp.data),
+        ...mapProd('verified_bh', vbhResp.data),
+        ...stgRows,
+      ].sort((a, b) => a.name.localeCompare(b.name));
+
+      setRows(all);
     } catch (err: any) {
       const msg = err?.message ?? err?.error_description ?? String(err);
       console.error('[AdminGeocodeReview] fetchRows failed:', err);
@@ -202,6 +200,66 @@ export default function AdminGeocodeReview() {
       setLoading(false);
     }
   }, []);
+
+  const runBackfill = useCallback(async () => {
+    setBackfillRunning(true);
+    try {
+      // Collect ids across all production tables
+      const targets: Array<{ table: SourceTable; id: string }> = [];
+      for (const t of PRODUCTION_TABLES) {
+        const { data, error } = await supabase
+          .from(t)
+          .select('id')
+          .is('geocoded_lat', null)
+          .not('street_address', 'is', null)
+          .not('coordinate_locked', 'is', true);
+        if (error) {
+          console.warn(`[backfill load] ${t}`, error.message);
+          continue;
+        }
+        for (const r of data ?? []) targets.push({ table: t, id: (r as any).id as string });
+      }
+
+      const total = targets.length;
+      setBackfillProgress({ current: 0, total });
+      if (total === 0) {
+        toast({ title: 'Backfill complete', description: 'No records need geocoding' });
+        return;
+      }
+
+      let failures = 0;
+      for (let i = 0; i < targets.length; i++) {
+        const { table, id } = targets[i];
+        try {
+          const { error: invokeError } = await supabase.functions.invoke('geocode-address', {
+            body: { table, id },
+          });
+          if (invokeError) {
+            failures += 1;
+            console.warn(`[backfill] ${table}/${id} failed:`, invokeError.message ?? invokeError);
+          }
+        } catch (err: any) {
+          failures += 1;
+          console.warn(`[backfill] ${table}/${id} threw:`, err?.message ?? err);
+        }
+        setBackfillProgress({ current: i + 1, total });
+        if (i < targets.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+      }
+      toast({
+        title: 'Backfill complete',
+        description: `Processed ${total} · ${failures} failed`,
+      });
+    } catch (err: any) {
+      toast({ title: 'Backfill failed', description: err?.message ?? String(err), variant: 'destructive' });
+    } finally {
+      setBackfillRunning(false);
+      setBackfillProgress(null);
+      await fetchBackfillCount();
+      await fetchRows();
+    }
+  }, [fetchBackfillCount, fetchRows]);
 
   useEffect(() => {
     if (perms.ready && (perms.isAdmin || perms.isStaff)) {
@@ -223,6 +281,16 @@ export default function AdminGeocodeReview() {
     });
     return c;
   }, [rows]);
+
+  const backfillTotal = useMemo(() => {
+    if (!backfillPending) return null;
+    return PRODUCTION_TABLES.reduce((sum, t) => sum + (backfillPending[t] ?? 0), 0);
+  }, [backfillPending]);
+
+  const backfillSummary = useMemo(() => {
+    if (!backfillPending) return 'Checking…';
+    return PRODUCTION_TABLES.map((t) => `${backfillPending[t] ?? 0} ${TABLE_LABELS_SHORT[t]}`).join(' · ') + ' need geocoding';
+  }, [backfillPending]);
 
   const rowKey = (r: ReviewRow) => `${r.table}:${r.id}`;
 
@@ -274,20 +342,7 @@ export default function AdminGeocodeReview() {
     }
     setBusyId(rowKey(r));
     try {
-      if (r.table === 'facilities') {
-        const { error } = await supabase
-          .from('facilities')
-          .update({
-            manual_lat: lat,
-            manual_lng: lng,
-            lat,
-            lng,
-            coordinate_locked: true,
-            coordinate_source: 'manual',
-          })
-          .eq('id', r.id);
-        if (error) throw error;
-      } else {
+      if (r.table === 'staging_providers') {
         const { error } = await supabase
           .from('staging_providers')
           .update({
@@ -297,6 +352,18 @@ export default function AdminGeocodeReview() {
             coordinate_source: 'manual',
           })
           .eq('id', r.id);
+        if (error) throw error;
+      } else {
+        const update: Record<string, unknown> = {
+          lat,
+          lng,
+          coordinate_locked: true,
+          coordinate_source: 'manual',
+        };
+        // facilities, rural_services, verified_services, verified_bh all have manual_lat/manual_lng
+        update.manual_lat = lat;
+        update.manual_lng = lng;
+        const { error } = await supabase.from(r.table).update(update).eq('id', r.id);
         if (error) throw error;
       }
       toast({ title: 'Coordinates saved', description: r.name });
@@ -312,6 +379,15 @@ export default function AdminGeocodeReview() {
   if (perms.ready && !perms.isAdmin && !perms.isStaff) {
     return <Navigate to="/" replace />;
   }
+
+  const FILTER_OPTIONS: TableFilter[] = [
+    'all',
+    'facilities',
+    'rural_services',
+    'verified_services',
+    'verified_bh',
+    'staging_providers',
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -337,8 +413,8 @@ export default function AdminGeocodeReview() {
             Geocode Review
           </h1>
           <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
-            Facilities and staging providers with low-confidence or failed Google geocoding results. Approve, re-geocode,
-            or manually correct coordinates.
+            Facilities, rural services, verified services, verified BH, and staging providers with low-confidence or
+            failed Google geocoding results. Approve, re-geocode, or manually correct coordinates.
           </p>
         </header>
 
@@ -346,16 +422,12 @@ export default function AdminGeocodeReview() {
         {perms.isAdmin ? (
           <div className="mb-4 flex flex-wrap items-center gap-3 rounded border border-border bg-card p-3">
             <div className="text-sm">
-              <span className="font-medium">Backfill ungeocoded facilities</span>
-              <span className="ml-2 text-muted-foreground">
-                {backfillPending == null
-                  ? 'Checking…'
-                  : `${backfillPending} ${backfillPending === 1 ? 'facility needs' : 'facilities need'} geocoding`}
-              </span>
+              <span className="font-medium">Backfill ungeocoded records</span>
+              <span className="ml-2 text-muted-foreground">{backfillSummary}</span>
             </div>
             <Button
               size="sm"
-              disabled={backfillRunning || (backfillPending ?? 0) === 0}
+              disabled={backfillRunning || (backfillTotal ?? 0) === 0}
               onClick={runBackfill}
             >
               {backfillRunning && backfillProgress
@@ -386,8 +458,8 @@ export default function AdminGeocodeReview() {
         </div>
 
         {/* Table filter */}
-        <div className="mb-4 flex gap-1">
-          {(['all', 'facilities', 'staging_providers'] as TableFilter[]).map((opt) => (
+        <div className="mb-4 flex flex-wrap gap-1">
+          {FILTER_OPTIONS.map((opt) => (
             <button
               key={opt}
               type="button"
@@ -399,7 +471,7 @@ export default function AdminGeocodeReview() {
                   : 'border-border text-muted-foreground hover:text-foreground hover:bg-muted/60',
               )}
             >
-              {opt === 'all' ? 'All' : opt === 'facilities' ? 'Facilities' : 'Staging Providers'}
+              {opt === 'all' ? 'All' : TABLE_LABELS[opt as SourceTable]}
             </button>
           ))}
         </div>
