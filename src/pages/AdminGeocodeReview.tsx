@@ -62,6 +62,7 @@ export default function AdminGeocodeReview() {
   const [backfillPending, setBackfillPending] = useState<number | null>(null);
   const [backfillRunning, setBackfillRunning] = useState(false);
   const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number } | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const fetchBackfillCount = useCallback(async () => {
     const { count, error } = await supabase
