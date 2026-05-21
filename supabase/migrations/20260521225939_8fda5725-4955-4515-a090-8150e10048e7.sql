@@ -1,0 +1,1 @@
+UPDATE public.facilities SET mappable = false, verification_status = 'unverified', review_status = 'flagged' WHERE name = 'Nevada Health Centers Winnemucca';
