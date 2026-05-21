@@ -59,6 +59,76 @@ export default function AdminGeocodeReview() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editLat, setEditLat] = useState('');
   const [editLng, setEditLng] = useState('');
+  const [backfillPending, setBackfillPending] = useState<number | null>(null);
+  const [backfillRunning, setBackfillRunning] = useState(false);
+  const [backfillProgress, setBackfillProgress] = useState<{ current: number; total: number } | null>(null);
+
+  const fetchBackfillCount = useCallback(async () => {
+    const { count, error } = await supabase
+      .from('facilities')
+      .select('id', { count: 'exact', head: true })
+      .is('geocoded_lat', null)
+      .not('street_address', 'is', null)
+      .not('coordinate_locked', 'is', true);
+    if (error) {
+      console.warn('[backfill count]', error.message);
+      setBackfillPending(null);
+      return;
+    }
+    setBackfillPending(count ?? 0);
+  }, []);
+
+  const runBackfill = useCallback(async () => {
+    setBackfillRunning(true);
+    try {
+      const { data, error } = await supabase
+        .from('facilities')
+        .select('id')
+        .is('geocoded_lat', null)
+        .not('street_address', 'is', null)
+        .not('coordinate_locked', 'is', true);
+      if (error) throw error;
+      const ids = (data ?? []).map((r: any) => r.id as string);
+      const total = ids.length;
+      setBackfillProgress({ current: 0, total });
+      if (total === 0) {
+        toast({ title: 'Backfill complete', description: 'No facilities need geocoding' });
+        return;
+      }
+      let failures = 0;
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        try {
+          const { error: invokeError } = await supabase.functions.invoke('geocode-address', {
+            body: { table: 'facilities', id },
+          });
+          if (invokeError) {
+            failures += 1;
+            console.warn(`[backfill] facilities/${id} failed:`, invokeError.message ?? invokeError);
+          }
+        } catch (err: any) {
+          failures += 1;
+          console.warn(`[backfill] facilities/${id} threw:`, err?.message ?? err);
+        }
+        setBackfillProgress({ current: i + 1, total });
+        if (i < ids.length - 1) {
+          await new Promise((resolve) => setTimeout(resolve, 200));
+        }
+      }
+      toast({
+        title: 'Backfill complete',
+        description: `Processed ${total} · ${failures} failed`,
+      });
+    } catch (err: any) {
+      toast({ title: 'Backfill failed', description: err?.message ?? String(err), variant: 'destructive' });
+    } finally {
+      setBackfillRunning(false);
+      setBackfillProgress(null);
+      await fetchBackfillCount();
+      await fetchRows();
+    }
+  }, []);
+
 
   const fetchRows = useCallback(async () => {
     setLoading(true);
