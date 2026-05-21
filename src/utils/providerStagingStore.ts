@@ -29,6 +29,7 @@ import {
   type GeocodeOutcome, type GeocodeRunSummary,
 } from '@/utils/serviceGeocode';
 import type { Facility, FacilityType } from '@/data/facilities';
+import { triggerGeocodeAddress } from '@/utils/triggerGeocode';
 
 type Json = Record<string, unknown>;
 
