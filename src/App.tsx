@@ -12,6 +12,10 @@ import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
 
 const queryClient = new QueryClient();
 
+const RouteFallback = () => (
+  <div className="min-h-screen bg-background text-foreground" aria-label="Loading page" />
+);
+
 const Platform = lazy(() => import("./pages/Platform.tsx"));
 const Briefing = lazy(() => import("./pages/Briefing.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
@@ -71,6 +75,7 @@ const App = () => {
             {!isPublicSafeModeActive() && <BuildFingerprint />}
             <BrowserRouter>
             <AuthProvider>
+              <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/public" element={<Index />} />
@@ -109,6 +114,7 @@ const App = () => {
 
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </AuthProvider>
           </BrowserRouter>
         </ErrorBoundary>
