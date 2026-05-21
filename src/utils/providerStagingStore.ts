@@ -228,6 +228,9 @@ export const editProviderStaging = async (
     target_table: 'staging_providers', target_row_id: id,
     details: { changed_fields: Object.keys(changes) },
   });
+  if (Object.prototype.hasOwnProperty.call(changes, 'street_address') && changes.street_address) {
+    triggerGeocodeAddress('staging_providers', id);
+  }
 };
 
 export const rejectStagingProvider = async (id: string): Promise<void> => {
