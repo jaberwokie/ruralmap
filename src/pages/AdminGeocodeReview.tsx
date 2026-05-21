@@ -348,7 +348,20 @@ export default function AdminGeocodeReview() {
     }
     setBusyId(rowKey(r));
     try {
-      if (r.table === 'staging_providers') {
+      const usesLatLng = r.table === 'facilities' || r.table === 'rural_services';
+      if (usesLatLng) {
+        // facilities & rural_services have lat/lng + manual_lat/manual_lng
+        const update = {
+          lat,
+          lng,
+          manual_lat: lat,
+          manual_lng: lng,
+          coordinate_locked: true,
+          coordinate_source: 'manual',
+        };
+        const { error } = await (supabase.from(r.table) as any).update(update).eq('id', r.id);
+        if (error) throw error;
+      } else if (r.table === 'staging_providers') {
         const { error } = await supabase
           .from('staging_providers')
           .update({
@@ -360,15 +373,15 @@ export default function AdminGeocodeReview() {
           .eq('id', r.id);
         if (error) throw error;
       } else {
+        // verified_services, verified_bh use latitude/longitude (+ manual_lat/manual_lng added in migration)
         const update = {
-          lat,
-          lng,
-          coordinate_locked: true,
-          coordinate_source: 'manual',
+          latitude: lat,
+          longitude: lng,
           manual_lat: lat,
           manual_lng: lng,
+          coordinate_locked: true,
+          coordinate_source: 'manual',
         };
-        // facilities, rural_services, verified_services, verified_bh all share these column names
         const { error } = await (supabase.from(r.table) as any).update(update).eq('id', r.id);
         if (error) throw error;
       }
