@@ -189,9 +189,12 @@ export default function AdminGeocodeReview() {
 
       setRows([...facRows, ...stgRows].sort((a, b) => a.name.localeCompare(b.name)));
     } catch (err: any) {
+      const msg = err?.message ?? err?.error_description ?? String(err);
+      console.error('[AdminGeocodeReview] fetchRows failed:', err);
+      setFetchError(msg);
       toast({
         title: 'Failed to load geocode review queue',
-        description: err?.message ?? String(err),
+        description: msg,
         variant: 'destructive',
       });
     } finally {
