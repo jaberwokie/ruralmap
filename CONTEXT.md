@@ -198,7 +198,7 @@ When `?public=1` or equivalent logic is active:
 | Geocoding      | Nominatim (Nevada-bounded, multi-candidate validation, address structure comparison) |
 | Error tracking | Sentry (integrated)                                                                  |
 | Build tool     | Vite                                                                                 |
-| Route loading  | `src/App.tsx` lazy-loads route pages so admin modules do not block main map startup  |
+| Route loading  | `src/App.tsx` eagerly imports `Index` (main map) for fastest first paint; all other routes (auth, admin, briefing, platform) are lazy-loaded via `React.lazy` + `Suspense` so they don't block startup |
 | Cross-tab sync | BroadcastChannel for verified record updates                                         |
 | Domain         | Cloudflare / custom domain for public routing                                        |
 | Deployment     | Manual publish via Lovable; no CI/CD pipeline yet                                    |
