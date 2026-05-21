@@ -354,16 +354,16 @@ export default function AdminGeocodeReview() {
           .eq('id', r.id);
         if (error) throw error;
       } else {
-        const update: Record<string, unknown> = {
+        const update = {
           lat,
           lng,
           coordinate_locked: true,
           coordinate_source: 'manual',
+          manual_lat: lat,
+          manual_lng: lng,
         };
-        // facilities, rural_services, verified_services, verified_bh all have manual_lat/manual_lng
-        update.manual_lat = lat;
-        update.manual_lng = lng;
-        const { error } = await supabase.from(r.table).update(update).eq('id', r.id);
+        // facilities, rural_services, verified_services, verified_bh all share these column names
+        const { error } = await (supabase.from(r.table) as any).update(update).eq('id', r.id);
         if (error) throw error;
       }
       toast({ title: 'Coordinates saved', description: r.name });
