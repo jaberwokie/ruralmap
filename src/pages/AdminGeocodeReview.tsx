@@ -120,7 +120,8 @@ export default function AdminGeocodeReview() {
     setLoading(true);
     setFetchError(null);
     try {
-      const buildProdQuery = (t: Exclude<SourceTable, 'staging_providers'>) =>
+      // facilities and rural_services use lat/lng columns
+      const buildLatLngQuery = (t: 'facilities' | 'rural_services') =>
         supabase
           .from(t)
           .select(
@@ -128,26 +129,30 @@ export default function AdminGeocodeReview() {
           )
           .or(REVIEW_OR_FILTER);
 
-      const stagingQuery = supabase
-        .from('staging_providers')
-        .select(
-          'id,name,street_address,city,state,zip,coordinate_source,coordinate_confidence,geocode_match_type,latitude,longitude',
-        )
-        .or(REVIEW_OR_FILTER);
+      // verified_services, verified_bh, staging_providers use latitude/longitude
+      const buildLatitudeLongitudeQuery = (
+        t: 'verified_services' | 'verified_bh' | 'staging_providers',
+      ) =>
+        supabase
+          .from(t)
+          .select(
+            'id,name,street_address,city,state,zip,coordinate_source,coordinate_confidence,geocode_match_type,latitude,longitude',
+          )
+          .or(REVIEW_OR_FILTER);
 
       const [facResp, rsvResp, vsvResp, vbhResp, stgResp] = await Promise.all([
-        buildProdQuery('facilities'),
-        buildProdQuery('rural_services'),
-        buildProdQuery('verified_services'),
-        buildProdQuery('verified_bh'),
-        stagingQuery,
+        buildLatLngQuery('facilities'),
+        buildLatLngQuery('rural_services'),
+        buildLatitudeLongitudeQuery('verified_services'),
+        buildLatitudeLongitudeQuery('verified_bh'),
+        buildLatitudeLongitudeQuery('staging_providers'),
       ]);
 
       for (const r of [facResp, rsvResp, vsvResp, vbhResp, stgResp]) {
         if (r.error) throw r.error;
       }
 
-      const mapProd = (table: SourceTable, data: any[] | null): ReviewRow[] =>
+      const mapLatLng = (table: SourceTable, data: any[] | null): ReviewRow[] =>
         (data ?? []).map((r: any) => ({
           table,
           id: r.id,
@@ -163,27 +168,28 @@ export default function AdminGeocodeReview() {
           lng: r.lng,
         }));
 
-      const stgRows: ReviewRow[] = (stgResp.data ?? []).map((r: any) => ({
-        table: 'staging_providers',
-        id: r.id,
-        name: r.name,
-        street_address: r.street_address,
-        city: r.city,
-        state: r.state,
-        zip: r.zip,
-        coordinate_source: r.coordinate_source,
-        coordinate_confidence: r.coordinate_confidence,
-        geocode_match_type: r.geocode_match_type,
-        lat: r.latitude,
-        lng: r.longitude,
-      }));
+      const mapLatitudeLongitude = (table: SourceTable, data: any[] | null): ReviewRow[] =>
+        (data ?? []).map((r: any) => ({
+          table,
+          id: r.id,
+          name: r.name,
+          street_address: r.street_address,
+          city: r.city,
+          state: r.state,
+          zip: r.zip,
+          coordinate_source: r.coordinate_source,
+          coordinate_confidence: r.coordinate_confidence,
+          geocode_match_type: r.geocode_match_type,
+          lat: r.latitude,
+          lng: r.longitude,
+        }));
 
       const all = [
-        ...mapProd('facilities', facResp.data),
-        ...mapProd('rural_services', rsvResp.data),
-        ...mapProd('verified_services', vsvResp.data),
-        ...mapProd('verified_bh', vbhResp.data),
-        ...stgRows,
+        ...mapLatLng('facilities', facResp.data),
+        ...mapLatLng('rural_services', rsvResp.data),
+        ...mapLatitudeLongitude('verified_services', vsvResp.data),
+        ...mapLatitudeLongitude('verified_bh', vbhResp.data),
+        ...mapLatitudeLongitude('staging_providers', stgResp.data),
       ].sort((a, b) => a.name.localeCompare(b.name));
 
       setRows(all);
