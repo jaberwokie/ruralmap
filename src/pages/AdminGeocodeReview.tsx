@@ -337,6 +337,32 @@ export default function AdminGeocodeReview() {
           </p>
         </header>
 
+        {/* Backfill (admin only) */}
+        {perms.isAdmin ? (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded border border-border bg-card p-3">
+            <div className="text-sm">
+              <span className="font-medium">Backfill ungeocoded facilities</span>
+              <span className="ml-2 text-muted-foreground">
+                {backfillPending == null
+                  ? 'Checking…'
+                  : `${backfillPending} ${backfillPending === 1 ? 'facility needs' : 'facilities need'} geocoding`}
+              </span>
+            </div>
+            <Button
+              size="sm"
+              disabled={backfillRunning || (backfillPending ?? 0) === 0}
+              onClick={runBackfill}
+            >
+              {backfillRunning && backfillProgress
+                ? `Geocoding ${backfillProgress.current} of ${backfillProgress.total}…`
+                : backfillRunning
+                  ? 'Starting…'
+                  : 'Run Backfill'}
+            </Button>
+          </div>
+        ) : null}
+
+
         {/* Summary counts */}
         <div className="mb-4 flex flex-wrap gap-2 text-xs">
           <div className="rounded border border-border bg-card px-3 py-1.5">
