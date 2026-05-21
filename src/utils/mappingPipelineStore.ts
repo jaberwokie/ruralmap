@@ -28,6 +28,7 @@ import {
   type GeocodeOutcome, type GeocodeRunSummary, type GeocodeCandidate,
 } from './serviceGeocode';
 import { parseBhAccessTags } from './bhAccessTags';
+import { triggerGeocodeAddress } from './triggerGeocode';
 
 type Json = Record<string, unknown>;
 
