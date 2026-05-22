@@ -73,12 +73,12 @@ The tool must avoid simple "covered / not covered" logic. Rural access is tiered
 
 **The system must not assume an entire county is locally field-covered because one part of that county is near a hub.**
 
-Nye County example — this is a standing regression test:
+County Discontinuity example — Nye County is a standing regression test:
 
 - A member near **Pahrump** → local field response may be available (Active Field Coverage)
 - A member near **Tonopah** → should not receive Pahrump-based routing (Scheduled Outreach at best)
 
-Northern Nye County = Scheduled Outreach. Southern Nye County = Active Field Coverage. A Lovable prompt has been drafted to implement this split; implement when ready.
+Northern Nye County = Scheduled Outreach. Southern Nye County = Active Field Coverage. This is a County Discontinuity — a single county whose internal geography produces meaningfully different coverage tiers. A Lovable prompt has been drafted to implement this classification; implement when ready.
 
 ---
 
@@ -318,7 +318,7 @@ New admin pages must follow this pattern without exception.
 | Item                          | Notes                                                                                                                         |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | SSHP deidentified claims data | Incoming; analysis plan needed for member counts by county, BH utilization, source geography, zero-utilization identification |
-| Nye County split              | Lovable prompt drafted; northern = Scheduled Outreach, southern = Active Field Coverage                                       |
+| County Discontinuity — Nye   | Lovable prompt drafted; northern = Scheduled Outreach, southern = Active Field Coverage                                       |
 | Mobile / tablet layout pass   | Tabled pending functional completion                                                                                          |
 
 ---
