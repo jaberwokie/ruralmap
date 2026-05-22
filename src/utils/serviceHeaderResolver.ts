@@ -1,5 +1,5 @@
 /**
- * Header Resolution + Import Gate (Nye ingestion v5).
+ * Header Resolution + Import Gate (Structured Import).
  *
  * Pre-stage gate that maps source headers (csv/xlsx) to canonical schema
  * fields. No row data is consumed here — only column headers.

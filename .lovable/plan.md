@@ -1,42 +1,74 @@
-## Audit results
 
-I scanned the admin pages for no-op handlers. Findings:
+# Rename plan — Nye → Structured/Resolved Import
 
-### Confirmed unwired (user-visible buttons that do nothing)
+Scope: identifiers, comments, and UI strings only. No logic changes. The DB value `'nye_ingestion_v5'` is preserved.
 
-1. **`/admin/mapping/rural-services`** (`src/pages/AdminMappingRuralServices.tsx`)
-   - `onPromote` — no-op. Same bug we just fixed on Facility Mapping.
-   - `onReject` — no-op.
-   - `onUpload` — no-op. The Upload CSV button in PipelineWorkspace is always rendered, so clicking it does nothing.
+## Identifier renames (apply repo-wide in the listed files)
 
-2. **`/admin/mapping/facilities`** (`src/pages/AdminMappingFacilities.tsx`)
-   - `onUpload` — still no-op. Upload CSV button does nothing. (Promote/Reject were fixed in the last pass.)
+- `nyeMode` → `resolvedImportMode`
+- `pendingNye` / `setPendingNye` → `pendingResolvedImport` / `setPendingResolvedImport`
+- `PendingNyeImport` → `PendingResolvedImport`
+- `NYE_SCHEMA_VERSION` → `RESOLVED_SCHEMA_VERSION` (value `'nye_ingestion_v5'` unchanged)
 
-### Not actually broken (no-ops by design)
+## File-by-file changes
 
-3. **`/admin/mapping/facilities/staging`** and **`/admin/mapping/rural-services/staging`**
-   - `onDeactivate` is a no-op, but these pages pass `verifiedRows={[]}`, so the Deactivate button is never rendered. Safe to leave.
+### `src/utils/mappingPipelineStore.ts`
+- L8–9: comment "Nye ingestion v5: every audit entry…" → "Structured Import: every audit entry…"
+- L35: `const NYE_SCHEMA_VERSION` → `const RESOLVED_SCHEMA_VERSION`
+- L83: comment "tagged with the Nye v5 schema version" → "tagged with the Structured Import schema version"
+- L84: `nyeMode?: boolean` → `resolvedImportMode?: boolean`
+- L87: `meta.nyeMode` → `meta.resolvedImportMode`; `NYE_SCHEMA_VERSION` → `RESOLVED_SCHEMA_VERSION`
+- L142: comment "Called by the Nye-mode upload" → "Called by the Structured Import upload"
+- L157: `NYE_SCHEMA_VERSION` → `RESOLVED_SCHEMA_VERSION`
+- L404: comment "Controlled upsert (Nye ingestion v5)…" → "Controlled upsert (Structured Import)…"
+- L488: `NYE_SCHEMA_VERSION` → `RESOLVED_SCHEMA_VERSION`
+- L519: `nyeMode: true` → `resolvedImportMode: true`
+- L532: `NYE_SCHEMA_VERSION` → `RESOLVED_SCHEMA_VERSION`
+- L547: `nyeMode: true` → `resolvedImportMode: true`
 
-## Proposed fixes
+### `src/utils/mappingPipelineCsv.ts`
+- L187: comment "Resolver-driven service row mapper (Nye ingestion v5 path)." → "Resolver-driven service row mapper (Structured Import path)."
+- L296: comment "If a resolver result is supplied (Nye v5 path)…" → "If a resolver result is supplied (Structured Import path)…"
 
-### A. Wire Rural Services live-management page (mirror of the Facility Mapping fix)
+### `src/utils/serviceHeaderResolver.ts`
+- L2: comment "Header Resolution + Import Gate (Nye ingestion v5)." → "Header Resolution + Import Gate (Structured Import)."
 
-`src/pages/AdminMappingRuralServices.tsx`:
-- `onPromote(id)` → `editRuralServiceRecord(id, { review_status: 'approved', verification_status: 'verified' })`, toast, refresh.
-- `onReject(id)` → `editRuralServiceRecord(id, { review_status: 'rejected' })`, toast, refresh.
+### `src/utils/serviceUpsertMatch.ts`
+- L2: comment "Controlled upsert matching for the Nye ingestion pipeline (v5)." → "Controlled upsert matching for the Structured Import pipeline."
 
-### B. Decide what to do about the Upload CSV button on the live-management pages
+### `src/utils/serviceNormalize.ts`
+- L2: comment "Normalization helpers for the Nye rural ingestion pipeline (v5)." → "Normalization helpers for the Structured Import pipeline."
 
-These two pages (`/admin/mapping/facilities` and `/admin/mapping/rural-services`) operate on already-live records. The actual CSV upload flow lives on the dedicated staging pipeline pages (`/admin/mapping/facilities/staging`, `/admin/mapping/rural-services/staging`).
+### `src/types/mappingPipeline.ts`
+- L56: comment "// Nye ingestion v5 additions" → "// Structured Import additions"
 
-Two options — pick one:
-- **Option 1 (recommended):** Route the Upload button on the live page to the staging page. `onUpload` becomes a redirect to `/admin/mapping/facilities/staging` (or rural equivalent) with a toast explaining where uploads happen. Keeps the UI honest without duplicating the pipeline.
-- **Option 2:** Hide the Upload section entirely on these pages. Would require a small `PipelineWorkspace` prop (e.g. `hideUpload`) to suppress that section. More invasive.
+### `src/hooks/useLiveVerifiedRecords.ts`
+- L84: comment "// Nye v5: respect explicit mappable=false…" → "// Structured Import: respect explicit mappable=false…"
 
-### C. Leave staging-page `onDeactivate` alone
+### `src/pages/AdminMappingServices.tsx`
+- L7: comment "Nye Mode (CSV or XLSX): pre-stage header resolution gate, then" → "Structured Import (CSV or XLSX): pre-stage header resolution gate, then"
+- L77: string "Nye Mode: headers resolved via alias map…" → "Structured Import: headers resolved via alias map…"
+- L78: string "Nye Mode: rows without location AND contact data…" → "Structured Import: rows without location AND contact data…"
+- L126: `interface PendingNyeImport` → `interface PendingResolvedImport`
+- L140: `const [nyeMode, setNyeMode] = useState(true);` → `const [resolvedImportMode, setResolvedImportMode] = useState(true);`
+- L141: `const [pendingNye, setPendingNye] = useState<PendingNyeImport | null>(null);` → `const [pendingResolvedImport, setPendingResolvedImport] = useState<PendingResolvedImport | null>(null);`
+- L179: `if (!nyeMode)` → `if (!resolvedImportMode)`
+- L190: comment "Nye v5 path: resolve headers…" → "Structured Import path: resolve headers…"
+- L195, L201: `setPendingNye(...)` → `setPendingResolvedImport(...)`
+- L459: JSX text "Nye Mode: header resolution gate, controlled upsert, normalization. Default: legacy CSV mapper." → "Structured Import: header resolution gate, controlled upsert, normalization. Default: legacy CSV mapper."
+- L463: `variant={nyeMode ? 'default' : 'outline'}` → `variant={resolvedImportMode ? 'default' : 'outline'}`
+- L465: `onClick={() => setNyeMode(true)}` → `onClick={() => setResolvedImportMode(true)}`
+- L466: button label "Nye Mode (CSV / XLSX)" → "Structured Import (CSV / XLSX)"
+- L468: `variant={!nyeMode ? 'default' : 'outline'}` → `variant={!resolvedImportMode ? 'default' : 'outline'}`
+- L470: `onClick={() => setNyeMode(false)}` → `onClick={() => setResolvedImportMode(false)}`
+- L476, L480, L486, L490, L493, L495, L496, L500, L508, L509, L511, L513, L517, L526: `pendingNye` → `pendingResolvedImport`; `setPendingNye` → `setPendingResolvedImport`
 
-Those pages never render the Deactivate button, so no work needed.
+## Intentionally NOT changed
 
-## Question for you
+- Database value `'nye_ingestion_v5'` at `mappingPipelineStore.ts:35` (RHS of the constant) — preserved per instructions.
+- All occurrences of "Nye" referring to Nye County (data files, county strings, tests, geographic comments) — these are unrelated geographic references.
+- "Default (CSV)" button label (not a Nye reference).
 
-Which Upload behavior do you want on the live-management pages — **Option 1 (redirect to staging)** or **Option 2 (hide the upload block)**? I'll wire Promote/Reject on the Rural Services page either way.
+## Confirmation requested
+
+Reply to confirm and I will switch to build mode and apply the edits exactly as listed.

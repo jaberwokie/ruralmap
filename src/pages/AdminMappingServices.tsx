@@ -4,7 +4,7 @@
  * Active operational pipeline for non-clinical / community resource locations.
  * Two upload modes:
  *   - Default (CSV): legacy alias-driven mapper; one row → one staging insert.
- *   - Nye Mode (CSV or XLSX): pre-stage header resolution gate, then
+ *   - Structured Import (CSV or XLSX): pre-stage header resolution gate, then
  *     controlled upsert into staging with conflict flagging.
  */
 
@@ -74,8 +74,8 @@ const VALIDATION_RULES = [
   'State should be NV/Nevada — non-Nevada records are flagged as warnings.',
   'ZIP must be 5 digits or ZIP+4.',
   'Records remain in staging until manually promoted by an admin.',
-  'Nye Mode: headers resolved via alias map; identity duplicates abort import.',
-  'Nye Mode: rows without location AND contact data are kept but marked non-mappable.',
+  'Structured Import: headers resolved via alias map; identity duplicates abort import.',
+  'Structured Import: rows without location AND contact data are kept but marked non-mappable.',
 ];
 
 const STAGING_COLS: StagingTableColumn[] = [
@@ -123,7 +123,7 @@ type EditTarget =
   | { scope: 'verified_services'; row: VerifiedServiceRow }
   | null;
 
-interface PendingNyeImport {
+interface PendingResolvedImport {
   fileName: string;
   importBatchId: string;
   resolver: HeaderResolutionResult;
@@ -137,8 +137,8 @@ export default function AdminMappingServices() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [editTarget, setEditTarget] = useState<EditTarget>(null);
-  const [nyeMode, setNyeMode] = useState(true);
-  const [pendingNye, setPendingNye] = useState<PendingNyeImport | null>(null);
+  const [resolvedImportMode, setResolvedImportMode] = useState(true);
+  const [pendingResolvedImport, setPendingResolvedImport] = useState<PendingResolvedImport | null>(null);
 
   const refresh = async () => {
     setLoading(true);
@@ -176,7 +176,7 @@ export default function AdminMappingServices() {
       if (rows.length === 0) { toast.error('File had no data rows.'); return; }
       const importBatchId = crypto.randomUUID();
 
-      if (!nyeMode) {
+      if (!resolvedImportMode) {
         // Legacy default path
         const prepared = rows.map((r, idx) => csvToStagingService(r, {
           source_file_name: file.name, source_row_number: idx + 2, import_batch_id: importBatchId,
@@ -187,24 +187,24 @@ export default function AdminMappingServices() {
         return;
       }
 
-      // Nye v5 path: resolve headers, audit, then either block or stage.
+      // Structured Import path: resolve headers, audit, then either block or stage.
       const resolver = resolveHeaders(headers);
       await writeHeaderResolutionAudit(importBatchId, file.name, resolver);
 
       if (resolver.status === 'blocked') {
-        setPendingNye({ fileName: file.name, importBatchId, resolver, rows });
+        setPendingResolvedImport({ fileName: file.name, importBatchId, resolver, rows });
         toast.error('Import blocked — see header resolution report.');
         await refresh();
         return;
       }
       // Allowed: surface report, then run controlled upsert
-      setPendingNye({ fileName: file.name, importBatchId, resolver, rows });
+      setPendingResolvedImport({ fileName: file.name, importBatchId, resolver, rows });
       const prepared = rows.map((r, idx) => csvToStagingService(r, {
         source_file_name: file.name, source_row_number: idx + 2, import_batch_id: importBatchId,
       }, resolver));
       const res = await upsertStagingServicesControlled(prepared, { fileName: file.name, importBatchId });
       toast.success(
-        `Nye import: ${res.inserted} new, ${res.merged} merged, ${res.conflicts} conflicts ` +
+        `Structured import: ${res.inserted} new, ${res.merged} merged, ${res.conflicts} conflicts ` +
         `(${res.errors} errors, ${res.warnings} warnings)`,
       );
       await refresh();
@@ -450,54 +450,54 @@ const handlePatchFailed = async () => {
       title="Service Mapping"
       description="Operational pipeline for non-clinical and community resource locations. Promoted records appear on the Services map layer."
     >
-      {/* Mode toggle + Nye-mode resolution report */}
+      {/* Mode toggle + Structured Import resolution report */}
       <div className="mb-3 rounded border border-border bg-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Upload mode</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
-              Nye Mode: header resolution gate, controlled upsert, normalization. Default: legacy CSV mapper.
+              Structured Import: header resolution gate, controlled upsert, normalization. Default: legacy CSV mapper.
             </p>
           </div>
           <div className="flex items-center gap-1.5">
-            <Button size="sm" variant={nyeMode ? 'default' : 'outline'}
+            <Button size="sm" variant={resolvedImportMode ? 'default' : 'outline'}
               className="h-7 px-2 text-[11px]"
-              onClick={() => setNyeMode(true)}>
-              Nye Mode (CSV / XLSX)
+              onClick={() => setResolvedImportMode(true)}>
+              Structured Import (CSV / XLSX)
             </Button>
-            <Button size="sm" variant={!nyeMode ? 'default' : 'outline'}
+            <Button size="sm" variant={!resolvedImportMode ? 'default' : 'outline'}
               className="h-7 px-2 text-[11px]"
-              onClick={() => setNyeMode(false)}>
+              onClick={() => setResolvedImportMode(false)}>
               Default (CSV)
             </Button>
           </div>
         </div>
 
-        {pendingNye ? (
+        {pendingResolvedImport ? (
           <div className="mt-3 rounded border border-border bg-muted/30 p-3 text-[11px]">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                {pendingNye.resolver.status === 'allowed' ? (
+                {pendingResolvedImport.resolver.status === 'allowed' ? (
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 ) : (
                   <AlertCircle className="h-3.5 w-3.5 text-rose-600" />
                 )}
                 <span className="font-semibold">
-                  Header Resolution Report — {pendingNye.fileName}
+                  Header Resolution Report — {pendingResolvedImport.fileName}
                 </span>
               </div>
               <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]"
-                onClick={() => setPendingNye(null)}>Dismiss</Button>
+                onClick={() => setPendingResolvedImport(null)}>Dismiss</Button>
             </div>
             <div className="mt-2 grid gap-1.5">
-              <ReportLine label="Matched (exact)" items={pendingNye.resolver.matchedExact.map((m) => m.source)} />
+              <ReportLine label="Matched (exact)" items={pendingResolvedImport.resolver.matchedExact.map((m) => m.source)} />
               <ReportLine label="Matched (via alias)"
-                items={pendingNye.resolver.matchedViaAlias.map((m) => `${m.source} → ${m.canonical}`)} />
-              {pendingNye.resolver.non_blocking_duplicates.length > 0 ? (
+                items={pendingResolvedImport.resolver.matchedViaAlias.map((m) => `${m.source} → ${m.canonical}`)} />
+              {pendingResolvedImport.resolver.non_blocking_duplicates.length > 0 ? (
                 <div>
                   <span className="text-muted-foreground">Non-blocking duplicates:</span>
                   <ul className="mt-0.5 list-disc pl-4 text-amber-700">
-                    {pendingNye.resolver.non_blocking_duplicates.map((d) => (
+                    {pendingResolvedImport.resolver.non_blocking_duplicates.map((d) => (
                       <li key={d.canonical}>
                         <code>{d.canonical}</code> — primary=<code>{d.primary}</code>, append={d.secondaries.map((s) => <code key={s} className="mx-0.5">{s}</code>)}
                       </li>
@@ -505,16 +505,16 @@ const handlePatchFailed = async () => {
                   </ul>
                 </div>
               ) : null}
-              <ReportLine label="Unmapped (ignored)" items={pendingNye.resolver.unmapped} />
-              {pendingNye.resolver.missingRequired.length > 0 ? (
+              <ReportLine label="Unmapped (ignored)" items={pendingResolvedImport.resolver.unmapped} />
+              {pendingResolvedImport.resolver.missingRequired.length > 0 ? (
                 <ReportLine label="Missing required"
-                  items={pendingNye.resolver.missingRequired} tone="rose" />
+                  items={pendingResolvedImport.resolver.missingRequired} tone="rose" />
               ) : null}
-              {pendingNye.resolver.blocking_conflicts.length > 0 ? (
+              {pendingResolvedImport.resolver.blocking_conflicts.length > 0 ? (
                 <div>
                   <span className="text-muted-foreground">Blocking conflicts:</span>
                   <ul className="mt-0.5 list-disc pl-4 text-rose-700">
-                    {pendingNye.resolver.blocking_conflicts.map((c) => (
+                    {pendingResolvedImport.resolver.blocking_conflicts.map((c) => (
                       <li key={c.canonical}>
                         <code>{c.canonical}</code> ← {c.sources.join(', ')}
                       </li>
@@ -523,7 +523,7 @@ const handlePatchFailed = async () => {
                 </div>
               ) : null}
               <div className="mt-1.5 flex items-center gap-1">
-                {pendingNye.resolver.status === 'allowed' ? (
+                {pendingResolvedImport.resolver.status === 'allowed' ? (
                   <span className="inline-flex items-center gap-1 text-emerald-700">
                     <CheckCircle2 className="h-3 w-3" /> Import allowed
                   </span>
