@@ -450,7 +450,7 @@ const handlePatchFailed = async () => {
       title="Service Mapping"
       description="Operational pipeline for non-clinical and community resource locations. Promoted records appear on the Services map layer."
     >
-      {/* Mode toggle + Nye-mode resolution report */}
+      {/* Mode toggle + Structured Import resolution report */}
       <div className="mb-3 rounded border border-border bg-card p-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
