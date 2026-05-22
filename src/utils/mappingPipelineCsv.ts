@@ -184,7 +184,7 @@ const readFieldAll = (
 };
 
 /**
- * Resolver-driven service row mapper (Nye ingestion v5 path).
+ * Resolver-driven service row mapper (Structured Import path).
  */
 const csvToStagingServiceResolved = (
   raw: Record<string, string>,
@@ -293,7 +293,7 @@ const csvToStagingServiceResolved = (
 };
 
 /**
- * Public entry. If a resolver result is supplied (Nye v5 path), use it;
+ * Public entry. If a resolver result is supplied (Structured Import path), use it;
  * otherwise fall back to the legacy alias-based mapping for the default
  * Services CSV flow.
  */

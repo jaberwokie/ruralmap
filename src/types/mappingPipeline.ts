@@ -53,7 +53,7 @@ export interface StagingServiceRow {
   source_file_name: string | null;
   source_row_number: number | null;
   import_batch_id: string | null;
-  // Nye ingestion v5 additions
+  // Structured Import additions
   service_tags: string | null;
   resource_class: string;
   mappable: boolean;

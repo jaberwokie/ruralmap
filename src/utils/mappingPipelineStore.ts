@@ -5,7 +5,7 @@
  * operations. All mutating ops broadcast `verified-records-changed` so the
  * live map refreshes without a reload.
  *
- * Nye ingestion v5: every audit entry on the services path carries
+ * Structured Import: every audit entry on the services path carries
  * `details.schema_version = 'nye_ingestion_v5'` when the resolver-driven
  * upload path is used.
  */
@@ -32,7 +32,7 @@ import { triggerGeocodeAddress } from './triggerGeocode';
 
 type Json = Record<string, unknown>;
 
-const NYE_SCHEMA_VERSION = 'nye_ingestion_v5';
+const RESOLVED_SCHEMA_VERSION = 'nye_ingestion_v5';
 
 const auditTable = () => supabase.from('mapping_audit_log' as never) as never;
 
@@ -80,11 +80,11 @@ export const insertStagingServices = async (
   meta: {
     fileName: string;
     importBatchId: string;
-    /** When provided, the audit entries are tagged with the Nye v5 schema version. */
-    nyeMode?: boolean;
+    /** When provided, the audit entries are tagged with the Structured Import schema version. */
+    resolvedImportMode?: boolean;
   },
 ): Promise<{ inserted: number; errors: number; warnings: number }> => {
-  const versionTag = meta.nyeMode ? { schema_version: NYE_SCHEMA_VERSION } : {};
+  const versionTag = meta.resolvedImportMode ? { schema_version: RESOLVED_SCHEMA_VERSION } : {};
 
   await writeAudit({
     pipeline: 'services',
@@ -139,7 +139,7 @@ export const insertStagingServices = async (
 };
 
 /**
- * Write a `header_resolution` audit entry. Called by the Nye-mode upload
+ * Write a `header_resolution` audit entry. Called by the Structured Import upload
  * flow before any staging insert (success OR block). Always carries the
  * v5 schema_version tag.
  */
@@ -154,7 +154,7 @@ export const writeHeaderResolutionAudit = async (
     action: 'header_resolution',
     import_batch_id: importBatchId,
     details: {
-      schema_version: NYE_SCHEMA_VERSION,
+      schema_version: RESOLVED_SCHEMA_VERSION,
       source_file_name: fileName,
       status: resolver.status,
       resolved_mappings: resolver.resolvedMap,
@@ -401,7 +401,7 @@ export const editServiceRecord = async (
 };
 
 /**
- * Controlled upsert (Nye ingestion v5). Routes each incoming row through
+ * Controlled upsert (Structured Import). Routes each incoming row through
  * the match resolver, then either:
  *   - inserts a new staging row,
  *   - controlled-merges into the single matching staging/verified record,
@@ -485,7 +485,7 @@ export const upsertStagingServicesControlled = async (
           target_row_id: cand.id,
           import_batch_id: meta.importBatchId,
           details: {
-            schema_version: NYE_SCHEMA_VERSION,
+            schema_version: RESOLVED_SCHEMA_VERSION,
             controlled_merge: true,
             match_tier: decision.tier,
             source_file_name: meta.fileName,
@@ -516,7 +516,7 @@ export const upsertStagingServicesControlled = async (
       const res = await insertStagingServices([conflictRow], {
         fileName: meta.fileName,
         importBatchId: meta.importBatchId,
-        nyeMode: true,
+        resolvedImportMode: true,
       });
       inserted += res.inserted;
       errors += res.errors;
@@ -529,7 +529,7 @@ export const upsertStagingServicesControlled = async (
         target_table: 'staging_services',
         import_batch_id: meta.importBatchId,
         details: {
-          schema_version: NYE_SCHEMA_VERSION,
+          schema_version: RESOLVED_SCHEMA_VERSION,
           match_conflict: true,
           match_tier: decision.tier,
           candidate_ids: decision.candidates.map((c) => c.id),
@@ -544,7 +544,7 @@ export const upsertStagingServicesControlled = async (
     const res = await insertStagingServices([row], {
       fileName: meta.fileName,
       importBatchId: meta.importBatchId,
-      nyeMode: true,
+      resolvedImportMode: true,
     });
     inserted += res.inserted;
     errors += res.errors;

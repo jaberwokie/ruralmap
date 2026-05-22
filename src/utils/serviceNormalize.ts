@@ -1,5 +1,5 @@
 /**
- * Normalization helpers for the Nye rural ingestion pipeline (v5).
+ * Normalization helpers for the Structured Import pipeline.
  *
  * Pure string utilities — no Cloud calls. Used by:
  *  - serviceHeaderResolver (header normalization for alias matching)

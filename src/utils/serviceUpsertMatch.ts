@@ -1,5 +1,5 @@
 /**
- * Controlled upsert matching for the Nye ingestion pipeline (v5).
+ * Controlled upsert matching for the Structured Import pipeline.
  *
  * Given an incoming partial staging row + the existing staging+verified
  * service universe, returns a match decision:
