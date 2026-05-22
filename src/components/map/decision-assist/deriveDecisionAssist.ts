@@ -233,7 +233,7 @@ export const deriveDecisionAssist = (
   const { member, facilities, services } = ctx;
   const county = getCountyForLocation(member.lat, member.lng);
   // Site-based strain: use member point, not whole-county FTE assignment.
-  // Mixed/large counties (e.g. Nye) cannot be summarised by one anchor FTE.
+  // County Discontinuity: mixed/large counties (e.g. Nye) cannot be summarised by one anchor FTE.
   const strain = computeFieldResponseStrain(member, ACTIVE_COVERAGE_RADIUS_KM);
   const fte = strain?.responder ?? null;
   const fteLoad = fte ? getLoadStatus(fte.currentLoad, fte.capacity) : null;
@@ -301,7 +301,7 @@ export const deriveDecisionAssist = (
     confidence = 'low';
   }
 
-  // Mixed-county detection (e.g. Nye): one anchor cannot stand for whole county.
+  // County Discontinuity detection (e.g. Nye): one anchor cannot stand for whole county.
   const reach = county ? getCountyReachShape(county, ACTIVE_COVERAGE_RADIUS_KM) : null;
   const isMixedCounty = !!reach?.isMixed;
 
