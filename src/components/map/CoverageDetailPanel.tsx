@@ -28,6 +28,7 @@ import type { ServiceOperationalMeta } from '@/types/medicaid';
 import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
+import { usePermissions } from '@/contexts/AuthContext';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import RefineResultsPanel from '@/components/map/RefineResultsPanel';
 import type { Filters } from '@/types/filters';
@@ -845,28 +846,24 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
       </div>
       <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Members</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
+          <span className="text-muted-foreground">Total Visits</span>
+          <span className="font-bold text-foreground tabular-nums">{util.totalVisits.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Visits</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
+          <span className="text-muted-foreground">Avg Visits/Member</span>
+          <span className="font-bold text-foreground tabular-nums">{util.avgVisitsPerMember}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Avg Visits/Member</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.avgVisitsPerMember}</span>
-        </div>
-        <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Active Providers</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.activeProviderCount}</span>
+          <span className="text-muted-foreground">Active Providers</span>
+          <span className="font-bold text-foreground tabular-nums">{util.activeProviderCount}</span>
         </div>
         {util.topProviders.length > 0 && (
           <div className="pt-1 border-t border-purple-100 mt-1">
-            <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Top Providers</div>
+            <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Top Providers</div>
             {util.topProviders.map((p, i) => (
               <div key={i} className="flex justify-between text-[10px]">
-                <span className="text-purple-700 truncate mr-1">{i + 1}. {p.name}</span>
-                <span className="text-purple-800 tabular-nums flex-shrink-0">{p.visits.toLocaleString()}</span>
+                <span className="text-muted-foreground truncate mr-1">{i + 1}. {p.name}</span>
+                <span className="text-foreground tabular-nums flex-shrink-0">{p.visits.toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -874,50 +871,50 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         {/* ── Utilization Metrics subsection ── */}
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Utilization Metrics</div>
+          <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Utilization Metrics</div>
           {providers === 0 ? (
             <p className="text-[10px] text-muted-foreground italic">No active provider access points verified for this county</p>
           ) : (
             <div className="space-y-0.5">
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Members per Provider</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(membersPerProvider)}</span>
+                <span className="text-muted-foreground">Members per Provider</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(membersPerProvider)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Encounters per Member</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(encountersPerMember)}</span>
+                <span className="text-muted-foreground">Encounters per Member</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(encountersPerMember)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Encounters per Provider</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(encountersPerProvider)}</span>
+                <span className="text-muted-foreground">Encounters per Provider</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(encountersPerProvider)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Provider Density (per 1k)</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(providerDensity)}</span>
+                <span className="text-muted-foreground">Provider Density (per 1k)</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(providerDensity)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Top Provider Share</span>
-                <span className="font-bold text-purple-800 tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
+                <span className="text-muted-foreground">Top Provider Share</span>
+                <span className="font-bold text-foreground tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
               </div>
             </div>
           )}
-          <p className="text-[10px] text-purple-600 italic leading-relaxed mt-1">{interpretation}</p>
+          <p className="text-[10px] text-muted-foreground italic leading-relaxed mt-1">{interpretation}</p>
         </div>
 
         {/* ── Provider Network Risk ── */}
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Provider Network Risk</div>
+          <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Provider Network Risk</div>
           <div className="space-y-0.5">
             <div className="flex justify-between text-[10px]">
-              <span className="text-purple-700">Total Providers</span>
-              <span className="font-bold text-purple-800 tabular-nums">{providers}</span>
+              <span className="text-muted-foreground">Total Providers</span>
+              <span className="font-bold text-foreground tabular-nums">{providers}</span>
             </div>
             <div className="flex justify-between text-[10px]">
-              <span className="text-purple-700">Top Provider Share</span>
-              <span className="font-bold text-purple-800 tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
+              <span className="text-muted-foreground">Top Provider Share</span>
+              <span className="font-bold text-foreground tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
             </div>
             <div className="flex justify-between text-[10px]">
-              <span className="text-purple-700">Network Depth</span>
+              <span className="text-muted-foreground">Network Depth</span>
               <span className={`font-bold ${providers <= 1 ? 'text-red-700' : providers <= 3 ? 'text-amber-700' : 'text-emerald-700'}`}>
                 {providers === 0 ? 'No providers' : providers === 1 ? 'Single point of failure' : providers <= 3 ? 'Limited network depth' : 'Distributed network'}
               </span>
@@ -957,14 +954,14 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
           return (
             <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-              <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Access Reality</div>
+              <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Access Reality</div>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px]">
-                  <span className="text-purple-700">Access Type</span>
+                  <span className="text-muted-foreground">Access Type</span>
                   <span className={`font-bold ${hasInPerson ? 'text-emerald-700' : 'text-orange-700'}`}>{accessType}</span>
                 </div>
                 <div className="flex justify-between text-[10px]">
-                  <span className="text-purple-700">Nearest In-Person Care</span>
+                  <span className="text-muted-foreground">Nearest In-Person Care</span>
                   <span className={`font-bold ${nearestCare === 'Available within county' ? 'text-emerald-700' : nearestCare === 'Available in adjacent county' ? 'text-amber-700' : 'text-red-700'}`}>
                     {nearestCare}
                   </span>
@@ -976,8 +973,8 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         {/* ── Engagement Signal ── */}
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Engagement Signal</div>
-          <p className="text-[10px] text-purple-700 italic leading-relaxed">
+          <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Engagement Signal</div>
+          <p className="text-[10px] text-muted-foreground italic leading-relaxed">
             {encountersPerMember !== null && encountersPerMember <= 5 && providers > 0
               ? 'Engagement gap likely (services exist but underutilized)'
               : mppHigh && epmHigh
@@ -995,7 +992,7 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
           return (
             <div className="pt-1.5 border-t border-purple-100 mt-1.5">
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-600 font-semibold">Data Confidence</span>
+                <span className="text-muted-foreground font-semibold">Data Confidence</span>
                 <span className={`font-bold ${confColor}`}>{confidence}</span>
               </div>
             </div>
@@ -1004,13 +1001,13 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Engagement Support</span>
+            <span className="text-muted-foreground">Engagement Support</span>
             <span className={`font-bold ${util.hasEngagementSupport ? 'text-emerald-700' : 'text-orange-700'}`}>
               {util.hasEngagementSupport ? 'Yes' : 'No'}
             </span>
           </div>
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Operational Read</span>
+            <span className="text-muted-foreground">Operational Read</span>
             <span className={`font-bold ${readColor}`}>{util.operationalRead}</span>
           </div>
         </div>
@@ -1125,10 +1122,6 @@ const MemberVolumeSection = ({ county }: { county: string }) => {
         <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: 'hsl(190, 60%, 40%)' }}>Member Volume</span>
       </div>
       <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 space-y-0.5">
-        <div className="flex justify-between text-[11px]">
-          <span className="text-teal-700">Total Members</span>
-          <span className="font-bold text-teal-800 tabular-nums">{displayCount(memberCount)}</span>
-        </div>
         <div className="flex justify-between text-[11px]">
           <span className="text-teal-700">Volume Level</span>
           <span className={`font-bold ${levelColor}`}>{volumeLevel}</span>
@@ -1444,32 +1437,28 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
   return (
     <div className="mt-2 mb-2">
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-[10px] font-bold uppercase tracking-wide text-purple-700">Utilization Metrics</span>
+        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Utilization Metrics</span>
       </div>
       <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Visits</span>
-          <span className="font-bold text-purple-800 tabular-nums">{totalVisits.toLocaleString()}</span>
+          <span className="text-muted-foreground">Total Visits</span>
+          <span className="font-bold text-foreground tabular-nums">{totalVisits.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Members</span>
-          <span className="font-bold text-purple-800 tabular-nums">{totalMembers.toLocaleString()}</span>
+          <span className="text-muted-foreground">Visits per Member</span>
+          <span className="font-bold text-foreground tabular-nums">{vpm.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Visits per Member</span>
-          <span className="font-bold text-purple-800 tabular-nums">{vpm.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Unique Providers</span>
-          <span className="font-bold text-purple-800 tabular-nums">{uniqueProviders}</span>
+          <span className="text-muted-foreground">Unique Providers</span>
+          <span className="font-bold text-foreground tabular-nums">{uniqueProviders}</span>
         </div>
         <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Top Provider Share</span>
+            <span className="text-muted-foreground">Top Provider Share</span>
             <span className={`font-bold tabular-nums ${shareColor(topProviderShare)}`}>{topProviderShare.toFixed(1)}%</span>
           </div>
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Top 3 Provider Share</span>
+            <span className="text-muted-foreground">Top 3 Provider Share</span>
             <span className={`font-bold tabular-nums ${shareColor(top3Share)}`}>{top3Share.toFixed(1)}%</span>
           </div>
         </div>
@@ -1481,6 +1470,7 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
 // ── County ──
 const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect, allFacilities, countyServiceCount }: { county: string; coverageRadiusKm: number; liveServices?: RuralService[]; onServiceSelect?: (s: RuralService) => void; allFacilities?: Facility[]; countyServiceCount: Map<string, number> }) => {
   const { isPublicSafe } = usePublicSafeMode();
+  const { isAdmin } = usePermissions();
   const t = useUtilizationToggles();
   const countyData = nevadaCounties.find(c => c.name === county);
   const area = getCountyArea(county);
@@ -1494,21 +1484,165 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const hasFte = serving.length > 0;
   const hasLocalResources = localServiceCount > 0;
 
-  // Auto-expand Transportation Coordination when transportation is a likely
-  // limiting factor: strained / remote-only response, OR sparse local resources.
-  // Reuses existing classification + service counts — no new logic system.
-  const transportationAutoExpand =
-    responseClass.level === 'strained' ||
-    responseClass.level === 'noSameDay' ||
-    responseClass.level === 'singleThreaded' ||
-    localServiceCount < 5;
+  // All sections below Engagement Priority default to collapsed on open.
+  const { isOpen, toggle } = useAccordion([]);
 
-  const memberVolumeAutoExpand = shouldAutoExpandMemberVolume(county);
+  // Precompute Service-Line Summary visibility / data
+  const countyFacs = (allFacilities ?? []).filter(fac => fac.county === county);
+  const hasHospital = countyHasHospital(county);
+  const psychProviders = countyFacs.filter(fac => {
+    const p = fac.psychiatric;
+    return p?.psychiatric_services_offered === true ||
+      (p?.psychiatric_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(p.psychiatric_verification_status));
+  });
+  const inpatientHospitals = countyFacs.filter(fac => {
+    const ip = fac.inpatient;
+    return ip?.inpatient_services_offered === true ||
+      (ip?.inpatient_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(ip.inpatient_verification_status));
+  });
+  const showServiceLineSummary = !(psychProviders.length === 0 && inpatientHospitals.length === 0 && hasHospital);
 
-  const defaultOpen: string[] = [];
-  if (memberVolumeAutoExpand) defaultOpen.push('memberVolume');
-  if (transportationAutoExpand) defaultOpen.push('transportation');
-  const { isOpen, toggle } = useAccordion(defaultOpen);
+  const renderServiceLineSummary = () => {
+    if (!showServiceLineSummary) return null;
+    const verifiedPsych = psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status === 'directly_verified' || f.psychiatric?.psychiatric_verification_status === 'verified_via_directory');
+    const verifiedMedicaidPsych = verifiedPsych.filter(f => f.psychiatric?.psychiatric_medicaid_status === 'participating');
+    const needsVerifPsych = psychProviders.filter(f =>
+      f.psychiatric?.psychiatric_services_offered === true && (!f.psychiatric?.psychiatric_verification_status || f.psychiatric.psychiatric_verification_status === 'reported_unverified' || f.psychiatric.psychiatric_verification_status === 'unable_to_confirm')
+    );
+    const verifiedInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status === 'directly_verified' || f.inpatient?.inpatient_verification_status === 'verified_via_directory');
+    const verifiedPsychInp = verifiedInp.filter(f => f.inpatient?.inpatient_service_types?.some(t => t.toLowerCase().includes('psychiatric inpatient')));
+    const medicaidInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_medicaid_status === 'participating');
+    const needsVerifInp = inpatientHospitals.filter(f =>
+      f.inpatient?.inpatient_services_offered === true && (!f.inpatient?.inpatient_verification_status || f.inpatient.inpatient_verification_status === 'reported_unverified' || f.inpatient.inpatient_verification_status === 'unable_to_confirm')
+    );
+    const directAdmit = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'direct_admit_allowed').length;
+    const edRequired = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'ED_required').length;
+    const transferOnly = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'transfer_only').length;
+
+    return (
+      <DetailSection title="Service-Line Summary" isOpen={isOpen('serviceLineSummary')} onToggle={() => toggle('serviceLineSummary')}>
+        <div className="space-y-2">
+          {psychProviders.length > 0 && (() => {
+            const opUsable = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'operationally_usable').length;
+            const fragile = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'fragile_access').length;
+            const verifNeeded = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'verification_needed').length;
+            return (
+            <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Psychiatric Providers</div>
+              <div className="space-y-0.5">
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Offering</span><span className="font-bold text-foreground tabular-nums">{psychProviders.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedPsych.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified + Medicaid</span><span className="font-bold text-foreground tabular-nums">{verifiedMedicaidPsych.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifPsych.length}</span></div>
+                <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                  <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Operational Access</div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsable}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragile}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Verification Needed</span><span className="font-bold text-foreground tabular-nums">{verifNeeded}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'fresh').length}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'stale').length}</span></div>
+                </div>
+              </div>
+            </div>
+            );
+          })()}
+          {inpatientHospitals.length > 0 && (() => {
+            const opUsableInp = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'operationally_usable').length;
+            const fragileInp = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'fragile_access').length;
+            const transferDep = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'transfer_dependent').length;
+            return (
+            <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Inpatient Hospitals</div>
+              <div className="space-y-0.5">
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Inpatient</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedInp.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified Psych Inpatient</span><span className="font-bold text-foreground tabular-nums">{verifiedPsychInp.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Medicaid Participating</span><span className="font-bold text-foreground tabular-nums">{medicaidInp.length}</span></div>
+                <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifInp.length}</span></div>
+                {(directAdmit > 0 || edRequired > 0 || transferOnly > 0) && (
+                  <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                    <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Referral Pathway</div>
+                    {directAdmit > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Direct Admit</span><span className="font-bold text-foreground tabular-nums">{directAdmit}</span></div>}
+                    {edRequired > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">ED Required</span><span className="font-bold text-foreground tabular-nums">{edRequired}</span></div>}
+                    {transferOnly > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Only</span><span className="font-bold text-foreground tabular-nums">{transferOnly}</span></div>}
+                  </div>
+                )}
+                <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
+                  <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Operational Access</div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsableInp}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragileInp}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Dependent</span><span className="font-bold text-foreground tabular-nums">{transferDep}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'fresh').length}</span></div>
+                  <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'stale').length}</span></div>
+                </div>
+              </div>
+            </div>
+            );
+          })()}
+          {!hasHospital && (
+            <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
+              <div className="text-[10px] font-semibold text-amber-700">⚠ No Hospital in County</div>
+              <p className="text-[9px] text-amber-600 mt-0.5">No hospital entities exist in {county} County</p>
+            </div>
+          )}
+          {verifiedPsych.length === 0 && psychProviders.length > 0 && (
+            <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
+              <div className="text-[10px] font-semibold text-amber-700">⚠ Zero Verified Psychiatric Providers</div>
+              <p className="text-[9px] text-amber-600 mt-0.5">All {psychProviders.length} psychiatric provider(s) need verification</p>
+            </div>
+          )}
+          {(() => {
+            const fb = deriveCountyFallback(county);
+            if (!fb.psychiatric_fallback_needed && !fb.inpatient_fallback_needed) return null;
+            return (
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Fallback Access</div>
+                <div className="space-y-0.5">
+                  {fb.psychiatric_fallback_needed && (
+                    <>
+                      <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Psychiatry Fallback</span><span className="font-bold text-foreground">Needed</span></div>
+                      {fb.psychiatric_fallback_county && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback County</span><span className="font-medium text-foreground">{fb.psychiatric_fallback_county}</span></div>}
+                      {fb.psychiatric_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Provider</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.psychiatric_fallback_entity_name}</span></div>}
+                      {fb.psychiatric_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{PSYCH_FALLBACK_REASON_LABELS[fb.psychiatric_fallback_reason]}</span></div>}
+                    </>
+                  )}
+                  {fb.inpatient_fallback_needed && (
+                    <>
+                      {fb.psychiatric_fallback_needed && <div className="border-t border-border/50 my-1" />}
+                      <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Inpatient Fallback</span><span className="font-bold text-foreground">Needed</span></div>
+                      {fb.inpatient_fallback_county && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback County</span><span className="font-medium text-foreground">{fb.inpatient_fallback_county}</span></div>}
+                      {fb.inpatient_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Hospital</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.inpatient_fallback_entity_name}</span></div>}
+                      {fb.inpatient_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{INPATIENT_FALLBACK_REASON_LABELS[fb.inpatient_fallback_reason]}</span></div>}
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+          {(() => {
+            const queue = deriveVerificationQueueFn();
+            const countyQueue = queue.filter(r => r.county === county || r.dependent_counties.includes(county));
+            const highPsych = countyQueue.filter(r => r.service_line === 'psychiatry' && r.priority_tier === 'high').length;
+            const highInp = countyQueue.filter(r => r.service_line === 'inpatient' && r.priority_tier === 'high').length;
+            if (highPsych === 0 && highInp === 0) return null;
+            return (
+              <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Verification Priority</div>
+                <div className="space-y-0.5">
+                  {highPsych > 0 && (
+                    <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">High Priority Psych</span><span className="font-bold text-destructive tabular-nums">{highPsych}</span></div>
+                  )}
+                  {highInp > 0 && (
+                    <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">High Priority Inpatient</span><span className="font-bold text-destructive tabular-nums">{highInp}</span></div>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      </DetailSection>
+    );
+  };
 
   return (
     <>
@@ -1533,9 +1667,39 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </p>
       )}
 
-      {/* Engagement Priority surfaces first — drives outreach decisions */}
+      {/* Engagement Priority — visible by default, drives outreach decisions */}
       <EngagementPriorityCard county={county} />
 
+      {/* Service-Line Summary */}
+      {renderServiceLineSummary()}
+
+      {/* Regional FTE Support */}
+      {hasFte && (
+        <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
+          <FieldCapacitySection county={county} />
+          <CapacityStatusSection county={county} coverageRadiusKm={coverageRadiusKm} />
+          <FieldResponseStrainSection county={county} coverageRadiusKm={coverageRadiusKm} />
+        </DetailSection>
+      )}
+
+      {/* Routing & Action Path */}
+      <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
+        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} countyServiceCount={countyServiceCount} />
+      </DetailSection>
+
+      {/* Local Resource Network */}
+      {hasLocalResources && (() => {
+        const liveCount = liveServices
+          ? liveServices.filter((s) => sameCounty(s.county, county)).length
+          : (countyServiceCount.get(county) ?? 0);
+        return (
+          <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
+            <LocalResourcesSection county={county} services={liveServices} liveServices={liveServices} onServiceSelect={onServiceSelect} />
+          </DetailSection>
+        );
+      })()}
+
+      {/* Coverage Breakdown */}
       <DetailSection title="Coverage Breakdown" isOpen={isOpen('coverage')} onToggle={() => toggle('coverage')}>
         <CoverageBreakdownBadge county={county} coverageRadiusKm={coverageRadiusKm} />
         <div className="space-y-1 text-xs text-foreground/80">
@@ -1549,20 +1713,14 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </div>
       </DetailSection>
 
+      {/* Member Volume */}
       {!isPublicSafe && (
         <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
           <MemberVolumeSection county={county} />
         </DetailSection>
       )}
 
-      {hasFte && (
-        <DetailSection title="Regional FTE Support" isOpen={isOpen('fte')} onToggle={() => toggle('fte')}>
-          <FieldCapacitySection county={county} />
-          <CapacityStatusSection county={county} coverageRadiusKm={coverageRadiusKm} />
-          <FieldResponseStrainSection county={county} coverageRadiusKm={coverageRadiusKm} />
-        </DetailSection>
-      )}
-
+      {/* Utilization & Engagement */}
       {hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
@@ -1570,23 +1728,8 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         </DetailSection>
       )}
 
-      <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
-        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} countyServiceCount={countyServiceCount} />
-      </DetailSection>
-
-      {hasLocalResources && (() => {
-        // Live-merged count for this county (falls back to baseline map).
-        const liveCount = liveServices
-          ? liveServices.filter((s) => sameCounty(s.county, county)).length
-          : (countyServiceCount.get(county) ?? 0);
-        return (
-          <DetailSection title="Local Resource Network" isOpen={isOpen('resources')} onToggle={() => toggle('resources')} count={liveCount}>
-            <LocalResourcesSection county={county} services={liveServices} liveServices={liveServices} onServiceSelect={onServiceSelect} />
-          </DetailSection>
-        );
-      })()}
-
-      {(() => {
+      {/* Digital Access Feasibility — Admin only */}
+      {isAdmin && (() => {
         const bb = getCountyBroadband(county);
         if (!bb) return null;
         const feasibility = getCountyRemoteFeasibility(county);
@@ -1675,7 +1818,8 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         );
       })()}
 
-      {(() => {
+      {/* Mobile Connectivity Feasibility — Admin only */}
+      {isAdmin && (() => {
         const cell = getCountyCellular(county);
         if (!cell) return null;
         const feasibility = getCountyMobileFeasibility(county);
@@ -1744,165 +1888,6 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
         );
       })()}
 
-      {/* Psychiatric & Inpatient County Summary */}
-      {(() => {
-        const countyFacs = (allFacilities ?? []).filter(fac => fac.county === county);
-        const hasHospital = countyHasHospital(county);
-        const psychProviders = countyFacs.filter(fac => {
-          const p = fac.psychiatric;
-          return p?.psychiatric_services_offered === true ||
-            (p?.psychiatric_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(p.psychiatric_verification_status));
-        });
-        const inpatientHospitals = countyFacs.filter(fac => {
-          const ip = fac.inpatient;
-          return ip?.inpatient_services_offered === true ||
-            (ip?.inpatient_verification_status != null && ['directly_verified', 'verified_via_directory', 'reported_unverified', 'unable_to_confirm'].includes(ip.inpatient_verification_status));
-        });
-        if (psychProviders.length === 0 && inpatientHospitals.length === 0 && hasHospital) return null;
-
-        const verifiedPsych = psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status === 'directly_verified' || f.psychiatric?.psychiatric_verification_status === 'verified_via_directory');
-        const verifiedMedicaidPsych = verifiedPsych.filter(f => f.psychiatric?.psychiatric_medicaid_status === 'participating');
-        const needsVerifPsych = psychProviders.filter(f =>
-          f.psychiatric?.psychiatric_services_offered === true && (!f.psychiatric?.psychiatric_verification_status || f.psychiatric.psychiatric_verification_status === 'reported_unverified' || f.psychiatric.psychiatric_verification_status === 'unable_to_confirm')
-        );
-
-        const verifiedInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status === 'directly_verified' || f.inpatient?.inpatient_verification_status === 'verified_via_directory');
-        const verifiedPsychInp = verifiedInp.filter(f => f.inpatient?.inpatient_service_types?.some(t => t.toLowerCase().includes('psychiatric inpatient')));
-        const medicaidInp = inpatientHospitals.filter(f => f.inpatient?.inpatient_medicaid_status === 'participating');
-        const needsVerifInp = inpatientHospitals.filter(f =>
-          f.inpatient?.inpatient_services_offered === true && (!f.inpatient?.inpatient_verification_status || f.inpatient.inpatient_verification_status === 'reported_unverified' || f.inpatient.inpatient_verification_status === 'unable_to_confirm')
-        );
-        const directAdmit = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'direct_admit_allowed').length;
-        const edRequired = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'ED_required').length;
-        const transferOnly = inpatientHospitals.filter(f => f.inpatient?.inpatient_referral_pathway === 'transfer_only').length;
-
-        return (
-          <DetailSection title="Service-Line Summary" isOpen={isOpen('serviceLineSummary')} onToggle={() => toggle('serviceLineSummary')}>
-            <div className="space-y-2">
-              {psychProviders.length > 0 && (() => {
-                const opUsable = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'operationally_usable').length;
-                const fragile = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'fragile_access').length;
-                const verifNeeded = psychProviders.filter(f => derivePsychiatricAccess(f.psychiatric) === 'verification_needed').length;
-                return (
-                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Psychiatric Providers</div>
-                  <div className="space-y-0.5">
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Offering</span><span className="font-bold text-foreground tabular-nums">{psychProviders.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedPsych.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified + Medicaid</span><span className="font-bold text-foreground tabular-nums">{verifiedMedicaidPsych.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifPsych.length}</span></div>
-                    <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
-                      <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Operational Access</div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsable}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragile}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Verification Needed</span><span className="font-bold text-foreground tabular-nums">{verifNeeded}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'fresh').length}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{psychProviders.filter(f => f.psychiatric?.psychiatric_verification_status != null && derivePsychiatricFreshness(f.psychiatric) === 'stale').length}</span></div>
-                    </div>
-                  </div>
-                </div>
-                );
-              })()}
-              {inpatientHospitals.length > 0 && (() => {
-                const opUsableInp = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'operationally_usable').length;
-                const fragileInp = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'fragile_access').length;
-                const transferDep = inpatientHospitals.filter(f => deriveInpatientAccess(f.inpatient) === 'transfer_dependent').length;
-                return (
-                <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Inpatient Hospitals</div>
-                  <div className="space-y-0.5">
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Total Inpatient</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified</span><span className="font-bold text-foreground tabular-nums">{verifiedInp.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Verified Psych Inpatient</span><span className="font-bold text-foreground tabular-nums">{verifiedPsychInp.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Medicaid Participating</span><span className="font-bold text-foreground tabular-nums">{medicaidInp.length}</span></div>
-                    <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Needs Verification</span><span className="font-bold text-foreground tabular-nums">{needsVerifInp.length}</span></div>
-                    {(directAdmit > 0 || edRequired > 0 || transferOnly > 0) && (
-                      <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
-                        <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Referral Pathway</div>
-                        {directAdmit > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Direct Admit</span><span className="font-bold text-foreground tabular-nums">{directAdmit}</span></div>}
-                        {edRequired > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">ED Required</span><span className="font-bold text-foreground tabular-nums">{edRequired}</span></div>}
-                        {transferOnly > 0 && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Only</span><span className="font-bold text-foreground tabular-nums">{transferOnly}</span></div>}
-                      </div>
-                    )}
-                    <div className="pt-1 border-t border-border/50 mt-1 space-y-0.5">
-                      <div className="text-[10px] font-semibold text-foreground/70 mb-0.5">Operational Access</div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Operationally Usable</span><span className="font-bold text-foreground tabular-nums">{opUsableInp}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fragile Access</span><span className="font-bold text-foreground tabular-nums">{fragileInp}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Transfer Dependent</span><span className="font-bold text-foreground tabular-nums">{transferDep}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fresh Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'fresh').length}</span></div>
-                      <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Stale Verifications</span><span className="font-bold text-foreground tabular-nums">{inpatientHospitals.filter(f => f.inpatient?.inpatient_verification_status != null && deriveInpatientFreshness(f.inpatient) === 'stale').length}</span></div>
-                    </div>
-                  </div>
-                </div>
-                );
-              })()}
-              {!hasHospital && (
-                <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
-                  <div className="text-[10px] font-semibold text-amber-700">⚠ No Hospital in County</div>
-                  <p className="text-[9px] text-amber-600 mt-0.5">No hospital entities exist in {county} County</p>
-                </div>
-              )}
-              {verifiedPsych.length === 0 && psychProviders.length > 0 && (
-                <div className="rounded-md border border-amber-200 bg-amber-50/50 px-2 py-1.5">
-                  <div className="text-[10px] font-semibold text-amber-700">⚠ Zero Verified Psychiatric Providers</div>
-                  <p className="text-[9px] text-amber-600 mt-0.5">All {psychProviders.length} psychiatric provider(s) need verification</p>
-                </div>
-              )}
-              {(() => {
-                const fb = deriveCountyFallback(county);
-                if (!fb.psychiatric_fallback_needed && !fb.inpatient_fallback_needed) return null;
-                return (
-                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Fallback Access</div>
-                    <div className="space-y-0.5">
-                      {fb.psychiatric_fallback_needed && (
-                        <>
-                          <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Psychiatry Fallback</span><span className="font-bold text-foreground">Needed</span></div>
-                          {fb.psychiatric_fallback_county && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback County</span><span className="font-medium text-foreground">{fb.psychiatric_fallback_county}</span></div>}
-                          {fb.psychiatric_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Provider</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.psychiatric_fallback_entity_name}</span></div>}
-                          {fb.psychiatric_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{PSYCH_FALLBACK_REASON_LABELS[fb.psychiatric_fallback_reason]}</span></div>}
-                        </>
-                      )}
-                      {fb.inpatient_fallback_needed && (
-                        <>
-                          {fb.psychiatric_fallback_needed && <div className="border-t border-border/50 my-1" />}
-                          <div className="flex justify-between text-[11px]"><span className="text-muted-foreground">Inpatient Fallback</span><span className="font-bold text-foreground">Needed</span></div>
-                          {fb.inpatient_fallback_county && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback County</span><span className="font-medium text-foreground">{fb.inpatient_fallback_county}</span></div>}
-                          {fb.inpatient_fallback_entity_name && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Fallback Hospital</span><span className="font-medium text-foreground truncate ml-2 max-w-[140px]">{fb.inpatient_fallback_entity_name}</span></div>}
-                          {fb.inpatient_fallback_reason && <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">Reason</span><span className="font-medium text-foreground">{INPATIENT_FALLBACK_REASON_LABELS[fb.inpatient_fallback_reason]}</span></div>}
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-              {(() => {
-                const queue = deriveVerificationQueueFn();
-                const countyQueue = queue.filter(r => {
-                  // Include records for entities in this county OR where this county depends on entity
-                  return r.county === county || r.dependent_counties.includes(county);
-                });
-                const highPsych = countyQueue.filter(r => r.service_line === 'psychiatry' && r.priority_tier === 'high').length;
-                const highInp = countyQueue.filter(r => r.service_line === 'inpatient' && r.priority_tier === 'high').length;
-                if (highPsych === 0 && highInp === 0) return null;
-                return (
-                  <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5">
-                    <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground/70 mb-1">Verification Priority</div>
-                    <div className="space-y-0.5">
-                      {highPsych > 0 && (
-                        <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">High Priority Psych</span><span className="font-bold text-destructive tabular-nums">{highPsych}</span></div>
-                      )}
-                      {highInp > 0 && (
-                        <div className="flex justify-between text-[10px]"><span className="text-muted-foreground">High Priority Inpatient</span><span className="font-bold text-destructive tabular-nums">{highInp}</span></div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          </DetailSection>
-        );
-      })()}
       <CountyUtilizationSection county={county} enabled={t.countyUtilization} />
       <TribalUtilizationSection county={county} enabled={t.tribalUtilization} tribalLayerOn={t.tribalNations} />
       {getMobilityManagersForCounty(county).length > 0 && (
@@ -1911,11 +1896,6 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
           isOpen={isOpen('transportation')}
           onToggle={() => toggle('transportation')}
         >
-          {transportationAutoExpand && (
-            <p className="mb-1.5 text-[10px] text-muted-foreground italic leading-snug">
-              Transportation coordination active for this region.
-            </p>
-          )}
           <TransportationCoordinationSection county={county} />
         </DetailSection>
       )}
