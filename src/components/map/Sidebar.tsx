@@ -916,7 +916,7 @@ const Sidebar = ({
             onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
             data-search-input="sidebar"
             placeholder="Search counties, services, BH, transit, tribal nations"
-            className="w-full h-8 md:h-9 pl-9 pr-3 text-sm bg-card border border-[#064f88]/35 rounded-sm text-foreground placeholder:text-[#064f88]/60 transition-colors hover:border-[#064f88]/55 focus:outline-none focus:border-[#064f88] focus:ring-1 focus:ring-[#064f88]/25"
+            className="w-full h-8 md:h-9 pl-9 pr-3 text-sm bg-card border border-[#064f88]/35 rounded-sm text-foreground placeholder:text-[#064f88] transition-colors hover:border-[#064f88]/55 focus:outline-none focus:border-[#064f88] focus:ring-1 focus:ring-[#064f88]/25"
           />
           {searchOpen && searchQuery.trim().length >= 2 && (
             <SidebarSearchResults
