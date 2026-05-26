@@ -5,6 +5,8 @@ import type { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
+import { getCountyForLocation } from '@/utils/countyLookup';
+import { logEvent } from '@/lib/metrics/logEvent';
 
 export interface MemberLocation {
   lat: number;
@@ -147,6 +149,10 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
     setMemberLocation(loc);
     setGeocodeError(null);
     setManualPlacementMode(false);
+    // PII-safe: log address_searched with county-only resolution. No raw
+    // address, no coordinates tied to a user session.
+    const county = getCountyForLocation(loc.lat, loc.lng);
+    logEvent('address_searched', { county: county ?? 'unknown' });
   }, []);
 
   const clearMember = useCallback(() => {
