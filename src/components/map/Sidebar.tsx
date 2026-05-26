@@ -367,7 +367,7 @@ const InlineHelpTooltip = ({ label, explanation }: { label: string; explanation:
 const Sidebar = ({
   layer: {
     layers,
-    onToggleLayer,
+    onToggleLayer: rawOnToggleLayer,
     onSetLayers,
     coverageRadius,
     coverageGaps,
