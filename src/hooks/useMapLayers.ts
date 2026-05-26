@@ -6,11 +6,14 @@ import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 // Default loadout: lead with coverage and field reach. Analysis layers
 // (BH, Services, Access Gaps, Tier 1, Tribal, Connectivity) are intentionally
 // off so the initial map is operationally useful without visual noise.
+// CHW clean load state: only county boundaries on for orientation. All pin
+// layers (providers, BH, services) and overlays default OFF so the member
+// address bar is the visual focal point on load.
 const DEFAULT_LAYERS: LayerState = {
   counties: true,
   services: false,
-  behavioralHealth: true,
-  serviceLocations: true,
+  behavioralHealth: false,
+  serviceLocations: false,
   operationalCoverage: false,
   fteCapacity: false,
   utilizationIntensity: false,

@@ -152,17 +152,11 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
     });
   }
 
-  // 6. Empty operational state — show nothing OR minimal reference line
+  // Empty operational state — hide the floating legend entirely until at
+  // least one pin/overlay section is active. County-only orientation does
+  // not warrant a floating chip.
   if (sections.length === 0) {
-    if (!layers.counties) return null;
-    return (
-      <div
-        style={liftStyle}
-        className="pointer-events-none absolute bottom-4 left-4 z-[800] rounded-md border border-border bg-card/85 px-2.5 py-1.5 shadow-sm backdrop-blur-sm transition-[bottom] duration-150"
-      >
-        <p className="text-[10px] text-muted-foreground">County operating boundaries</p>
-      </div>
-    );
+    return null;
   }
 
   return (
