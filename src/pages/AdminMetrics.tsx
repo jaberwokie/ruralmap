@@ -115,8 +115,9 @@ export default function AdminMetrics() {
         if (c) incr(counties, c);
       }
       if (r.event_type === 'address_searched') {
-        const a = String((detail as { address?: unknown }).address ?? '').trim();
-        if (a) incr(addresses, a);
+        // PII-safe: address_searched stores county-only resolution.
+        const c = String((detail as { county?: unknown }).county ?? '').trim();
+        if (c) incr(addresses, c);
       }
       if (r.event_type === 'provider_viewed') {
         const n = String((detail as { name?: unknown }).name ?? '').trim();
