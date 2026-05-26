@@ -28,6 +28,7 @@ import { COUNTY_BROADBAND_DATA } from '@/data/broadband-coverage';
 import { COUNTY_CELLULAR_DATA } from '@/data/cellular-coverage';
 import { Switch } from '@/components/ui/switch';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Slider } from '@/components/ui/slider';
 import { MAP_PIN_VISUALS, getSharedPinSvgMarkup } from '@/components/map/pinVisuals';
 import { RESPONSE_CAPABILITY_META, getResponseCapabilityMarkerHtml, type ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
@@ -720,7 +721,51 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] border-r border-[hsl(var(--brand-health)/0.3)]">
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth sidebar-scroll pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-6">
       {/* Header */}
-      <div className="flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
+      <div className="relative flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
+        {/* User avatar menu — top right */}
+        {authReady && isAuthenticated ? (() => {
+          const email = user?.email ?? '';
+          const initials = (email
+            .split('@')[0]
+            .split(/[._-]+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map(s => s[0]?.toUpperCase() ?? '')
+            .join('')) || email.slice(0, 2).toUpperCase() || 'U';
+          const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '';
+          const buildTime = typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : '';
+          const dateStr = buildTime ? (() => { try { return new Date(buildTime).toISOString().slice(0, 10); } catch { return buildTime.slice(0, 10); } })() : '';
+          const buildLabel = version ? `v${version}${dateStr ? ` • ${dateStr}` : ''}` : dateStr ? `build ${dateStr}` : 'build dev';
+          return (
+            <div className="absolute top-2 right-2 z-10">
+              <DropdownMenu>
+                <DropdownMenuTrigger
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--brand-health)/0.4)]"
+                  aria-label="Account menu"
+                  title={email || 'Account'}
+                >
+                  {initials}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel className="flex flex-col gap-0.5">
+                    <span className="text-xs font-semibold text-foreground">{isAdmin ? 'Admin' : 'Staff'}</span>
+                    <span className="text-[10px] font-normal text-muted-foreground tabular-nums">{buildLabel}</span>
+                    {email ? <span className="text-[10px] font-normal text-muted-foreground truncate">{email}</span> : null}
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {isAdmin ? (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin/mapping">Manage Operational Data</Link>
+                    </DropdownMenuItem>
+                  ) : null}
+                  <DropdownMenuItem onSelect={() => { void signOut(); }}>
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        })() : null}
         <img
           src={novumLogo}
           alt="NovumHealth"
@@ -732,47 +777,6 @@ const Sidebar = ({
           Search by facility, city, county, or enter a member address.
         </p>
 
-        {/* Auth + admin row */}
-        <div className="mt-2 flex w-full flex-col items-center gap-y-1 text-[10.5px] leading-none">
-          {!authReady ? null : isAdmin ? (
-            <div className="flex items-center justify-center gap-2">
-              <span
-                className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-primary"
-                title={user?.email ?? 'Admin'}
-              >
-                <span className="h-1 w-1 rounded-full bg-primary" />
-                Admin
-              </span>
-              <AdminVersionBadge />
-            </div>
-          ) : null}
-      {authReady && (isAdmin || isAuthenticated) ? (
-            <div className="mt-1.5 flex w-full items-center justify-center gap-2 whitespace-nowrap text-muted-foreground/70">
-              {isAdmin ? (
-                <Link
-                  to="/admin/mapping"
-                  className="font-normal transition-colors hover:text-foreground"
-                  title="All ingestion, mapping, verification, and audit workflows"
-                >
-                  Manage Operational Data
-                </Link>
-              ) : null}
-              {isAdmin && isAuthenticated ? (
-                <span aria-hidden className="h-3 w-px bg-[#4a92c9]" />
-              ) : null}
-              {isAuthenticated ? (
-                <button
-                  type="button"
-                  onClick={() => { void signOut(); }}
-                  className="font-normal transition-colors hover:text-foreground"
-                  title={user?.email ?? undefined}
-                >
-                  Sign Out
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
 
         {/* Action buttons row: Staff sign in + Map Explainer */}
         <div className="mt-2 grid grid-cols-2 gap-2 w-full">
