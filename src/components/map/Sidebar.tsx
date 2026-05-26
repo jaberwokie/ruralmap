@@ -445,7 +445,19 @@ const Sidebar = ({
   const [accessOpen, toggleAccess, setAccessOpen] = usePersistToggle('sidebar_layer_access');
   const [transitOpen, toggleTransit, setTransitOpen] = usePersistToggle('sidebar_layer_transit');
   const [connectivityOpen, toggleConnectivity, setConnectivityOpen] = usePersistToggle('sidebar_layer_connectivity');
-  
+  const onToggleLayer = useCallback((key: keyof LayerState) => {
+    const next = !layers[key];
+    logEvent('overlay_toggled', { overlay: String(key), on: next });
+    rawOnToggleLayer(key);
+  }, [rawOnToggleLayer, layers]);
+
+  // Debounced directory_searched logging.
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q.length < 2) return;
+    const t = window.setTimeout(() => { logEvent('directory_searched', { query: q }); }, 600);
+    return () => window.clearTimeout(t);
+  }, [searchQuery]);
 
 
   // Counts from filtered set
