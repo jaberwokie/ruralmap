@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 
 const ORIGIN = 'https://ruralmap.opsframe.io';
