@@ -5,6 +5,8 @@ import type { RuralService } from '@/data/rural-services';
 import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
+import { getCountyForLocation } from '@/utils/countyLookup';
+import { logEvent } from '@/lib/metrics/logEvent';
 
 export interface MemberLocation {
   lat: number;
