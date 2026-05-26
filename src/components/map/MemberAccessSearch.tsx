@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
+import { logEvent } from '@/lib/metrics/logEvent';
 
 interface MemberAccessSearchProps {
   onSearch: (address: string) => void;
@@ -15,6 +16,7 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
   const handleSearch = useCallback(() => {
     const trimmed = value.trim();
     if (!trimmed) return;
+    logEvent('address_searched', { address: trimmed });
     onSearch(trimmed);
   }, [value, onSearch]);
 
