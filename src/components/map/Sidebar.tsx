@@ -820,7 +820,7 @@ const Sidebar = ({
         const isBasic = layers.serviceLocations && layers.behavioralHealth && layers.services && !layers.tribalNations && !layers.tier1Highlight;
         const isFull = layers.serviceLocations && layers.behavioralHealth && layers.services && layers.tribalNations && layers.tier1Highlight;
         const isClean = !layers.serviceLocations && !layers.behavioralHealth && !layers.services && !layers.tribalNations && !layers.tier1Highlight;
-        const modes: Array<{ key: 'clean' | 'basic' | 'full'; label: string; active: boolean; onClick: () => void }> = [
+        const allModes: Array<{ key: 'clean' | 'basic' | 'full'; label: string; active: boolean; onClick: () => void }> = [
           {
             key: 'clean',
             label: 'Clean',
@@ -864,6 +864,11 @@ const Sidebar = ({
             })),
           },
         ];
+        const visibleModes = (() => {
+          if (role === 'admin') return allModes;
+          if (role === 'staff') return allModes.filter((m) => m.key !== 'full');
+          return allModes.filter((m) => m.key === 'clean');
+        })();
         return (
           <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
             <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
@@ -871,7 +876,7 @@ const Sidebar = ({
               <div className={`flex w-full items-center rounded-md border bg-secondary/40 p-0.5 transition-colors ${
                 isFull ? 'border-[#064f88]/50' : 'border-[hsl(var(--brand-health)/0.35)]'
               }`}>
-                {modes.map((m) => (
+                {visibleModes.map((m) => (
                   <button
                     key={m.key}
                     type="button"
