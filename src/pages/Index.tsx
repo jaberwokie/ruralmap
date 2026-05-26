@@ -73,6 +73,7 @@ const Index = () => {
   // jumping when layout flow shifts.
   const [decisionAssistOpen, setDecisionAssistOpen] = useState(false);
   const isMobileLayout = useIsMobile();
+  const { ready: authReady, isAuthenticated, user, isAdmin, signOut } = usePermissions();
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
   const layers = useMapLayers();
