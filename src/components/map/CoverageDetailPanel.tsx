@@ -846,28 +846,28 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
       </div>
       <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Members</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
+          <span className="text-muted-foreground">Total Members</span>
+          <span className="font-bold text-foreground tabular-nums">{util.totalMembers.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Visits</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
+          <span className="text-muted-foreground">Total Visits</span>
+          <span className="font-bold text-foreground tabular-nums">{util.totalVisits.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Avg Visits/Member</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.avgVisitsPerMember}</span>
+          <span className="text-muted-foreground">Avg Visits/Member</span>
+          <span className="font-bold text-foreground tabular-nums">{util.avgVisitsPerMember}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Active Providers</span>
-          <span className="font-bold text-purple-800 tabular-nums">{util.activeProviderCount}</span>
+          <span className="text-muted-foreground">Active Providers</span>
+          <span className="font-bold text-foreground tabular-nums">{util.activeProviderCount}</span>
         </div>
         {util.topProviders.length > 0 && (
           <div className="pt-1 border-t border-purple-100 mt-1">
-            <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Top Providers</div>
+            <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Top Providers</div>
             {util.topProviders.map((p, i) => (
               <div key={i} className="flex justify-between text-[10px]">
-                <span className="text-purple-700 truncate mr-1">{i + 1}. {p.name}</span>
-                <span className="text-purple-800 tabular-nums flex-shrink-0">{p.visits.toLocaleString()}</span>
+                <span className="text-muted-foreground truncate mr-1">{i + 1}. {p.name}</span>
+                <span className="text-foreground tabular-nums flex-shrink-0">{p.visits.toLocaleString()}</span>
               </div>
             ))}
           </div>
@@ -875,50 +875,50 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         {/* ── Utilization Metrics subsection ── */}
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Utilization Metrics</div>
+          <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Utilization Metrics</div>
           {providers === 0 ? (
             <p className="text-[10px] text-muted-foreground italic">No active provider access points verified for this county</p>
           ) : (
             <div className="space-y-0.5">
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Members per Provider</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(membersPerProvider)}</span>
+                <span className="text-muted-foreground">Members per Provider</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(membersPerProvider)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Encounters per Member</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(encountersPerMember)}</span>
+                <span className="text-muted-foreground">Encounters per Member</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(encountersPerMember)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Encounters per Provider</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(encountersPerProvider)}</span>
+                <span className="text-muted-foreground">Encounters per Provider</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(encountersPerProvider)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Provider Density (per 1k)</span>
-                <span className="font-bold text-purple-800 tabular-nums">{fmt1(providerDensity)}</span>
+                <span className="text-muted-foreground">Provider Density (per 1k)</span>
+                <span className="font-bold text-foreground tabular-nums">{fmt1(providerDensity)}</span>
               </div>
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-700">Top Provider Share</span>
-                <span className="font-bold text-purple-800 tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
+                <span className="text-muted-foreground">Top Provider Share</span>
+                <span className="font-bold text-foreground tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
               </div>
             </div>
           )}
-          <p className="text-[10px] text-purple-600 italic leading-relaxed mt-1">{interpretation}</p>
+          <p className="text-[10px] text-muted-foreground italic leading-relaxed mt-1">{interpretation}</p>
         </div>
 
         {/* ── Provider Network Risk ── */}
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Provider Network Risk</div>
+          <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Provider Network Risk</div>
           <div className="space-y-0.5">
             <div className="flex justify-between text-[10px]">
-              <span className="text-purple-700">Total Providers</span>
-              <span className="font-bold text-purple-800 tabular-nums">{providers}</span>
+              <span className="text-muted-foreground">Total Providers</span>
+              <span className="font-bold text-foreground tabular-nums">{providers}</span>
             </div>
             <div className="flex justify-between text-[10px]">
-              <span className="text-purple-700">Top Provider Share</span>
-              <span className="font-bold text-purple-800 tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
+              <span className="text-muted-foreground">Top Provider Share</span>
+              <span className="font-bold text-foreground tabular-nums">{topProviderShare !== null ? topProviderShare.toFixed(1) + '%' : 'N/A'}</span>
             </div>
             <div className="flex justify-between text-[10px]">
-              <span className="text-purple-700">Network Depth</span>
+              <span className="text-muted-foreground">Network Depth</span>
               <span className={`font-bold ${providers <= 1 ? 'text-red-700' : providers <= 3 ? 'text-amber-700' : 'text-emerald-700'}`}>
                 {providers === 0 ? 'No providers' : providers === 1 ? 'Single point of failure' : providers <= 3 ? 'Limited network depth' : 'Distributed network'}
               </span>
@@ -958,14 +958,14 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
           return (
             <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-              <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Access Reality</div>
+              <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Access Reality</div>
               <div className="space-y-0.5">
                 <div className="flex justify-between text-[10px]">
-                  <span className="text-purple-700">Access Type</span>
+                  <span className="text-muted-foreground">Access Type</span>
                   <span className={`font-bold ${hasInPerson ? 'text-emerald-700' : 'text-orange-700'}`}>{accessType}</span>
                 </div>
                 <div className="flex justify-between text-[10px]">
-                  <span className="text-purple-700">Nearest In-Person Care</span>
+                  <span className="text-muted-foreground">Nearest In-Person Care</span>
                   <span className={`font-bold ${nearestCare === 'Available within county' ? 'text-emerald-700' : nearestCare === 'Available in adjacent county' ? 'text-amber-700' : 'text-red-700'}`}>
                     {nearestCare}
                   </span>
@@ -977,8 +977,8 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         {/* ── Engagement Signal ── */}
         <div className="pt-1.5 border-t border-purple-100 mt-1.5">
-          <div className="text-[10px] text-purple-600 font-semibold mb-0.5">Engagement Signal</div>
-          <p className="text-[10px] text-purple-700 italic leading-relaxed">
+          <div className="text-[10px] text-muted-foreground font-semibold mb-0.5">Engagement Signal</div>
+          <p className="text-[10px] text-muted-foreground italic leading-relaxed">
             {encountersPerMember !== null && encountersPerMember <= 5 && providers > 0
               ? 'Engagement gap likely (services exist but underutilized)'
               : mppHigh && epmHigh
@@ -996,7 +996,7 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
           return (
             <div className="pt-1.5 border-t border-purple-100 mt-1.5">
               <div className="flex justify-between text-[10px]">
-                <span className="text-purple-600 font-semibold">Data Confidence</span>
+                <span className="text-muted-foreground font-semibold">Data Confidence</span>
                 <span className={`font-bold ${confColor}`}>{confidence}</span>
               </div>
             </div>
@@ -1005,13 +1005,13 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
 
         <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Engagement Support</span>
+            <span className="text-muted-foreground">Engagement Support</span>
             <span className={`font-bold ${util.hasEngagementSupport ? 'text-emerald-700' : 'text-orange-700'}`}>
               {util.hasEngagementSupport ? 'Yes' : 'No'}
             </span>
           </div>
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Operational Read</span>
+            <span className="text-muted-foreground">Operational Read</span>
             <span className={`font-bold ${readColor}`}>{util.operationalRead}</span>
           </div>
         </div>
@@ -1445,32 +1445,32 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
   return (
     <div className="mt-2 mb-2">
       <div className="flex items-center gap-1.5 mb-1.5">
-        <span className="text-[10px] font-bold uppercase tracking-wide text-purple-700">Utilization Metrics</span>
+        <span className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Utilization Metrics</span>
       </div>
       <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Visits</span>
-          <span className="font-bold text-purple-800 tabular-nums">{totalVisits.toLocaleString()}</span>
+          <span className="text-muted-foreground">Total Visits</span>
+          <span className="font-bold text-foreground tabular-nums">{totalVisits.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Total Members</span>
-          <span className="font-bold text-purple-800 tabular-nums">{totalMembers.toLocaleString()}</span>
+          <span className="text-muted-foreground">Total Members</span>
+          <span className="font-bold text-foreground tabular-nums">{totalMembers.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Visits per Member</span>
-          <span className="font-bold text-purple-800 tabular-nums">{vpm.toFixed(2)}</span>
+          <span className="text-muted-foreground">Visits per Member</span>
+          <span className="font-bold text-foreground tabular-nums">{vpm.toFixed(2)}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-purple-700">Unique Providers</span>
-          <span className="font-bold text-purple-800 tabular-nums">{uniqueProviders}</span>
+          <span className="text-muted-foreground">Unique Providers</span>
+          <span className="font-bold text-foreground tabular-nums">{uniqueProviders}</span>
         </div>
         <div className="pt-1 border-t border-purple-100 mt-1 space-y-0.5">
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Top Provider Share</span>
+            <span className="text-muted-foreground">Top Provider Share</span>
             <span className={`font-bold tabular-nums ${shareColor(topProviderShare)}`}>{topProviderShare.toFixed(1)}%</span>
           </div>
           <div className="flex justify-between text-[11px]">
-            <span className="text-purple-700">Top 3 Provider Share</span>
+            <span className="text-muted-foreground">Top 3 Provider Share</span>
             <span className={`font-bold tabular-nums ${shareColor(top3Share)}`}>{top3Share.toFixed(1)}%</span>
           </div>
         </div>
