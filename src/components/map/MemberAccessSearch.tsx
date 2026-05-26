@@ -1,6 +1,5 @@
 import { useState, useCallback } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
-import { logEvent } from '@/lib/metrics/logEvent';
 
 interface MemberAccessSearchProps {
   onSearch: (address: string) => void;
@@ -16,7 +15,8 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
   const handleSearch = useCallback(() => {
     const trimmed = value.trim();
     if (!trimmed) return;
-    logEvent('address_searched', { address: trimmed });
+    // PII: do NOT log the raw address. address_searched is emitted with
+    // county-only resolution inside useMemberAccess.placeMember.
     onSearch(trimmed);
   }, [value, onSearch]);
 
