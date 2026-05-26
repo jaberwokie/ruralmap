@@ -437,6 +437,13 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
           {/* Body */}
           <div className="overflow-y-auto flex-1 px-3 pb-3">
+            {filters && onFiltersChange && allFacilities && (display.type === 'county' || display.type === 'memberAccess' || display.type === 'memberVolume') && (
+              <RefineResultsPanel
+                filters={filters}
+                onFiltersChange={onFiltersChange}
+                allFacilities={allFacilities}
+              />
+            )}
             {memberLocation && display.type === 'facility' && (
               <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
             )}
