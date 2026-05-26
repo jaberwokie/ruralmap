@@ -15,10 +15,10 @@
     --background: 210 25% 98%;
     --foreground: 216 35% 14%;
 
-    --card: 0 0% 100%;
+    --card: 60 14% 97%;
     --card-foreground: 216 35% 14%;
 
-    --popover: 0 0% 100%;
+    --popover: 60 14% 97%;
     --popover-foreground: 216 35% 14%;
 
     --primary: 206 54% 54%;
@@ -91,7 +91,7 @@
     --cellular-weak: 20 85% 55%;
     --cellular-none: 215 16% 60%;
 
-    --sidebar-background: 0 0% 100%;
+    --sidebar-background: 60 14% 97%;
     --sidebar-foreground: 216 35% 14%;
     --sidebar-primary: 206 54% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -191,7 +191,7 @@
 }
 
 .leaflet-control-zoom a {
-  background: white !important;
+  background: hsl(60 14% 97%) !important;
   color: hsl(240 10% 10%) !important;
   border: none !important;
   width: 32px !important;
