@@ -870,7 +870,7 @@ const Sidebar = ({
           return allModes.filter((m) => m.key === 'clean');
         })();
         return (
-          <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
+          <div className="px-4 pt-2 pb-1 border-b border-border/60">
             <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
               <span className="text-[11px] font-medium text-muted-foreground">View</span>
               <div className={`flex w-full items-center rounded-md border bg-secondary/40 p-0.5 transition-colors ${
