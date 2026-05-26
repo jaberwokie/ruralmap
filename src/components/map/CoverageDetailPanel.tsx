@@ -846,10 +846,6 @@ const UtilizationEngagementSection = ({ county, allFacilities }: { county: strin
       </div>
       <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
         <div className="flex justify-between text-[11px]">
-          <span className="text-muted-foreground">Total Members</span>
-          <span className="font-bold text-foreground tabular-nums">{util.totalMembers.toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between text-[11px]">
           <span className="text-muted-foreground">Total Visits</span>
           <span className="font-bold text-foreground tabular-nums">{util.totalVisits.toLocaleString()}</span>
         </div>
