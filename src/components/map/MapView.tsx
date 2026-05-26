@@ -787,14 +787,46 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     return result;
   }, [countyFilters, hasServiceLineFilter, ruralServices, searchQuery, selectedCounty, serviceCategoryFilters, typeFilters]);
 
+  // Geometric pin scoping: when a county is selected, service/BH pins should
+  // appear only where the marker's coordinates fall inside the county polygon.
+  // Some services are tagged to one county but physically co-located in a
+  // neighbor (e.g. Lander-serving outreach in Winnemucca/Lovelock); metadata
+  // filtering alone leaves their pins rendering outside the selected county.
+  // Panel lists (derived from `filteredRuralServices`) intentionally keep
+  // those records so cross-border outreach still shows in the resource list.
+  const selectedCountyPolygon = useMemo<[number, number][] | null>(() => {
+    if (!selectedCounty) return null;
+    return nevadaCounties.find((c) => c.name === selectedCounty)?.boundaries ?? null;
+  }, [selectedCounty]);
+
+  const isInsideSelectedCounty = useCallback(
+    (lat: number, lng: number): boolean => {
+      const poly = selectedCountyPolygon;
+      if (!poly) return true;
+      let inside = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+        const [yi, xi] = poly[i];
+        const [yj, xj] = poly[j];
+        const intersects =
+          ((xi > lng) !== (xj > lng)) &&
+          (lat < ((yj - yi) * (lng - xi)) / ((xj - xi) || Number.EPSILON) + yi);
+        if (intersects) inside = !inside;
+      }
+      return inside;
+    },
+    [selectedCountyPolygon],
+  );
+
   const filteredCommunityServices = useMemo(() => {
     if (hasServiceLineFilter) return [];
     if (typeFilters && typeFilters.size > 0 && !typeFilters.has('service')) {
       return [];
     }
 
-    return filteredRuralServices.filter(isCommunitySupportService);
-  }, [filteredRuralServices, hasServiceLineFilter, typeFilters]);
+    const base = filteredRuralServices.filter(isCommunitySupportService);
+    if (!selectedCountyPolygon) return base;
+    return base.filter((s) => isInsideSelectedCounty(s.lat, s.lng));
+  }, [filteredRuralServices, hasServiceLineFilter, typeFilters, selectedCountyPolygon, isInsideSelectedCounty]);
 
   const filteredBehavioralHealthServices = useMemo(() => {
     if (hasServiceLineFilter) return [];
@@ -802,8 +834,11 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       return [];
     }
 
-    return filteredRuralServices.filter(isBehavioralHealthService);
-  }, [filteredRuralServices, hasServiceLineFilter, typeFilters]);
+    const base = filteredRuralServices.filter(isBehavioralHealthService);
+    if (!selectedCountyPolygon) return base;
+    return base.filter((s) => isInsideSelectedCounty(s.lat, s.lng));
+  }, [filteredRuralServices, hasServiceLineFilter, typeFilters, selectedCountyPolygon, isInsideSelectedCounty]);
+
 
   const countyHoverMetrics = useMemo(() => {
     const metricsByCounty = new Map<string, CountyHoverMetrics>();
