@@ -44,6 +44,7 @@ import type { ResponseCapabilityCategory } from '@/components/map/responseCapabi
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ChevronLeft, Search, SlidersHorizontal, Layers, Activity, Map as MapIcon } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
+import { logEvent } from '@/lib/metrics/logEvent';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
