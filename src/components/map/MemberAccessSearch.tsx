@@ -57,6 +57,7 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
           </button>
         )}
       </div>
+      <p className="text-xs text-muted-foreground select-none">Sign in to get started, then enter a member address to find nearby providers and services.</p>
       {hasPin && !error && (
         <p className="text-[9px] text-muted-foreground/60 select-none">Clear search to exit member mode</p>
       )}
