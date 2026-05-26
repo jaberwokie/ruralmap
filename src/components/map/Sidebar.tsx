@@ -816,54 +816,83 @@ const Sidebar = ({
       </div>
 
       {/* View toggle */}
-      {onSetLayers && (
-        <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
-          <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
-            <span className="text-[11px] font-medium text-muted-foreground">View</span>
-            <div className={`flex w-full items-center rounded-md border bg-secondary/40 p-0.5 transition-colors ${
-              layers.tribalNations && layers.behavioralHealth && layers.services
-                ? 'border-[#064f88]/50'
-                : 'border-[hsl(var(--brand-health)/0.35)]'
-            }`}>
-              <button
-                type="button"
-                onClick={() => onSetLayers((prev) => ({
-                  ...prev,
-                  tribalNations: false,
-                  behavioralHealth: false,
-                  services: false,
-                }))}
-                className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
-                  !layers.tribalNations && !layers.behavioralHealth && !layers.services
-                    ? 'bg-card text-foreground shadow-sm border border-[hsl(var(--brand-health)/0.35)]'
-                    : 'text-muted-foreground hover:text-foreground border border-transparent'
-                }`}
-                aria-pressed={!layers.tribalNations && !layers.behavioralHealth && !layers.services}
-              >
-                Basic
-              </button>
-              <button
-                type="button"
-                onClick={() => onSetLayers((prev) => ({
-                  ...prev,
-                  tribalNations: true,
-                  behavioralHealth: true,
-                  services: true,
-                }))}
-                className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
-                  layers.tribalNations && layers.behavioralHealth && layers.services
-                    ? 'bg-[hsl(var(--brand-health))] text-white shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                aria-pressed={layers.tribalNations && layers.behavioralHealth && layers.services}
-              >
-                Full System
-              </button>
+      {onSetLayers && (() => {
+        const isBasic = layers.serviceLocations && layers.behavioralHealth && layers.services && !layers.tribalNations && !layers.tier1Highlight;
+        const isFull = layers.serviceLocations && layers.behavioralHealth && layers.services && layers.tribalNations && layers.tier1Highlight;
+        const isClean = !layers.serviceLocations && !layers.behavioralHealth && !layers.services && !layers.tribalNations && !layers.tier1Highlight;
+        const modes: Array<{ key: 'clean' | 'basic' | 'full'; label: string; active: boolean; onClick: () => void }> = [
+          {
+            key: 'clean',
+            label: 'Clean',
+            active: isClean,
+            onClick: () => onSetLayers((prev) => ({
+              ...prev,
+              counties: true,
+              serviceLocations: false,
+              behavioralHealth: false,
+              services: false,
+              tribalNations: false,
+              tier1Highlight: false,
+            })),
+          },
+          {
+            key: 'basic',
+            label: 'Basic',
+            active: isBasic,
+            onClick: () => onSetLayers((prev) => ({
+              ...prev,
+              counties: true,
+              serviceLocations: true,
+              behavioralHealth: true,
+              services: true,
+              tribalNations: false,
+              tier1Highlight: false,
+            })),
+          },
+          {
+            key: 'full',
+            label: 'Full',
+            active: isFull,
+            onClick: () => onSetLayers((prev) => ({
+              ...prev,
+              counties: true,
+              serviceLocations: true,
+              behavioralHealth: true,
+              services: true,
+              tribalNations: true,
+              tier1Highlight: true,
+            })),
+          },
+        ];
+        return (
+          <div className="px-4 pt-2.5 pb-2 border-b border-border/60">
+            <div className="flex flex-col gap-1" role="group" aria-label="View Mode">
+              <span className="text-[11px] font-medium text-muted-foreground">View</span>
+              <div className={`flex w-full items-center rounded-md border bg-secondary/40 p-0.5 transition-colors ${
+                isFull ? 'border-[#064f88]/50' : 'border-[hsl(var(--brand-health)/0.35)]'
+              }`}>
+                {modes.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    onClick={m.onClick}
+                    className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
+                      m.active
+                        ? (m.key === 'full'
+                            ? 'bg-[hsl(var(--brand-health))] text-white shadow-sm'
+                            : 'bg-card text-foreground shadow-sm border border-[hsl(var(--brand-health)/0.35)]')
+                        : 'text-muted-foreground hover:text-foreground border border-transparent'
+                    }`}
+                    aria-pressed={m.active}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-
-        </div>
-      )}
+        );
+      })()}
 
       {/*
         Search bar — wired global navigator.
