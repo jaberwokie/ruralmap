@@ -37,7 +37,7 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
             onChange={e => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter member address"
-            className="bg-transparent text-sm text-foreground placeholder:text-[hsl(var(--brand-health)/0.6)] outline-none w-52 md:w-64"
+            className="bg-transparent text-sm text-foreground placeholder:text-[#064f88]/60 outline-none w-52 md:w-64"
             disabled={isGeocoding}
           />
           <button
