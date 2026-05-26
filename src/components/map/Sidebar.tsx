@@ -729,7 +729,7 @@ const Sidebar = ({
           decoding="async"
         />
         <div className="flex w-full items-center justify-between gap-2 mt-2">
-          <h1 className="text-base font-semibold tracking-tight leading-tight text-left" style={{ color: '#064f88' }}>Rural Access Operations</h1>
+          <h1 className="text-base font-semibold tracking-tight leading-tight text-center flex-1" style={{ color: '#064f88' }}>Rural Access Operations</h1>
           {authReady && isAuthenticated ? (() => {
             const email = user?.email ?? '';
             const initials = (email
