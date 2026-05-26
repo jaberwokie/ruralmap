@@ -33,6 +33,7 @@ export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping/pipeline-audit', label: 'Data Pipeline Log' },
   { to: '/admin/mapping/facilities', label: 'Facilities (Live)' },
   { to: '/admin/mapping/rural-services', label: 'Rural Services (Live)' },
+  { to: '/admin/metrics', label: 'Metrics' },
 ];
 
 interface AdminMappingLayoutProps {

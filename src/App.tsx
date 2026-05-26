@@ -6,6 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import { AuthProvider } from "@/contexts/AuthContext";
+import MetricsTracker from "@/components/MetricsTracker";
 import BuildFingerprint from "./components/BuildFingerprint";
 import { isPublicSafeModeActive } from "./hooks/usePublicSafeMode";
 import Index from "./pages/Index.tsx";
@@ -40,6 +41,7 @@ const AdminMappingFacilitiesStaging = lazy(() => import("./pages/AdminMappingFac
 const AdminMappingRuralServicesStaging = lazy(() => import("./pages/AdminMappingRuralServicesStaging"));
 const AdminTraining = lazy(() => import("./pages/AdminTraining.tsx"));
 const AdminGeocodeReview = lazy(() => import("./pages/AdminGeocodeReview.tsx"));
+const AdminMetrics = lazy(() => import("./pages/AdminMetrics.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const APP_VERSION = 'public-sharing-v2';
@@ -78,6 +80,7 @@ const App = () => {
             {!isPublicSafeModeActive() && <BuildFingerprint />}
             <BrowserRouter>
             <AuthProvider>
+              <MetricsTracker />
               <Suspense fallback={<RouteFallback />}>
               <Routes>
                 <Route path="/" element={<Index />} />
@@ -105,6 +108,9 @@ const App = () => {
                 <Route path="/admin/mapping/rural-services" element={<AdminMappingRuralServices />} />
                 <Route path="/admin/mapping/facilities-staging" element={<AdminMappingFacilitiesStaging />} />
                 <Route path="/admin/mapping/rural-services-staging" element={<AdminMappingRuralServicesStaging />} />
+
+                {/* Admin > Metrics */}
+                <Route path="/admin/metrics" element={<AdminMetrics />} />
 
                 {/* Admin > Training (additive; rollback by removing this line and src/pages/AdminTraining.tsx + src/pages/admin-training/) */}
                 <Route path="/admin/training" element={<AdminTraining />} />
