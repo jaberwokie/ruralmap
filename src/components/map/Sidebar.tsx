@@ -721,23 +721,29 @@ const Sidebar = ({
     <div data-tutorial="sidebar" className="relative flex h-full w-full flex-col bg-card shadow-[var(--shadow-panel)] border-r border-[hsl(var(--brand-health)/0.3)]">
       <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain scroll-smooth sidebar-scroll pb-[calc(env(safe-area-inset-bottom)+5rem)] md:pb-6">
       {/* Header */}
-      <div className="relative flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
-        {/* User avatar menu — top right */}
-        {authReady && isAuthenticated ? (() => {
-          const email = user?.email ?? '';
-          const initials = (email
-            .split('@')[0]
-            .split(/[._-]+/)
-            .filter(Boolean)
-            .slice(0, 2)
-            .map(s => s[0]?.toUpperCase() ?? '')
-            .join('')) || email.slice(0, 2).toUpperCase() || 'U';
-          const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '';
-          const buildTime = typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : '';
-          const dateStr = buildTime ? (() => { try { return new Date(buildTime).toISOString().slice(0, 10); } catch { return buildTime.slice(0, 10); } })() : '';
-          const buildLabel = version ? `v${version}${dateStr ? ` • ${dateStr}` : ''}` : dateStr ? `build ${dateStr}` : 'build dev';
-          return (
-            <div className="absolute top-2 right-2 z-10">
+      <div className="flex flex-col items-center px-4 pt-4 pb-3 text-center border-b border-border/60">
+        <img
+          src={novumLogo}
+          alt="NovumHealth"
+          className="block w-full max-w-[180px] h-auto object-contain"
+          decoding="async"
+        />
+        <div className="flex w-full items-center justify-between mt-2">
+          <h1 className="text-base font-semibold tracking-tight leading-tight text-left" style={{ color: '#064f88' }}>Rural Access Operations</h1>
+          {authReady && isAuthenticated ? (() => {
+            const email = user?.email ?? '';
+            const initials = (email
+              .split('@')[0]
+              .split(/[._-]+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map(s => s[0]?.toUpperCase() ?? '')
+              .join('')) || email.slice(0, 2).toUpperCase() || 'U';
+            const version = typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '';
+            const buildTime = typeof __APP_BUILD_TIME__ !== 'undefined' ? __APP_BUILD_TIME__ : '';
+            const dateStr = buildTime ? (() => { try { return new Date(buildTime).toISOString().slice(0, 10); } catch { return buildTime.slice(0, 10); } })() : '';
+            const buildLabel = version ? `v${version}${dateStr ? ` • ${dateStr}` : ''}` : dateStr ? `build ${dateStr}` : 'build dev';
+            return (
               <DropdownMenu>
                 <DropdownMenuTrigger
                   className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--brand-health)/0.4)]"
@@ -763,17 +769,10 @@ const Sidebar = ({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
-          );
-        })() : null}
-        <img
-          src={novumLogo}
-          alt="NovumHealth"
-          className="block w-full max-w-[180px] h-auto object-contain"
-          decoding="async"
-        />
-        <h1 className="mt-2 text-base font-semibold tracking-tight leading-tight" style={{ color: '#064f88' }}>Rural Access Operations</h1>
-        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px]">
+            );
+          })() : null}
+        </div>
+        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px] text-left w-full">
           Search by facility, city, county, or enter a member address.
         </p>
 
