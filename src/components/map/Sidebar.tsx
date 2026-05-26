@@ -184,7 +184,7 @@ const SECTION_CONTENT_CLASSNAME = 'mt-0.5 space-y-px';
 // Audit History, Data Import, etc.). Uniform inset, thickness, color, and
 // vertical breathing room.
 const SectionDivider = () => (
-  <div className="my-2 mx-4 h-px bg-border" aria-hidden="true" />
+  <div className="mx-4 h-px bg-border my-0" aria-hidden="true" />
 );
 
 const renderLayerIcon = (Icon: LucideIcon, colorClassName: string, dimmed = false) => (
@@ -901,12 +901,12 @@ const Sidebar = ({
 
 
       {/* Filter Panel */}
-      <div className="px-4 pb-2">
+      <div className="px-[15px] py-0 pb-0">
         <div className="mb-1.5 flex items-center gap-2 pl-0">
           <button
             type="button"
             onClick={toggleFilters}
-            className="flex flex-1 items-center gap-1.5 text-left text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground"
+            className="flex-1 items-center text-left text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground flex flex-row gap-[5px] my-[11px]"
           >
             {filtersOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
             <span>Filters</span>
@@ -1048,7 +1048,7 @@ const Sidebar = ({
       </div>
 
       <SectionDivider />
-      <div className="px-4 pb-2">
+      <div className="px-[15px] py-0 pb-0">
         <div className="space-y-1.5">
               <div className="space-y-1">
                 <div data-tutorial="section-core-map">
