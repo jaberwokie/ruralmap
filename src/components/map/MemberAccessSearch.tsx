@@ -29,7 +29,7 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
 
   return (
     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-1 pointer-events-auto max-w-[calc(100%-1rem)]">
-      <div className="bg-card rounded-xl shadow-md p-2 flex flex-col items-center gap-1">
+      <div className="bg-primary/10 rounded-xl shadow-md p-2 flex flex-col items-center gap-1">
         <div className="flex items-center gap-1 rounded-lg border border-[hsl(var(--brand-health)/0.35)] bg-card/95 shadow-sm backdrop-blur-sm px-2 py-1.5 transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus-within:border-[hsl(var(--brand-health))] focus-within:ring-2 focus-within:ring-[hsl(var(--brand-health)/0.2)]">
           <input
             type="text"
