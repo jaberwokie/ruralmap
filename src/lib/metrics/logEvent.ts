@@ -43,12 +43,12 @@ export const logEvent = (
   // Fire-and-forget; never block UI.
   void supabase
     .from('user_events')
-    .insert({
+    .insert([{
       user_id: currentUserId,
       user_role: currentRole,
       event_type,
-      event_detail,
-    })
+      event_detail: event_detail as never,
+    }])
     .then(({ error }) => {
       if (error && import.meta.env.DEV) {
         // eslint-disable-next-line no-console
