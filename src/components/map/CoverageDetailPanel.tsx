@@ -66,6 +66,7 @@ import { UtilizationTogglesContext, useUtilizationToggles, UtilizationProviderCl
 import CountyUtilizationSection from '@/components/map/utilization/CountyUtilizationSection';
 import ProviderUtilizationReachSection from '@/components/map/utilization/ProviderUtilizationReachSection';
 import TribalUtilizationSection from '@/components/map/utilization/TribalUtilizationSection';
+import { logEvent } from '@/lib/metrics/logEvent';
 
 interface CoverageDetailPanelProps {
   entity: MapEntity | null;
@@ -1485,7 +1486,8 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
   const hasLocalResources = localServiceCount > 0;
 
   // All sections below Engagement Priority default to collapsed on open.
-  const { isOpen, toggle } = useAccordion([]);
+  const { isOpen, toggle: rawToggle } = useAccordion([]);
+  const toggle = (s: string) => { logEvent('detail_section_expanded', { section: s, county }); rawToggle(s); };
 
   // Precompute Service-Line Summary visibility / data
   const countyFacs = (allFacilities ?? []).filter(fac => fac.county === county);
@@ -2187,7 +2189,8 @@ const FacilityContent = ({
 }) => {
   const t = useUtilizationToggles();
   const isBillingProvider = facility.type === 'hospital' || facility.type === 'clinic';
-  const { isOpen, toggle } = useAccordion('provider');
+  const { isOpen, toggle: rawToggle } = useAccordion('provider');
+  const toggle = (s: string) => { logEvent('detail_section_expanded', { section: s, provider: facility.name, county: facility.county }); rawToggle(s); };
   const isHighUtilClinic = facility.tier === 'tier1';
   const classification = getFacilityClassification(facility);
   const dataConfidence = getFacilityDataConfidence(facility);
@@ -2406,7 +2409,8 @@ const FacilityContent = ({
 
 // ── Individual Rural Service ──
 const RuralServiceContent = ({ service }: { service: RuralService }) => {
-  const { isOpen, toggle } = useAccordion('provider');
+  const { isOpen, toggle: rawToggle } = useAccordion('provider');
+  const toggle = (s: string) => { logEvent('detail_section_expanded', { section: s, service: service.name, county: service.county }); rawToggle(s); };
   const isBH = isBehavioralHealthService(service);
   const fullAddress = service.address ? `${service.address}, ${service.city}, NV` : undefined;
   const hasContact = !!(service.phone || normalizeWebsite(service.website));
@@ -2490,7 +2494,8 @@ const RuralServiceContent = ({ service }: { service: RuralService }) => {
 const TribalNationContent = ({ tribe }: { tribe: TribalNation }) => {
   const t = useUtilizationToggles();
   const tribalCounty = tribe.counties[0] ?? '';
-  const { isOpen, toggle } = useAccordion('location');
+  const { isOpen, toggle: rawToggle } = useAccordion('location');
+  const toggle = (s: string) => { logEvent('detail_section_expanded', { section: s, tribe: tribe.name }); rawToggle(s); };
   const normalizedWeb = normalizeWebsite(tribe.website);
   const hasContact = !!(tribe.phone || normalizedWeb);
   const services = tribe.triballyOperatedServices;
