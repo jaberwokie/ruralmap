@@ -1445,10 +1445,6 @@ const UtilizationMetricsCard = ({ county }: { county: string }) => {
           <span className="font-bold text-foreground tabular-nums">{totalVisits.toLocaleString()}</span>
         </div>
         <div className="flex justify-between text-[11px]">
-          <span className="text-muted-foreground">Total Members</span>
-          <span className="font-bold text-foreground tabular-nums">{totalMembers.toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between text-[11px]">
           <span className="text-muted-foreground">Visits per Member</span>
           <span className="font-bold text-foreground tabular-nums">{vpm.toFixed(2)}</span>
         </div>
