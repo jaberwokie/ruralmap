@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { NotebookPen, PhoneCall, Plus, X } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
+import { logEvent } from '@/lib/metrics/logEvent';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -95,11 +96,13 @@ const CHWNotesSection = ({ providerId }: CHWNotesSectionProps) => {
       created_by: identity,
       source: 'chw',
     });
+    logEvent('chw_note_added', { provider: providerId, note_type: draftType });
     resetDraft();
   };
 
   const handleAttempt = () => {
     markAttemptedContact(providerId, identity, draftText.trim() || undefined);
+    logEvent('attempted_contact_marked', { provider: providerId });
     resetDraft();
   };
 

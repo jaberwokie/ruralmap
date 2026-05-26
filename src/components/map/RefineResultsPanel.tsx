@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { ChevronDown, ChevronRight, X } from 'lucide-react';
 import type { Filters } from '@/types/filters';
 import type { Facility } from '@/data/facilities';
+import { logEvent } from '@/lib/metrics/logEvent';
 
 interface RefineResultsPanelProps {
   filters: Filters;
@@ -63,7 +64,7 @@ const RefineResultsPanel = ({ filters, onFiltersChange, allFacilities }: RefineR
       <div className="flex items-center gap-2 px-2">
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((v) => { const next = !v; if (next) logEvent('detail_section_expanded', { section: 'Refine Results' }); return next; })}
           className="flex flex-1 items-center gap-1.5 py-1.5 text-left text-[11px] font-semibold tracking-tight text-foreground/70 transition-colors hover:text-foreground"
         >
           {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}

@@ -19,6 +19,7 @@ import { deriveRecency } from '@/utils/facilityRecency';
 import { findBackupOptions, type BackupOption } from '@/utils/backupOptions';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
+import { logEvent } from '@/lib/metrics/logEvent';
 
 const haversineMi = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 3958.8;
@@ -189,6 +190,7 @@ const BackupRow = ({ opt, highlightBH, onSelect }: { opt: BackupOption; highligh
       onClick={(e) => {
         e.preventDefault();
         e.stopPropagation();
+        logEvent('backup_option_clicked', { provider: opt.facility.name, county: opt.facility.county });
         onSelect();
       }}
       className="w-full text-left rounded border border-transparent hover:border-border hover:bg-secondary/60 px-1.5 py-1 transition-colors"
