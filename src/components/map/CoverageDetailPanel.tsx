@@ -2258,31 +2258,6 @@ const FacilityContent = ({
         </p>
       )}
 
-      {/* Decision-support: top-of-panel guidance (Phase 1) */}
-      <RecommendedNextStep facility={facility} memberLocation={memLoc} />
-      <AccessFrictionSummary facility={facility} memberLocation={memLoc} />
-      <LastTouchedSummary facility={facility} />
-
-      {/* Quick Action Strip — falls back to imported values when verified is missing */}
-      <ActionButtonRow
-        phone={effectivePhone}
-        address={facility.address}
-        lat={facility.lat}
-        lng={facility.lng}
-        city={facility.city}
-        website={effectiveWebsite}
-      />
-
-      <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
-
-      {/* Service-line badges */}
-      {(hasPsychiatricData(facility.psychiatric) || hasInpatientData(facility.inpatient)) && (
-        <div className="flex flex-wrap gap-1 mb-2">
-          <PsychiatryBadge fields={facility.psychiatric} />
-          <InpatientBadge fields={facility.inpatient} />
-        </div>
-      )}
-
       <DetailSection title="Provider Information" isOpen={isOpen('provider')} onToggle={() => toggle('provider')}>
         <div className="space-y-1.5">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -2318,6 +2293,14 @@ const FacilityContent = ({
         </div>
       </DetailSection>
 
+      {/* Service-line badges */}
+      {(hasPsychiatricData(facility.psychiatric) || hasInpatientData(facility.inpatient)) && (
+        <div className="flex flex-wrap gap-1 mb-2">
+          <PsychiatryBadge fields={facility.psychiatric} />
+          <InpatientBadge fields={facility.inpatient} />
+        </div>
+      )}
+
       {hasServices && (
         <DetailSection title="Services Offered" isOpen={isOpen('services')} onToggle={() => toggle('services')} count={1}>
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -2344,17 +2327,40 @@ const FacilityContent = ({
         </DetailSection>
       )}
 
-      {hasContact && (
-        <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
-          <ContactPhoneAction phone={facility.phone} variant="detail" />
-          {(() => { const href = normalizeWebsite(facility.website); return href ? (
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <ExternalLink className="w-3 h-3 flex-shrink-0" />
-              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(href)}</a>
+      <LastTouchedSummary facility={facility} />
+
+      <OperationalBadges meta={facility.operational} alwaysShowMedicaid entityId={facility.id} />
+
+      <ImportedMetadataSection providerId={facility.id} facility={facility} />
+
+      {util && (
+        <DetailSection title="Engagement Metrics" isOpen={isOpen('engagement')} onToggle={() => toggle('engagement')}>
+          <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Provider Rank</span>
+              <span className="font-bold text-purple-800">#{util.rank}</span>
             </div>
-          ) : null; })()}
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Total Members</span>
+              <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Total Visits</span>
+              <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-purple-700">Visits per Member</span>
+              <span className="font-bold text-purple-800 tabular-nums">{util.visitsPerMember}</span>
+            </div>
+          </div>
         </DetailSection>
       )}
+      {isBillingProvider && (
+        <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
+      )}
+
+      <RecommendedNextStep facility={facility} memberLocation={memLoc} />
+      <AccessFrictionSummary facility={facility} memberLocation={memLoc} />
 
       {hasAccess && (
         <DetailSection title="Access Details" isOpen={isOpen('access')} onToggle={() => toggle('access')}>
@@ -2383,32 +2389,28 @@ const FacilityContent = ({
         </DetailSection>
       )}
 
-      {util && (
-        <DetailSection title="Engagement Metrics" isOpen={isOpen('engagement')} onToggle={() => toggle('engagement')}>
-          <div className="rounded-md border border-purple-200 bg-purple-50/50 px-2 py-1.5 space-y-0.5">
-            <div className="flex justify-between text-[11px]">
-              <span className="text-purple-700">Provider Rank</span>
-              <span className="font-bold text-purple-800">#{util.rank}</span>
+      {/* Quick Action Strip — falls back to imported values when verified is missing */}
+      <ActionButtonRow
+        phone={effectivePhone}
+        address={facility.address}
+        lat={facility.lat}
+        lng={facility.lng}
+        city={facility.city}
+        website={effectiveWebsite}
+      />
+
+      {hasContact && (
+        <DetailSection title="Contact Information" isOpen={isOpen('contact')} onToggle={() => toggle('contact')}>
+          <ContactPhoneAction phone={facility.phone} variant="detail" />
+          {(() => { const href = normalizeWebsite(facility.website); return href ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ExternalLink className="w-3 h-3 flex-shrink-0" />
+              <a href={href} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline truncate" onClick={e => e.stopPropagation()}>{websiteDisplayLabel(href)}</a>
             </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-purple-700">Total Members</span>
-              <span className="font-bold text-purple-800 tabular-nums">{util.totalMembers.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-purple-700">Total Visits</span>
-              <span className="font-bold text-purple-800 tabular-nums">{util.totalVisits.toLocaleString()}</span>
-            </div>
-            <div className="flex justify-between text-[11px]">
-              <span className="text-purple-700">Visits per Member</span>
-              <span className="font-bold text-purple-800 tabular-nums">{util.visitsPerMember}</span>
-            </div>
-          </div>
+          ) : null; })()}
         </DetailSection>
       )}
-      {isBillingProvider && (
-        <ProviderUtilizationReachSection providerName={facility.name} enabled={t.providerUtilizationReach} />
-      )}
-      <ImportedMetadataSection providerId={facility.id} facility={facility} />
+
       <CHWNotesSection providerId={facility.id} />
       {allFacilities && onFacilitySelect && (
         <BackupOptions
