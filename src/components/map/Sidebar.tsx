@@ -899,65 +899,6 @@ const Sidebar = ({
         );
       })()}
 
-      {/*
-        Search bar — wired global navigator.
-        Logic lives in <SidebarSearchResults>. Data sources searched:
-          counties (nevadaCounties), facilities (allFacilities prop),
-          rural services (enrichedRuralServices), local transit providers,
-          tribal nations. Selecting a result reuses Index handlers
-          (onCountySelect / onFacilitySelect / onServiceSelect /
-          onTransitProviderClick / onTribalNationSelect + onFocusBounds).
-        Search query continues to drive map marker filtering through
-        useMapFilters → MapView (unchanged).
-      */}
-      <div className="px-4 pt-2.5 pb-2" data-tutorial="search-bar">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#064f88]" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => { onSearchChange(e.target.value); setSearchOpen(true); }}
-            onFocus={() => setSearchOpen(true)}
-            onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
-            data-search-input="sidebar"
-            placeholder="Search counties, services, BH, transit, tribal nations"
-            className="w-full h-8 md:h-9 pl-9 pr-3 text-sm bg-card border border-[#064f88]/35 rounded-sm text-foreground placeholder:text-[#064f88] transition-colors hover:border-[#064f88]/55 focus:outline-none focus:border-[#064f88] focus:ring-1 focus:ring-[#064f88]/25"
-          />
-          {searchOpen && searchQuery.trim().length >= 2 && (
-            <SidebarSearchResults
-              query={searchQuery}
-              counties={nevadaCounties}
-              facilities={allFacilities}
-              services={ruralServices}
-              transitProviders={localTransitProviders}
-              tribalNations={tribalNations}
-              onClose={() => setSearchOpen(false)}
-              onSelect={(r) => {
-                setSearchOpen(false);
-                if (r.kind === 'County') {
-                  onCountySelect?.(r.county.name);
-                } else if (r.kind === 'Facility') {
-                  onFacilitySelect?.(r.facility);
-                } else if (r.kind === 'Service') {
-                  onServiceSelect?.(r.service);
-                } else if (r.kind === 'Transit') {
-                  onTransitProviderClick?.(r.provider.id);
-                } else if (r.kind === 'TribalNation') {
-                  if (onTribalNationSelect) {
-                    onTribalNationSelect(r.tribe);
-                  } else if (onFocusBounds) {
-                    // Fallback: zoom near centroid (~0.5° box).
-                    const { lat, lng } = r.tribe;
-                    onFocusBounds([[lat - 0.5, lng - 0.5], [lat + 0.5, lng + 0.5]]);
-                  } else if (r.tribe.counties[0]) {
-                    onCountySelect?.(r.tribe.counties[0]);
-                  }
-                }
-              }}
-            />
-          )}
-        </div>
-      </div>
 
       {/* Filter Panel */}
       <div className="px-4 pb-2">
