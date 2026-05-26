@@ -46,6 +46,13 @@ const EmptyStateOverlay = ({
 
   if (providerVisible || otherPinsVisible || operationalOverlays) return null;
 
+  // Only surface the hint when the user has actively enabled a pin layer
+  // that yielded zero results. On initial load (all pin layers off), stay
+  // silent so the address bar remains the focal point.
+  const anyPinLayerEnabled =
+    layers.serviceLocations || layers.behavioralHealth || layers.services;
+  if (!anyPinLayerEnabled) return null;
+
   return (
     <div className="pointer-events-none absolute inset-0 z-[650] flex items-center justify-center">
       <div className="pointer-events-none mx-6 max-w-xs rounded-md border border-border bg-card/85 px-4 py-3 text-center shadow-sm backdrop-blur-sm">
