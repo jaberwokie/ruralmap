@@ -29,35 +29,37 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
 
   return (
     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-1 pointer-events-auto max-w-[calc(100%-1rem)]">
-      <div className="flex items-center gap-1 rounded-lg border border-[hsl(var(--brand-health)/0.35)] bg-card/95 shadow-md backdrop-blur-sm px-2 py-1.5 transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus-within:border-[hsl(var(--brand-health))] focus-within:ring-2 focus-within:ring-[hsl(var(--brand-health)/0.2)]">
-        <input
-          type="text"
-          value={value}
-          onChange={e => setValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Enter member address"
-          className="bg-transparent text-sm text-foreground placeholder:text-[hsl(var(--brand-health)/0.6)] outline-none w-52 md:w-64"
-          disabled={isGeocoding}
-        />
-        <button
-          onClick={handleSearch}
-          disabled={isGeocoding || !value.trim()}
-          className="inline-flex items-center justify-center h-7 w-7 rounded-md text-[hsl(var(--brand-health))] hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-40"
-          aria-label="Search address"
-        >
-          {isGeocoding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-        </button>
-        {(hasPin || value) && (
+      <div className="bg-card rounded-xl shadow-md p-2 flex flex-col items-center gap-1">
+        <div className="flex items-center gap-1 rounded-lg border border-[hsl(var(--brand-health)/0.35)] bg-card/95 shadow-sm backdrop-blur-sm px-2 py-1.5 transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus-within:border-[hsl(var(--brand-health))] focus-within:ring-2 focus-within:ring-[hsl(var(--brand-health)/0.2)]">
+          <input
+            type="text"
+            value={value}
+            onChange={e => setValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Enter member address"
+            className="bg-transparent text-sm text-foreground placeholder:text-[hsl(var(--brand-health)/0.6)] outline-none w-52 md:w-64"
+            disabled={isGeocoding}
+          />
           <button
-            onClick={handleClear}
-            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-            aria-label="Clear member location"
+            onClick={handleSearch}
+            disabled={isGeocoding || !value.trim()}
+            className="inline-flex items-center justify-center h-7 w-7 rounded-md text-[hsl(var(--brand-health))] hover:bg-secondary hover:text-foreground transition-colors disabled:opacity-40"
+            aria-label="Search address"
           >
-            <X className="h-3.5 w-3.5" />
+            {isGeocoding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
           </button>
-        )}
+          {(hasPin || value) && (
+            <button
+              onClick={handleClear}
+              className="inline-flex items-center justify-center h-7 w-7 rounded-md text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+              aria-label="Clear member location"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground select-none text-center w-full">Sign in to get started, then enter a member address to find nearby providers and services.</p>
       </div>
-      <p className="text-xs text-muted-foreground select-none">Sign in to get started, then enter a member address to find nearby providers and services.</p>
       {hasPin && !error && (
         <p className="text-[9px] text-muted-foreground/60 select-none">Clear search to exit member mode</p>
       )}
