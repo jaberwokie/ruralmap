@@ -215,7 +215,7 @@ export default function AdminMetrics() {
         </Card>
 
         <RankTable title="Top 10 counties selected" rows={agg.topCounties} label="County" />
-        <RankTable title="Top 10 addresses searched" rows={agg.topAddresses} label="Address" />
+        <RankTable title="Top 10 counties searched (member lookups)" rows={agg.topAddresses} label="County" />
         <RankTable title="Most viewed providers" rows={agg.topProviders} label="Provider" />
         <RankTable title="Top directory searches" rows={agg.topSearches} label="Query" />
         <RankTable title="Most expanded detail sections" rows={agg.topSections} label="Section" />
