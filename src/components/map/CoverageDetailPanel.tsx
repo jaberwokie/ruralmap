@@ -28,6 +28,7 @@ import type { ServiceOperationalMeta } from '@/types/medicaid';
 import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
+import { usePermissions } from '@/contexts/AuthContext';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
 import RefineResultsPanel from '@/components/map/RefineResultsPanel';
 import type { Filters } from '@/types/filters';
