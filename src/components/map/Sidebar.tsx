@@ -728,7 +728,7 @@ const Sidebar = ({
           className="block w-full max-w-[180px] h-auto object-contain"
           decoding="async"
         />
-        <div className="flex w-full items-center justify-between mt-2">
+        <div className="flex w-full items-center justify-between gap-2 mt-2">
           <h1 className="text-base font-semibold tracking-tight leading-tight text-left" style={{ color: '#064f88' }}>Rural Access Operations</h1>
           {authReady && isAuthenticated ? (() => {
             const email = user?.email ?? '';
@@ -772,9 +772,7 @@ const Sidebar = ({
             );
           })() : null}
         </div>
-        <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground max-w-[280px] text-left w-full">
-          Search by facility, city, county, or enter a member address.
-        </p>
+
 
 
         {/* Action buttons row: Staff sign in + Map Explainer */}
