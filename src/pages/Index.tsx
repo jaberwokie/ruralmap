@@ -43,6 +43,8 @@ import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ChevronLeft, Search, SlidersHorizontal, Layers, Activity, Map as MapIcon } from 'lucide-react';
+import { usePermissions } from '@/contexts/AuthContext';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const THUMBNAIL_PLACEHOLDER_DURATION_MS = 1600;
 
