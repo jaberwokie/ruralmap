@@ -230,8 +230,8 @@ const Index = () => {
     // Member pin persists across map/sidebar/filter clicks. It is only cleared
     // by the search bar's explicit clear ("X") or by entering a new address.
   }, [selection.actions]);
-  const onCounty = useCallback((c: string) => { selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
-  const onFacility = useCallback((f: Facility) => { selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
+  const onCounty = useCallback((c: string) => { logEvent('county_selected', { county: c }); selection.actions.selectCounty(c); setMobileSidebarOpen(false); }, [selection.actions]);
+  const onFacility = useCallback((f: Facility) => { logEvent('provider_viewed', { name: f.name, county: f.county, id: f.id }); selection.actions.selectEntity({ type: 'facility', facility: f }); setMobileSidebarOpen(false); }, [selection.actions]);
   /**
    * Open a rural service detail panel from list-driven contexts (e.g. County
    * Details → Local Resource Network, Member Access list). Uses
