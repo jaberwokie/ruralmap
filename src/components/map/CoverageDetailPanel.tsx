@@ -29,6 +29,8 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
+import RefineResultsPanel from '@/components/map/RefineResultsPanel';
+import type { Filters } from '@/types/filters';
 import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
 import CHWNotesSection from '@/components/map/CHWNotesSection';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
@@ -91,6 +93,9 @@ interface CoverageDetailPanelProps {
    * appear in the county detail panel.
    */
   liveServices?: RuralService[];
+  /** Filter state + setter for the in-panel "Refine Results" controls. */
+  filters?: Filters;
+  onFiltersChange?: (filters: Filters) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
