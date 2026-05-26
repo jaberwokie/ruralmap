@@ -96,6 +96,74 @@ const Index = () => {
     }));
   }, []);
 
+  /**
+   * Role-based county-click pin surfacing.
+   *
+   * Staff: clicking a county auto-enables the three Core pin layers
+   * (Provider Access Infrastructure, BH Capacity Network, Community Service
+   * Access Network) scoped to that county. Pre-click layer state is restored
+   * when the county is deselected.
+   *
+   * Viewer: no pins surfaced (Clean-only).
+   * Admin: respects the currently active pill mode — no override.
+   */
+  const preCountyLayerSnapshotRef = useRef<null | {
+    serviceLocations: boolean;
+    behavioralHealth: boolean;
+    services: boolean;
+  }>(null);
+  const activeCountyForPinsRef = useRef<string | null>(null);
+  useEffect(() => {
+    const currentCounty = selection.selectedCounty;
+    const previousCounty = activeCountyForPinsRef.current;
+
+    if (currentCounty && currentCounty !== previousCounty) {
+      // County newly selected (or changed). Only staff gets auto-surfacing.
+      if (isStaff) {
+        if (!preCountyLayerSnapshotRef.current) {
+          // First county click in this run — take a snapshot of pre-click state.
+          // Read via functional setState to avoid stale closure on layers.layers.
+          layers.actions.setLayers((prev) => {
+            preCountyLayerSnapshotRef.current = {
+              serviceLocations: prev.serviceLocations,
+              behavioralHealth: prev.behavioralHealth,
+              services: prev.services,
+            };
+            return {
+              ...prev,
+              serviceLocations: true,
+              behavioralHealth: true,
+              services: true,
+            };
+          });
+        } else {
+          // County changed while another was selected — keep Core pins on.
+          layers.actions.setLayers((prev) => ({
+            ...prev,
+            serviceLocations: true,
+            behavioralHealth: true,
+            services: true,
+          }));
+        }
+      }
+      activeCountyForPinsRef.current = currentCounty;
+    } else if (!currentCounty && previousCounty) {
+      // County deselected — restore pre-click layer state if we captured one.
+      const snap = preCountyLayerSnapshotRef.current;
+      if (snap) {
+        layers.actions.setLayers((prev) => ({
+          ...prev,
+          serviceLocations: snap.serviceLocations,
+          behavioralHealth: snap.behavioralHealth,
+          services: snap.services,
+        }));
+        preCountyLayerSnapshotRef.current = null;
+      }
+      activeCountyForPinsRef.current = null;
+    }
+  }, [selection.selectedCounty, isStaff, layers.actions]);
+
+
   // Dev-only invariant + transition logging for Staffing Capacity & Load.
   // Stripped from production builds via import.meta.env.DEV check inside.
   useStaffingValidation({
