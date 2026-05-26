@@ -549,6 +549,8 @@ const Index = () => {
           onFacilitySelect={onFacility}
           onServiceSelect={onService}
           liveServices={mergedRuralServices}
+          filters={filters.filters}
+          onFiltersChange={filters.actions.setFilters}
         />
         {/* Decision Assist — desktop-only guided intake drawer. Additive.
             Rollback: delete src/components/map/decision-assist/ and remove

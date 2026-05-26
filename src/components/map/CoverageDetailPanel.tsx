@@ -29,6 +29,8 @@ import { compareEntitiesByOperationalPriority } from '@/utils/entitySortOrder';
 import { ROUTING_TIER_COLORS, VERIFICATION_SIGNAL_COLORS } from '@/utils/statusColors';
 import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 import MemberAccessPanelLazy from '@/components/map/MemberAccessPanel';
+import RefineResultsPanel from '@/components/map/RefineResultsPanel';
+import type { Filters } from '@/types/filters';
 import ImportedMetadataSection from '@/components/map/ImportedMetadataSection';
 import CHWNotesSection from '@/components/map/CHWNotesSection';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
@@ -91,6 +93,9 @@ interface CoverageDetailPanelProps {
    * appear in the county detail panel.
    */
   liveServices?: RuralService[];
+  /** Filter state + setter for the in-panel "Refine Results" controls. */
+  filters?: Filters;
+  onFiltersChange?: (filters: Filters) => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -343,7 +348,7 @@ const FieldResponseStrainSection = ({
 
 // MemberDistanceBadge extracted to ./MemberDistanceBadge.
 
-const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, previousEntity, allFacilities, onFacilitySelect, onServiceSelect, liveServices }: CoverageDetailPanelProps) => {
+const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLocation, utilizationToggles, onProviderClick, onBack, canGoBack, previousEntity, allFacilities, onFacilitySelect, onServiceSelect, liveServices, filters, onFiltersChange }: CoverageDetailPanelProps) => {
   const display = entity;
   const isLocked = !!entity;
   const countyServiceCount = useMemo(() => buildCountyServiceCount(liveServices), [liveServices]);
@@ -432,6 +437,13 @@ const CoverageDetailPanel = ({ entity, onClear, coverageRadiusKm = 120, memberLo
 
           {/* Body */}
           <div className="overflow-y-auto flex-1 px-3 pb-3">
+            {filters && onFiltersChange && allFacilities && (display.type === 'county' || display.type === 'memberAccess' || display.type === 'memberVolume') && (
+              <RefineResultsPanel
+                filters={filters}
+                onFiltersChange={onFiltersChange}
+                allFacilities={allFacilities}
+              />
+            )}
             {memberLocation && display.type === 'facility' && (
               <MemberDistanceBadge memberLocation={memberLocation} targetLat={display.facility.lat} targetLng={display.facility.lng} />
             )}
