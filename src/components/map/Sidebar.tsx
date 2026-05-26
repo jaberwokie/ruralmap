@@ -907,7 +907,7 @@ const Sidebar = ({
       */}
       <div className="px-4 pt-2.5 pb-2" data-tutorial="search-bar">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--brand-health))]" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#064f88]" />
           <input
             type="text"
             value={searchQuery}
@@ -916,7 +916,7 @@ const Sidebar = ({
             onBlur={() => window.setTimeout(() => setSearchOpen(false), 120)}
             data-search-input="sidebar"
             placeholder="Search counties, services, BH, transit, tribal nations"
-            className="w-full h-8 md:h-9 pl-9 pr-3 text-sm bg-card border border-[hsl(var(--brand-health)/0.35)] rounded-sm text-foreground placeholder:text-muted-foreground transition-colors hover:border-[hsl(var(--brand-health)/0.55)] focus:outline-none focus:border-[hsl(var(--brand-health))] focus:ring-1 focus:ring-[hsl(var(--brand-health)/0.25)]"
+            className="w-full h-8 md:h-9 pl-9 pr-3 text-sm bg-card border border-[#064f88]/35 rounded-sm text-foreground placeholder:text-[#064f88]/60 transition-colors hover:border-[#064f88]/55 focus:outline-none focus:border-[#064f88] focus:ring-1 focus:ring-[#064f88]/25"
           />
           {searchOpen && searchQuery.trim().length >= 2 && (
             <SidebarSearchResults
