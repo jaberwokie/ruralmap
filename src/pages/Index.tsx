@@ -286,6 +286,42 @@ const Index = () => {
         </div>
         {desktopSidebarCollapsed && !isMobileLayout ? (
           <div className="hidden md:flex flex-col items-center gap-1 w-full h-full bg-card border-r border-[hsl(var(--brand-health)/0.3)] py-3">
+            {authReady && isAuthenticated ? (() => {
+              const email = user?.email ?? '';
+              const initials = (email
+                .split('@')[0]
+                .split(/[._-]+/)
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(s => s[0]?.toUpperCase() ?? '')
+                .join('')) || email.slice(0, 2).toUpperCase() || 'U';
+              return (
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-[11px] font-semibold text-primary border border-primary/30 hover:bg-primary/20 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[hsl(var(--brand-health)/0.4)] mb-1"
+                    aria-label="Account menu"
+                    title={email || 'Account'}
+                  >
+                    {initials}
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuLabel className="flex flex-col gap-0.5">
+                      <span className="text-xs font-semibold text-foreground">{isAdmin ? 'Admin' : 'Staff'}</span>
+                      {email ? <span className="text-[10px] font-normal text-muted-foreground truncate">{email}</span> : null}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {isAdmin ? (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/mapping">Manage Operational Data</Link>
+                      </DropdownMenuItem>
+                    ) : null}
+                    <DropdownMenuItem onSelect={() => { void signOut(); }}>
+                      Sign Out
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              );
+            })() : null}
             {[
               { Icon: Search, label: 'Search' },
               { Icon: SlidersHorizontal, label: 'Filters' },
