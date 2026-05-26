@@ -6,6 +6,7 @@ import { Search, ChevronDown, ChevronRight, X, Brain, Headphones, HelpCircle, Ma
 import { HELP_TOOLTIPS } from '@/data/help-tooltips';
 import { Facility, FacilityType, getFacilityClassification, getFacilityDataConfidence } from '@/data/facilities';
 import { exportCsv } from '@/utils/csvExport';
+import { logEvent } from '@/lib/metrics/logEvent';
 // CSV import + verification panels relocated to Admin > Mapping.
 
 
@@ -880,7 +881,7 @@ const Sidebar = ({
                   <button
                     key={m.key}
                     type="button"
-                    onClick={m.onClick}
+                    onClick={() => { logEvent('pill_mode_changed', { mode: m.key }); m.onClick(); }}
                     className={`flex-1 px-3 py-1 text-[11px] font-medium rounded transition-colors ${
                       m.active
                         ? (m.key === 'full'
