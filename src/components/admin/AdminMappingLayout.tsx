@@ -10,9 +10,15 @@
 
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 export interface MappingNavItem {
@@ -20,6 +26,12 @@ export interface MappingNavItem {
   label: string;
 }
 
+interface MappingNavGroup {
+  label: string;
+  items: MappingNavItem[];
+}
+
+// Flat list kept for any external consumers / route references.
 export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping', label: 'Overview' },
   { to: '/admin/mapping/providers', label: 'Provider Mapping' },
@@ -35,6 +47,49 @@ export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping/rural-services', label: 'Rural Services (Live)' },
   { to: '/admin/metrics', label: 'Metrics' },
 ];
+
+const OVERVIEW_ITEM: MappingNavItem = { to: '/admin/mapping', label: 'Overview' };
+
+const MAPPING_NAV_GROUPS: MappingNavGroup[] = [
+  {
+    label: 'Ingestion',
+    items: [
+      { to: '/admin/mapping/providers', label: 'Provider Mapping' },
+      { to: '/admin/mapping/provider-metadata', label: 'Provider Metadata' },
+      { to: '/admin/mapping/services', label: 'Service Mapping' },
+      { to: '/admin/mapping/behavioral-health', label: 'Behavioral Health' },
+    ],
+  },
+  {
+    label: 'Staging',
+    items: [
+      { to: '/admin/mapping/facilities-staging', label: 'Facility Staging' },
+      { to: '/admin/mapping/rural-services-staging', label: 'Rural Services Staging' },
+    ],
+  },
+  {
+    label: 'Review',
+    items: [
+      { to: '/admin/mapping/verification-queue', label: 'Verification Queue' },
+      { to: '/admin/mapping/audit-history', label: 'Verification Outreach Log' },
+      { to: '/admin/mapping/pipeline-audit', label: 'Data Pipeline Log' },
+    ],
+  },
+  {
+    label: 'Live Data',
+    items: [
+      { to: '/admin/mapping/facilities', label: 'Facilities (Live)' },
+      { to: '/admin/mapping/rural-services', label: 'Rural Services (Live)' },
+      { to: '/admin/metrics', label: 'Metrics' },
+    ],
+  },
+];
+
+function isItemActive(pathname: string, to: string): boolean {
+  if (to === '/admin/mapping') return pathname === '/admin/mapping';
+  return pathname === to || pathname.startsWith(to + '/');
+}
+
 
 interface AdminMappingLayoutProps {
   title: string;
@@ -75,29 +130,67 @@ export default function AdminMappingLayout({ title, description, children }: Adm
             </Button>
           </div>
 
-          {/* Subnav — horizontal scroll on small screens */}
-          <nav className="mt-3 -mx-1 flex gap-1 overflow-x-auto pb-1">
-            {MAPPING_NAV.map((item) => {
-              const active =
-                item.to === '/admin/mapping'
-                  ? location.pathname === '/admin/mapping'
-                  : location.pathname.startsWith(item.to);
+          {/* Subnav — Overview + grouped dropdowns */}
+          <nav className="mt-3 -mx-1 flex flex-wrap gap-1 pb-1">
+            {(() => {
+              const overviewActive = isItemActive(location.pathname, OVERVIEW_ITEM.to);
               return (
                 <Link
-                  key={item.to}
-                  to={item.to}
+                  key={OVERVIEW_ITEM.to}
+                  to={OVERVIEW_ITEM.to}
                   className={cn(
                     'whitespace-nowrap rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                    active
+                    overviewActive
                       ? 'border-[hsl(var(--brand-health))] bg-[hsl(var(--brand-health)/0.08)] text-[hsl(var(--brand-health))]'
                       : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60',
                   )}
                 >
-                  {item.label}
+                  {OVERVIEW_ITEM.label}
                 </Link>
+              );
+            })()}
+
+            {MAPPING_NAV_GROUPS.map((group) => {
+              const groupActive = group.items.some((it) => isItemActive(location.pathname, it.to));
+              return (
+                <DropdownMenu key={group.label}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      type="button"
+                      className={cn(
+                        'inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-2.5 py-1 text-xs font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                        groupActive
+                          ? 'border-[hsl(var(--brand-health))] bg-[hsl(var(--brand-health)/0.08)] text-[hsl(var(--brand-health))]'
+                          : 'border-transparent text-muted-foreground hover:text-foreground hover:bg-muted/60',
+                      )}
+                    >
+                      {group.label}
+                      <ChevronDown className="h-3 w-3" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="min-w-[200px]">
+                    {group.items.map((item) => {
+                      const active = isItemActive(location.pathname, item.to);
+                      return (
+                        <DropdownMenuItem key={item.to} asChild>
+                          <Link
+                            to={item.to}
+                            className={cn(
+                              'w-full cursor-pointer text-xs',
+                              active && 'bg-[hsl(var(--brand-health)/0.08)] text-[hsl(var(--brand-health))] font-medium',
+                            )}
+                          >
+                            {item.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               );
             })}
           </nav>
+
         </div>
       </div>
 
