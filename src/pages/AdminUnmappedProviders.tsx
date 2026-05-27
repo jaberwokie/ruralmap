@@ -115,7 +115,7 @@ export default function AdminUnmappedProviders() {
     );
   };
 
-  if (perms.ready && !perms.isAdmin) {
+  if (perms.ready && !perms.isAdmin && !perms.isOps) {
     return <Navigate to="/" replace />;
   }
 
