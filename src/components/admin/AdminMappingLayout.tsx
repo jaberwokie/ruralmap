@@ -46,9 +46,9 @@ export default function AdminMappingLayout({ title, description, children }: Adm
   const perms = usePermissions();
   const location = useLocation();
 
-  // Ops gets the same read access as Staff here. All write/approve/promote/edit/delete
-  // controls inside individual mapping pages remain gated by `perms.isAdmin`.
-  if (perms.ready && !perms.isAdmin && !perms.isStaff && !perms.isOps) {
+  // Backend/admin-area access: Admin + Ops only. Staff has no admin/backend
+  // visibility. Inner mapping-page write controls remain `perms.isAdmin`-gated.
+  if (perms.ready && !perms.canAccessOps) {
     return <Navigate to="/" replace />;
   }
 

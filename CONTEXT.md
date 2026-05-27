@@ -233,18 +233,17 @@ When `?public=1` or equivalent logic is active:
 Role hierarchy (highest → lowest): **Admin → Ops → Staff → Viewer**.
 
 - **Admin**: full system access — user management, role assignment, ingestion approval, pipeline promotion, verified record edits, mapping configuration, data import, destructive actions, credentials/security settings.
-- **Ops**: full authenticated map access (same as any signed-in internal user) plus limited read-only backend/admin-area operational visibility. Ops CAN view the Mapping workspace, Geocode Review, Unmapped Top Utilized Providers, and the dedicated `/admin/ops-access` page. Ops CANNOT add/remove users, change roles, approve ingestions, promote staged records, edit/delete verified records, modify mapping configuration, change system settings, perform destructive actions, or access credential/security settings. All write controls remain gated by `perms.canImportData` / `perms.canApplyVerification` / `perms.canEditMapData` (Admin-only).
-- **Staff**: existing authenticated staff access unchanged.
+- **Ops**: full authenticated map access (same as any signed-in internal user) plus read-only backend/admin-area operational visibility. Ops CAN view the Admin home, Mapping workspace, Geocode Review, Unmapped Top Utilized Providers, and the dedicated `/admin/ops-access` page. Ops CANNOT add/remove users, change roles, approve ingestions, promote staged records, edit/delete verified records, modify mapping configuration, access metrics/training, change system settings, perform destructive actions, or access credential/security settings. All write controls remain gated by `perms.canImportData` / `perms.canApplyVerification` / `perms.canEditMapData` (Admin-only).
+- **Staff**: full authenticated map access at `/` only. No backend/admin routing, no mapping admin visibility, no ingestion or geocode review, no unmapped provider report, no operational data capture.
 - **Viewer**: standard limited access.
 - **Public-safe mode**: collapses effective role to `viewer`; no internal backend or admin access.
 
 Route guards:
 
-- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/promote/edit/delete actions.
-- `perms.canAccessOps` (Admin OR Ops) — `/admin/ops-access`.
-- `perms.isAdmin || perms.isStaff || perms.isOps` — `/admin/mapping/*` (read view) and `/admin/geocode-review` (read view); writes inside still require `isAdmin`.
-- `perms.isAdmin || perms.isOps` — `/admin/unmapped-providers` (operational awareness; export retained).
-- Public-safe mode is blocked from every admin route via the same `isAdmin`/`canAccessOps`/`isStaff`/`isOps` checks, because public-safe collapses the effective role to `viewer`.
+- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/approve/promote/edit/delete/configuration actions.
+- `perms.canAccessOps` (Admin OR Ops) — `/admin` home, `/admin/ops-access`, `/admin/mapping/*` (read view), `/admin/geocode-review` (read view), `/admin/unmapped-providers` (read + CSV export). Writes inside still require `isAdmin`.
+- Staff is excluded from every `/admin/*` route. Staff continues to have full authenticated map access at `/`.
+- Public-safe mode collapses the effective role to `viewer`, so it fails every admin guard.
 - `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
 - DB enum `public.app_role` includes `viewer | staff | ops | admin`; `admin_set_user_role` accepts all four.
 
