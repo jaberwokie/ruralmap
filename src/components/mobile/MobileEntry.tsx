@@ -144,8 +144,9 @@ const MobileEntry = ({
         )}
       </header>
 
-      {/* Input column */}
-      <section className="px-4 pt-3 pb-2 space-y-3">
+      {/* Input column — sits on the same chrome band as the header to mirror
+          the desktop sidebar surface (bg-card with a single closing border). */}
+      <section className="px-4 pt-3 pb-3 space-y-3 bg-card border-b border-border">
         <div>
           <label htmlFor="member-address" className="block text-[12px] font-medium text-foreground mb-1.5">
             Enter member address to begin
