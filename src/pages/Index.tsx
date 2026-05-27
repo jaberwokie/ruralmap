@@ -44,6 +44,7 @@ import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsTablet } from '@/hooks/use-tablet';
 import { ChevronLeft, Search, SlidersHorizontal, Layers, Activity, Map as MapIcon } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { logEvent } from '@/lib/metrics/logEvent';
@@ -76,6 +77,8 @@ const Index = () => {
   // jumping when layout flow shifts.
   const [decisionAssistOpen, setDecisionAssistOpen] = useState(false);
   const isMobileLayout = useIsMobile();
+  const isTabletLayout = useIsTablet();
+  const sidebarExpandedWidth = isTabletLayout ? 280 : 320;
   const { ready: authReady, isAuthenticated, user, isAdmin, isStaff, signOut } = usePermissions();
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
@@ -439,7 +442,7 @@ const Index = () => {
         style={
           isMobileLayout
             ? { transition: 'width 250ms ease' }
-            : { width: desktopSidebarCollapsed ? '56px' : '320px', transition: 'width 250ms ease' }
+            : { width: desktopSidebarCollapsed ? '56px' : `${sidebarExpandedWidth}px`, transition: 'width 250ms ease' }
         }
       >
         <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
@@ -504,7 +507,7 @@ const Index = () => {
           </div>
         ) : null}
         <div
-          className={desktopSidebarCollapsed && !isMobileLayout ? 'hidden' : 'flex flex-col flex-1 min-h-0 w-full'}
+          className={`${desktopSidebarCollapsed && !isMobileLayout ? 'hidden' : 'flex flex-col flex-1 min-h-0 w-full overflow-y-auto'}${isTabletLayout ? ' text-[13px] [&_*]:tracking-tight' : ''}`}
           aria-hidden={desktopSidebarCollapsed && !isMobileLayout}
         >
           <Sidebar
@@ -540,7 +543,7 @@ const Index = () => {
         aria-expanded={!desktopSidebarCollapsed}
         className="hidden md:flex absolute top-1/2 items-center justify-center h-6 w-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground shadow-sm"
         style={{
-          left: `${(desktopSidebarCollapsed ? 56 : 320) - 12}px`,
+          left: `${(desktopSidebarCollapsed ? 56 : sidebarExpandedWidth) - 12}px`,
           transform: 'translateY(-50%)',
           zIndex: 1000,
           transition: 'left 250ms ease',
@@ -552,7 +555,7 @@ const Index = () => {
         />
       </button>
 
-      <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 min-h-0 relative md:h-full`}>
+      <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 min-w-0 min-h-0 relative md:h-full`}>
         <MapView
           facilities={facility.filteredFacilities}
           allFacilities={facility.facilities}

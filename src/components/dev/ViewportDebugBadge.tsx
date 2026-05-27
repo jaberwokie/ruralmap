@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsTablet } from '@/hooks/use-tablet';
 
 const PRODUCTION_HOSTS = new Set([
   'ruralmap.lovable.app',
@@ -38,6 +39,7 @@ interface Props {
 const ViewportDebugBadge = ({ mobileEntryMounted }: Props) => {
   const enabled = isPreviewEnvironment();
   const isMobile = useIsMobile();
+  const isTablet = useIsTablet();
   const [size, setSize] = useState(() =>
     typeof window === 'undefined'
       ? { w: 0, h: 0 }
@@ -55,7 +57,7 @@ const ViewportDebugBadge = ({ mobileEntryMounted }: Props) => {
   if (!enabled) return null;
 
   const mode =
-    size.w < 768 ? 'mobile' : size.w < 1280 ? 'tablet/laptop' : 'desktop';
+    size.w < 768 ? 'mobile' : size.w < 1024 ? 'tablet' : 'laptop/desktop';
 
   return (
     <div
@@ -77,6 +79,7 @@ const ViewportDebugBadge = ({ mobileEntryMounted }: Props) => {
     >
       <div>{size.w}×{size.h} · {mode}</div>
       <div>useIsMobile: {String(isMobile)}</div>
+      <div>useIsTablet: {String(isTablet)}</div>
       <div>MobileEntry: {mobileEntryMounted ? 'yes' : 'no'}</div>
     </div>
   );
