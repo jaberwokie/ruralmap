@@ -71,7 +71,7 @@ export default function AdminUsers() {
   const [sortKey, setSortKey] = useState<SortKey>('email');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'viewer' | 'staff' | 'admin'>('viewer');
+  const [inviteRole, setInviteRole] = useState<AppRole>('viewer');
   const [inviting, setInviting] = useState(false);
 
   const handleInvite = async () => {
