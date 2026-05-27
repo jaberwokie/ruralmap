@@ -36,7 +36,9 @@ const ToolCard = ({ to, title, description, icon }: ToolCardProps) => (
 export default function AdminHome() {
   const perms = usePermissions();
 
-  if (perms.ready && !perms.isAdmin && !perms.isStaff) {
+  // Admin and Ops can view this directory. Staff retains existing access
+  // (legacy admin-tool entry point). Viewer / public-safe redirected.
+  if (perms.ready && !perms.isAdmin && !perms.isOps && !perms.isStaff) {
     return <Navigate to="/" replace />;
   }
 
