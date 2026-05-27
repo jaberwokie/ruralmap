@@ -64,6 +64,7 @@ const MAPPING_NAV_GROUPS: MappingNavGroup[] = [
     label: 'Staging',
     items: [
       { to: '/admin/mapping/facilities-staging', label: 'Facility Staging' },
+      { to: '/admin/mapping/behavioral-health', label: 'Behavioral Health Staging' },
       { to: '/admin/mapping/rural-services-staging', label: 'Rural Services Staging' },
     ],
   },
