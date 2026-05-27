@@ -507,7 +507,7 @@ const Index = () => {
           </div>
         ) : null}
         <div
-          className={desktopSidebarCollapsed && !isMobileLayout ? 'hidden' : 'flex flex-col flex-1 min-h-0 w-full'}
+          className={`${desktopSidebarCollapsed && !isMobileLayout ? 'hidden' : 'flex flex-col flex-1 min-h-0 w-full overflow-y-auto'}${isTabletLayout ? ' text-[13px] [&_*]:tracking-tight' : ''}`}
           aria-hidden={desktopSidebarCollapsed && !isMobileLayout}
         >
           <Sidebar
