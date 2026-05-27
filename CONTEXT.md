@@ -234,7 +234,7 @@ Role hierarchy (highest → lowest): **Admin → Ops → Staff → Viewer**.
 
 - **Admin**: full system access — user management, role assignment, ingestion approval, pipeline promotion, verified record edits, mapping configuration, data import, destructive actions, credentials/security settings.
 - **Ops**: full authenticated map access (same as any signed-in internal user) plus read-only backend/admin-area operational visibility. Ops CAN view the Admin home, Mapping workspace, Geocode Review, Unmapped Top Utilized Providers, and the dedicated `/admin/ops-access` page. Ops CANNOT add/remove users, change roles, approve ingestions, promote staged records, edit/delete verified records, modify mapping configuration, access metrics/training, change system settings, perform destructive actions, or access credential/security settings. All write controls remain gated by `perms.canImportData` / `perms.canApplyVerification` / `perms.canEditMapData` (Admin-only).
-- **Staff**: existing authenticated staff access unchanged.
+- **Staff**: full authenticated map access at `/` only. No backend/admin routing, no mapping admin visibility, no ingestion or geocode review, no unmapped provider report, no operational data capture.
 - **Viewer**: standard limited access.
 - **Public-safe mode**: collapses effective role to `viewer`; no internal backend or admin access.
 
