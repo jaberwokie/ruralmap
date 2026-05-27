@@ -39,6 +39,7 @@ const AdminMappingFacilities = lazy(() => import("./pages/AdminMappingFacilities
 const AdminMappingRuralServices = lazy(() => import("./pages/AdminMappingRuralServices"));
 const AdminMappingFacilitiesStaging = lazy(() => import("./pages/AdminMappingFacilitiesStaging"));
 const AdminMappingRuralServicesStaging = lazy(() => import("./pages/AdminMappingRuralServicesStaging"));
+const AdminMappingBehavioralHealthLive = lazy(() => import("./pages/AdminMappingBehavioralHealthLive.tsx"));
 const AdminTraining = lazy(() => import("./pages/AdminTraining.tsx"));
 const AdminGeocodeReview = lazy(() => import("./pages/AdminGeocodeReview.tsx"));
 const AdminMetrics = lazy(() => import("./pages/AdminMetrics.tsx"));
