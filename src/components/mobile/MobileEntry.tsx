@@ -130,7 +130,7 @@ const MobileEntry = ({
   return (
     <div className="flex flex-col w-full min-h-screen bg-background safe-area-top">
       {/* Minimal header */}
-      <header className="px-4 pt-4 pb-3 border-b border-border bg-card">
+      <header className="px-4 pt-2 pb-2 border-b border-border bg-card">
         <h1 className="text-base font-semibold text-foreground tracking-tight leading-snug">
           Nevada Rural Access Operations
         </h1>
@@ -138,14 +138,14 @@ const MobileEntry = ({
           Nevada Behavioral Health
         </p>
         {isPublicSafeModeActive() && (
-          <span className="mt-1.5 inline-block rounded-sm border border-border/40 bg-background/60 px-1.5 py-px text-[9px] text-muted-foreground/80">
+          <span className="mt-1 inline-block rounded-sm border border-border/40 bg-background/60 px-1.5 py-px text-[9px] text-muted-foreground/80">
             Publication-safe operational view
           </span>
         )}
       </header>
 
       {/* Input column */}
-      <section className="px-4 pt-4 pb-2 space-y-3">
+      <section className="px-4 pt-3 pb-2 space-y-3">
         <div>
           <label htmlFor="member-address" className="block text-[12px] font-medium text-foreground mb-1.5">
             Enter member address to begin
@@ -182,7 +182,7 @@ const MobileEntry = ({
               onChange={(e) => setCountyChoice(e.target.value)}
               className="w-full appearance-none rounded-md border border-border bg-card px-3 py-2 pr-8 text-[14px] text-foreground outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
             >
-              <option value="">— Choose county —</option>
+              <option value="">Select county</option>
               {sortedCounties.map((c) => (
                 <option key={c.name} value={c.name}>{c.name}</option>
               ))}
@@ -195,7 +195,7 @@ const MobileEntry = ({
           type="button"
           onClick={handleSubmit}
           disabled={memberIsGeocoding || (!address.trim() && !countyChoice)}
-          className="w-full rounded-md bg-primary px-3 py-2.5 text-[14px] font-semibold text-primary-foreground shadow-sm transition-opacity disabled:cursor-not-allowed disabled:opacity-50 active:opacity-90"
+          className="w-full rounded-md bg-[hsl(206,62%,47%)] px-3 py-2.5 text-[14px] font-semibold text-primary-foreground shadow-sm transition-opacity disabled:cursor-not-allowed disabled:opacity-50 active:opacity-90"
         >
           {memberIsGeocoding ? 'Locating…' : 'Get Access Pathway'}
         </button>
