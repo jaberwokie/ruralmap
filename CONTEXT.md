@@ -287,12 +287,30 @@ Every admin page follows this exact structure — no exceptions:
 | Page               | Route                           | Breadcrumb         |
 | ------------------ | ------------------------------- | ------------------ |
 | Admin Home         | `/admin`                        | "Admin" title      |
-| Mapping            | `/admin/mapping`                | ← Admin / Mapping  |
 | User Management    | `/admin/users`                  | ← Admin            |
 | Unmapped Providers | `/admin/unmapped`               | ← Admin            |
 | Staff Training     | `/admin/training`               | ← Admin / Training |
-| Facilities         | `/admin/mapping/facilities`     | ← Back to Overview |
-| Rural Services     | `/admin/mapping/rural-services` | ← Back to Overview |
+
+#### Mapping nav — grouped dropdowns
+
+| Group      | Item                      | Route                                  |
+| ---------- | ------------------------- | -------------------------------------- |
+| Overview   | Overview                  | `/admin/mapping`                       |
+| Ingestion  | Provider Mapping          | `/admin/mapping/providers`             |
+|            | Provider Metadata         | `/admin/mapping/provider-metadata`     |
+|            | Service Mapping           | `/admin/mapping/services`              |
+|            | Behavioral Health         | `/admin/mapping/behavioral-health`     |
+| Staging    | Facility Staging          | `/admin/mapping/facilities-staging`    |
+|            | Behavioral Health Staging | `/admin/mapping/behavioral-health`       |
+|            | Rural Services Staging    | `/admin/mapping/rural-services-staging`|
+| Review     | Verification Queue        | `/admin/mapping/verification-queue`    |
+|            | Verification Outreach Log | `/admin/mapping/audit-history`         |
+|            | Data Pipeline Log         | `/admin/mapping/pipeline-audit`        |
+| Live Data  | Facilities (Live)         | `/admin/mapping/facilities`            |
+|            | Rural Services (Live)     | `/admin/mapping/rural-services`        |
+|            | Metrics                   | `/admin/metrics`                       |
+
+Note: Behavioral Health is accessible from both Ingestion (raw import) and Staging (review/promote). Same page, two logical entry points by design.
 
 ### Ops Pages
 
