@@ -33,7 +33,7 @@ import novumHealthLogo from '@/assets/novumhealth-logo.svg';
 
 interface MobileEntryProps {
   // Member access
-  memberLocation: { lat: number; lng: number; address?: string } | null;
+  memberLocation: { lat: number; lng: number; address?: string; isApproximate?: boolean } | null;
   memberIsGeocoding: boolean;
   memberGeocodeError: string | null;
   onMemberGeocode: (address: string) => Promise<void>;
