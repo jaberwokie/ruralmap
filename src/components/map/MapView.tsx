@@ -2673,13 +2673,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
-      <MemberAccessSearch
-        onSearch={(addr) => onMemberGeocode?.(addr)}
-        onClear={() => onMemberClear?.()}
-        isGeocoding={memberIsGeocoding}
-        error={memberGeocodeError}
-        hasPin={!!memberLocation}
-      />
+      {!hideEmbeddedSearch && (
+        <MemberAccessSearch
+          onSearch={(addr) => onMemberGeocode?.(addr)}
+          onClear={() => onMemberClear?.()}
+          isGeocoding={memberIsGeocoding}
+          error={memberGeocodeError}
+          hasPin={!!memberLocation}
+        />
+      )}
+
       {presentationIsPresenting && (
         <div
           aria-hidden="true"
