@@ -43,6 +43,9 @@ const AdminTraining = lazy(() => import("./pages/AdminTraining.tsx"));
 const AdminGeocodeReview = lazy(() => import("./pages/AdminGeocodeReview.tsx"));
 const AdminMetrics = lazy(() => import("./pages/AdminMetrics.tsx"));
 const AdminOpsAccess = lazy(() => import("./pages/AdminOpsAccess.tsx"));
+const OpsHome = lazy(() => import("./pages/OpsHome.tsx"));
+const OpsDataCapture = lazy(() => import("./pages/OpsDataCapture.tsx"));
+const OpsActivityLog = lazy(() => import("./pages/OpsActivityLog.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const APP_VERSION = 'public-sharing-v2';
@@ -116,6 +119,11 @@ const App = () => {
 
                 {/* Admin > Training (additive; rollback by removing this line and src/pages/AdminTraining.tsx + src/pages/admin-training/) */}
                 <Route path="/admin/training" element={<AdminTraining />} />
+
+                {/* Field Ops */}
+                <Route path="/ops" element={<OpsHome />} />
+                <Route path="/ops/data-capture" element={<OpsDataCapture />} />
+                <Route path="/ops/activity" element={<OpsActivityLog />} />
 
                 {/* Backward-compat: keep old bookmarks alive */}
                 <Route

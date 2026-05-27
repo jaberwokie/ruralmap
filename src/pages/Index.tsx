@@ -79,7 +79,7 @@ const Index = () => {
   const isMobileLayout = useIsMobile();
   const isTabletLayout = useIsTablet();
   const sidebarExpandedWidth = isTabletLayout ? 280 : 320;
-  const { ready: authReady, isAuthenticated, user, isAdmin, isStaff, signOut } = usePermissions();
+  const { ready: authReady, isAuthenticated, user, isAdmin, isStaff, isOps, signOut } = usePermissions();
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
   const layers = useMapLayers();
@@ -470,13 +470,18 @@ const Index = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <DropdownMenuLabel className="flex flex-col gap-0.5">
-                      <span className="text-xs font-semibold text-foreground">{isAdmin ? 'Admin' : 'Staff'}</span>
+                      <span className="text-xs font-semibold text-foreground">{isAdmin ? 'Admin' : isOps ? 'Ops' : 'Staff'}</span>
                       {email ? <span className="text-[10px] font-normal text-muted-foreground truncate">{email}</span> : null}
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     {isAdmin ? (
                       <DropdownMenuItem asChild>
                         <Link to="/admin/mapping">Manage Operational Data</Link>
+                      </DropdownMenuItem>
+                    ) : null}
+                    {(isAdmin || isOps) ? (
+                      <DropdownMenuItem asChild>
+                        <Link to="/ops">Field Ops</Link>
                       </DropdownMenuItem>
                     ) : null}
                     <DropdownMenuItem onSelect={() => { void signOut(); }}>
