@@ -129,8 +129,8 @@ const MobileEntry = ({
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background safe-area-top">
-      {/* Minimal header */}
-      <header className="px-4 pt-2 pb-2 border-b border-border bg-card">
+      {/* Minimal header — shares the bg-card chrome band with the input section below. */}
+      <header className="px-4 pt-2 pb-2 bg-card">
         <h1 className="text-base font-semibold text-foreground tracking-tight leading-snug">
           Nevada Rural Access Operations
         </h1>
@@ -144,8 +144,9 @@ const MobileEntry = ({
         )}
       </header>
 
-      {/* Input column */}
-      <section className="px-4 pt-3 pb-2 space-y-3">
+      {/* Input column — sits on the same chrome band as the header to mirror
+          the desktop sidebar surface (bg-card with a single closing border). */}
+      <section className="px-4 pt-3 pb-3 space-y-3 bg-card border-b border-border">
         <div>
           <label htmlFor="member-address" className="block text-[12px] font-medium text-foreground mb-1.5">
             Enter member address to begin
