@@ -12,6 +12,9 @@ export interface MemberLocation {
   lat: number;
   lng: number;
   address?: string;
+  /** True when only an approximate (city/ZIP centroid) match was resolved
+   *  for an address that originally contained a street component. */
+  isApproximate?: boolean;
 }
 
 export type AccessTierKey = 'local' | 'managed' | 'highFriction' | 'nonViable';
