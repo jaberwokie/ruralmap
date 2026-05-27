@@ -268,11 +268,11 @@ export default function AdminGeocodeReview() {
   }, [fetchBackfillCount, fetchRows]);
 
   useEffect(() => {
-    if (perms.ready && (perms.isAdmin || perms.isStaff)) {
+    if (perms.ready && (perms.isAdmin || perms.isStaff || perms.isOps)) {
       void fetchRows();
       void fetchBackfillCount();
     }
-  }, [perms.ready, perms.isAdmin, perms.isStaff, fetchRows, fetchBackfillCount]);
+  }, [perms.ready, perms.isAdmin, perms.isStaff, perms.isOps, fetchRows, fetchBackfillCount]);
 
   const filtered = useMemo(
     () => (tableFilter === 'all' ? rows : rows.filter((r) => r.table === tableFilter)),
