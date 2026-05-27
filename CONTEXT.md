@@ -319,7 +319,7 @@ New admin pages must follow this pattern without exception.
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | SSHP deidentified claims data | Incoming; analysis plan needed for member counts by county, BH utilization, source geography, zero-utilization identification |
 | County Discontinuity — Nye   | Lovable prompt drafted; northern = Scheduled Outreach, southern = Active Field Coverage                                       |
-| Mobile / tablet layout pass   | Tabled pending functional completion                                                                                          |
+| Mobile / tablet layout pass   | Done — input-first mobile surface at `src/components/mobile/MobileEntry.tsx` rendered at `<768px`; laptop (768–1279px) keeps 320px sidebar + tightened detail-panel text; desktop unchanged. |
 
 ---
 
