@@ -1,26 +1,54 @@
-## NovumHealth Branding — Mobile Header
+# Plan — Preview Breakpoint Debug Badge
 
-### Goal
-Restructure the `MobileEntry.tsx` header to lead with the NovumHealth brand identity and retitle the surface.
+Scope: instrumentation only. No changes to responsive logic, breakpoints, `useIsMobile`, MobileEntry, map, or Decision Assist.
 
-### What changes
-**File: `src/components/mobile/MobileEntry.tsx`**
+## 1. New component: `src/components/dev/ViewportDebugBadge.tsx`
 
-1. **Import the logo**: Add an import for `src/assets/novumhealth-logo.svg` (Vite handles SVG imports as static assets).
+A small fixed-position badge, bottom-right, `z-[9999]`, semi-transparent dark chip with mono text.
 
-2. **Restructure the `<header>` block** (lines 133–145):
-   - Replace the current `<h1>` text "Nevada Rural Access Operations" with the NovumHealth SVG logo rendered at `~24–28px` height via an `<img>` tag.
-   - Move "Nevada Rural Access Operations" down to a subtitle `<p>` line beneath the logo (replacing the current "Nevada Behavioral Health" text).
-   - Remove the standalone "Nevada Behavioral Health" line.
-   - Keep the `isPublicSafeModeActive()` badge in the same position and with the same styling.
-   - Maintain existing `bg-card`, `px-4`, `pt-2`, `pb-2` classes — no padding or layout changes outside the title swap.
+Displays live:
+- `window.innerWidth` × `window.innerHeight` (updated on `resize`)
+- Responsive mode derived from width:
+  - `< 768` → `mobile`
+  - `768–1279` → `tablet/laptop`
+  - `≥ 1280` → `desktop`
+- `useIsMobile()` boolean
+- `MobileEntry mounted: yes/no` — read via a prop passed from `Index.tsx` (no global state, no context)
 
-### What stays exactly the same
-- All sections below the header (input column, context banner, Decision Assist, collapsible map).
-- Desktop/laptop layout in `Index.tsx`.
-- Map logic, routing, Decision Assist derivation, county selection, geocoding, layer visibility, responsive breakpoints.
+Gating (must satisfy ALL):
+- `import.meta.env.DEV === true`, OR hostname matches `localhost` / `*.lovable.app` / `*.lovable.dev`
+- Never renders when `import.meta.env.PROD` and hostname is the published custom domain (`ruralmap.lovable.app`, `ruralmap.opsframe.io`)
 
-### Out of scope
-- Desktop header / `Sidebar.tsx` branding (ask if you want that aligned too).
-- Favicon or `index.html` metadata changes.
-- Any other pages or components.
+Implementation detail: a single `isPreviewEnvironment()` helper inside the component returns `false` for production hostnames. Returns `null` early when gated off so it tree-shakes cleanly at runtime.
+
+## 2. Mount point: `src/pages/Index.tsx`
+
+Add one import and one render line at the root of the returned tree, passing `mobileEntryMounted={isMobile}` (or whatever variable already controls MobileEntry rendering — read the file first to match the exact flag). No other Index.tsx changes.
+
+## 3. Verification pass (manual, via browser tool)
+
+Resize the sandbox to each width and screenshot the badge + layout:
+- 375 (sanity mobile)
+- 768, 820, 912, 1024, 1180 (tablet/laptop band)
+- 1280, 1440 (desktop)
+
+For each, record in the final chat reply:
+- badge-reported `innerWidth`
+- `useIsMobile()` value
+- whether MobileEntry mounted
+- which layout actually rendered
+
+## 4. Lovable preview frame note
+
+Compare the Lovable preview chrome width (reported as 768 in current `client_state`) against `window.innerWidth` at the same moment. If they diverge, document in the final reply that Lovable's preview frame is cosmetic only and real responsive validation requires browser devtools device emulation or a resized browser window.
+
+## 5. Disposition of the badge
+
+Keep the component checked in but **gated to dev/preview only** (per §1). Production builds on the custom domain will not render it. No removal step required; the gate is the ship-safe behavior the prompt asked for.
+
+## Files touched
+- `src/components/dev/ViewportDebugBadge.tsx` (new)
+- `src/pages/Index.tsx` (1 import + 1 JSX line)
+
+## Out of scope (unchanged)
+Breakpoints, `useIsMobile`, MobileEntry layout, tablet/laptop layout, map logic, Decision Assist, routing, auth.
