@@ -18,7 +18,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { isPublicSafeModeActive, setUnauthenticatedPublicSafe } from '@/hooks/usePublicSafeMode';
 
-export type AppRole = 'viewer' | 'staff' | 'admin';
+export type AppRole = 'viewer' | 'staff' | 'ops' | 'admin';
 
 export interface Permissions {
   /** True only after auth state has been resolved at least once. */
@@ -28,7 +28,11 @@ export interface Permissions {
   role: AppRole;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  /** True for Ops users only (not Admin). Use `canAccessOps` for "Ops or higher". */
+  isOps: boolean;
   isStaff: boolean;
+  /** Ops-or-Admin. Grants access to operational underlying data (read-only for Ops). */
+  canAccessOps: boolean;
   /** Convenience flags used by UI gating + handler guards. */
   canImportData: boolean;
   canApplyVerification: boolean;
@@ -43,7 +47,9 @@ const DEFAULT_PERMISSIONS: Permissions = {
   role: 'viewer',
   isAuthenticated: false,
   isAdmin: false,
+  isOps: false,
   isStaff: false,
+  canAccessOps: false,
   canImportData: false,
   canApplyVerification: false,
   canEditMapData: false,
