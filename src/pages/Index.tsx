@@ -555,7 +555,7 @@ const Index = () => {
         />
       </button>
 
-      <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 min-h-0 relative md:h-full`}>
+      <div className={`${mobileSidebarOpen ? 'hidden' : 'flex'} md:flex flex-1 min-w-0 min-h-0 relative md:h-full`}>
         <MapView
           facilities={facility.filteredFacilities}
           allFacilities={facility.facilities}
