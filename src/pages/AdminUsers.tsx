@@ -32,7 +32,7 @@ type Row = {
   role_updated_at: string | null;
 };
 
-const ROLE_OPTIONS: AppRole[] = ['viewer', 'staff', 'admin'];
+const ROLE_OPTIONS: AppRole[] = ['viewer', 'staff', 'ops', 'admin'];
 const VALID_ROLES = new Set<AppRole>(ROLE_OPTIONS);
 
 type SortKey = 'email' | 'role' | 'status' | 'created';
