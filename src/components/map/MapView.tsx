@@ -145,6 +145,9 @@ interface MapViewProps {
    *  map is purely geographic context. The mobile workflow entry point lives
    *  above the map (address input + county selector + CTA in MobileEntry). */
   hideEmbeddedSearch?: boolean;
+  /** Mobile-only: render the floating MapLegend as a collapsed chip by
+   *  default. User can tap to expand. Desktop/laptop unchanged. */
+  legendCollapsible?: boolean;
 }
 
 
@@ -491,7 +494,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistVisible = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true }, hideEmbeddedSearch = false }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistVisible = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true }, hideEmbeddedSearch = false, legendCollapsible = false }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const { ruralServices: _baseRuralServices } = useRuralServiceData();
   const { isPublicSafe } = usePublicSafeMode();
@@ -2702,6 +2705,7 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
         hasAccessGaps={coverageGaps}
         hasTier1={layers.tier1Highlight}
         decisionAssistVisible={decisionAssistVisible}
+        collapsible={legendCollapsible}
       />
       {DEBUG_ENABLED && (
         <MapDebugPanel
