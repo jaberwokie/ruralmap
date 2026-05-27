@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, Map as MapIcon } from 'lucide-react';
 import type { LayerState } from '@/types/layers';
 
 interface MapLegendProps {
@@ -12,6 +14,11 @@ interface MapLegendProps {
    * (ResizeObserver-driven), so the lift tracks both states.
    */
   decisionAssistVisible?: boolean;
+  /**
+   * Mobile-only: render the legend as a small chip that expands on tap.
+   * Desktop/laptop behavior unchanged (defaults to false).
+   */
+  collapsible?: boolean;
 }
 
 interface Section {
@@ -34,7 +41,8 @@ const square = (style: React.CSSProperties) => (
  * `LayerState` — no extra calculation. Replaces the prior connectivity-only
  * floating block.
  */
-const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: MapLegendProps) => {
+const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible, collapsible = false }: MapLegendProps) => {
+  const [expanded, setExpanded] = useState(false);
   const liftStyle: React.CSSProperties = decisionAssistVisible
     ? { bottom: 'calc(var(--decision-assist-height, 96px) + 20px)' }
     : {};
@@ -159,11 +167,44 @@ const MapLegend = ({ layers, hasAccessGaps, hasTier1, decisionAssistVisible }: M
     return null;
   }
 
+  // Mobile-only collapsible mode: render a chip; expand on tap.
+  if (collapsible && !expanded) {
+    return (
+      <button
+        type="button"
+        style={liftStyle}
+        onClick={() => setExpanded(true)}
+        className="absolute bottom-4 left-4 z-[800] flex items-center gap-1.5 rounded-md border border-border bg-card/95 px-2.5 py-1.5 text-[11px] font-medium text-foreground shadow-sm backdrop-blur-sm transition-[bottom] duration-150 hover:bg-card"
+        aria-expanded={false}
+        aria-label="Show map legend"
+      >
+        <MapIcon className="h-3.5 w-3.5 text-muted-foreground" />
+        <span>Map Legend</span>
+        <ChevronUp className="h-3 w-3 text-muted-foreground" />
+      </button>
+    );
+  }
+
   return (
     <div
       style={liftStyle}
-      className="pointer-events-none absolute bottom-4 left-4 z-[800] max-w-[180px] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2 transition-[bottom] duration-150"
+      className={`${collapsible ? '' : 'pointer-events-none'} absolute bottom-4 left-4 z-[800] max-w-[180px] rounded-md border border-border bg-card/95 px-2.5 py-2 shadow-sm backdrop-blur-sm space-y-2 transition-[bottom] duration-150`}
     >
+      {collapsible && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="-mt-1 -mr-1 ml-auto flex w-full items-center justify-between gap-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+          aria-expanded={true}
+          aria-label="Hide map legend"
+        >
+          <span className="flex items-center gap-1">
+            <MapIcon className="h-3 w-3" />
+            Map Legend
+          </span>
+          <ChevronDown className="h-3 w-3" />
+        </button>
+      )}
       {sections.map((section, i) => (
         <div key={section.key}>
           {i > 0 && <div className="-mt-1 mb-1.5 border-t border-border/50" />}
