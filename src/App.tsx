@@ -114,6 +114,7 @@ const App = () => {
                 <Route path="/admin/mapping/rural-services" element={<AdminMappingRuralServices />} />
                 <Route path="/admin/mapping/facilities-staging" element={<AdminMappingFacilitiesStaging />} />
                 <Route path="/admin/mapping/rural-services-staging" element={<AdminMappingRuralServicesStaging />} />
+                <Route path="/admin/mapping/behavioral-health-live" element={<AdminMappingBehavioralHealthLive />} />
 
                 {/* Admin > Metrics */}
                 <Route path="/admin/metrics" element={<AdminMetrics />} />
