@@ -12,6 +12,7 @@
 
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsTablet } from '@/hooks/use-tablet';
 
 const PRODUCTION_HOSTS = new Set([
   'ruralmap.lovable.app',
