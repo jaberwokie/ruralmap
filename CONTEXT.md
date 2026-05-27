@@ -232,17 +232,19 @@ When `?public=1` or equivalent logic is active:
 
 Role hierarchy (highest → lowest): **Admin → Ops → Staff → Viewer**.
 
-- **Admin**: full system and configuration access (user management, role assignment, pipeline promotion, verified record edits, data import, destructive actions, credentials/security settings).
-- **Ops**: operational underlying data access below Admin. Read-only on the `/admin/ops-access` surface. Data-capture permissions are **TBD** — Admin-only write/data-capture controls remain Admin-only until scoped Ops permissions are explicitly granted (see `TODO` markers in `AuthContext.tsx` and `AdminOpsAccess.tsx`).
+- **Admin**: full system access — user management, role assignment, ingestion approval, pipeline promotion, verified record edits, mapping configuration, data import, destructive actions, credentials/security settings.
+- **Ops**: full authenticated map access (same as any signed-in internal user) plus limited read-only backend/admin-area operational visibility. Ops CAN view the Mapping workspace, Geocode Review, Unmapped Top Utilized Providers, and the dedicated `/admin/ops-access` page. Ops CANNOT add/remove users, change roles, approve ingestions, promote staged records, edit/delete verified records, modify mapping configuration, change system settings, perform destructive actions, or access credential/security settings. All write controls remain gated by `perms.canImportData` / `perms.canApplyVerification` / `perms.canEditMapData` (Admin-only).
 - **Staff**: existing authenticated staff access unchanged.
 - **Viewer**: standard limited access.
-- **Public-safe mode**: collapses effective role to `viewer`; no internal operational or admin access.
+- **Public-safe mode**: collapses effective role to `viewer`; no internal backend or admin access.
 
 Route guards:
 
-- `perms.isAdmin` required for Admin-only pages (`/admin/users`, mapping writes, metrics, etc.).
-- `perms.canAccessOps` (Admin OR Ops) required for `/admin/ops-access`.
-- Staff retains its existing redirect/read pattern; not granted Ops Access.
+- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/promote/edit/delete actions.
+- `perms.canAccessOps` (Admin OR Ops) — `/admin/ops-access`.
+- `perms.isAdmin || perms.isStaff || perms.isOps` — `/admin/mapping/*` (read view) and `/admin/geocode-review` (read view); writes inside still require `isAdmin`.
+- `perms.isAdmin || perms.isOps` — `/admin/unmapped-providers` (operational awareness; export retained).
+- Public-safe mode is blocked from every admin route via the same `isAdmin`/`canAccessOps`/`isStaff`/`isOps` checks, because public-safe collapses the effective role to `viewer`.
 - `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
 - DB enum `public.app_role` includes `viewer | staff | ops | admin`; `admin_set_user_role` accepts all four.
 

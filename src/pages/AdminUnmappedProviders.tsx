@@ -42,7 +42,8 @@ export default function AdminUnmappedProviders() {
   const [hideNonSite, setHideNonSite] = useState(false);
 
   useEffect(() => {
-    if (!perms.ready || !perms.isAdmin) return;
+    // Admin + Ops can view this operational awareness page (read-only for Ops).
+    if (!perms.ready || (!perms.isAdmin && !perms.isOps)) return;
     let cancelled = false;
     setLoading(true);
     loadUtilizationDataset()
@@ -59,7 +60,7 @@ export default function AdminUnmappedProviders() {
         setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [perms.ready, perms.isAdmin]);
+  }, [perms.ready, perms.isAdmin, perms.isOps]);
 
   const visibleRows = useMemo(
     () => (hideNonSite ? rows.filter((r) => !r.excludedReason) : rows),
@@ -114,7 +115,7 @@ export default function AdminUnmappedProviders() {
     );
   };
 
-  if (perms.ready && !perms.isAdmin) {
+  if (perms.ready && !perms.isAdmin && !perms.isOps) {
     return <Navigate to="/" replace />;
   }
 

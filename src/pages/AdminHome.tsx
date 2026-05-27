@@ -87,12 +87,14 @@ export default function AdminHome() {
             description="Approve, re-geocode, or manually correct low-confidence Google geocoding results."
             icon={<MapPin className="h-4 w-4" />}
           />
-          <ToolCard
-            to="/admin/training"
-            title="Staff Training"
-            description="Rural Map + Decision Assist training packet. Review on screen and download as .docx or PDF."
-            icon={<BookOpen className="h-4 w-4" />}
-          />
+          {perms.isAdmin && (
+            <ToolCard
+              to="/admin/training"
+              title="Staff Training"
+              description="Rural Map + Decision Assist training packet. Review on screen and download as .docx or PDF."
+              icon={<BookOpen className="h-4 w-4" />}
+            />
+          )}
         </div>
       </div>
     </div>
