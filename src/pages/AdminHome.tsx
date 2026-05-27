@@ -6,7 +6,7 @@
  */
 
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Layers, ListChecks, MapPin, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Layers, ListChecks, MapPin, ShieldCheck, Users } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
