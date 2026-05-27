@@ -46,7 +46,9 @@ export default function AdminMappingLayout({ title, description, children }: Adm
   const perms = usePermissions();
   const location = useLocation();
 
-  if (perms.ready && !perms.isAdmin && !perms.isStaff) {
+  // Ops gets the same read access as Staff here. All write/approve/promote/edit/delete
+  // controls inside individual mapping pages remain gated by `perms.isAdmin`.
+  if (perms.ready && !perms.isAdmin && !perms.isStaff && !perms.isOps) {
     return <Navigate to="/" replace />;
   }
 
