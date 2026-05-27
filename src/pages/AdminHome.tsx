@@ -6,7 +6,7 @@
  */
 
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Layers, ListChecks, MapPin, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Layers, ListChecks, MapPin, ShieldCheck, Users } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -36,7 +36,9 @@ const ToolCard = ({ to, title, description, icon }: ToolCardProps) => (
 export default function AdminHome() {
   const perms = usePermissions();
 
-  if (perms.ready && !perms.isAdmin && !perms.isStaff) {
+  // Admin and Ops can view this directory. Staff retains existing access
+  // (legacy admin-tool entry point). Viewer / public-safe redirected.
+  if (perms.ready && !perms.isAdmin && !perms.isOps && !perms.isStaff) {
     return <Navigate to="/" replace />;
   }
 
@@ -57,12 +59,22 @@ export default function AdminHome() {
             description="Provider, service, and BH ingestion · verification queue · audit history · data import."
             icon={<Layers className="h-4 w-4" />}
           />
-          <ToolCard
-            to="/admin/users"
-            title="User Management"
-            description="View and manage user roles, activation status, and access."
-            icon={<Users className="h-4 w-4" />}
-          />
+          {(perms.isAdmin || perms.isOps) && (
+            <ToolCard
+              to="/admin/ops-access"
+              title="Ops Access"
+              description="Operational underlying data for Admin and Ops. Read-only for Ops; Admin-only writes remain Admin-only."
+              icon={<ShieldCheck className="h-4 w-4" />}
+            />
+          )}
+          {perms.isAdmin && (
+            <ToolCard
+              to="/admin/users"
+              title="User Management"
+              description="View and manage user roles, activation status, and access."
+              icon={<Users className="h-4 w-4" />}
+            />
+          )}
           <ToolCard
             to="/admin/unmapped-providers"
             title="Unmapped Top Utilized Providers"

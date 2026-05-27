@@ -32,7 +32,7 @@ type Row = {
   role_updated_at: string | null;
 };
 
-const ROLE_OPTIONS: AppRole[] = ['viewer', 'staff', 'admin'];
+const ROLE_OPTIONS: AppRole[] = ['viewer', 'staff', 'ops', 'admin'];
 const VALID_ROLES = new Set<AppRole>(ROLE_OPTIONS);
 
 type SortKey = 'email' | 'role' | 'status' | 'created';
@@ -71,7 +71,7 @@ export default function AdminUsers() {
   const [sortKey, setSortKey] = useState<SortKey>('email');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
   const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteRole, setInviteRole] = useState<'viewer' | 'staff' | 'admin'>('viewer');
+  const [inviteRole, setInviteRole] = useState<AppRole>('viewer');
   const [inviting, setInviting] = useState(false);
 
   const handleInvite = async () => {
@@ -141,7 +141,7 @@ export default function AdminUsers() {
         case 'email':
           return (a.email ?? '').localeCompare(b.email ?? '') * dir;
         case 'role': {
-          const order: Record<AppRole, number> = { admin: 0, staff: 1, viewer: 2 };
+          const order: Record<AppRole, number> = { admin: 0, ops: 1, staff: 2, viewer: 3 };
           return ((order[a.role ?? 'viewer'] - order[b.role ?? 'viewer']) || 0) * dir;
         }
         case 'status':
@@ -307,11 +307,12 @@ export default function AdminUsers() {
             />
             <select
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as 'viewer' | 'staff' | 'admin')}
+              onChange={(e) => setInviteRole(e.target.value as AppRole)}
               className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <option value="viewer">Viewer</option>
               <option value="staff">Staff</option>
+              <option value="ops">Ops</option>
               <option value="admin">Admin</option>
             </select>
             <Button

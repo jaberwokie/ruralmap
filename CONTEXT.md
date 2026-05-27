@@ -230,9 +230,21 @@ When `?public=1` or equivalent logic is active:
 
 ### Auth and Roles
 
-- `perms.isAdmin` required for `/admin/*`; staff currently redirected to `/` (gap — see Section 13)
-- Role tiers: admin, staff, viewer
-- `AdminMappingLayout.tsx` is the canonical admin navigation pattern
+Role hierarchy (highest → lowest): **Admin → Ops → Staff → Viewer**.
+
+- **Admin**: full system and configuration access (user management, role assignment, pipeline promotion, verified record edits, data import, destructive actions, credentials/security settings).
+- **Ops**: operational underlying data access below Admin. Read-only on the `/admin/ops-access` surface. Data-capture permissions are **TBD** — Admin-only write/data-capture controls remain Admin-only until scoped Ops permissions are explicitly granted (see `TODO` markers in `AuthContext.tsx` and `AdminOpsAccess.tsx`).
+- **Staff**: existing authenticated staff access unchanged.
+- **Viewer**: standard limited access.
+- **Public-safe mode**: collapses effective role to `viewer`; no internal operational or admin access.
+
+Route guards:
+
+- `perms.isAdmin` required for Admin-only pages (`/admin/users`, mapping writes, metrics, etc.).
+- `perms.canAccessOps` (Admin OR Ops) required for `/admin/ops-access`.
+- Staff retains its existing redirect/read pattern; not granted Ops Access.
+- `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
+- DB enum `public.app_role` includes `viewer | staff | ops | admin`; `admin_set_user_role` accepts all four.
 
 ---
 

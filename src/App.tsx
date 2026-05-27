@@ -42,6 +42,7 @@ const AdminMappingRuralServicesStaging = lazy(() => import("./pages/AdminMapping
 const AdminTraining = lazy(() => import("./pages/AdminTraining.tsx"));
 const AdminGeocodeReview = lazy(() => import("./pages/AdminGeocodeReview.tsx"));
 const AdminMetrics = lazy(() => import("./pages/AdminMetrics.tsx"));
+const AdminOpsAccess = lazy(() => import("./pages/AdminOpsAccess.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const APP_VERSION = 'public-sharing-v2';
@@ -91,6 +92,7 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/ops-access" element={<AdminOpsAccess />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
                 <Route path="/admin/geocode-review" element={<AdminGeocodeReview />} />
 
