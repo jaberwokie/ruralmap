@@ -77,7 +77,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       const value = (data as AppRole | null) ?? 'viewer';
-      setRole(value === 'admin' || value === 'staff' ? value : 'viewer');
+      setRole(
+        value === 'admin' || value === 'ops' || value === 'staff' ? value : 'viewer'
+      );
     } catch (e) {
       console.warn('[auth] role lookup threw; defaulting to viewer', e);
       setRole('viewer');
