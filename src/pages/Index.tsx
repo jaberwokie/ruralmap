@@ -20,6 +20,7 @@ import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
 import DecisionAssistDrawer from '@/components/map/decision-assist/DecisionAssistDrawer';
 import MobileEntry from '@/components/mobile/MobileEntry';
+import ViewportDebugBadge from '@/components/dev/ViewportDebugBadge';
 import PresentationOverlay from '@/components/map/presentation/PresentationOverlay';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
