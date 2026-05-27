@@ -12,6 +12,9 @@ export interface MemberLocation {
   lat: number;
   lng: number;
   address?: string;
+  /** True when only an approximate (city/ZIP centroid) match was resolved
+   *  for an address that originally contained a street component. */
+  isApproximate?: boolean;
 }
 
 export type AccessTierKey = 'local' | 'managed' | 'highFriction' | 'nonViable';
@@ -183,21 +186,90 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       const isInNevada = (lat: number, lng: number) =>
         lat >= NV_SOUTH && lat <= NV_NORTH && lng >= NV_WEST && lng <= NV_EAST;
 
-      // Stage 1 — Nominatim with Nevada bounding and multiple candidates
-      const nominatimUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}&bounded=1`;
-      const nominatimRes = await fetch(nominatimUrl);
-      if (nominatimRes.ok) {
-        const nominatimData = await nominatimRes.json();
-        const hit = nominatimData.find((r: { lat: string; lon: string }) => {
-          const lat = parseFloat(r.lat);
-          const lng = parseFloat(r.lon);
-          return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-        });
+      // --- Retry variant chain (conservative, in order) ---
+      // 1. original  2. abbreviation-expanded  3. street+city+state+ZIP
+      // 4. city+state+ZIP  5. ZIP-only
+      const expandAbbrev = (s: string) => s
+        .replace(/\bRd\.?\b/gi, 'Road')
+        .replace(/\bSt\.?\b/gi, 'Street')
+        .replace(/\bAve\.?\b/gi, 'Avenue')
+        .replace(/\bHwy\.?\b/gi, 'Highway')
+        .replace(/\bBlvd\.?\b/gi, 'Boulevard')
+        .replace(/\bDr\.?\b/gi, 'Drive')
+        .replace(/\bLn\.?\b/gi, 'Lane')
+        .replace(/\bCt\.?\b/gi, 'Court')
+        .replace(/\bPkwy\.?\b/gi, 'Parkway');
+
+      const parseAddressParts = (s: string): { street: string | null; city: string | null; zip: string | null } => {
+        const zipMatch = s.match(/\b(\d{5})\b/);
+        const zip = zipMatch?.[1] ?? null;
+        const m1 = s.match(/^(.+?),\s*([^,]+?),\s*(?:NV|Nevada)\b/i);
+        if (m1) return { street: m1[1].trim(), city: m1[2].trim(), zip };
+        const m2 = s.match(/^([^,]+?),\s*(?:NV|Nevada)\b/i);
+        if (m2) return { street: null, city: m2[1].trim(), zip };
+        return { street: null, city: null, zip };
+      };
+
+      const parts = parseAddressParts(query);
+      const originalHadStreet = !!parts.street && /\d/.test(parts.street);
+
+      type VariantLevel = 'street' | 'city' | 'zip';
+      const variants: { q: string; level: VariantLevel }[] = [];
+      const pushUnique = (q: string, level: VariantLevel) => {
+        if (!q.trim()) return;
+        if (!variants.some(v => v.q.toLowerCase() === q.toLowerCase())) {
+          variants.push({ q, level });
+        }
+      };
+
+      const baseLevel: VariantLevel = parts.street ? 'street' : parts.city ? 'city' : 'zip';
+      pushUnique(query, baseLevel);
+      const expanded = expandAbbrev(query);
+      if (expanded !== query) pushUnique(expanded, baseLevel);
+      if (parts.street && parts.city && parts.zip) {
+        pushUnique(`${expandAbbrev(parts.street)}, ${parts.city}, NV ${parts.zip}`, 'street');
+      }
+      if (parts.city && parts.zip) {
+        pushUnique(`${parts.city}, NV ${parts.zip}`, 'city');
+      } else if (parts.city) {
+        pushUnique(`${parts.city}, NV`, 'city');
+      }
+      if (parts.zip) {
+        pushUnique(`${parts.zip}, NV`, 'zip');
+      }
+
+      const tryNominatim = async (q: string, bounded: boolean) => {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}${bounded ? '&bounded=1' : ''}`;
+        try {
+          const res = await fetch(url);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const hit = data.find((r: { lat: string; lon: string }) => {
+            const lat = parseFloat(r.lat);
+            const lng = parseFloat(r.lon);
+            return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
+          });
+          return hit ?? null;
+        } catch {
+          return null;
+        }
+      };
+
+      for (const variant of variants) {
+        // Try bounded first, then unbounded (still NV-validated) for rural fallback.
+        const hit = (await tryNominatim(variant.q, true)) ?? (await tryNominatim(variant.q, false));
         if (hit) {
-          placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
+          const isApproximate = originalHadStreet && variant.level !== 'street';
+          placeMember({
+            lat: parseFloat(hit.lat),
+            lng: parseFloat(hit.lon),
+            address: hit.display_name,
+            isApproximate,
+          });
           return;
         }
       }
+
 
       // Stage 2 — Census Geocoder fallback (via Supabase Edge Function proxy to avoid CORS)
       try {
@@ -224,21 +296,8 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         // Census proxy unavailable — continue to Stage 3
       }
 
-      // Stage 3 — Nominatim retry without strict bounding (highway/rural fallback)
-      const nominatimUnboundedUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}`;
-      const nominatimUnboundedRes = await fetch(nominatimUnboundedUrl);
-      if (nominatimUnboundedRes.ok) {
-        const nominatimUnboundedData = await nominatimUnboundedRes.json();
-        const hit = nominatimUnboundedData.find((r: { lat: string; lon: string }) => {
-          const lat = parseFloat(r.lat);
-          const lng = parseFloat(r.lon);
-          return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-        });
-        if (hit) {
-          placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
-          return;
-        }
-      }
+      // (Stage 3 unbounded Nominatim retry is now covered by the variant chain above.)
+
 
       // Stage 4 — Highway local-name alias retry
       const lowerQuery = normalized.toLowerCase();

@@ -33,7 +33,7 @@ import novumHealthLogo from '@/assets/novumhealth-logo.svg';
 
 interface MobileEntryProps {
   // Member access
-  memberLocation: { lat: number; lng: number; address?: string } | null;
+  memberLocation: { lat: number; lng: number; address?: string; isApproximate?: boolean } | null;
   memberIsGeocoding: boolean;
   memberGeocodeError: string | null;
   onMemberGeocode: (address: string) => Promise<void>;
@@ -229,6 +229,11 @@ const MobileEntry = ({
               )}
             </div>
           </div>
+          {memberLocation?.isApproximate && (
+            <p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+              Exact address could not be resolved. Using approximate location for operational routing.
+            </p>
+          )}
         </div>
       )}
 
