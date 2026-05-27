@@ -243,6 +243,7 @@ Route guards:
 - `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/approve/promote/edit/delete/configuration actions.
 - `perms.canAccessOps` (Admin OR Ops) — `/admin` home, `/admin/ops-access`, `/admin/mapping/*` (read view), `/admin/geocode-review` (read view), `/admin/unmapped-providers` (read + CSV export). Writes inside still require `isAdmin`.
 - Staff is excluded from every `/admin/*` route. Staff continues to have full authenticated map access at `/`.
+- `/ops/*` (Field Ops surface): `OpsLayout.tsx` gates to Admin OR Ops. Routes: `/ops` (home), `/ops/data-capture` (standalone CHW Note / Attempted Contact form that calls existing `logEvent`), `/ops/activity` (user's own `user_events` rows filtered to `chw_note_added` / `attempted_contact_marked`). No new tables; no provider-panel reuse. Map header dropdown shows a "Field Ops" link to `/ops` for Admin or Ops only.
 - Public-safe mode collapses the effective role to `viewer`, so it fails every admin guard.
 - `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
 - DB enum `public.app_role` includes `viewer | staff | ops | admin`; `admin_set_user_role` accepts all four.
