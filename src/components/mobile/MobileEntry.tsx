@@ -274,21 +274,28 @@ const MobileEntry = ({
           </button>
           {mapOpen && (
             <div className="relative w-full" style={{ height: '50vh' }}>
-              {/* Mobile curated operational layer set — automatic, opinionated.
-                  Overrides whatever desktop default layer state is in the
-                  shared store so mobile users get immediate operational
-                  readability without a toggle drawer. Embedded map search
-                  is suppressed; the entry point lives above the map. */}
+              {/* Mobile curated operational layer set — pins only.
+                  On mobile we show ONLY the selected county polygon plus
+                  facility/provider, behavioral health, and service pins
+                  within that county. No response capability rings, no
+                  coverage overlays, no statewide pin clutter. Pin scoping
+                  is enforced by overriding countyFilters to the effective
+                  county (selected county, or resolved from member loc). */}
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {(() => {
                 const base = mapViewProps as any;
+                const effectiveCounty =
+                  selectedCounty ??
+                  (memberLocation
+                    ? getCountyForLocation(memberLocation.lat, memberLocation.lng)
+                    : null);
                 const mobileLayers = {
                   ...(base.layers ?? {}),
                   counties: true,
                   serviceLocations: true,
                   behavioralHealth: true,
-                  operationalCoverage: true,
-                  services: false,
+                  services: true,
+                  operationalCoverage: false,
                   tier1Highlight: false,
                   broadbandAccess: false,
                   cellularCoverage: false,
@@ -303,8 +310,13 @@ const MobileEntry = ({
                 const mobileProps = {
                   ...base,
                   layers: mobileLayers,
-                  coverageRadius: true,
+                  coverageRadius: false,
+                  coverageGaps: false,
                   hideEmbeddedSearch: true,
+                  legendCollapsible: true,
+                  ...(effectiveCounty
+                    ? { countyFilters: new Set([effectiveCounty]) }
+                    : {}),
                 };
                 return <MapView {...mobileProps} />;
               })()}
