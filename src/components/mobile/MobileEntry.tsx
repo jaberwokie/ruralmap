@@ -130,13 +130,15 @@ const MobileEntry = ({
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background safe-area-top">
-      {/* Minimal header — shares the bg-card chrome band with the input section below. */}
+      {/* Minimal header — NovumHealth brand lead, with operational subtitle. */}
       <header className="px-4 pt-2 pb-2 bg-card">
-        <h1 className="text-base font-semibold text-foreground tracking-tight leading-snug">
+        <img
+          src={novumHealthLogo}
+          alt="NovumHealth"
+          className="h-6 w-auto"
+        />
+        <p className="mt-1 text-[11px] text-muted-foreground leading-tight">
           Nevada Rural Access Operations
-        </h1>
-        <p className="mt-0.5 text-[11px] text-muted-foreground leading-tight">
-          Nevada Behavioral Health
         </p>
         {isPublicSafeModeActive() && (
           <span className="mt-1 inline-block rounded-sm border border-border/40 bg-background/60 px-1.5 py-px text-[9px] text-muted-foreground/80">
@@ -144,6 +146,7 @@ const MobileEntry = ({
           </span>
         )}
       </header>
+
 
       {/* Input column — sits on the same chrome band as the header to mirror
           the desktop sidebar surface (bg-card with a single closing border). */}
