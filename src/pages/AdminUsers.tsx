@@ -141,7 +141,7 @@ export default function AdminUsers() {
         case 'email':
           return (a.email ?? '').localeCompare(b.email ?? '') * dir;
         case 'role': {
-          const order: Record<AppRole, number> = { admin: 0, staff: 1, viewer: 2 };
+          const order: Record<AppRole, number> = { admin: 0, ops: 1, staff: 2, viewer: 3 };
           return ((order[a.role ?? 'viewer'] - order[b.role ?? 'viewer']) || 0) * dir;
         }
         case 'status':
