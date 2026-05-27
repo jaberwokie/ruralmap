@@ -141,7 +141,12 @@ interface MapViewProps {
   decisionAssistVisible?: boolean;
   /** Optional Response Capability category visibility filter. Defaults to all on. */
   responseCapabilityVisible?: Record<'active' | 'scheduled' | 'remote', boolean>;
+  /** Mobile-only: suppress the embedded MemberAccessSearch overlay so the
+   *  map is purely geographic context. The mobile workflow entry point lives
+   *  above the map (address input + county selector + CTA in MobileEntry). */
+  hideEmbeddedSearch?: boolean;
 }
+
 
 // Hover preview types are owned by HoverPreviewLayer.
 
