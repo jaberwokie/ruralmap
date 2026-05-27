@@ -44,6 +44,7 @@ import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import { DEFAULT_ZONE_FILTERS, type ZoneFilters } from '@/types/zoneFilters';
 import type { ResponseCapabilityCategory } from '@/components/map/responseCapabilityVisuals';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useIsTablet } from '@/hooks/use-tablet';
 import { ChevronLeft, Search, SlidersHorizontal, Layers, Activity, Map as MapIcon } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { logEvent } from '@/lib/metrics/logEvent';
