@@ -19,6 +19,7 @@ import MapView from '@/components/map/MapView';
 import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
 import DecisionAssistDrawer from '@/components/map/decision-assist/DecisionAssistDrawer';
+import MobileEntry from '@/components/mobile/MobileEntry';
 import PresentationOverlay from '@/components/map/presentation/PresentationOverlay';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
@@ -305,8 +306,96 @@ const Index = () => {
     return [...baseFiltered, ...liveVerifiedRecords];
   }, [liveVerifiedRecords]);
 
+  // Mobile (<768px) uses an input-first single-column surface.
+  // Layout-only swap: same hooks, same data, same logic. Desktop/laptop
+  // tree below is untouched.
+  if (isMobileLayout) {
+    const mapViewProps = {
+      facilities: facility.filteredFacilities,
+      allFacilities: facility.facilities,
+      layers: layers.layers,
+      typeFilters: filters.filters.types,
+      countyFilters: filters.filters.counties,
+      serviceCategoryFilters: filters.filters.serviceCategories,
+      filters: filters.filters,
+      onFacilityClick: (f: Facility) => onEntity({ type: 'facility', facility: f }),
+      onMapClick: onMapBackgroundClick,
+      searchQuery: filters.searchQuery,
+      radiusKm: layers.radiusKm,
+      coverageRadius: layers.coverageRadius,
+      coverageGaps: layers.coverageGaps,
+      onEntityClick: onEntity,
+      selectedCounty: selection.selectedCounty,
+      onFteHubClick: selection.actions.handleFteHubClick,
+      selectedFteId: selection.activeFteId,
+      selectedTransitProviderId: selection.lockedEntity?.type === 'localTransitProvider' ? selection.lockedEntity.provider.id : null,
+      activeFteCoverageIds: selection.activeFteCoverageIds,
+      coverageRadiusKm: layers.coverageRadiusKm,
+      topProvidersOnly: filters.topProvidersOnly,
+      engagementRateBelow20Only: filters.engagementRateBelow20Only,
+      engagementGapView: layers.engagementGapView,
+      responseCapabilityVisible: zoneFilters.responseCapability,
+      memberLocation: member.memberLocation,
+      memberAnalysis: member.analysis,
+      onMemberPlace: member.placeMember,
+      onMemberClear: () => { member.clearMember(); },
+      onMemberGeocode: member.geocodeAddress,
+      memberIsGeocoding: member.isGeocoding,
+      memberGeocodeError: member.geocodeError,
+      memberManualMode: member.manualPlacementMode,
+      focusBounds,
+      presentationIsPresenting: presentation.isPresenting,
+      decisionAssistVisible: false,
+      presentationPhase: presentation.phase,
+      onPresentationToggle: presentation.toggle,
+      onPresentationPhaseChange: presentation.setPhase,
+    };
+    const coveragePanelProps = {
+      onClear: () => { selection.actions.clearSelection(); },
+      coverageRadiusKm: layers.coverageRadiusKm,
+      memberLocation: member.memberLocation,
+      utilizationToggles: {
+        countyUtilization: layers.layers.countyUtilization,
+        providerUtilizationReach: layers.layers.providerUtilizationReach,
+        tribalUtilization: layers.layers.tribalUtilization,
+        tribalNations: layers.layers.tribalNations,
+      },
+      onProviderClick: onProviderClickFromUtilization,
+      onBack: selection.actions.goBack,
+      canGoBack: !!selection.previousEntity,
+      previousEntity: selection.previousEntity,
+      allFacilities: facility.facilities,
+      onFacilitySelect: onFacility,
+      onServiceSelect: onService,
+      liveServices: mergedRuralServices,
+      filters: filters.filters,
+      onFiltersChange: filters.actions.setFilters,
+    };
+    return (
+      <MobileEntry
+        memberLocation={member.memberLocation}
+        memberIsGeocoding={member.isGeocoding}
+        memberGeocodeError={member.geocodeError}
+        onMemberGeocode={member.geocodeAddress}
+        onMemberClear={() => member.clearMember()}
+        memberAnalysis={member.analysis}
+        selectedCounty={selection.selectedCounty}
+        onCountySelect={onCounty}
+        onClearSelection={() => selection.actions.clearSelection()}
+        facilities={facility.facilities}
+        allFacilities={facility.facilities}
+        services={mergedRuralServices}
+        activeEntity={activeEntity}
+        mapViewProps={mapViewProps}
+        coveragePanelProps={coveragePanelProps}
+        onFacilitySelect={onFacility}
+      />
+    );
+  }
+
   return (
     <div className="relative flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+      
       
       {/*
         Mobile chrome header. Always rendered on <md viewports regardless of
