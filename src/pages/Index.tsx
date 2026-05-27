@@ -373,22 +373,25 @@ const Index = () => {
       onFiltersChange: filters.actions.setFilters,
     };
     return (
-      <MobileEntry
-        memberLocation={member.memberLocation}
-        memberIsGeocoding={member.isGeocoding}
-        memberGeocodeError={member.geocodeError}
-        onMemberGeocode={member.geocodeAddress}
-        onMemberClear={() => member.clearMember()}
-        memberAnalysis={member.analysis}
-        selectedCounty={selection.selectedCounty}
-        onCountySelect={onCounty}
-        onClearSelection={() => selection.actions.clearSelection()}
-        facilities={facility.facilities}
-        allFacilities={facility.facilities}
-        services={mergedRuralServices}
-        mapViewProps={mapViewProps}
-        onFacilitySelect={onFacility}
-      />
+      <>
+        <MobileEntry
+          memberLocation={member.memberLocation}
+          memberIsGeocoding={member.isGeocoding}
+          memberGeocodeError={member.geocodeError}
+          onMemberGeocode={member.geocodeAddress}
+          onMemberClear={() => member.clearMember()}
+          memberAnalysis={member.analysis}
+          selectedCounty={selection.selectedCounty}
+          onCountySelect={onCounty}
+          onClearSelection={() => selection.actions.clearSelection()}
+          facilities={facility.facilities}
+          allFacilities={facility.facilities}
+          services={mergedRuralServices}
+          mapViewProps={mapViewProps}
+          onFacilitySelect={onFacility}
+        />
+        <ViewportDebugBadge mobileEntryMounted={true} />
+      </>
     );
   }
 
