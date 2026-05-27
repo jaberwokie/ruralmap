@@ -92,6 +92,7 @@ const App = () => {
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
+                <Route path="/admin/ops-access" element={<AdminOpsAccess />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
                 <Route path="/admin/geocode-review" element={<AdminGeocodeReview />} />
 
