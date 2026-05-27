@@ -59,12 +59,22 @@ export default function AdminHome() {
             description="Provider, service, and BH ingestion · verification queue · audit history · data import."
             icon={<Layers className="h-4 w-4" />}
           />
-          <ToolCard
-            to="/admin/users"
-            title="User Management"
-            description="View and manage user roles, activation status, and access."
-            icon={<Users className="h-4 w-4" />}
-          />
+          {(perms.isAdmin || perms.isOps) && (
+            <ToolCard
+              to="/admin/ops-access"
+              title="Ops Access"
+              description="Operational underlying data for Admin and Ops. Read-only for Ops; Admin-only writes remain Admin-only."
+              icon={<ShieldCheck className="h-4 w-4" />}
+            />
+          )}
+          {perms.isAdmin && (
+            <ToolCard
+              to="/admin/users"
+              title="User Management"
+              description="View and manage user roles, activation status, and access."
+              icon={<Users className="h-4 w-4" />}
+            />
+          )}
           <ToolCard
             to="/admin/unmapped-providers"
             title="Unmapped Top Utilized Providers"
