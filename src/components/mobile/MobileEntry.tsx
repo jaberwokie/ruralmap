@@ -28,6 +28,7 @@ import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
+import { getCountyForLocation } from '@/utils/countyLookup';
 import novumHealthLogo from '@/assets/novumhealth-logo.svg';
 
 interface MobileEntryProps {
