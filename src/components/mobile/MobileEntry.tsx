@@ -19,7 +19,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Search, Loader2, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import MapView from '@/components/map/MapView';
-import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
 import DecisionAssistIntake from '@/components/map/decision-assist/DecisionAssistIntake';
 import DecisionAssistResultView from '@/components/map/decision-assist/DecisionAssistResult';
 import { deriveDecisionAssist } from '@/components/map/decision-assist/deriveDecisionAssist';
@@ -27,7 +26,6 @@ import { DOMAIN_LABELS, findNeed } from '@/components/map/decision-assist/decisi
 import type { Domain, Need } from '@/components/map/decision-assist/decisionAssistTypes';
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
-import type { MapEntity } from '@/types/entities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import novumHealthLogo from '@/assets/novumhealth-logo.svg';
