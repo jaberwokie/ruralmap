@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Search, X, Loader2 } from 'lucide-react';
+import { useIsTablet } from '@/hooks/use-tablet';
 
 interface MemberAccessSearchProps {
   onSearch: (address: string) => void;
@@ -11,6 +12,7 @@ interface MemberAccessSearchProps {
 
 const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: MemberAccessSearchProps) => {
   const [value, setValue] = useState('');
+  const isTablet = useIsTablet();
 
   const handleSearch = useCallback(() => {
     const trimmed = value.trim();
@@ -31,15 +33,15 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
 
   return (
     <div className="absolute top-2 left-1/2 -translate-x-1/2 z-[1000] flex flex-col items-center gap-1 pointer-events-auto max-w-[calc(100%-1rem)]">
-      <div className="bg-card rounded-xl p-2 flex flex-col items-center gap-1 border border-[#064f88]/20">
-        <div className="flex items-center gap-1 rounded-lg border border-[#064f88]/35 bg-card/95 shadow-sm backdrop-blur-sm px-2 py-1.5 transition-colors hover:border-[#064f88]/55 focus-within:border-[#064f88] focus-within:ring-2 focus-within:ring-[#064f88]/20">
+      <div className={`bg-card rounded-xl flex flex-col items-center border border-[#064f88]/20 ${isTablet ? 'p-1.5 gap-0.5' : 'p-2 gap-1'}`}>
+        <div className={`flex items-center gap-1 rounded-lg border border-[#064f88]/35 bg-card/95 shadow-sm backdrop-blur-sm px-2 transition-colors hover:border-[#064f88]/55 focus-within:border-[#064f88] focus-within:ring-2 focus-within:ring-[#064f88]/20 ${isTablet ? 'py-1' : 'py-1.5'}`}>
           <input
             type="text"
             value={value}
             onChange={e => setValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter member address"
-            className="bg-transparent text-sm text-foreground placeholder:text-[#064f88] outline-none w-52 md:w-64"
+            className={`bg-transparent text-sm text-foreground placeholder:text-[#064f88] outline-none ${isTablet ? 'w-48' : 'w-52 md:w-64'}`}
             disabled={isGeocoding}
           />
           <button
@@ -60,7 +62,7 @@ const MemberAccessSearch = ({ onSearch, onClear, isGeocoding, error, hasPin }: M
             </button>
           )}
         </div>
-        <p className="text-[11px] leading-tight text-muted-foreground select-none text-center w-[260px] md:w-[320px] line-clamp-2">Sign in to get started, then enter a member address to find nearby providers and services.</p>
+        <p className={`text-[11px] text-muted-foreground select-none text-center line-clamp-2 ${isTablet ? 'leading-[1.15] w-56' : 'leading-tight w-[260px] md:w-[320px]'}`}>Sign in to get started, then enter a member address to find nearby providers and services.</p>
       </div>
       {hasPin && !error && (
         <p className="text-[9px] text-muted-foreground/60 select-none">Clear search to exit member mode</p>
