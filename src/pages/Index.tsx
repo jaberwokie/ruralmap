@@ -397,6 +397,7 @@ const Index = () => {
 
   return (
     <div className="relative flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+      <ViewportDebugBadge mobileEntryMounted={false} />
       
       
       {/*
