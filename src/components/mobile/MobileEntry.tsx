@@ -229,6 +229,11 @@ const MobileEntry = ({
               )}
             </div>
           </div>
+          {memberLocation?.isApproximate && (
+            <p className="mt-1.5 text-[11px] text-amber-700 dark:text-amber-400 leading-snug">
+              Exact address could not be resolved. Using approximate location for operational routing.
+            </p>
+          )}
         </div>
       )}
 
