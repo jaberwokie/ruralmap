@@ -385,9 +385,7 @@ const Index = () => {
         facilities={facility.facilities}
         allFacilities={facility.facilities}
         services={mergedRuralServices}
-        activeEntity={activeEntity}
         mapViewProps={mapViewProps}
-        coveragePanelProps={coveragePanelProps}
         onFacilitySelect={onFacility}
       />
     );
