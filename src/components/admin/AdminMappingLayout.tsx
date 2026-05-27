@@ -10,9 +10,15 @@
 
 import { Link, Navigate, useLocation } from 'react-router-dom';
 import type { ReactNode } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronDown } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
 export interface MappingNavItem {
@@ -20,6 +26,12 @@ export interface MappingNavItem {
   label: string;
 }
 
+interface MappingNavGroup {
+  label: string;
+  items: MappingNavItem[];
+}
+
+// Flat list kept for any external consumers / route references.
 export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping', label: 'Overview' },
   { to: '/admin/mapping/providers', label: 'Provider Mapping' },
@@ -35,6 +47,49 @@ export const MAPPING_NAV: MappingNavItem[] = [
   { to: '/admin/mapping/rural-services', label: 'Rural Services (Live)' },
   { to: '/admin/metrics', label: 'Metrics' },
 ];
+
+const OVERVIEW_ITEM: MappingNavItem = { to: '/admin/mapping', label: 'Overview' };
+
+const MAPPING_NAV_GROUPS: MappingNavGroup[] = [
+  {
+    label: 'Ingestion',
+    items: [
+      { to: '/admin/mapping/providers', label: 'Provider Mapping' },
+      { to: '/admin/mapping/provider-metadata', label: 'Provider Metadata' },
+      { to: '/admin/mapping/services', label: 'Service Mapping' },
+      { to: '/admin/mapping/behavioral-health', label: 'Behavioral Health' },
+    ],
+  },
+  {
+    label: 'Staging',
+    items: [
+      { to: '/admin/mapping/facilities-staging', label: 'Facility Staging' },
+      { to: '/admin/mapping/rural-services-staging', label: 'Rural Services Staging' },
+    ],
+  },
+  {
+    label: 'Review',
+    items: [
+      { to: '/admin/mapping/verification-queue', label: 'Verification Queue' },
+      { to: '/admin/mapping/audit-history', label: 'Verification Outreach Log' },
+      { to: '/admin/mapping/pipeline-audit', label: 'Data Pipeline Log' },
+    ],
+  },
+  {
+    label: 'Live Data',
+    items: [
+      { to: '/admin/mapping/facilities', label: 'Facilities (Live)' },
+      { to: '/admin/mapping/rural-services', label: 'Rural Services (Live)' },
+      { to: '/admin/metrics', label: 'Metrics' },
+    ],
+  },
+];
+
+function isItemActive(pathname: string, to: string): boolean {
+  if (to === '/admin/mapping') return pathname === '/admin/mapping';
+  return pathname === to || pathname.startsWith(to + '/');
+}
+
 
 interface AdminMappingLayoutProps {
   title: string;
