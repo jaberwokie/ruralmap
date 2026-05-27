@@ -240,11 +240,10 @@ Role hierarchy (highest → lowest): **Admin → Ops → Staff → Viewer**.
 
 Route guards:
 
-- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/promote/edit/delete actions.
-- `perms.canAccessOps` (Admin OR Ops) — `/admin/ops-access`.
-- `perms.isAdmin || perms.isStaff || perms.isOps` — `/admin/mapping/*` (read view) and `/admin/geocode-review` (read view); writes inside still require `isAdmin`.
-- `perms.isAdmin || perms.isOps` — `/admin/unmapped-providers` (operational awareness; export retained).
-- Public-safe mode is blocked from every admin route via the same `isAdmin`/`canAccessOps`/`isStaff`/`isOps` checks, because public-safe collapses the effective role to `viewer`.
+- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/approve/promote/edit/delete/configuration actions.
+- `perms.canAccessOps` (Admin OR Ops) — `/admin` home, `/admin/ops-access`, `/admin/mapping/*` (read view), `/admin/geocode-review` (read view), `/admin/unmapped-providers` (read + CSV export). Writes inside still require `isAdmin`.
+- Staff is excluded from every `/admin/*` route. Staff continues to have full authenticated map access at `/`.
+- Public-safe mode collapses the effective role to `viewer`, so it fails every admin guard.
 - `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
 - DB enum `public.app_role` includes `viewer | staff | ops | admin`; `admin_set_user_role` accepts all four.
 
