@@ -42,14 +42,12 @@ interface MobileEntryProps {
   selectedCounty: string | null;
   onCountySelect: (county: string) => void;
   onClearSelection: () => void;
-  // Data + map props (forwarded to MapView / CoverageDetailPanel as-is)
+  // Data + map props (forwarded to MapView as-is)
   facilities: Facility[];
   allFacilities: Facility[];
   services: RuralService[];
-  activeEntity: MapEntity | null;
-  // Pass-throughs (kept minimal — only what MapView + Panel need on mobile)
+  // Pass-throughs (kept minimal — only what MapView needs on mobile)
   mapViewProps: Record<string, unknown>;
-  coveragePanelProps: Record<string, unknown>;
   onFacilitySelect: (f: Facility) => void;
 }
 
@@ -64,9 +62,7 @@ const MobileEntry = ({
   onClearSelection,
   facilities,
   services,
-  activeEntity,
   mapViewProps,
-  coveragePanelProps,
   onFacilitySelect,
 }: MobileEntryProps) => {
   const [address, setAddress] = useState('');
@@ -279,10 +275,6 @@ const MobileEntry = ({
             <div className="relative w-full" style={{ height: '50vh' }}>
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <MapView {...(mapViewProps as any)} />
-              {activeEntity && (
-                /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-                <CoverageDetailPanel {...(coveragePanelProps as any)} entity={activeEntity} />
-              )}
             </div>
           )}
         </section>
