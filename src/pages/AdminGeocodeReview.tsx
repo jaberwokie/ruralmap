@@ -395,7 +395,7 @@ export default function AdminGeocodeReview() {
     }
   };
 
-  if (perms.ready && !perms.isAdmin && !perms.isStaff && !perms.isOps) {
+  if (perms.ready && !perms.canAccessOps) {
     return <Navigate to="/" replace />;
   }
 
