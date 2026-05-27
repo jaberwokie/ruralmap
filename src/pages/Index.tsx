@@ -77,6 +77,8 @@ const Index = () => {
   // jumping when layout flow shifts.
   const [decisionAssistOpen, setDecisionAssistOpen] = useState(false);
   const isMobileLayout = useIsMobile();
+  const isTabletLayout = useIsTablet();
+  const sidebarExpandedWidth = isTabletLayout ? 280 : 320;
   const { ready: authReady, isAuthenticated, user, isAdmin, isStaff, signOut } = usePermissions();
   const [focusBounds, setFocusBounds] = useState<[[number, number], [number, number]] | null>(null);
   const [showInitialMapCover, setShowInitialMapCover] = useState(true);
