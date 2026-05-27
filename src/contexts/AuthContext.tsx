@@ -167,7 +167,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const effectiveRole: AppRole = isPublicSafe ? 'viewer' : role;
     const isAdmin = effectiveRole === 'admin';
+    const isOps = effectiveRole === 'ops';
     const isStaff = effectiveRole === 'staff';
+    const canAccessOps = isAdmin || isOps;
     return {
       ready,
       session: isPublicSafe ? null : session,
@@ -175,8 +177,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       role: effectiveRole,
       isAuthenticated: !isPublicSafe && !!session?.user,
       isAdmin,
+      isOps,
       isStaff,
-      // Admin-only writes. Staff is view-only — they can open admin UI but cannot mutate.
+      canAccessOps,
+      // Admin-only writes. Ops/Staff are read-only — they may open Ops/admin UI
+      // but cannot mutate. TODO: Ops data-capture permissions are TBD; grant
+      // specific Ops write capabilities here when scoped.
       canImportData: isAdmin,
       canApplyVerification: isAdmin,
       canEditMapData: isAdmin,
