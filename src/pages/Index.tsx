@@ -543,7 +543,7 @@ const Index = () => {
         aria-expanded={!desktopSidebarCollapsed}
         className="hidden md:flex absolute top-1/2 items-center justify-center h-6 w-6 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground shadow-sm"
         style={{
-          left: `${(desktopSidebarCollapsed ? 56 : 320) - 12}px`,
+          left: `${(desktopSidebarCollapsed ? 56 : sidebarExpandedWidth) - 12}px`,
           transform: 'translateY(-50%)',
           zIndex: 1000,
           transition: 'left 250ms ease',
