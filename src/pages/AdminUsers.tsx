@@ -307,11 +307,12 @@ export default function AdminUsers() {
             />
             <select
               value={inviteRole}
-              onChange={(e) => setInviteRole(e.target.value as 'viewer' | 'staff' | 'admin')}
+              onChange={(e) => setInviteRole(e.target.value as AppRole)}
               className="flex h-9 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <option value="viewer">Viewer</option>
               <option value="staff">Staff</option>
+              <option value="ops">Ops</option>
               <option value="admin">Admin</option>
             </select>
             <Button
