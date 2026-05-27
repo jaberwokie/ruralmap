@@ -230,7 +230,7 @@ When `?public=1` or equivalent logic is active:
 
 ### Auth and Roles
 
-Role hierarchy (highest → lowest): **Admin → Ops → Staff → Viewer**.
+Role tiers: **admin | ops | staff | viewer**.
 
 - **Admin**: full system access — user management, role assignment, ingestion approval, pipeline promotion, verified record edits, mapping configuration, data import, destructive actions, credentials/security settings.
 - **Ops**: full authenticated map access (same as any signed-in internal user) plus read-only backend/admin-area operational visibility. Ops CAN view the Admin home, Mapping workspace, Geocode Review, Unmapped Top Utilized Providers, and the dedicated `/admin/ops-access` page. Ops CANNOT add/remove users, change roles, approve ingestions, promote staged records, edit/delete verified records, modify mapping configuration, access metrics/training, change system settings, perform destructive actions, or access credential/security settings. All write controls remain gated by `perms.canImportData` / `perms.canApplyVerification` / `perms.canEditMapData` (Admin-only).
@@ -294,9 +294,30 @@ Every admin page follows this exact structure — no exceptions:
 | Facilities         | `/admin/mapping/facilities`     | ← Back to Overview |
 | Rural Services     | `/admin/mapping/rural-services` | ← Back to Overview |
 
+### Ops Pages
+
+| Page               | Route               | Breadcrumb         | Access      |
+| ------------------ | ------------------- | ------------------ | ----------- |
+| Ops Home           | `/ops`              | "Field Ops" title  | Admin + Ops |
+| Field Data Entry   | `/ops/data-capture` | ← Field Ops        | Admin + Ops |
+| My Activity        | `/ops/activity`     | ← Field Ops        | Admin + Ops |
+
 New admin pages must follow this pattern without exception.
 
 ---
+
+## 12a. Ops System
+
+Ops routing uses `OpsLayout.tsx`, gated on `perms.isAdmin || perms.isOps`. Ops users have no access to `/admin/*`. A "Field Ops" entry in the authenticated map header dropdown is visible to Admin and Ops only.
+
+Data capture (`/ops/data-capture`) is a standalone form — county, provider name, entry type (CHW Note / Attempted Contact), note text. Calls existing `logEvent` utility; writes to existing `user_events` table. No new tables.
+
+Activity log (`/ops/activity`) reads `user_events` for the current user only, filtered to `chw_note_added` and `attempted_contact_marked`. RLS enforced at the database layer.
+
+Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promotion, verified-record editing, mapping configuration, user/role management, or any destructive actions.
+
+---
+
 
 ## 13. Completed Phases
 
