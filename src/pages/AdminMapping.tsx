@@ -185,6 +185,13 @@ export default function AdminMapping() {
               icon={<Home className="h-4 w-4" />}
               pipelineKey="rural_services"
             />
+            <ToolCard
+              to="/admin/mapping/behavioral-health-live"
+              title="Behavioral Health (Live)"
+              description="Behavioral health records currently shown on the map."
+              icon={<Brain className="h-4 w-4" />}
+              pipelineKey="behavioral_health"
+            />
           </div>
         </section>
 
