@@ -30,6 +30,7 @@ import type { RuralService } from '@/data/rural-services';
 import type { MapEntity } from '@/types/entities';
 import { nevadaCounties } from '@/data/nevada-counties';
 import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
+import novumHealthLogo from '@/assets/novumhealth-logo.svg';
 
 interface MobileEntryProps {
   // Member access
