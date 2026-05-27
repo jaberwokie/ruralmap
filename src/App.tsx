@@ -42,6 +42,7 @@ const AdminMappingRuralServicesStaging = lazy(() => import("./pages/AdminMapping
 const AdminTraining = lazy(() => import("./pages/AdminTraining.tsx"));
 const AdminGeocodeReview = lazy(() => import("./pages/AdminGeocodeReview.tsx"));
 const AdminMetrics = lazy(() => import("./pages/AdminMetrics.tsx"));
+const AdminOpsAccess = lazy(() => import("./pages/AdminOpsAccess.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const APP_VERSION = 'public-sharing-v2';
