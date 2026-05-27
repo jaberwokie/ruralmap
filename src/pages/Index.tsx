@@ -442,7 +442,7 @@ const Index = () => {
         style={
           isMobileLayout
             ? { transition: 'width 250ms ease' }
-            : { width: desktopSidebarCollapsed ? '56px' : '320px', transition: 'width 250ms ease' }
+            : { width: desktopSidebarCollapsed ? '56px' : `${sidebarExpandedWidth}px`, transition: 'width 250ms ease' }
         }
       >
         <div className="md:hidden shrink-0 border-b border-border bg-card/60 px-3 py-2 text-[10px] leading-tight text-muted-foreground">
