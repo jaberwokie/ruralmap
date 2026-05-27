@@ -106,7 +106,8 @@ export default function AdminMetrics() {
         const d = dayKey(r.created_at);
         const entry = byDayRole.get(d) ?? { date: d, admin: 0, staff: 0, viewer: 0 };
         if (r.user_role === 'admin') entry.admin++;
-        else if (r.user_role === 'staff') entry.staff++;
+        // TODO: surface 'ops' as its own bucket in the chart; for now grouped with staff.
+        else if (r.user_role === 'staff' || r.user_role === 'ops') entry.staff++;
         else entry.viewer++;
         byDayRole.set(d, entry);
       }
