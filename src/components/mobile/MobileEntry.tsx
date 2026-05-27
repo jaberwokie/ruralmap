@@ -129,8 +129,8 @@ const MobileEntry = ({
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-background safe-area-top">
-      {/* Minimal header */}
-      <header className="px-4 pt-2 pb-2 border-b border-border bg-card">
+      {/* Minimal header — shares the bg-card chrome band with the input section below. */}
+      <header className="px-4 pt-2 pb-2 bg-card">
         <h1 className="text-base font-semibold text-foreground tracking-tight leading-snug">
           Nevada Rural Access Operations
         </h1>
