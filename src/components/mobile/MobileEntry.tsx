@@ -273,10 +273,43 @@ const MobileEntry = ({
           </button>
           {mapOpen && (
             <div className="relative w-full" style={{ height: '50vh' }}>
+              {/* Mobile curated operational layer set — automatic, opinionated.
+                  Overrides whatever desktop default layer state is in the
+                  shared store so mobile users get immediate operational
+                  readability without a toggle drawer. Embedded map search
+                  is suppressed; the entry point lives above the map. */}
               {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              <MapView {...(mapViewProps as any)} />
+              {(() => {
+                const base = mapViewProps as any;
+                const mobileLayers = {
+                  ...(base.layers ?? {}),
+                  counties: true,
+                  serviceLocations: true,
+                  behavioralHealth: true,
+                  operationalCoverage: true,
+                  services: false,
+                  tier1Highlight: false,
+                  broadbandAccess: false,
+                  cellularCoverage: false,
+                  railCorridor: false,
+                  localTransitZones: false,
+                  tribalNations: false,
+                  sshpCatchments: false,
+                  utilizationIntensity: false,
+                  engagementGap: false,
+                  fteCapacity: false,
+                };
+                const mobileProps = {
+                  ...base,
+                  layers: mobileLayers,
+                  coverageRadius: true,
+                  hideEmbeddedSearch: true,
+                };
+                return <MapView {...mobileProps} />;
+              })()}
             </div>
           )}
+
         </section>
       )}
     </div>

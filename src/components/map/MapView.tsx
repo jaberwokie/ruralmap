@@ -141,7 +141,12 @@ interface MapViewProps {
   decisionAssistVisible?: boolean;
   /** Optional Response Capability category visibility filter. Defaults to all on. */
   responseCapabilityVisible?: Record<'active' | 'scheduled' | 'remote', boolean>;
+  /** Mobile-only: suppress the embedded MemberAccessSearch overlay so the
+   *  map is purely geographic context. The mobile workflow entry point lives
+   *  above the map (address input + county selector + CTA in MobileEntry). */
+  hideEmbeddedSearch?: boolean;
 }
+
 
 // Hover preview types are owned by HoverPreviewLayer.
 
@@ -486,7 +491,7 @@ const getDisplayCoordinates = (points: PointRenderCandidate[], zoom: number) => 
 
 
 
-const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistVisible = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true } }: MapViewProps) => {
+const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters, serviceCategoryFilters, filters: externalFilters, onFacilityClick, onMapClick, searchQuery, radiusKm, coverageRadius, coverageGaps, onEntityClick, selectedCounty, onFteHubClick, selectedFteId, selectedTransitProviderId = null, activeFteCoverageIds = [], coverageRadiusKm = 120, topProvidersOnly = false, engagementRateBelow20Only = false, engagementGapView = 'priority', memberLocation, memberAnalysis, onMemberPlace, onMemberClear, onMemberGeocode, memberIsGeocoding = false, memberGeocodeError = null, memberManualMode = false, focusBounds = null, presentationIsPresenting = false, presentationPhase = 1, onPresentationToggle, onPresentationPhaseChange, decisionAssistVisible = false, responseCapabilityVisible = { active: true, scheduled: true, remote: true }, hideEmbeddedSearch = false }: MapViewProps) => {
   const { broadbandReady } = useBroadbandData();
   const { ruralServices: _baseRuralServices } = useRuralServiceData();
   const { isPublicSafe } = usePublicSafeMode();
@@ -2668,13 +2673,16 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
   return (
     <div className="relative h-full w-full">
       <div ref={containerRef} className="h-full w-full" />
-      <MemberAccessSearch
-        onSearch={(addr) => onMemberGeocode?.(addr)}
-        onClear={() => onMemberClear?.()}
-        isGeocoding={memberIsGeocoding}
-        error={memberGeocodeError}
-        hasPin={!!memberLocation}
-      />
+      {!hideEmbeddedSearch && (
+        <MemberAccessSearch
+          onSearch={(addr) => onMemberGeocode?.(addr)}
+          onClear={() => onMemberClear?.()}
+          isGeocoding={memberIsGeocoding}
+          error={memberGeocodeError}
+          hasPin={!!memberLocation}
+        />
+      )}
+
       {presentationIsPresenting && (
         <div
           aria-hidden="true"
