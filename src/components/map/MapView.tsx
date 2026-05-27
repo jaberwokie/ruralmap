@@ -145,6 +145,9 @@ interface MapViewProps {
    *  map is purely geographic context. The mobile workflow entry point lives
    *  above the map (address input + county selector + CTA in MobileEntry). */
   hideEmbeddedSearch?: boolean;
+  /** Mobile-only: render the floating MapLegend as a collapsed chip by
+   *  default. User can tap to expand. Desktop/laptop unchanged. */
+  legendCollapsible?: boolean;
 }
 
 
