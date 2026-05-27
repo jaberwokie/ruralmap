@@ -20,6 +20,7 @@ import Sidebar from '@/components/map/Sidebar';
 import CoverageDetailPanel from '@/components/map/CoverageDetailPanel';
 import DecisionAssistDrawer from '@/components/map/decision-assist/DecisionAssistDrawer';
 import MobileEntry from '@/components/mobile/MobileEntry';
+import ViewportDebugBadge from '@/components/dev/ViewportDebugBadge';
 import PresentationOverlay from '@/components/map/presentation/PresentationOverlay';
 import { useMapLayers } from '@/hooks/useMapLayers';
 import { useMapSelection } from '@/hooks/useMapSelection';
@@ -372,27 +373,31 @@ const Index = () => {
       onFiltersChange: filters.actions.setFilters,
     };
     return (
-      <MobileEntry
-        memberLocation={member.memberLocation}
-        memberIsGeocoding={member.isGeocoding}
-        memberGeocodeError={member.geocodeError}
-        onMemberGeocode={member.geocodeAddress}
-        onMemberClear={() => member.clearMember()}
-        memberAnalysis={member.analysis}
-        selectedCounty={selection.selectedCounty}
-        onCountySelect={onCounty}
-        onClearSelection={() => selection.actions.clearSelection()}
-        facilities={facility.facilities}
-        allFacilities={facility.facilities}
-        services={mergedRuralServices}
-        mapViewProps={mapViewProps}
-        onFacilitySelect={onFacility}
-      />
+      <>
+        <MobileEntry
+          memberLocation={member.memberLocation}
+          memberIsGeocoding={member.isGeocoding}
+          memberGeocodeError={member.geocodeError}
+          onMemberGeocode={member.geocodeAddress}
+          onMemberClear={() => member.clearMember()}
+          memberAnalysis={member.analysis}
+          selectedCounty={selection.selectedCounty}
+          onCountySelect={onCounty}
+          onClearSelection={() => selection.actions.clearSelection()}
+          facilities={facility.facilities}
+          allFacilities={facility.facilities}
+          services={mergedRuralServices}
+          mapViewProps={mapViewProps}
+          onFacilitySelect={onFacility}
+        />
+        <ViewportDebugBadge mobileEntryMounted={true} />
+      </>
     );
   }
 
   return (
     <div className="relative flex flex-col md:flex-row h-screen w-screen overflow-hidden bg-background">
+      <ViewportDebugBadge mobileEntryMounted={false} />
       
       
       {/*
