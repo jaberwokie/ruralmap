@@ -252,6 +252,8 @@ Route guards:
 - `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
 - DB enum `public.app_role` includes `viewer | staff | ops | admin | sysop`; `admin_set_user_role` accepts only the first four and rejects any attempt to assign or modify `sysop`.
 
+Authoritative standalone RBAC reference: `rbac-spec-v3.md` (May 2026) — supersedes all prior role definitions.
+
 ### Soft delete + SysOp recovery
 
 Tables with soft-delete support (columns `deleted_at`, `deleted_by`, `deleted_reason`):
@@ -360,6 +362,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 3**           | Admin UI for Facilities (53 records) and Rural Services (172 records); pipeline pattern; geocode confidence column | ✅     |
 | **Phase 4**           | All map-rendering consumers migrated to Supabase hooks; `Sidebar.tsx` and `Index.tsx` off static imports           | ✅     |
 | **Phase 5 (partial)** | Sentry integrated; ErrorBoundary wired; admin navigation normalized                                                | ✅     |
+| **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.
 
@@ -437,6 +440,7 @@ Any update must be tested against these risks:
 - **SSHP layer hidden in public mode** — disabled via three hard-coded guards. Not a route or visible toggle.
 - **Wrong pin is worse than no pin** — geocoder rejects mismatches rather than accepting first-hit results.
 - **Services excluded from access gap logic** — unless explicitly redesigned and documented.
+- **No hard deletes from application layer** — all deletions on data tables write soft-delete columns. Recovery is SysOp-only via `/sysop`. Foundational to audit integrity.
 
 ---
 
