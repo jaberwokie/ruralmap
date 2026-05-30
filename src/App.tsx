@@ -47,6 +47,7 @@ const AdminOpsAccess = lazy(() => import("./pages/AdminOpsAccess.tsx"));
 const OpsHome = lazy(() => import("./pages/OpsHome.tsx"));
 const OpsDataCapture = lazy(() => import("./pages/OpsDataCapture.tsx"));
 const OpsActivityLog = lazy(() => import("./pages/OpsActivityLog.tsx"));
+const SysOpHome = lazy(() => import("./pages/SysOpHome.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const APP_VERSION = 'public-sharing-v2';
@@ -126,6 +127,9 @@ const App = () => {
                 <Route path="/ops" element={<OpsHome />} />
                 <Route path="/ops/data-capture" element={<OpsDataCapture />} />
                 <Route path="/ops/activity" element={<OpsActivityLog />} />
+
+                {/* SysOp recovery console */}
+                <Route path="/sysop" element={<SysOpHome />} />
 
                 {/* Backward-compat: keep old bookmarks alive */}
                 <Route
