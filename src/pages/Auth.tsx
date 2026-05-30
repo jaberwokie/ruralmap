@@ -91,10 +91,12 @@ const Auth = () => {
             Nevada Behavioral Health
           </div>
           <h1 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-            Staff Sign In
+            {mode === 'forgot' ? 'Reset your password' : 'Staff Sign In'}
           </h1>
           <p className="mt-1 text-[12px] text-muted-foreground leading-snug">
-            The Rural Access Operations environment is read-only for the public. Sign in with an authorized staff account to access write controls.
+            {mode === 'forgot'
+              ? 'Enter the email associated with your account. We will send you a link to set a new password.'
+              : 'The Rural Access Operations environment is read-only for the public. Sign in with an authorized staff account to access write controls.'}
           </p>
         </div>
 
@@ -110,18 +112,31 @@ const Auth = () => {
               required
             />
           </div>
-          <div>
-            <label className="block text-[11px] font-medium text-foreground mb-1">Password</label>
-            <input
-              type="password"
-              autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              required
-              minLength={6}
-            />
-          </div>
+          {mode !== 'forgot' && (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[11px] font-medium text-foreground">Password</label>
+                {mode === 'signin' && (
+                  <button
+                    type="button"
+                    onClick={() => { setMode('forgot'); setErrorMsg(null); setInfoMsg(null); }}
+                    className="text-[10px] text-muted-foreground hover:text-foreground underline decoration-dotted underline-offset-2"
+                  >
+                    Forgot password?
+                  </button>
+                )}
+              </div>
+              <input
+                type="password"
+                autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-2.5 py-1.5 text-[13px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                required
+                minLength={6}
+              />
+            </div>
+          )}
 
           {errorMsg && (
             <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive">
@@ -139,22 +154,42 @@ const Auth = () => {
             disabled={submitting}
             className="w-full rounded-md bg-primary px-3 py-1.5 text-[12px] font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {submitting ? 'Working…' : mode === 'signin' ? 'Sign In' : 'Create Account'}
+            {submitting
+              ? 'Working…'
+              : mode === 'signin'
+                ? 'Sign In'
+                : mode === 'signup'
+                  ? 'Create Account'
+                  : 'Send reset link'}
           </button>
         </form>
 
         <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
-          <button
-            type="button"
-            onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setErrorMsg(null); setInfoMsg(null); }}
-            className="hover:text-foreground underline decoration-dotted underline-offset-2"
-          >
-            {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
-          </button>
+          {mode === 'forgot' ? (
+            <button
+              type="button"
+              onClick={() => { setMode('signin'); setErrorMsg(null); setInfoMsg(null); }}
+              className="hover:text-foreground underline decoration-dotted underline-offset-2"
+            >
+              Back to sign in
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setErrorMsg(null); setInfoMsg(null); }}
+              className="hover:text-foreground underline decoration-dotted underline-offset-2"
+            >
+              {mode === 'signin' ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+            </button>
+          )}
           <Link to="/" className="hover:text-foreground underline decoration-dotted underline-offset-2">
             Back to map
           </Link>
         </div>
+      </div>
+    </div>
+  );
+};
       </div>
     </div>
   );
