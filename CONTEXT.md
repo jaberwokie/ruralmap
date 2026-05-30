@@ -230,8 +230,9 @@ When `?public=1` or equivalent logic is active:
 
 ### Auth and Roles
 
-Role tiers: **admin | ops | staff | viewer**.
+Role tiers: **sysop | admin | ops | staff | viewer**.
 
+- **SysOp**: superset of Admin plus recovery capabilities. Inherits every Admin permission. Additionally can see and restore soft-deleted records across all data tables via `/sysop`. Assigned ONLY by direct DB write (or auto-assignment on signup) to the two hardcoded operator emails: `mcloutier@nvbhs.com`, `mcloutier@protonmail.com`. **No UI exists to assign, view, or modify SysOp accounts.** Admin user-management RPCs hide SysOp users and refuse to assign or alter the SysOp role.
 - **Admin**: full system access — user management, role assignment, ingestion approval, pipeline promotion, verified record edits, mapping configuration, data import, destructive actions, credentials/security settings.
 - **Ops**: full authenticated map access (same as any signed-in internal user) plus read-only backend/admin-area operational visibility. Ops CAN view the Admin home, Mapping workspace, Geocode Review, Unmapped Top Utilized Providers, and the dedicated `/admin/ops-access` page. Ops CANNOT add/remove users, change roles, approve ingestions, promote staged records, edit/delete verified records, modify mapping configuration, access metrics/training, change system settings, perform destructive actions, or access credential/security settings. All write controls remain gated by `perms.canImportData` / `perms.canApplyVerification` / `perms.canEditMapData` (Admin-only).
 - **Staff**: full authenticated map access at `/` only. No backend/admin routing, no mapping admin visibility, no ingestion or geocode review, no unmapped provider report, no operational data capture.
@@ -240,13 +241,24 @@ Role tiers: **admin | ops | staff | viewer**.
 
 Route guards:
 
-- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/approve/promote/edit/delete/configuration actions.
-- `perms.canAccessOps` (Admin OR Ops) — `/admin` home, `/admin/ops-access`, `/admin/mapping/*` (read view), `/admin/geocode-review` (read view), `/admin/unmapped-providers` (read + CSV export). Writes inside still require `isAdmin`.
-- Staff is excluded from every `/admin/*` route. Staff continues to have full authenticated map access at `/`.
+- `perms.isSysOp` — `/sysop` only. SysOp also passes every `perms.isAdmin` check because `isAdmin` is now defined as `role === 'admin' || isSysOp`.
+- `perms.isAdmin` — Admin-only pages: `/admin/users`, `/admin/metrics`, `/admin/training`, and all mapping write/approve/promote/edit/delete/configuration actions. SysOp inherits.
+- `perms.canAccessOps` (Admin/SysOp OR Ops) — `/admin` home, `/admin/ops-access`, `/admin/mapping/*` (read view), `/admin/geocode-review` (read view), `/admin/unmapped-providers` (read + CSV export). Writes inside still require `isAdmin`.
+- Staff is excluded from every `/admin/*` and `/sysop` route. Staff continues to have full authenticated map access at `/`.
 - `/ops/*` (Field Ops surface): `OpsLayout.tsx` gates to Admin OR Ops. Routes: `/ops` (home), `/ops/data-capture` (standalone CHW Note / Attempted Contact form that calls existing `logEvent`), `/ops/activity` (user's own `user_events` rows filtered to `chw_note_added` / `attempted_contact_marked`). No new tables; no provider-panel reuse. Map header dropdown shows a "Field Ops" link to `/ops` for Admin or Ops only.
-- Public-safe mode collapses the effective role to `viewer`, so it fails every admin guard.
+- Public-safe mode collapses the effective role to `viewer`, so it fails every admin and sysop guard.
 - `AdminMappingLayout.tsx` is the canonical admin navigation pattern.
-- DB enum `public.app_role` includes `viewer | staff | ops | admin`; `admin_set_user_role` accepts all four.
+- DB enum `public.app_role` includes `viewer | staff | ops | admin | sysop`; `admin_set_user_role` accepts only the first four and rejects any attempt to assign or modify `sysop`.
+
+### Soft delete + SysOp recovery
+
+Tables with soft-delete support (columns `deleted_at`, `deleted_by`, `deleted_reason`):
+`facilities`, `rural_services`, `verified_bh`, `verified_services`, `staging_bh`, `staging_services`, `staging_providers`.
+
+- RLS hides rows where `deleted_at IS NOT NULL` from every role except `sysop`. The anon (public map) policies on `verified_*` also require `deleted_at IS NULL`.
+- No hard `DELETE` is issued from the app on these tables. Existing pipeline flows (`rejectStaging*`, status changes) update `review_status` rather than deleting; any future delete handler must write `deleted_at`, `deleted_by` (actor email), and optional `deleted_reason` instead.
+- `/sysop` page (sysop-only) renders a single panel — **Deletion Recovery Queue** — listing every soft-deleted record across the seven tables with type, name/id, deleter email, timestamp, reason, and a Restore action.
+- Restore calls `sysop_restore_record(table, id)` (SECURITY DEFINER), which clears the three deleted_* columns and writes a `record_restored` row to `mapping_audit_log` with the sysop's id + email.
 
 ---
 

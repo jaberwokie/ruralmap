@@ -26,6 +26,9 @@ export type Database = {
           county: string | null
           created_at: string
           data_confidence: string | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           geocode_match_type: string | null
           geocode_provider: string | null
           geocoded_lat: number | null
@@ -66,6 +69,9 @@ export type Database = {
           county?: string | null
           created_at?: string
           data_confidence?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           geocode_match_type?: string | null
           geocode_provider?: string | null
           geocoded_lat?: number | null
@@ -106,6 +112,9 @@ export type Database = {
           county?: string | null
           created_at?: string
           data_confidence?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           geocode_match_type?: string | null
           geocode_provider?: string | null
           geocoded_lat?: number | null
@@ -207,6 +216,9 @@ export type Database = {
           coordinate_source: string | null
           county: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           geocode_match_type: string | null
           geocode_provider: string | null
           geocoded_lat: number | null
@@ -244,6 +256,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           geocode_match_type?: string | null
           geocode_provider?: string | null
           geocoded_lat?: number | null
@@ -281,6 +296,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           geocode_match_type?: string | null
           geocode_provider?: string | null
           geocoded_lat?: number | null
@@ -326,6 +344,9 @@ export type Database = {
           county: string | null
           created_at: string
           crisis_capable: boolean | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           description: string | null
           detox_capable: boolean | null
           facility_type: string | null
@@ -390,6 +411,9 @@ export type Database = {
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           detox_capable?: boolean | null
           facility_type?: string | null
@@ -454,6 +478,9 @@ export type Database = {
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           detox_capable?: boolean | null
           facility_type?: string | null
@@ -651,6 +678,9 @@ export type Database = {
           coordinate_source: string | null
           county: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           geocode_match_type: string | null
           geocode_provider: string | null
           geocoded_lat: number | null
@@ -687,6 +717,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           geocode_match_type?: string | null
           geocode_provider?: string | null
           geocoded_lat?: number | null
@@ -723,6 +756,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           geocode_match_type?: string | null
           geocode_provider?: string | null
           geocoded_lat?: number | null
@@ -894,6 +930,9 @@ export type Database = {
           coordinate_source: string | null
           county: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           description: string | null
           eligibility_notes: string | null
           email: string | null
@@ -950,6 +989,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
@@ -1006,6 +1048,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
@@ -1127,6 +1172,9 @@ export type Database = {
           county: string | null
           created_at: string
           crisis_capable: boolean | null
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           description: string | null
           detox_capable: boolean | null
           facility_type: string | null
@@ -1193,6 +1241,9 @@ export type Database = {
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           detox_capable?: boolean | null
           facility_type?: string | null
@@ -1259,6 +1310,9 @@ export type Database = {
           county?: string | null
           created_at?: string
           crisis_capable?: boolean | null
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           detox_capable?: boolean | null
           facility_type?: string | null
@@ -1323,6 +1377,9 @@ export type Database = {
           coordinate_source: string | null
           county: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          deleted_reason: string | null
           description: string | null
           eligibility_notes: string | null
           email: string | null
@@ -1380,6 +1437,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
@@ -1437,6 +1497,9 @@ export type Database = {
           coordinate_source?: string | null
           county?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          deleted_reason?: string | null
           description?: string | null
           eligibility_notes?: string | null
           email?: string | null
@@ -1530,9 +1593,24 @@ export type Database = {
         }
         Returns: boolean
       }
+      sysop_list_deleted: {
+        Args: never
+        Returns: {
+          deleted_at: string
+          deleted_by: string
+          deleted_reason: string
+          record_id: string
+          record_name: string
+          source_table: string
+        }[]
+      }
+      sysop_restore_record: {
+        Args: { _id: string; _table: string }
+        Returns: undefined
+      }
     }
     Enums: {
-      app_role: "viewer" | "staff" | "admin" | "ops"
+      app_role: "viewer" | "staff" | "admin" | "ops" | "sysop"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1660,7 +1738,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["viewer", "staff", "admin", "ops"],
+      app_role: ["viewer", "staff", "admin", "ops", "sysop"],
     },
   },
 } as const

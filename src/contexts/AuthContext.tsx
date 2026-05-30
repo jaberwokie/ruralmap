@@ -18,7 +18,7 @@ import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { isPublicSafeModeActive, setUnauthenticatedPublicSafe } from '@/hooks/usePublicSafeMode';
 
-export type AppRole = 'viewer' | 'staff' | 'ops' | 'admin';
+export type AppRole = 'viewer' | 'staff' | 'ops' | 'admin' | 'sysop';
 
 export interface Permissions {
   /** True only after auth state has been resolved at least once. */
@@ -27,11 +27,14 @@ export interface Permissions {
   user: User | null;
   role: AppRole;
   isAuthenticated: boolean;
+  /** True only for sysop (recovery-tier accounts). */
+  isSysOp: boolean;
+  /** True for admin OR sysop. SysOp inherits all admin permissions. */
   isAdmin: boolean;
-  /** True for Ops users only (not Admin). Use `canAccessOps` for "Ops or higher". */
+  /** True for Ops users only (not Admin/SysOp). Use `canAccessOps` for "Ops or higher". */
   isOps: boolean;
   isStaff: boolean;
-  /** Ops-or-Admin. Grants access to operational underlying data (read-only for Ops). */
+  /** Ops-or-Admin-or-SysOp. Grants access to operational underlying data (read-only for Ops). */
   canAccessOps: boolean;
   /** Convenience flags used by UI gating + handler guards. */
   canImportData: boolean;
@@ -46,6 +49,7 @@ const DEFAULT_PERMISSIONS: Permissions = {
   user: null,
   role: 'viewer',
   isAuthenticated: false,
+  isSysOp: false,
   isAdmin: false,
   isOps: false,
   isStaff: false,
@@ -78,7 +82,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       const value = (data as AppRole | null) ?? 'viewer';
       setRole(
-        value === 'admin' || value === 'ops' || value === 'staff' ? value : 'viewer'
+        value === 'sysop' || value === 'admin' || value === 'ops' || value === 'staff' ? value : 'viewer'
       );
     } catch (e) {
       console.warn('[auth] role lookup threw; defaulting to viewer', e);
@@ -166,7 +170,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isPublicSafe = isPublicSafeModeActive();
 
     const effectiveRole: AppRole = isPublicSafe ? 'viewer' : role;
-    const isAdmin = effectiveRole === 'admin';
+    const isSysOp = effectiveRole === 'sysop';
+    // SysOp inherits all admin permissions.
+    const isAdmin = effectiveRole === 'admin' || isSysOp;
     const isOps = effectiveRole === 'ops';
     const isStaff = effectiveRole === 'staff';
     const canAccessOps = isAdmin || isOps;
@@ -176,13 +182,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user: isPublicSafe ? null : (session?.user ?? null),
       role: effectiveRole,
       isAuthenticated: !isPublicSafe && !!session?.user,
+      isSysOp,
       isAdmin,
       isOps,
       isStaff,
       canAccessOps,
-      // Admin-only writes. Ops/Staff are read-only — they may open Ops/admin UI
-      // but cannot mutate. TODO: Ops data-capture permissions are TBD; grant
-      // specific Ops write capabilities here when scoped.
+      // Admin-only writes (sysop inherits). Ops/Staff are read-only.
       canImportData: isAdmin,
       canApplyVerification: isAdmin,
       canEditMapData: isAdmin,
