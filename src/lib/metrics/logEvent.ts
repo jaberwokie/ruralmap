@@ -12,7 +12,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-type Role = 'viewer' | 'staff' | 'ops' | 'admin';
+type Role = 'viewer' | 'staff' | 'ops' | 'admin' | 'sysop';
 
 let currentRole: Role = 'viewer';
 let currentUserId: string | null = null;
