@@ -216,6 +216,8 @@ When `?public=1` or equivalent logic is active:
 | `mapping_audit_log`                                   | Pipeline audit trail (written; not yet displayed in UI) |
 | `user_roles`                                          | Role definitions for RBAC                               |
 
+All seven data tables (`facilities`, `rural_services`, `verified_bh`, `verified_services`, `staging_bh`, `staging_services`, `staging_providers`) carry soft-delete columns: `deleted_at` (TIMESTAMPTZ), `deleted_by` (TEXT), `deleted_reason` (TEXT). RLS hides soft-deleted rows from all roles except sysop. No hard DELETEs are issued from the application layer on these tables.
+
 ### Key Files and Hooks
 
 | File                               | Purpose                                                        |
