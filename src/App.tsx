@@ -23,6 +23,7 @@ const RouteFallback = () => (
 const Platform = lazy(() => import("./pages/Platform.tsx"));
 const Briefing = lazy(() => import("./pages/Briefing.tsx"));
 const Auth = lazy(() => import("./pages/Auth.tsx"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword.tsx"));
 const AdminHome = lazy(() => import("./pages/AdminHome.tsx"));
 const AdminUsers = lazy(() => import("./pages/AdminUsers.tsx"));
 const AdminUnmappedProviders = lazy(() => import("./pages/AdminUnmappedProviders.tsx"));
@@ -95,6 +96,7 @@ const App = () => {
                 <Route path="/platform" element={<Platform />} />
                 <Route path="/briefing" element={<Briefing />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin" element={<AdminHome />} />
                 <Route path="/admin/users" element={<AdminUsers />} />
                 <Route path="/admin/ops-access" element={<AdminOpsAccess />} />
