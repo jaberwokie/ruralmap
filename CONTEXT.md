@@ -441,6 +441,7 @@ Any update must be tested against these risks:
 - **Wrong pin is worse than no pin** — geocoder rejects mismatches rather than accepting first-hit results.
 - **Services excluded from access gap logic** — unless explicitly redesigned and documented.
 - **No hard deletes from application layer** — all deletions on data tables write soft-delete columns. Recovery is SysOp-only via `/sysop`. Foundational to audit integrity.
+- **RPC authorization must be explicit for both admin and sysop** — app-layer `isAdmin` (which resolves true for both roles) does not propagate to the database layer. Any RPC that gates on `has_role('admin')` must also check `has_role('sysop')` explicitly. This applies to all existing and future admin RPCs. Sysop row-hiding and modification protection remain in place regardless.
 
 ---
 
