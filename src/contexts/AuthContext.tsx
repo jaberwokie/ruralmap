@@ -170,7 +170,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const isPublicSafe = isPublicSafeModeActive();
 
     const effectiveRole: AppRole = isPublicSafe ? 'viewer' : role;
-    const isAdmin = effectiveRole === 'admin';
+    const isSysOp = effectiveRole === 'sysop';
+    // SysOp inherits all admin permissions.
+    const isAdmin = effectiveRole === 'admin' || isSysOp;
     const isOps = effectiveRole === 'ops';
     const isStaff = effectiveRole === 'staff';
     const canAccessOps = isAdmin || isOps;
@@ -180,13 +182,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       user: isPublicSafe ? null : (session?.user ?? null),
       role: effectiveRole,
       isAuthenticated: !isPublicSafe && !!session?.user,
+      isSysOp,
       isAdmin,
       isOps,
       isStaff,
       canAccessOps,
-      // Admin-only writes. Ops/Staff are read-only — they may open Ops/admin UI
-      // but cannot mutate. TODO: Ops data-capture permissions are TBD; grant
-      // specific Ops write capabilities here when scoped.
+      // Admin-only writes (sysop inherits). Ops/Staff are read-only.
       canImportData: isAdmin,
       canApplyVerification: isAdmin,
       canEditMapData: isAdmin,
