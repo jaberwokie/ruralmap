@@ -14,7 +14,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { usePermissions } from '@/contexts/AuthContext';
 
-type Mode = 'signin' | 'signup';
+type Mode = 'signin' | 'signup' | 'forgot';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -43,13 +43,21 @@ const Auth = () => {
     setSubmitting(true);
     try {
       if (mode === 'signin') {
+        if (!password) {
+          setErrorMsg('Password is required.');
+          return;
+        }
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           setErrorMsg(error.message);
         } else {
           navigate('/', { replace: true });
         }
-      } else {
+      } else if (mode === 'signup') {
+        if (!password) {
+          setErrorMsg('Password is required.');
+          return;
+        }
         const redirectUrl = `${window.location.origin}/`;
         const { error } = await supabase.auth.signUp({
           email,
@@ -61,12 +69,38 @@ const Auth = () => {
         } else {
           setInfoMsg('Account created. If email confirmation is required, check your inbox to finish signing in.');
         }
+      } else {
+        // forgot password
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (error) {
+          setErrorMsg(error.message);
+        } else {
+          setInfoMsg('If an account exists for that email, a password reset link has been sent.');
+        }
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Unexpected error.');
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const onSubmitGuarded = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setInfoMsg(null);
+    if (!email) {
+      setErrorMsg('Email is required.');
+      return;
+    }
+    if (mode !== 'forgot' && !password) {
+      setErrorMsg('Password is required.');
+      return;
+    }
+    setSubmitting(true);
+    await onSubmit(e);
   };
 
   return (
