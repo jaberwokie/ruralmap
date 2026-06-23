@@ -2,13 +2,13 @@
  * Static smoke test: verifies index.html metadata is correct for the public
  * canonical URL. Runs without booting the app.
  *
- * NOTE: The deployed canonical is ruralmap.opsframe.io (the custom domain),
+ * NOTE: The deployed canonical is ruraltool.iterum.systems (the custom domain),
  * not ruralmap.lovable.app. We assert the canonical that actually ships.
  */
 import { describe, it, expect } from "vitest";
 import html from "../../index.html?raw";
 
-const PUBLIC_CANONICAL = "https://ruralmap.opsframe.io/";
+const PUBLIC_CANONICAL = "https://ruraltool.iterum.systems/";
 
 describe("index.html public metadata", () => {
   it("has canonical pointing to the public domain", () => {
