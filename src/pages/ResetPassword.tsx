@@ -23,30 +23,103 @@ const ResetPassword = () => {
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    // Detect recovery token in URL hash (Supabase convention).
-    const hash = window.location.hash || '';
-    const hasRecovery = hash.includes('type=recovery');
+    let cancelled = false;
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    // Supabase recovery links arrive in one of three shapes depending on the
+    // project's flow type:
+    //   1. ?code=...                       (PKCE)
+    //   2. ?token_hash=...&type=recovery   (token hash / email OTP)
+    //   3. #access_token=...&type=recovery (implicit; SDK parses the hash)
+    // Handle all three, and also allow an already-signed-in user to change
+    // their password here.
+    const sub = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+        if (cancelled) return;
         setRecovery(true);
         setReady(true);
       }
     });
 
-    // If the hash already indicates recovery, mark ready immediately.
-    if (hasRecovery) {
-      setRecovery(true);
-    }
+    const stripTokensFromUrl = () => {
+      const clean = `${window.location.origin}${window.location.pathname}`;
+      window.history.replaceState({}, '', clean);
+    };
 
-    // Allow time for Supabase to parse the hash on initial load.
-    const t = setTimeout(() => setReady(true), 400);
+    const resolve = async () => {
+      const url = new URL(window.location.href);
+      const query = url.searchParams;
+      const hash = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+
+      const code = query.get('code');
+      const tokenHash = query.get('token_hash') ?? query.get('token');
+      const type = query.get('type') ?? hash.get('type');
+      const errorDescription =
+        query.get('error_description') ?? hash.get('error_description');
+
+      // 1. PKCE code exchange
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (cancelled) return;
+        if (!error) {
+          stripTokensFromUrl();
+          setRecovery(true);
+          setReady(true);
+          return;
+        }
+        setErrorMsg(error.message);
+      }
+
+      // 2. Token hash verification
+      if (tokenHash) {
+        const { error } = await supabase.auth.verifyOtp({
+          type: 'recovery',
+          token_hash: tokenHash,
+        });
+        if (cancelled) return;
+        if (!error) {
+          stripTokensFromUrl();
+          setRecovery(true);
+          setReady(true);
+          return;
+        }
+        setErrorMsg(error.message);
+      }
+
+      // 3. Implicit hash flow — the SDK sets the session from the hash itself.
+      if (hash.get('access_token') || type === 'recovery') {
+        // Give the SDK a moment to parse the hash and emit PASSWORD_RECOVERY.
+        await new Promise((r) => setTimeout(r, 600));
+        if (cancelled) return;
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          stripTokensFromUrl();
+          setRecovery(true);
+          setReady(true);
+          return;
+        }
+      }
+
+      // 4. Already authenticated — allow an in-place password change.
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session) {
+        setRecovery(true);
+        setReady(true);
+        return;
+      }
+
+      if (errorDescription) setErrorMsg(errorDescription);
+      setReady(true);
+    };
+
+    resolve();
 
     return () => {
-      sub.subscription.unsubscribe();
-      clearTimeout(t);
+      cancelled = true;
+      sub.data.subscription.unsubscribe();
     };
   }, []);
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
