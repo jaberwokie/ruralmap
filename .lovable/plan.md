@@ -1,37 +1,37 @@
-# Admin user management: password resets, resend invite, remove user
+# Fix sysop password reset
 
-Adds password-reset and account actions to the existing `/admin/users` page so you can manage users without touching the backend directly.
+Two problems, two fixes. Your two sysop emails are hidden from `/admin/users` by design, so the only path today is the emailed reset link — and that link is not landing on a usable screen.
 
-## What you get on /admin/users
+## Why the reset link fails
 
-Each user row gets an actions menu:
+`/reset-password` only looks for a `type=recovery` token in the URL **hash**. Current Supabase recovery links deliver either:
 
-- **Send password reset** — emails a reset link that lands on `/reset-password` on the live domain. No password is ever shown to you.
-- **Set temporary password** — generates (or accepts) a temp password, shown once in a copy-to-clipboard dialog, for cases where email is not reaching the user. Fallback action, visually secondary.
-- **Resend invite** — re-sends the invite email for users who were registered but never signed up.
-- **Remove user** — deletes the auth user and their role row. Requires typing the user's email to confirm. Restricted to sysop.
+- `?code=...` (PKCE), or
+- `?token_hash=...&type=recovery`
 
-Rules kept from today's page:
-- You cannot run any of these actions on your own row (except password reset for yourself, which is allowed).
-- Sysop accounts stay hidden from the list and cannot be targeted.
-- The last active admin cannot be removed.
-- Every action produces a success/error toast and reloads the list.
+Neither is handled, so the page waits 400ms, finds no recovery session, and shows "This reset link is invalid or has expired." That matches what you're seeing.
 
-## Technical notes
+## Fix 1 — make /reset-password accept all link formats
 
-New edge function `admin-user-actions` (service-role, verifies caller JWT and requires `admin` or `sysop` in `user_roles` with `is_active`), with an `action` field:
+Rewrite the token detection in `src/pages/ResetPassword.tsx` to, in order:
 
-| action | implementation |
-| --- | --- |
-| `send_reset` | `auth.admin.generateLink({ type: 'recovery' })` or `resetPasswordForEmail` with `redirectTo` = live origin + `/reset-password` |
-| `set_temp_password` | `auth.admin.updateUserById(id, { password })`, returns the password once in the response body; also sets a `must_change_password` flag in user metadata |
-| `resend_invite` | re-upsert `pending_admin_emails`, then `auth.admin.inviteUserByEmail` (same logic as `invite-user`) |
-| `delete_user` | sysop-only; `auth.admin.deleteUser(id)` after last-active-admin check; role row cascades |
+1. `?code=` present → `supabase.auth.exchangeCodeForSession(code)`
+2. `?token_hash=` + `type=recovery` → `supabase.auth.verifyOtp({ type: 'recovery', token_hash })`
+3. hash `access_token` / `type=recovery` → existing behavior (session set by the SDK)
+4. already-authenticated session → allow the password change anyway
 
-Server-side guards: reject self-delete, reject targeting any user whose role is `sysop`, reject `delete_user` unless caller role is `sysop`, reject temp passwords under 12 chars.
+Only show the "invalid or expired" state after all four fail. Show the specific error text from the failed exchange instead of a generic message, and strip the token from the URL after a successful exchange so a refresh doesn't re-consume it.
 
-Frontend: `src/pages/AdminUsers.tsx` gains an actions column using the existing `DropdownMenu`, `AlertDialog`, and `Dialog` primitives plus `sonner` toasts. No new dependencies. No role/active logic changes.
+## Fix 2 — immediate password set for your two accounts
 
-`must_change_password` handling: on login, if the flag is set, `ResetPassword.tsx` is reused to force a password change before the map loads. This is the only touch outside admin surfaces.
+So you are not blocked on email at all, I'll set the passwords for `mcloutier@nvbhs.com` and `mcloutier@protonmail.com` directly through the backend admin API using a password you give me, then you sign in normally and can change it from `/reset-password` afterward.
 
-Docs: CONTEXT.md Section 12 (Admin System) gets the new admin user actions and the sysop-only delete restriction; Section 17 gets a line that account deletion is the one hard delete in the system and is sysop-only.
+Send me the password you want to use (or say "generate" and I'll create a strong one and give it to you once). This is a one-off backend action, no code involved.
+
+## Also worth checking
+
+Recovery links break if the redirect target isn't allow-listed. `https://ruraltool.iterum.systems/reset-password` needs to be in the auth redirect allowlist with Site URL set to `https://ruraltool.iterum.systems`. That's a Cloud settings screen you have to set manually (Cloud → Users → Auth settings) — I can't write it from here, but Fix 1 + Fix 2 get you in regardless.
+
+## Out of scope
+
+No change to how sysop accounts are hidden from `/admin/users`, no change to roles, RLS, or the invite flow.
