@@ -168,7 +168,9 @@ const ResetPassword = () => {
         {ready && !recovery ? (
           <div className="space-y-3">
             <div className="rounded-md border border-destructive/30 bg-destructive/5 px-2 py-1.5 text-[11px] text-destructive">
-              This reset link is invalid or has expired. Request a new one from the sign-in page.
+              {errorMsg
+                ? `${errorMsg} Request a new reset link from the sign-in page.`
+                : 'This reset link is invalid or has expired. Request a new one from the sign-in page.'}
             </div>
             <Link
               to="/auth"
