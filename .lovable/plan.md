@@ -1,54 +1,37 @@
-# Plan — Preview Breakpoint Debug Badge
+# Admin user management: password resets, resend invite, remove user
 
-Scope: instrumentation only. No changes to responsive logic, breakpoints, `useIsMobile`, MobileEntry, map, or Decision Assist.
+Adds password-reset and account actions to the existing `/admin/users` page so you can manage users without touching the backend directly.
 
-## 1. New component: `src/components/dev/ViewportDebugBadge.tsx`
+## What you get on /admin/users
 
-A small fixed-position badge, bottom-right, `z-[9999]`, semi-transparent dark chip with mono text.
+Each user row gets an actions menu:
 
-Displays live:
-- `window.innerWidth` × `window.innerHeight` (updated on `resize`)
-- Responsive mode derived from width:
-  - `< 768` → `mobile`
-  - `768–1279` → `tablet/laptop`
-  - `≥ 1280` → `desktop`
-- `useIsMobile()` boolean
-- `MobileEntry mounted: yes/no` — read via a prop passed from `Index.tsx` (no global state, no context)
+- **Send password reset** — emails a reset link that lands on `/reset-password` on the live domain. No password is ever shown to you.
+- **Set temporary password** — generates (or accepts) a temp password, shown once in a copy-to-clipboard dialog, for cases where email is not reaching the user. Fallback action, visually secondary.
+- **Resend invite** — re-sends the invite email for users who were registered but never signed up.
+- **Remove user** — deletes the auth user and their role row. Requires typing the user's email to confirm. Restricted to sysop.
 
-Gating (must satisfy ALL):
-- `import.meta.env.DEV === true`, OR hostname matches `localhost` / `*.lovable.app` / `*.lovable.dev`
-- Never renders when `import.meta.env.PROD` and hostname is the published custom domain (`ruralmap.lovable.app`, `ruralmap.opsframe.io`)
+Rules kept from today's page:
+- You cannot run any of these actions on your own row (except password reset for yourself, which is allowed).
+- Sysop accounts stay hidden from the list and cannot be targeted.
+- The last active admin cannot be removed.
+- Every action produces a success/error toast and reloads the list.
 
-Implementation detail: a single `isPreviewEnvironment()` helper inside the component returns `false` for production hostnames. Returns `null` early when gated off so it tree-shakes cleanly at runtime.
+## Technical notes
 
-## 2. Mount point: `src/pages/Index.tsx`
+New edge function `admin-user-actions` (service-role, verifies caller JWT and requires `admin` or `sysop` in `user_roles` with `is_active`), with an `action` field:
 
-Add one import and one render line at the root of the returned tree, passing `mobileEntryMounted={isMobile}` (or whatever variable already controls MobileEntry rendering — read the file first to match the exact flag). No other Index.tsx changes.
+| action | implementation |
+| --- | --- |
+| `send_reset` | `auth.admin.generateLink({ type: 'recovery' })` or `resetPasswordForEmail` with `redirectTo` = live origin + `/reset-password` |
+| `set_temp_password` | `auth.admin.updateUserById(id, { password })`, returns the password once in the response body; also sets a `must_change_password` flag in user metadata |
+| `resend_invite` | re-upsert `pending_admin_emails`, then `auth.admin.inviteUserByEmail` (same logic as `invite-user`) |
+| `delete_user` | sysop-only; `auth.admin.deleteUser(id)` after last-active-admin check; role row cascades |
 
-## 3. Verification pass (manual, via browser tool)
+Server-side guards: reject self-delete, reject targeting any user whose role is `sysop`, reject `delete_user` unless caller role is `sysop`, reject temp passwords under 12 chars.
 
-Resize the sandbox to each width and screenshot the badge + layout:
-- 375 (sanity mobile)
-- 768, 820, 912, 1024, 1180 (tablet/laptop band)
-- 1280, 1440 (desktop)
+Frontend: `src/pages/AdminUsers.tsx` gains an actions column using the existing `DropdownMenu`, `AlertDialog`, and `Dialog` primitives plus `sonner` toasts. No new dependencies. No role/active logic changes.
 
-For each, record in the final chat reply:
-- badge-reported `innerWidth`
-- `useIsMobile()` value
-- whether MobileEntry mounted
-- which layout actually rendered
+`must_change_password` handling: on login, if the flag is set, `ResetPassword.tsx` is reused to force a password change before the map loads. This is the only touch outside admin surfaces.
 
-## 4. Lovable preview frame note
-
-Compare the Lovable preview chrome width (reported as 768 in current `client_state`) against `window.innerWidth` at the same moment. If they diverge, document in the final reply that Lovable's preview frame is cosmetic only and real responsive validation requires browser devtools device emulation or a resized browser window.
-
-## 5. Disposition of the badge
-
-Keep the component checked in but **gated to dev/preview only** (per §1). Production builds on the custom domain will not render it. No removal step required; the gate is the ship-safe behavior the prompt asked for.
-
-## Files touched
-- `src/components/dev/ViewportDebugBadge.tsx` (new)
-- `src/pages/Index.tsx` (1 import + 1 JSX line)
-
-## Out of scope (unchanged)
-Breakpoints, `useIsMobile`, MobileEntry layout, tablet/laptop layout, map logic, Decision Assist, routing, auth.
+Docs: CONTEXT.md Section 12 (Admin System) gets the new admin user actions and the sysop-only delete restriction; Section 17 gets a line that account deletion is the one hard delete in the system and is sysop-only.
