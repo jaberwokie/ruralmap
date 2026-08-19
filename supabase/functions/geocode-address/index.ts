@@ -21,12 +21,47 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
+/**
+ * Verifies the caller's JWT and requires an active admin/sysop role.
+ * Returns null when authorized, or a Response to return immediately.
+ */
+const requireAdmin = async (
+  req: Request,
+  admin: ReturnType<typeof createClient>,
+): Promise<Response | null> => {
+  const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '').trim();
+  if (!token) return json({ error: 'Unauthorized' }, 401);
+
+  const { data: { user }, error: authError } = await admin.auth.getUser(token);
+  if (authError || !user) return json({ error: 'Unauthorized' }, 401);
+
+  const { data: roleRow } = await admin
+    .from('user_roles')
+    .select('role, is_active')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (!roleRow?.is_active || (roleRow.role !== 'admin' && roleRow.role !== 'sysop')) {
+    return json({ error: 'Admin access required' }, 403);
+  }
+  return null;
+};
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
     const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
     if (!apiKey) return json({ error: 'GOOGLE_GEOCODING_API_KEY not configured' }, 500);
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+    );
+
+    const denied = await requireAdmin(req, supabase);
+    if (denied) return denied;
+
 
     const body = await req.json().catch(() => null) as
       | { table?: string; id?: string; force?: boolean }
