@@ -108,8 +108,6 @@
     "vitest": "^4.1.0"
   },
   "overrides": {
-    "docx": {
-      "nanoid": "5.1.16"
-    }
+    "nanoid": "5.1.16"
   }
 }
