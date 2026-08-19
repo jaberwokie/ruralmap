@@ -361,12 +361,8 @@ export default function AdminMappingServices() {
 
       // Geocode facilities (53 records — single batch)
       toast.info(`Geocoding ${facilityIds.length} facilities…`);
-      const facRes = await fetch(baseUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ table: 'facilities', limit: BATCH_SIZE, offset: 0 }),
-      });
-      const facResult = await facRes.json();
+      const { data: facResult, error: facResultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'facilities', limit: BATCH_SIZE, offset: 0 } });
+      if (facResultErr) throw new Error(facResultErr.message);
       toast.success(`Facilities: ${facResult.geocoded} geocoded, ${facResult.failed} failed, ${facResult.skipped} skipped`);
 
       // Geocode rural services in batches
@@ -377,12 +373,8 @@ export default function AdminMappingServices() {
 
       while (true) {
         toast.info(`Rural services batch ${batchNum}…`);
-        const ruralRes = await fetch(baseUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ table: 'rural_services', limit: BATCH_SIZE, offset }),
-        });
-        const ruralResult = await ruralRes.json();
+        const { data: ruralResult, error: ruralResultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'rural_services', limit: BATCH_SIZE, offset } });
+        if (ruralResultErr) throw new Error(ruralResultErr.message);
 
         totalGeocoded += ruralResult.geocoded ?? 0;
         totalFailed += ruralResult.failed ?? 0;
@@ -422,12 +414,8 @@ const handleGeocodeUnresolved = async () => {
       return;
     }
     toast.info(`Found ${count} unresolved — geocoding now…`);
-    const res = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ table: 'rural_services', limit: 100, offset: 0 }),
-    });
-    const result = await res.json();
+    const { data: result, error: resultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'rural_services', limit: 100, offset: 0 } });
+    if (resultErr) throw new Error(resultErr.message);
     toast.success(`Done: ${result.geocoded} geocoded, ${result.failed} failed, ${result.skipped} skipped`);
   } catch (err) {
     toast.error(`Failed: ${String(err)}`);
