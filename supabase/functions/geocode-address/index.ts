@@ -80,11 +80,6 @@ serve(async (req) => {
     const latCol = usesLatLng ? 'lat' : 'latitude';
     const lngCol = usesLatLng ? 'lng' : 'longitude';
 
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
-    );
-
     const { data: record, error: fetchErr } = await supabase
       .from(table)
       .select('*')
