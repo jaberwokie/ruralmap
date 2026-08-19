@@ -70,14 +70,9 @@ export default function AdminMappingRuralServices() {
   });
 
   const handleGeocodeBulk = async (ids: string[]) => {
-    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
     await supabase.from('rural_services').update({ lat: null, lng: null, access_notes: null }).in('id', ids);
-    const res = await fetch(baseUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ table: 'rural_services', limit: 100, offset: 0 }),
-    });
-    const result = await res.json();
+    const { data: result, error: resultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'rural_services', limit: 100, offset: 0 } });
+    if (resultErr) throw new Error(resultErr.message);
     toast.success(`Geocoded: ${result.geocoded} success, ${result.failed} failed`);
     await refresh();
   };

@@ -442,6 +442,8 @@ Any update must be tested against these risks:
 - **Services excluded from access gap logic** — unless explicitly redesigned and documented.
 - **No hard deletes from application layer** — all deletions on data tables write soft-delete columns. Recovery is SysOp-only via `/sysop`. Foundational to audit integrity.
 - **RPC authorization must be explicit for both admin and sysop** — app-layer `isAdmin` (which resolves true for both roles) does not propagate to the database layer. Any RPC that gates on `has_role('admin')` must also check `has_role('sysop')` explicitly. This applies to all existing and future admin RPCs. Sysop row-hiding and modification protection remain in place regardless.
+- **Edge functions that write data must authenticate in-function** — Lovable edge functions deploy with `verify_jwt = false`, so `geocode-address` and `geocode-bulk` verify the caller's bearer token via `auth.getUser()` and require an active `admin`/`sysop` row in `user_roles` before any read or write. `geocode-bulk` caps per-call batch size at 100. Client callers must use `supabase.functions.invoke` (never raw `fetch`) so the session token is attached.
+- **`anon` cannot execute SECURITY DEFINER functions** — `EXECUTE` is granted to `authenticated`/`service_role` only. `has_role` remains executable by `authenticated` because RLS policies depend on it.
 
 ---
 
