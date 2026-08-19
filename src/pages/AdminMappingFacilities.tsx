@@ -70,7 +70,6 @@ export default function AdminMappingFacilities() {
   });
 
   const handleGeocodeBulk = async (ids: string[]) => {
-    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
     await supabase.from('facilities').update({ lat: null, lng: null, access_notes: null }).in('id', ids);
     const { data: result, error: resultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'facilities', limit: 100, offset: 0 } });
     if (resultErr) throw new Error(resultErr.message);

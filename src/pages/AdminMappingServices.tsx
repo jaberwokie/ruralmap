@@ -347,7 +347,6 @@ export default function AdminMappingServices() {
   const handleGeocodeStaticData = async () => {
     toast.info('Starting server-side geocode — running in batches…');
     try {
-      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
       const BATCH_SIZE = 80;
 
       // Clear existing coordinates first
@@ -396,7 +395,6 @@ export default function AdminMappingServices() {
 const handleGeocodeUnresolved = async () => {
   toast.info('Clearing failed stamps and re-geocoding unresolved rural services…');
   try {
-    const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/geocode-bulk`;
 
     // Clear access_notes on failed rural service records so they get a fresh attempt
     await supabase
