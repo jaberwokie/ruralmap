@@ -92,19 +92,47 @@ serve(async (req) => {
     return new Response('ok', { headers: corsHeaders });
   }
 
+  const jsonRes = (body: unknown, status = 200) =>
+    new Response(JSON.stringify(body), {
+      status,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    const { table, limit = 80, offset = 0 } = await req.json();
-    if (table !== 'facilities' && table !== 'rural_services') {
-      return new Response(JSON.stringify({ error: 'invalid table' }), {
-        status: 400,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Require an authenticated caller with an active admin/sysop role.
+    const token = (req.headers.get('Authorization') ?? '').replace('Bearer ', '').trim();
+    if (!token) return jsonRes({ error: 'Unauthorized' }, 401);
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) return jsonRes({ error: 'Unauthorized' }, 401);
+
+    const { data: roleRow } = await supabase
+      .from('user_roles')
+      .select('role, is_active')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (!roleRow?.is_active || (roleRow.role !== 'admin' && roleRow.role !== 'sysop')) {
+      return jsonRes({ error: 'Admin access required' }, 403);
     }
+
+    const payload = await req.json().catch(() => null) as
+      | { table?: string; limit?: number; offset?: number }
+      | null;
+    const table = payload?.table;
+    // Cap per-call work so a single request cannot loop the paid geocoders indefinitely.
+    const limit = Math.min(Math.max(Number(payload?.limit ?? 80) || 80, 1), 100);
+    const offset = Math.max(Number(payload?.offset ?? 0) || 0, 0);
+
+    if (table !== 'facilities' && table !== 'rural_services') {
+      return jsonRes({ error: 'invalid table' }, 400);
+    }
+
 
     const { data: rows } = await supabase
       .from(table)
