@@ -661,6 +661,8 @@ const Index = () => {
           facilities={facility.facilities}
           services={mergedRuralServices}
           onFacilitySelect={onFacility}
+          onServiceSelect={onService}
+          onFocusLocation={(lat, lng) => setFocusBounds([[lat - 0.08, lng - 0.08], [lat + 0.08, lng + 0.08]])}
           isPresenting={presentation.isPresenting}
           onOpenChange={setDecisionAssistOpen}
         />

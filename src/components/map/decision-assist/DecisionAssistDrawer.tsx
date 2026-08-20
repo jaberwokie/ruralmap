@@ -33,6 +33,9 @@ interface Props {
   facilities: Facility[];
   services: RuralService[];
   onFacilitySelect: (f: Facility) => void;
+  onServiceSelect?: (s: RuralService) => void;
+  /** Optional map focus callback for a selected recommendation. */
+  onFocusLocation?: (lat: number, lng: number) => void;
   isPresenting: boolean;
   /** Lifted open-state callback so siblings (e.g. the bottom-left
    *  Broadband/Cellular legend) can deterministically reposition when the
@@ -45,6 +48,8 @@ const DecisionAssistDrawer = ({
   facilities,
   services,
   onFacilitySelect,
+  onServiceSelect,
+  onFocusLocation,
   isPresenting,
   onOpenChange,
 }: Props) => {
@@ -160,6 +165,8 @@ const DecisionAssistDrawer = ({
                 domainLabel={DOMAIN_LABELS[selectedDomain]}
                 needLabel={findNeed(selectedNeed)?.label ?? selectedNeed}
                 onFacilitySelect={onFacilitySelect}
+                onServiceSelect={onServiceSelect}
+                onFocusLocation={onFocusLocation}
               />
             )}
           </div>

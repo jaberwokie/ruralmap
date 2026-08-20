@@ -16,6 +16,8 @@
 import { ArrowRight, AlertTriangle, CheckCircle2, Info, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Facility } from '@/data/facilities';
+import type { RuralService } from '@/data/rural-services';
+
 import type { DecisionAssistResult } from './decisionAssistTypes';
 import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
@@ -24,7 +26,11 @@ interface Props {
   domainLabel: string;
   needLabel: string;
   onFacilitySelect: (f: Facility) => void;
+  onServiceSelect?: (s: RuralService) => void;
+  /** Optional map focus callback (lat/lng of the selected resource). */
+  onFocusLocation?: (lat: number, lng: number) => void;
 }
+
 
 const CONFIDENCE_STYLE = {
   high:   { color: 'hsl(142, 60%, 35%)', bg: 'hsl(142, 60%, 96%)', label: 'High confidence', Icon: CheckCircle2 },
@@ -81,7 +87,7 @@ const buildPlanText = (
   return lines.join('\n');
 };
 
-const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySelect }: Props) => {
+const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySelect, onServiceSelect, onFocusLocation }: Props) => {
   const { isPublicSafe } = usePublicSafeMode();
   const conf = CONFIDENCE_STYLE[result.confidence];
   const ConfIcon = conf.Icon;
@@ -141,19 +147,26 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Primary targets</p>
           <ul className="space-y-1">
             {result.primaryTargets.map(t => {
-              const clickable = t.kind === 'facility' && t.facility;
+              const record = t.kind === 'facility' ? t.facility : t.kind === 'service' ? t.service : undefined;
+              const clickable = !!record;
               return (
-                <li key={t.id}>
+                <li key={`${t.kind}:${t.id}`}>
                   <button
                     type="button"
                     disabled={!clickable}
+                    aria-label={clickable ? `Select ${t.name}` : undefined}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (clickable && t.facility) onFacilitySelect(t.facility);
+                      if (!record) return;
+                      if (t.kind === 'facility' && t.facility) onFacilitySelect(t.facility);
+                      else if (t.kind === 'service' && t.service) onServiceSelect?.(t.service);
+                      onFocusLocation?.(record.lat, record.lng);
                     }}
                     className={`w-full text-left rounded border border-border px-2 py-1 transition-colors ${
-                      clickable ? 'hover:bg-secondary cursor-pointer' : 'cursor-default opacity-90'
+                      clickable
+                        ? 'hover:bg-secondary hover:border-primary/50 cursor-pointer'
+                        : 'cursor-default opacity-90'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -167,6 +180,7 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
                 </li>
               );
             })}
+
           </ul>
         </div>
       )}
