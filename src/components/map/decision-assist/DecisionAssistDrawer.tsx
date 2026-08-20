@@ -48,6 +48,8 @@ const DecisionAssistDrawer = ({
   facilities,
   services,
   onFacilitySelect,
+  onServiceSelect,
+  onFocusLocation,
   isPresenting,
   onOpenChange,
 }: Props) => {
