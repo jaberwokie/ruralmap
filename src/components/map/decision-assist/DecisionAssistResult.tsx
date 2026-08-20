@@ -147,19 +147,26 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
           <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-1">Primary targets</p>
           <ul className="space-y-1">
             {result.primaryTargets.map(t => {
-              const clickable = t.kind === 'facility' && t.facility;
+              const record = t.kind === 'facility' ? t.facility : t.kind === 'service' ? t.service : undefined;
+              const clickable = !!record;
               return (
-                <li key={t.id}>
+                <li key={`${t.kind}:${t.id}`}>
                   <button
                     type="button"
                     disabled={!clickable}
+                    aria-label={clickable ? `Select ${t.name}` : undefined}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      if (clickable && t.facility) onFacilitySelect(t.facility);
+                      if (!record) return;
+                      if (t.kind === 'facility' && t.facility) onFacilitySelect(t.facility);
+                      else if (t.kind === 'service' && t.service) onServiceSelect?.(t.service);
+                      onFocusLocation?.(record.lat, record.lng);
                     }}
                     className={`w-full text-left rounded border border-border px-2 py-1 transition-colors ${
-                      clickable ? 'hover:bg-secondary cursor-pointer' : 'cursor-default opacity-90'
+                      clickable
+                        ? 'hover:bg-secondary hover:border-primary/50 cursor-pointer'
+                        : 'cursor-default opacity-90'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -173,6 +180,7 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
                 </li>
               );
             })}
+
           </ul>
         </div>
       )}
