@@ -33,6 +33,9 @@ interface Props {
   facilities: Facility[];
   services: RuralService[];
   onFacilitySelect: (f: Facility) => void;
+  onServiceSelect?: (s: RuralService) => void;
+  /** Optional map focus callback for a selected recommendation. */
+  onFocusLocation?: (lat: number, lng: number) => void;
   isPresenting: boolean;
   /** Lifted open-state callback so siblings (e.g. the bottom-left
    *  Broadband/Cellular legend) can deterministically reposition when the
