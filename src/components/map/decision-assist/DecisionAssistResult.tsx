@@ -24,7 +24,11 @@ interface Props {
   domainLabel: string;
   needLabel: string;
   onFacilitySelect: (f: Facility) => void;
+  onServiceSelect?: (s: RuralService) => void;
+  /** Optional map focus callback (lat/lng of the selected resource). */
+  onFocusLocation?: (lat: number, lng: number) => void;
 }
+
 
 const CONFIDENCE_STYLE = {
   high:   { color: 'hsl(142, 60%, 35%)', bg: 'hsl(142, 60%, 96%)', label: 'High confidence', Icon: CheckCircle2 },
