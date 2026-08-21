@@ -39,10 +39,14 @@ import {
 import {
   getResourceTableContract,
   isRecordCoordinateProtected,
+  RESOURCE_TABLE_CONTRACTS,
   RESOURCE_TABLES,
   type ResourceTableContract,
 } from '../_shared/resourceTableContracts.ts';
+import { evaluateResourceEligibility } from '../_shared/resourceEligibility.ts';
+import { canonicalizeAddress } from '../_shared/geocodeNormalize.ts';
 import { stampGeocodeTag } from '../_shared/geocodeTags.ts';
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
