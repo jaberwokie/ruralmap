@@ -183,7 +183,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
 
       // --- HARD PRIVACY BOUNDARY (Phase 2B.1) --------------------------
       // The member address is sent ONLY to the internal resolver. All
-      // external geocoding (Nominatim, Census), retry variants, and highway
+      // external geocoding providers, retry variants, and highway
       // alias handling run server-side. This path FAILS CLOSED: if the
       // server boundary is unreachable, we ask for manual map placement
       // rather than exposing the address to a third-party geocoder.
