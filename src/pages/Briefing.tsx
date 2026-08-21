@@ -392,12 +392,12 @@ const Briefing = () => {
                     URL
                   </p>
                   <a
-                    href="https://ruralmap.opsframe.io"
+                    href="https://ruraltool.iterum.systems"
                     target="_blank"
                     rel="noreferrer"
                     className="block text-[13px] font-medium leading-tight text-foreground/85 underline-offset-2 hover:underline"
                   >
-                    ruralmap.opsframe.io
+                    ruraltool.iterum.systems
                   </a>
                 </CardContent>
               </Card>

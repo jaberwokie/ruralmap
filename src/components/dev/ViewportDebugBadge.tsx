@@ -15,6 +15,10 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useIsTablet } from '@/hooks/use-tablet';
 
 const PRODUCTION_HOSTS = new Set([
+  // Current deployment
+  'ruraltool.iterum.systems',
+  'ruraltool.lovable.app',
+  // Legacy published hosts (retained so the badge stays off if still resolving)
   'ruralmap.lovable.app',
   'ruralmap.opsframe.io',
 ]);
