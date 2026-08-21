@@ -386,8 +386,16 @@ export const runFccBroadbandIngestion = async (
       http_status: 200,
       content_type: 'application/zip',
       raw_payload: {
-        note: 'Raw bytes are stored immutably in Storage; see storage_bucket/storage_path and source_artifacts.',
+        note: 'Raw bytes are stored immutably in Storage; see storage_bucket / storage_path / source_artifacts.',
         as_of_date: asOfDate,
+        endpoints: {
+          list_as_of_dates: fccEndpoints.listAsOfDates(),
+          list_availability_data: fccEndpoints.listAvailabilityData(asOfDate),
+          download_file: fccEndpoints.downloadFile('{file_id}'),
+        },
+        auth_header_names: ['username', 'hash_value'],
+        derivation: summary,
+        technology_treatment: TECHNOLOGY_TREATMENT,
       },
       content_hash: contentHash,
       record_count: metrics.length,
@@ -396,17 +404,16 @@ export const runFccBroadbandIngestion = async (
       storage_bucket: EVIDENCE_BUCKET,
       storage_path: stored[0]?.storagePath ?? null,
       acquisition_protocol: ACQUISITION_PROTOCOL_VERSION,
-      source_artifacts: {
-        endpoints: {
-          list_as_of_dates: fccEndpoints.listAsOfDates(),
-          list_availability_data: fccEndpoints.listAvailabilityData(asOfDate),
-          download_file: fccEndpoints.downloadFile('{file_id}'),
-        },
-        auth_header_names: ['username', 'hash_value'],
-        artifacts: stored,
-        derivation: summary,
-        technology_treatment: TECHNOLOGY_TREATMENT,
-      },
+      /** JSONB ARRAY — the table's evidence constraint measures its length. */
+      source_artifacts: stored.map((s) => ({
+        file_name: s.fileName,
+        file_id: s.fileId,
+        role: s.role,
+        sha256: s.sha256,
+        byte_size: s.byteSize,
+        storage_bucket: EVIDENCE_BUCKET,
+        storage_path: s.storagePath,
+      })),
     });
 
     // ── 8. Compatibility boundary + atomic replacement ──
