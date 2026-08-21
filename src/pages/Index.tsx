@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 
-const ORIGIN = 'https://ruralmap.opsframe.io';
+const ORIGIN = 'https://ruraltool.iterum.systems';
 const syncRouteCanonical = (pathname: string) => {
   if (typeof document === 'undefined') return;
   const path = pathname.replace(/\/+$/, '') || '/';
@@ -192,7 +192,7 @@ const Index = () => {
     const isPublicRoute = path === '/public' || path.startsWith('/public/');
     if (!isPublicRoute) return;
 
-    const PUBLIC_URL = 'https://ruralmap.opsframe.io/public';
+    const PUBLIC_URL = 'https://ruraltool.iterum.systems/public';
 
     const setMeta = (selector: string, attr: string, value: string): (() => void) => {
       const el = document.head.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null;
