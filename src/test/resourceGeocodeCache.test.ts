@@ -265,9 +265,10 @@ describe('manual / locked precedence', () => {
       readFileSync(resolve(process.cwd(), 'supabase/functions/_shared/resourceEligibility.ts'), 'utf8'),
     ).toContain('isRecordCoordinateProtected(record, contract)');
     const bulk = readFileSync('supabase/functions/geocode-bulk/index.ts', 'utf8');
-    // Phase 2D: bulk protection is enforced through the shared table contract,
-    // covering locks AND curated manual coordinates on every resource table.
-    expect(bulk).toContain('isRecordCoordinateProtected(record, contract)');
+    // Phase 2D.1 §3: bulk protection is enforced through the same shared
+    // eligibility contract, covering locks AND curated manual coordinates.
+    expect(bulk).toContain('evaluateResourceEligibility');
+
   });
 
   it('14. automated results cannot replace manual_verified cache authority', async () => {
