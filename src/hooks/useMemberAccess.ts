@@ -1,10 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Facility } from '@/data/facilities';
-import { defaultFacilities } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
-import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { useRuralServiceData } from '@/hooks/useRuralServiceData';
-import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { getCountyForLocation } from '@/utils/countyLookup';
 import { logEvent } from '@/lib/metrics/logEvent';
 import { supabase } from '@/integrations/supabase/client';
@@ -83,6 +80,11 @@ export interface UseMemberAccessReturn {
   setManualPlacementMode: (v: boolean) => void;
 }
 
+/**
+ * Local highway hints used ONLY to phrase the manual-placement message. The
+ * alias→route expansion itself lives server-side; nothing here resolves
+ * coordinates.
+ */
 const NV_HIGHWAY_ALIASES: Record<string, string> = {
   'schurz hwy': 'US-95',
   'schurz highway': 'US-95',
@@ -91,26 +93,6 @@ const NV_HIGHWAY_ALIASES: Record<string, string> = {
   'winnemucca ranch rd': 'NV-796',
   'battle mountain hwy': 'NV-305',
 };
-
-const KNOWN_PROVIDER_COORDINATES: Array<{
-  addressTokens: string[];
-  lat: number;
-  lng: number;
-  label: string;
-}> = [
-  {
-    addressTokens: ['1685', 'schurz', 'fallon', '89406'],
-    lat: 39.4600,
-    lng: -118.7800,
-    label: '1685 Schurz Hwy, Fallon, NV 89406',
-  },
-  {
-    addressTokens: ['mine', 'round', 'mountain'],
-    lat: 38.6943,
-    lng: -117.1614,
-    label: '1 Mine Rd, Round Mountain, NV (matched from provider records)',
-  },
-];
 
 export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn => {
   const [memberLocation, setMemberLocation] = useState<MemberLocation | null>(null);
@@ -211,54 +193,13 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         serverUnavailable = true;
       }
 
-      // --- Internal static resource match (local, no network) -----------
-      // Bundled Rural Tool records only. No address ever leaves the client.
-      const inputNormalized = normalized.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      // --- NO SECOND COORDINATE AUTHORITY (Phase 2B.2) ------------------
+      // The server resolver is the single authority for member placement.
+      // The former client-side three-token fuzzy matching against bundled
+      // facilities/services and hardcoded provider coordinates is removed:
+      // it could place a member after the authoritative resolver returned
+      // unresolved. Wrong coordinates are worse than no coordinates.
 
-      const tokenMatch = (addrString: string) => {
-        const addrNorm = addrString.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-        const inputTokens = inputNormalized.split(/\s+/);
-        const addrTokens = new Set(addrNorm.split(/\s+/));
-        const matchCount = inputTokens.filter(t => t.length > 2 && addrTokens.has(t)).length;
-        return matchCount >= 3;
-      };
-
-      const facilityMatch = defaultFacilities.find(f =>
-        f.lat && f.lng && f.address &&
-        tokenMatch(`${f.address} ${f.city} ${f.county}`)
-      );
-
-      if (facilityMatch) {
-        placeMember({
-          lat: facilityMatch.lat,
-          lng: facilityMatch.lng,
-          address: `${facilityMatch.address}, ${facilityMatch.city}, NV (matched from provider records)`,
-        });
-        return;
-      }
-
-      const serviceMatch = enrichedRuralServices.find(s =>
-        s.lat && s.lng && s.address &&
-        tokenMatch(`${s.address} ${s.city ?? ''} ${s.county ?? ''}`)
-      );
-
-      if (serviceMatch) {
-        placeMember({
-          lat: serviceMatch.lat,
-          lng: serviceMatch.lng,
-          address: `${serviceMatch.address}, ${serviceMatch.city ?? 'NV'}, NV (matched from provider records)`,
-        });
-        return;
-      }
-
-      const inputTokensLower = inputNormalized.split(/\s+/);
-      const knownMatch = KNOWN_PROVIDER_COORDINATES.find(entry =>
-        entry.addressTokens.every(token => inputTokensLower.includes(token))
-      );
-      if (knownMatch) {
-        placeMember({ lat: knownMatch.lat, lng: knownMatch.lng, address: knownMatch.label });
-        return;
-      }
 
       const isHighwayAddress = highwayHint ||
         Object.keys(NV_HIGHWAY_ALIASES).some(alias => normalized.toLowerCase().includes(alias)) ||

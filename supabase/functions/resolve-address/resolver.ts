@@ -96,6 +96,13 @@ export interface ResolveRequest {
   variants?: QueryVariant[];
   /** Hard cap on external provider calls per request (abuse resistance). */
   maxExternalCalls?: number;
+  /**
+   * Phase 2B.2 — whether an unresolved (null-coordinate) row may be written to
+   * the internal cache. Defaults to false: a null-coordinate row is never a
+   * valid cache hit, so persisting one for every anonymous miss only lets an
+   * unauthenticated caller grow the table without operational benefit.
+   */
+  persistUnresolved?: boolean;
 }
 
 export interface ResolveResult {
@@ -385,26 +392,31 @@ export const resolveAddress = async (
 
   // ── 6. Unresolved. No coordinates are invented. ──────────────────────
   if (externalCalls > 0) addFailure('external_geocoding_unavailable');
+  if (ports.geocoders.length === 0) addFailure('no_approved_external_provider');
   addFailure('manual_resolution_required');
 
-  await ports.cacheUpsert({
-    lookup_key: lookupKey,
-    location_class: locationClass,
-    latitude: null,
-    longitude: null,
-    geocode_source: 'unresolved',
-    confidence: null,
-    precision: null,
-    county_name: null,
-    county_fips: null,
-    state: canon.state,
-    postal_code: canon.zip,
-    is_manual: false,
-    is_coordinate_locked: false,
-    verified_at: null,
-    expires_at: null,
-    source_metadata: { resolver: 'phase2b', failures },
-  });
+  // Negative caching is deliberately NOT permanent: a null-coordinate row is
+  // never a valid cache hit, and by default it is not written at all.
+  if (req.persistUnresolved) {
+    await ports.cacheUpsert({
+      lookup_key: lookupKey,
+      location_class: locationClass,
+      latitude: null,
+      longitude: null,
+      geocode_source: 'unresolved',
+      confidence: null,
+      precision: null,
+      county_name: null,
+      county_fips: null,
+      state: canon.state,
+      postal_code: canon.zip,
+      is_manual: false,
+      is_coordinate_locked: false,
+      verified_at: null,
+      expires_at: null,
+      source_metadata: { resolver: 'phase2b', failures },
+    });
+  }
 
   await ports.logEvent({
     event: 'resolution_failed',

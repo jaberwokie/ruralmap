@@ -38,6 +38,8 @@ export type GeocodeFailureCode =
   | 'census_failed'
   | 'google_failed'
   | 'external_geocoding_unavailable'
+  /** Phase 2B.2: no external provider is approved to receive this class. */
+  | 'no_approved_external_provider'
   | 'manual_resolution_required';
 
 /** Canonical Nevada county → FIPS. 32025 (Ormsby) is intentionally absent. */

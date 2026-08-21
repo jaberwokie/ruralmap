@@ -1,21 +1,32 @@
 /**
- * Phase 2B / 2B.1 — `resolve-address` edge function.
+ * Phase 2B / 2B.1 / 2B.2 — `resolve-address` edge function.
  *
- * HARD PRIVACY BOUNDARY. All external geocoding for member addresses happens
- * here. The browser never calls Nominatim or Census directly and never sees
- * cache internals, keys, or credentials.
+ * MEMBER-ADDRESS RESOLVER ONLY.
+ *
+ * Data-boundary rule (Phase 2B.2): a member address may be sent to the Rural
+ * Tool's own server boundary, its internal HMAC-keyed geocode authority, and
+ * canonical NovumHealth-controlled data — and to nothing else. There is
+ * currently NO external provider approved to receive member addresses:
+ *
+ *   member_address_external_provider = none_approved
+ *
+ * Public Nominatim is prohibited (OSMF policy forbids personal/confidential
+ * material) and the Census Geocoder has no documented project approval for
+ * member data, so both are removed from this pipeline. They remain available
+ * for public business/resource geocoding via the dedicated administrative
+ * functions (`geocode-address`, `geocode-bulk`, `census-geocode`).
  *
  * Flow: normalize → HMAC lookup key → canonical Rural Tool resource match →
- *       internal cache → server-side retry-variant chain across the approved
- *       external geocoders (Nominatim bounded → unbounded → Census) →
- *       Nevada validation → privacy-safe persistence → response.
+ *       internal authority/cache → unresolved (manual placement offered).
+ *
+ * Elevated `location_class` values are NOT exposed here: canonical resource
+ * maintenance uses the administrative geocoding pathways. Any caller-supplied
+ * class other than `member_address` is rejected with 403, for every role
+ * (Ops is read-only in this project's role model and must never be able to
+ * cause a service-role geocode write).
  *
  * Secrets NEVER leave this function: GEOCODE_CACHE_HMAC_SECRET,
  * SUPABASE_SERVICE_ROLE_KEY.
- *
- * Anonymous callers are supported because member-address search is a core
- * public map feature — but they are hard-pinned to `location_class =
- * 'member_address'`. Only admin/ops/sysop callers may request another class.
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
@@ -27,8 +38,6 @@ import {
 import {
   resolveAddress,
   type CachedResolution,
-  type ExternalHit,
-  type GeocoderPort,
   type ResolverPorts,
 } from './resolver.ts';
 
@@ -43,81 +52,29 @@ const json = (body: unknown, status = 200) =>
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
 
-const NV_VIEWBOX = '-120.0064,42.0022,-114.0396,35.0019';
-const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
-const CENSUS = 'https://geocoding.geo.census.gov/geocoder/locations/onelineaddress';
+/** This endpoint resolves exactly one class. Nothing else is accepted. */
+const MEMBER_CLASS: LocationClass = 'member_address';
 
-/** Elevated classes may only be requested by internal operational roles. */
-const ELEVATED_CLASSES: LocationClass[] = [
-  'facility',
-  'rural_service',
-  'provider',
-  'known_place',
-  'manual',
+/**
+ * Canonical tables that own real map-resource coordinates, with the column
+ * semantics each family actually uses.
+ *
+ * - `facilities` / `rural_services`: canonical LIVE map resources. Coordinates
+ *   are `manual_lat/lng` (curated) → `lat/lng`. Non-mappable rows are excluded.
+ * - `verified_services` / `verified_bh`: promoted verified records. Coordinates
+ *   are `manual_lat/lng` → `latitude/longitude`.
+ */
+const CANONICAL_TABLES: Array<{
+  table: 'facilities' | 'rural_services' | 'verified_services' | 'verified_bh';
+  latCol: string;
+  lngCol: string;
+  requireMappable: boolean;
+}> = [
+  { table: 'facilities', latCol: 'lat', lngCol: 'lng', requireMappable: true },
+  { table: 'rural_services', latCol: 'lat', lngCol: 'lng', requireMappable: true },
+  { table: 'verified_services', latCol: 'latitude', lngCol: 'longitude', requireMappable: false },
+  { table: 'verified_bh', latCol: 'latitude', lngCol: 'longitude', requireMappable: false },
 ];
-
-const precisionFromNominatim = (r: Record<string, unknown>): string => {
-  const cls = String(r.class ?? '');
-  const type = String(r.type ?? '');
-  if (cls === 'building' || type === 'house') return 'rooftop';
-  if (cls === 'highway') return 'street';
-  if (cls === 'place' || cls === 'boundary') return 'locality';
-  return 'approximate';
-};
-
-const nominatimPort = (bounded: boolean): GeocoderPort => ({
-  name: 'nominatim',
-  failureCode: 'nominatim_failed',
-  run: async (query) => {
-    const url = `${NOMINATIM}?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1&countrycodes=us&viewbox=${NV_VIEWBOX}${bounded ? '&bounded=1' : ''}`;
-    const res = await fetch(url, {
-      headers: { Accept: 'application/json', 'User-Agent': 'NovumHealth-RuralMap/1.0' },
-      signal: AbortSignal.timeout(8000),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!Array.isArray(data)) return null;
-    const hit = data.find((r: Record<string, unknown>) =>
-      isInNevada(parseFloat(String(r.lat)), parseFloat(String(r.lon))));
-    if (!hit) return null;
-    const addr = (hit.address ?? {}) as Record<string, string>;
-    const precision = precisionFromNominatim(hit);
-    return {
-      lat: parseFloat(String(hit.lat)),
-      lng: parseFloat(String(hit.lon)),
-      confidence: precision === 'rooftop' ? 'high' : precision === 'street' ? 'medium' : 'low',
-      precision,
-      county: addr.county ?? null,
-      postal_code: addr.postcode ?? null,
-      label: String(hit.display_name ?? ''),
-    } satisfies ExternalHit;
-  },
-});
-
-const censusPort: GeocoderPort = {
-  name: 'census',
-  failureCode: 'census_failed',
-  run: async (query) => {
-    const url = `${CENSUS}?address=${encodeURIComponent(query)}&benchmark=2020&format=json`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) return null;
-    const data = await res.json();
-    const match = data?.result?.addressMatches?.[0];
-    if (!match) return null;
-    const lat = match.coordinates?.y;
-    const lng = match.coordinates?.x;
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-    return {
-      lat,
-      lng,
-      confidence: 'medium',
-      precision: 'range',
-      county: null,
-      postal_code: match.addressComponents?.zip ?? null,
-      label: String(match.matchedAddress ?? ''),
-    } satisfies ExternalHit;
-  },
-};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -141,58 +98,42 @@ serve(async (req) => {
     const address = typeof body?.address === 'string' ? body.address.trim() : '';
     if (!address || address.length > 300) return json({ error: 'invalid_address' }, 400);
 
+    // ── location_class authorization (Phase 2B.2) ────────────────────────
+    // Member-address resolver only. No role — viewer, staff, ops, admin, or
+    // sysop — can request an elevated class through this endpoint, so no role
+    // can use it to drive a service-role write into another class.
+    if (
+      body?.location_class !== undefined &&
+      body?.location_class !== null &&
+      String(body.location_class) !== MEMBER_CLASS
+    ) {
+      return json({ error: 'location_class_forbidden' }, 403);
+    }
+    const locationClass: LocationClass = MEMBER_CLASS;
+
     const admin = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
-    // ── location_class authorization ────────────────────────────────────
-    // Public/anonymous callers are pinned to member_address. Elevated classes
-    // write into the shared internal geocode authority, so they require an
-    // internal operational role.
-    const requested = String(body?.location_class ?? 'member_address') as LocationClass;
-    let locationClass: LocationClass = 'member_address';
-
-    if (ELEVATED_CLASSES.includes(requested)) {
-      const authHeader = req.headers.get('Authorization') ?? '';
-      const token = authHeader.toLowerCase().startsWith('bearer ')
-        ? authHeader.slice(7).trim()
-        : '';
-      let allowed = false;
-      if (token) {
-        const { data: userData } = await admin.auth.getUser(token);
-        const userId = userData?.user?.id;
-        if (userId) {
-          const { data: roles } = await admin
-            .from('user_roles')
-            .select('role')
-            .eq('user_id', userId);
-          allowed = (roles ?? []).some((r: { role: string }) =>
-            ['admin', 'ops', 'sysop'].includes(r.role));
-        }
-      }
-      if (!allowed) return json({ error: 'location_class_forbidden' }, 403);
-      locationClass = requested;
-    }
-
     const ports: ResolverPorts = {
       secret,
       // ── Canonical Rural Tool resource coordinates ─────────────────────
-      // Exact canonical-address equality only. No fuzzy matching: a wrong
+      // Exact canonicalized-address equality only. No fuzzy matching: a wrong
       // canonical match would place a member at the wrong location.
       canonicalMatch: async (canonical) => {
         const canon = canonicalizeAddress(canonical);
         if (!canon.street) return null;
 
-        const tables = ['verified_services', 'verified_bh'] as const;
-        for (const table of tables) {
+        for (const spec of CANONICAL_TABLES) {
           let query = admin
-            .from(table)
-            .select('street_address, city, state, zip, county, latitude, longitude, coordinate_locked, coordinate_confidence')
+            .from(spec.table)
+            .select(
+              `street_address, city, state, zip, county, ${spec.latCol}, ${spec.lngCol}, manual_lat, manual_lng, coordinate_locked, coordinate_confidence`,
+            )
             .is('deleted_at', null)
-            .not('latitude', 'is', null)
-            .not('longitude', 'is', null)
             .limit(50);
+          if (spec.requireMappable) query = query.eq('mappable', true);
           if (canon.zip) query = query.eq('zip', canon.zip);
           else if (canon.city) query = query.ilike('city', canon.city);
           else continue;
@@ -205,9 +146,17 @@ serve(async (req) => {
             if (!street) continue;
             const rowCanon = canonicalizeAddress(`${street}, ${city}, NV ${zip}`);
             if (rowCanon.canonical !== canon.canonical) continue;
-            const lat = Number(row.latitude);
-            const lng = Number(row.longitude);
+
+            // Curated/manual coordinates outrank automated ones; a coordinate
+            // lock means the curated value is the only acceptable answer.
+            const manualLat = Number(row.manual_lat);
+            const manualLng = Number(row.manual_lng);
+            const hasManual = Number.isFinite(manualLat) && Number.isFinite(manualLng);
+            const lat = hasManual ? manualLat : Number(row[spec.latCol]);
+            const lng = hasManual ? manualLng : Number(row[spec.lngCol]);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
             if (!isInNevada(lat, lng)) continue;
+
             return {
               lat,
               lng,
@@ -271,7 +220,10 @@ serve(async (req) => {
           })
           .eq('id', row.id);
       },
-      geocoders: [nominatimPort(true), nominatimPort(false), censusPort],
+      // member_address_external_provider = none_approved.
+      // Public Nominatim: prohibited for personal/confidential material.
+      // Census Geocoder: no documented project approval for member addresses.
+      geocoders: [],
       // Safe metadata only: never the address, never a secret, never a credential.
       logEvent: (event) => {
         console.log(JSON.stringify({ scope: 'geocode', ...event }));
@@ -279,7 +231,12 @@ serve(async (req) => {
       now: () => new Date().toISOString(),
     };
 
-    const result = await resolveAddress(ports, { address, locationClass });
+    const result = await resolveAddress(ports, {
+      address,
+      locationClass,
+      // Anonymous misses do not create null-coordinate cache rows.
+      persistUnresolved: false,
+    });
 
     return json({
       resolved: result.resolved,
@@ -301,7 +258,8 @@ serve(async (req) => {
       highway_address: result.highway_address,
     });
   } catch {
-    // No internal detail leaks to the caller.
+    // No internal detail leaks to the caller. The submitted address is never
+    // echoed back in an error.
     return json({ error: 'resolver_error' }, 500);
   }
 });
