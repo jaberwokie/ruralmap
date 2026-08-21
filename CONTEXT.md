@@ -270,7 +270,32 @@ Rules:
 - The `*_share` values, `coverage_unevenness`, and `notes` are Rural Tool interpretation, not FCC measurements. They are **carried forward** from the dataset in effect. FCC per-technology availability is overlapping and must never be converted into a share that sums to 100. If carried values are missing for a county the run fails rather than inventing shares.
 - Every failure resolves to exactly one code in `failureCodes.ts` (`fcc_credentials_missing`, `fcc_authentication_failed`, `fcc_release_discovery_failed`, `fcc_no_valid_release`, `fcc_manifest_failed`, `fcc_nevada_files_missing`, `fcc_download_failed`, `fcc_source_hash_failed`, `fcc_source_parse_failed`, `fcc_validation_failed`, `fcc_transformation_failed`, `fcc_persistence_failed`), stored in `data_source_runs.failure_code` with the stage in `run_metadata`. A failed run never mutates `broadband_county_coverage`; the source is marked `failing` and the application keeps reading the previous dataset, then the static JSON.
 - `POST { "dry_run": true }` acquires, hashes, stores evidence, and derives without replacing the dataset. `POST { "as_of_date": "YYYY-MM-DD" }` pins a release.
-- Live authoritative ingestion is blocked until the two FCC secrets are configured. Unauthenticated probes of the FCC API return HTTP 401, confirming the credential boundary.
+
+### Internal geocode authority (Phase 6d — Phase 2B)
+
+Address resolution is internal-first. The browser no longer calls an external geocoder as its first dependency for member addresses; it calls the `resolve-address` edge function, which owns normalization, cache lookup, and the external chain.
+
+Resolution order (fixed, do not reorder):
+
+1. canonical Rural Tool resource coordinates (`facilities` / `rural_services` own their own coordinates — the cache is never a competing authority for them)
+2. verified / manual / coordinate-locked internal coordinates
+3. internal geocode cache (`geocode_resolutions`)
+4. approved external chain — Nominatim bounded → Nominatim unbounded → Census
+5. approved approximate fallback from that chain
+6. unresolved → manual placement
+
+Rules:
+
+- **Privacy.** `geocode_resolutions` stores no raw address text for `member_address` records. The key is `lookup_key = "v1:" + HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "<location_class>|<canonical address>")`. A plain unsalted SHA-256 of an address is forbidden — addresses are dictionary-reconstructable. The secret is server-only: never returned to the browser, never written to `source_metadata`, never logged.
+- **Normalization** lives in one place: `supabase/functions/_shared/geocodeNormalize.ts`. It only trims, collapses whitespace, lowercases, drops periods, standardizes the state token to `nv`, and reduces ZIP+4 to ZIP5. It never rewrites highway or route names — that would change what the address means. Highway aliasing stays a query-time fallback in `useMemberAccess`.
+- **Coordinate locks and manual coordinates outrank all automation.** A later automated result returns the locked record instead of overwriting it, enforced both in the resolver and by a database trigger.
+- **No invented coordinates.** An unresolved attempt is persisted as an unresolved row (null lat/lng) so it stays reportable; it never receives a guessed centroid.
+- Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `manual_resolution_required`. Secret values never appear in an error.
+- **Self-reliance condition:** when every external geocoder is unavailable but the location is already known internally, resolution still succeeds. This is covered by tests in `src/test/geocodeInternalAuthority.test.ts`.
+- `expires_at` is nullable and unset — no Rural Tool cache-expiration policy exists yet. Do not invent a duration without recording it here first.
+- Admin surface `/admin/geocode-health` shows aggregate counts by source, confidence, county, and location class. Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode. It renders no address text because none is stored.
+
+
 
 
 ### Key Files and Hooks
