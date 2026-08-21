@@ -134,8 +134,29 @@ serve(async (req) => {
     if (denied) return denied;
 
     const payload = await req.json().catch(() => null) as
-      | { table?: string; ids?: unknown; force?: boolean; mode?: string; limit?: number }
+      | { table?: string; tables?: unknown; ids?: unknown; force?: boolean; mode?: string; limit?: number }
       | null;
+
+    const secretEarly = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
+
+    /**
+     * Phase 2D.1 §9 — ONE combined cross-table dry-run. No `table` is required:
+     * the report covers every canonical RESOURCE_TABLE_CONTRACTS entry and
+     * deduplicates Census calls by canonical resource-address identity ACROSS
+     * tables. Strictly read-only.
+     */
+    if (payload?.mode === 'dry_run_revalidation') {
+      const requested = Array.isArray(payload.tables)
+        ? payload.tables.map((t) => String(t))
+        : payload.table
+          ? [String(payload.table)]
+          : RESOURCE_TABLES;
+      const tables = requested.filter((t) => !!getResourceTableContract(t));
+      if (tables.length === 0) {
+        return json({ error: 'invalid_table', supported_tables: RESOURCE_TABLES }, 400);
+      }
+      return await runCombinedDryRun(supabase, tables, payload?.limit);
+    }
 
     const table = payload?.table;
     const contract = getResourceTableContract(table);
@@ -146,14 +167,11 @@ serve(async (req) => {
       );
     }
 
-    const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
+    const secret = secretEarly;
     if (!secret) return json({ error: 'geocode_cache_secret_missing' }, 500);
 
     const actor = await callerIdentity(req, supabase);
 
-    if (payload?.mode === 'dry_run_revalidation') {
-      return await runDryRun(supabase, secret, table, contract, payload?.limit);
-    }
 
     // ── Stable explicit ID batching ────────────────────────────────────────
     const rawIds = Array.isArray(payload?.ids) ? payload!.ids : null;
