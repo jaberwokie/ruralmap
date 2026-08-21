@@ -7,9 +7,13 @@ import {
 import { createResourceCachePorts } from '../_shared/resourceCachePorts.ts';
 import {
   createCensusPort,
+  geodesicMeters,
   type CensusValidationDetail,
 } from '../_shared/censusResourceGeocoder.ts';
+
 import { getResourceTableContract, RESOURCE_TABLES } from '../_shared/resourceTableContracts.ts';
+import { evaluateResourceEligibility } from '../_shared/resourceEligibility.ts';
+
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -95,25 +99,35 @@ serve(async (req) => {
     if (fetchErr) return json({ error: `Lookup failed: ${fetchErr.message}` }, 500);
     if (!record) return json({ error: 'Record not found' }, 404);
 
-    if (record.coordinate_locked && !force) {
+    /**
+     * Phase 2D.1 — ONE eligibility/protection contract shared with
+     * `geocode-bulk`. Manual/locked authority outranks cache, Census and
+     * `force`; soft-deleted, inactive and non-mappable records are never sent
+     * to an external provider. `force` only permits re-resolving a record that
+     * already has coordinates.
+     */
+    const gate = evaluateResourceEligibility(record, contract, {
+      force: true,
+      allowExistingCoordinates: true,
+    });
+    if (!gate.eligible) {
       return json({
         success: true,
-        locked: true,
-        lat: record[latCol],
-        lng: record[lngCol],
-        confidence: record.coordinate_confidence,
-        match_type: record.geocode_match_type,
+        skipped: true,
+        reason: gate.reason,
+        protected: gate.reason === 'protected_manual_or_locked_coordinate',
+        lat: record[latCol] ?? null,
+        lng: record[lngCol] ?? null,
+        confidence: record.coordinate_confidence ?? null,
+        match_type: record.geocode_match_type ?? null,
       });
-    }
-
-    if (!record.street_address) {
-      return json({ error: 'Record has no street_address' }, 400);
     }
 
     const addressParts = buildResourceAddress(record);
 
     const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
     if (!secret) return json({ error: 'geocode_cache_secret_missing' }, 500);
+
 
     /**
      * Ordering: the internal approved cache is consulted FIRST (inside
@@ -176,13 +190,59 @@ serve(async (req) => {
       last_geocoded_at: new Date().toISOString(),
     };
 
-    if (!record.coordinate_locked) {
-      update[latCol] = lat;
-      update[lngCol] = lng;
+    // Reached only for unprotected records (protection short-circuits above).
+    update[latCol] = lat;
+    update[lngCol] = lng;
+
+    /**
+     * Phase 2D.1 §5 — record-level legacy supersession must be visible in the
+     * existing mapping audit history AS the record fields change. No new
+     * schema; historical audit rows are never rewritten.
+     */
+    const prevLat = record[latCol];
+    const prevLng = record[lngCol];
+    const prevProvider = (record.geocode_provider as string | null) ?? null;
+    const prevSource = (record.coordinate_source as string | null) ?? null;
+    const newProvider = resolution.geocode_provider;
+    const newSource = resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider;
+    const movedMeters =
+      typeof prevLat === 'number' && Number.isFinite(prevLat) &&
+      typeof prevLng === 'number' && Number.isFinite(prevLng)
+        ? Math.round(geodesicMeters(prevLat, prevLng, lat, lng))
+        : null;
+
+    try {
+      await supabase.from('mapping_audit_log').insert({
+        pipeline: contract.auditPipeline,
+        action: 'record_edited',
+        target_table: table,
+        target_row_id: id,
+        details: {
+          geocode: true,
+          previous_provider: prevProvider,
+          previous_coordinate_source: prevSource,
+          new_provider: newProvider,
+          new_coordinate_source: newSource,
+          previous_latitude: typeof prevLat === 'number' ? prevLat : null,
+          previous_longitude: typeof prevLng === 'number' ? prevLng : null,
+          new_latitude: lat,
+          new_longitude: lng,
+          distance_meters: movedMeters,
+          legacy_provider_superseded:
+            prevProvider === 'google' || prevProvider === 'nominatim',
+          validation_status: validation?.validation_status ?? null,
+          house_number_match: validation?.house_number_match ?? null,
+          street_name_match: validation?.street_name_match ?? null,
+          forced: !!force,
+        },
+      });
+    } catch {
+      // Audit failure must never abort geocoding.
     }
 
     const { error: updateErr } = await supabase.from(table).update(update).eq('id', id);
     if (updateErr) return json({ error: 'record_update_failed' }, 500);
+
 
     return json({
       success: true,

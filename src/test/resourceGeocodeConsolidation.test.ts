@@ -315,8 +315,10 @@ describe('census validation', () => {
 describe('stable id batching', () => {
   it('23. the client submits explicit ids, never numeric offsets', () => {
     expect(CLIENT).toMatch(/ids: batch/);
-    // No numeric offset is ever sent in a request body.
-    expect(CLIENT).not.toMatch(/offset:/);
+    // Resolution requests carry ids only. The sole numeric offset in the
+    // client belongs to the READ-ONLY combined dry-run slicing (Phase 2D.1 §9).
+    const resolveSection = CLIENT.slice(0, CLIENT.indexOf('runCombinedLegacyDryRun'));
+    expect(resolveSection).not.toMatch(/offset:/);
   });
 
   it('24. the server accepts an explicit id list', () => {

@@ -140,3 +140,25 @@ export const runLegacyRevalidationDryRun = async (
   if (error) throw new Error(error.message);
   return data;
 };
+
+/**
+ * Phase 2D.1 §9 — ONE combined, read-only dry-run across every supported
+ * resource table. Census calls are deduplicated by canonical resource-address
+ * identity across tables. `offset` slices the canonical address list only; it
+ * never changes grouping or inventory counters. Nothing is mutated.
+ */
+export const runCombinedLegacyDryRun = async (
+  opts: { limit?: number; offset?: number; tables?: ResourceGeocodeTable[] } = {},
+): Promise<Record<string, unknown>> => {
+  const { data, error } = await supabase.functions.invoke('geocode-bulk', {
+    body: {
+      mode: 'dry_run_revalidation',
+      limit: opts.limit ?? 100,
+      offset: opts.offset ?? 0,
+      ...(opts.tables ? { tables: opts.tables } : {}),
+    },
+  });
+  if (error) throw new Error(error.message);
+  return (data ?? {}) as Record<string, unknown>;
+};
+

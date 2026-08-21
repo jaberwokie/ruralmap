@@ -9,6 +9,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   RESOURCE_LOCATION_CLASS,
   buildResourceAddress,
@@ -258,11 +259,16 @@ describe('manual / locked precedence', () => {
     // Coordinate ownership lives in the edge functions: locked rows never get
     // their display columns rewritten.
     const addr = readFileSync('supabase/functions/geocode-address/index.ts', 'utf8');
-    expect(addr).toContain('if (!record.coordinate_locked)');
+    // Phase 2D.1 §3: enforced via the shared eligibility contract.
+    expect(addr).toContain('evaluateResourceEligibility');
+    expect(
+      readFileSync(resolve(process.cwd(), 'supabase/functions/_shared/resourceEligibility.ts'), 'utf8'),
+    ).toContain('isRecordCoordinateProtected(record, contract)');
     const bulk = readFileSync('supabase/functions/geocode-bulk/index.ts', 'utf8');
-    // Phase 2D: bulk protection is enforced through the shared table contract,
-    // covering locks AND curated manual coordinates on every resource table.
-    expect(bulk).toContain('isRecordCoordinateProtected(record, contract)');
+    // Phase 2D.1 §3: bulk protection is enforced through the same shared
+    // eligibility contract, covering locks AND curated manual coordinates.
+    expect(bulk).toContain('evaluateResourceEligibility');
+
   });
 
   it('14. automated results cannot replace manual_verified cache authority', async () => {
