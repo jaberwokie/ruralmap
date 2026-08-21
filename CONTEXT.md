@@ -270,6 +270,9 @@ Rules:
 - The `*_share` values, `coverage_unevenness`, and `notes` are Rural Tool interpretation, not FCC measurements. They are **carried forward** from the dataset in effect. FCC per-technology availability is overlapping and must never be converted into a share that sums to 100. If carried values are missing for a county the run fails rather than inventing shares.
 - Every failure resolves to exactly one code in `failureCodes.ts` (`fcc_credentials_missing`, `fcc_authentication_failed`, `fcc_release_discovery_failed`, `fcc_no_valid_release`, `fcc_manifest_failed`, `fcc_nevada_files_missing`, `fcc_download_failed`, `fcc_source_hash_failed`, `fcc_source_parse_failed`, `fcc_validation_failed`, `fcc_transformation_failed`, `fcc_persistence_failed`), stored in `data_source_runs.failure_code` with the stage in `run_metadata`. A failed run never mutates `broadband_county_coverage`; the source is marked `failing` and the application keeps reading the previous dataset, then the static JSON.
 - `POST { "dry_run": true }` acquires, hashes, stores evidence, and derives without replacing the dataset. `POST { "as_of_date": "YYYY-MM-DD" }` pins a release.
+- Live authoritative ingestion is blocked until the two FCC secrets are configured. Unauthenticated probes of the FCC API return HTTP 401, confirming the credential boundary.
+
+
 
 ### Internal geocode authority (Phase 6d — Phase 2B)
 
