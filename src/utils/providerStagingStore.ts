@@ -194,7 +194,8 @@ export const insertStagingProviders = async (
     details: { errors, warnings, valid: (data?.length ?? 0) - errors - warnings },
   });
 
-  // Background geocode each new row that has a street_address.
+  // Background geocode each new row that has a street_address. NON-FORCE:
+  // imported coordinates are preserved; only rows lacking coordinates resolve.
   (data ?? []).forEach((row, idx) => {
     const src = prepared[idx] as { street_address?: string | null };
     if (row?.id && src?.street_address) {
@@ -229,8 +230,10 @@ export const editProviderStaging = async (
     target_table: 'staging_providers', target_row_id: id,
     details: { changed_fields: Object.keys(changes) },
   });
+  // Address deliberately changed → force re-resolution of the automated
+  // coordinate. Manual/locked coordinates remain protected server-side.
   if (Object.prototype.hasOwnProperty.call(changes, 'street_address') && changes.street_address) {
-    triggerGeocodeAddress('staging_providers', id);
+    triggerGeocodeAddress('staging_providers', id, { force: true });
   }
 };
 
