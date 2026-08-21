@@ -1,10 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import type { Facility } from '@/data/facilities';
-import { defaultFacilities } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
-import { enrichedRuralServices } from '@/data/enriched-rural-services';
 import { useRuralServiceData } from '@/hooks/useRuralServiceData';
-import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { getCountyForLocation } from '@/utils/countyLookup';
 import { logEvent } from '@/lib/metrics/logEvent';
 import { supabase } from '@/integrations/supabase/client';
