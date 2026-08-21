@@ -104,6 +104,9 @@ export const validateCensusMatch = (
     state_match: null,
     zip_match: null,
     street_identity_present: streetIdentity,
+    house_number_match: null,
+    street_name_match: null,
+    street_verdict: null,
     in_nevada: null,
     validation_status: 'rejected',
     rejection_reason: null,
@@ -149,16 +152,42 @@ export const validateCensusMatch = (
     };
   }
 
+  /**
+   * Phase 2D.1 — PHYSICAL STREET IDENTITY.
+   *
+   * State/ZIP agreement alone can accept a completely unrelated street inside
+   * the same ZIP, so the source street is compared against the Census
+   * `matchedAddress` street. Insufficient street evidence rejects; it never
+   * guesses.
+   */
+  const street = compareStreetIdentity(source.street_address, match.matchedAddress);
+  if (street.verdict !== 'match') {
+    return {
+      ...base,
+      in_nevada: inNv,
+      state_match: stateMatch,
+      zip_match: zipMatch,
+      house_number_match: street.house_number_match,
+      street_name_match: street.street_name_match,
+      street_verdict: street.verdict,
+      rejection_reason: street.reason ?? 'street_identity_unverified',
+    };
+  }
+
   return {
     matched_address_available: true,
     state_match: stateMatch,
     zip_match: zipMatch,
     street_identity_present: true,
+    house_number_match: street.house_number_match,
+    street_name_match: true,
+    street_verdict: 'match',
     in_nevada: inNv,
     validation_status: 'accepted',
     rejection_reason: null,
   };
 };
+
 
 /** Conservative, honest provenance for an accepted Census result. */
 export const CENSUS_PROVENANCE = {
