@@ -144,8 +144,11 @@ describe('cache availability is independent of the Google credential', () => {
     const stampIdx = ADDRESS_FN.indexOf("coordinate_source: 'failed'");
     expect(missingIdx).toBeGreaterThan(unresolvedIdx);
     expect(missingIdx).toBeLessThan(stampIdx);
-    // Credential values are never echoed.
-    expect(ADDRESS_FN).not.toMatch(/apiKey\s*\}/);
+    // The credential is only interpolated into the provider request URL — it is
+    // never placed in a response body, and its presence is reported as a boolean.
+    expect(ADDRESS_FN).toContain('google_credentials_missing: !apiKey ? true : undefined');
+    const responses = ADDRESS_FN.match(/return json\([\s\S]*?\);/g) ?? [];
+    for (const r of responses) expect(r).not.toMatch(/\$\{apiKey\}|apiKey,|: apiKey/);
   });
 });
 
