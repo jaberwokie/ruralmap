@@ -55,26 +55,6 @@ const json = (body: unknown, status = 200) =>
 /** This endpoint resolves exactly one class. Nothing else is accepted. */
 const MEMBER_CLASS: LocationClass = 'member_address';
 
-/**
- * Canonical tables that own real map-resource coordinates, with the column
- * semantics each family actually uses.
- *
- * - `facilities` / `rural_services`: canonical LIVE map resources. Coordinates
- *   are `manual_lat/lng` (curated) → `lat/lng`. Non-mappable rows are excluded.
- * - `verified_services` / `verified_bh`: promoted verified records. Coordinates
- *   are `manual_lat/lng` → `latitude/longitude`.
- */
-const CANONICAL_TABLES: Array<{
-  table: 'facilities' | 'rural_services' | 'verified_services' | 'verified_bh';
-  latCol: string;
-  lngCol: string;
-  requireMappable: boolean;
-}> = [
-  { table: 'facilities', latCol: 'lat', lngCol: 'lng', requireMappable: true },
-  { table: 'rural_services', latCol: 'lat', lngCol: 'lng', requireMappable: true },
-  { table: 'verified_services', latCol: 'latitude', lngCol: 'longitude', requireMappable: false },
-  { table: 'verified_bh', latCol: 'latitude', lngCol: 'longitude', requireMappable: false },
-];
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
