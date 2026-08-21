@@ -327,8 +327,13 @@ describe('Geocode Static Data is non-destructive', () => {
   it('16b. server-side lock protection still governs display columns', () => {
     // Bulk now enforces protection via the shared table contract (locks AND
     // curated manual coordinates); single-record still guards the display write.
-    expect(BULK_FN).toContain('isRecordCoordinateProtected(record, contract)');
-    expect(BULK_FN).toContain('protected_manual_or_locked_coordinate');
-    expect(ADDRESS_FN).toContain('if (!record.coordinate_locked)');
+    // Phase 2D.1 §3: BOTH functions now enforce protection through the one
+    // shared eligibility contract instead of local inline checks.
+    expect(BULK_FN).toContain('evaluateResourceEligibility');
+    expect(ADDRESS_FN).toContain('evaluateResourceEligibility');
+    const eligibility = readFileSync(
+      resolve(process.cwd(), 'supabase/functions/_shared/resourceEligibility.ts'), 'utf8');
+    expect(eligibility).toContain('isRecordCoordinateProtected(record, contract)');
+    expect(eligibility).toContain('protected_manual_or_locked_coordinate');
   });
 });

@@ -258,7 +258,11 @@ describe('manual / locked precedence', () => {
     // Coordinate ownership lives in the edge functions: locked rows never get
     // their display columns rewritten.
     const addr = readFileSync('supabase/functions/geocode-address/index.ts', 'utf8');
-    expect(addr).toContain('if (!record.coordinate_locked)');
+    // Phase 2D.1 §3: enforced via the shared eligibility contract.
+    expect(addr).toContain('evaluateResourceEligibility');
+    expect(
+      readFileSync(resolve(process.cwd(), 'supabase/functions/_shared/resourceEligibility.ts'), 'utf8'),
+    ).toContain('isRecordCoordinateProtected(record, contract)');
     const bulk = readFileSync('supabase/functions/geocode-bulk/index.ts', 'utf8');
     // Phase 2D: bulk protection is enforced through the shared table contract,
     // covering locks AND curated manual coordinates on every resource table.
