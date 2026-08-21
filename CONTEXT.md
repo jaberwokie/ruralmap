@@ -1,6 +1,6 @@
 # Nevada Rural Medicaid Access Tool — Project Context Document
 
-**Last updated:** May 2026  
+**Last updated:** August 2026  
 **Version:** 2.0 (merged)  
 **Maintained by:** Maurice / NBH  
 **Purpose:** Single authoritative reference for all Claude and Lovable sessions. Paste at the start of any new conversation to preserve continuity.
@@ -16,7 +16,7 @@ The Rural Medicaid Access Tool is a live operational decision system that transl
 ## 2. What This Tool Is (and Is Not)
 
 **Working names:** Rural Medicaid Access Tool / Rural Operations Map / Nevada Behavioral Health Rural Coverage & Capacity Map  
-**Live URL:** ruralmap.opsframe.io
+**Live URL:** https://ruraltool.iterum.systems/ (custom domain; `ruraltool.lovable.app` is the platform host). `ruralmap.opsframe.io` is a legacy/historical host, not the current deployment contract.
 
 This is a **live operational decision system**, not a map, dashboard, network directory, or portfolio item.
 
@@ -195,8 +195,9 @@ When `?public=1` or equivalent logic is active:
 | Backend / DB   | Supabase (PostgreSQL with RLS, Edge Functions, Auth)                                 |
 | Mapping        | Leaflet, marker clustering, Turf.js geometry helpers                                 |
 | Styling        | Tailwind CSS                                                                         |
-| Geocoding      | Nominatim (Nevada-bounded, multi-candidate validation, address structure comparison) |
-| Error tracking | Sentry (integrated)                                                                  |
+| Geocoding — member addresses | Internal-only: `resolve-address` edge function (canonical resource match → HMAC-keyed internal cache). No approved external provider; unresolved → manual placement. See "Internal geocode authority". |
+| Geocoding — public resources  | Google Geocoding API via `geocode-address` (admin/sysop only); Nominatim + Census Geocoder chain retained in `geocode-bulk` and `census-geocode` for public business/resource addresses only |
+| Error tracking | Not currently configured — no Sentry (or other monitoring) package in `package.json`; `ErrorBoundary` logs to the console only |
 | Build tool     | Vite                                                                                 |
 | Route loading  | `src/App.tsx` eagerly imports `Index` (main map) for fastest first paint; all other routes (auth, admin, briefing, platform) are lazy-loaded via `React.lazy` + `Suspense` so they don't block startup |
 | Cross-tab sync | BroadcastChannel for verified record updates                                         |
@@ -211,8 +212,8 @@ When `?public=1` or equivalent logic is active:
 | ----------------------------------------------------- | ------------------------------------------------------- |
 | `staging_bh`, `staging_services`, `staging_providers` | Pipeline intake                                         |
 | `verified_bh`, `verified_services`                    | Verified, geocoded live records                         |
-| `facilities`                                          | 53 records (seeded Phase 3)                             |
-| `rural_services`                                      | 172 records (seeded Phase 3)                            |
+| `facilities`                                          | Seeded Phase 3 (historical count 53; live count not verified) |
+| `rural_services`                                      | Seeded Phase 3 (historical count 172; live count not verified) |
 | `mapping_audit_log`                                   | Pipeline audit trail (written; not yet displayed in UI) |
 | `user_roles`                                          | Role definitions for RBAC                               |
 | `data_sources`                                        | Source Registry — provenance/governance metadata (Phase 6a) |
@@ -311,7 +312,7 @@ Rules:
 - `expires_at` is nullable and unset — no cache-expiration policy exists yet.
 - Admin surface `/admin/geocode-health` shows aggregate counts only (Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode).
 - The `service_role` key is used only inside `resolve-address` for cache reads/writes. It is never returned, logged, or exposed.
-- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`.
+- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`, `src/test/memberCanonicalMatch.test.ts` (behavioral canonical-matcher coverage).
 
 
 
@@ -327,7 +328,7 @@ Rules:
 | `src/hooks/useMemberAccess.ts`     | Member address geocoding and access analysis                   |
 | `src/hooks/useMapLayers.ts`        | Layer toggle state including `sshpCatchments`                  |
 | `src/data/sshpCatchments.ts`       | SSHP overlay data (static; disabled in public mode)            |
-| `src/components/ErrorBoundary.tsx` | App-level error boundary, wired to Sentry                      |
+| `src/components/ErrorBoundary.tsx` | App-level error boundary; logs to console (no monitoring service) |
 | `src/utils/csvExport.ts`           | CSV export utility (built; not yet wired into all admin pages) |
 
 ### Auth and Roles
@@ -462,14 +463,14 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 2**           | Map reads from Supabase; static files retained as fallback                                                         | ✅     |
 | **Phase 3**           | Admin UI for Facilities (53 records) and Rural Services (172 records); pipeline pattern; geocode confidence column | ✅     |
 | **Phase 4**           | All map-rendering consumers migrated to Supabase hooks; `Sidebar.tsx` and `Index.tsx` off static imports           | ✅     |
-| **Phase 5 (partial)** | Sentry integrated; ErrorBoundary wired; admin navigation normalized                                                | ✅     |
+| **Phase 5 (partial)** | ErrorBoundary wired (console-only; no monitoring service configured in current HEAD); admin navigation normalized                                                | ✅     |
 | **Phase 6a**          | Source Registry foundation: `data_sources` + `data_source_runs` with role-scoped RLS, deterministic source-health helper, `/admin/data-sources` governance surface, admin-only gap warnings, 19 seeded sources from repository evidence. No live data source changed. | ✅     |
 | **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
-| **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC URL still UNKNOWN. | ✅     |
+| **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC endpoint later established in Phase 6c (`https://broadbandmap.fcc.gov/api/public/map`, protocol `fcc-bdc-public-data-api-v1`); binding/code complete, live authoritative ingestion still blocked pending FCC credentials. | ✅     |
 | **Phase 6c**          | FCC broadband bound to the real BDC Public Data API: credentialed server-side acquisition (fail-closed on missing secrets), release discovery, county summary artifact selection, immutable hashed raw evidence in the private `source-evidence` bucket, reproducible `fcc-bdc-summary-county-v1` derivation with satellite excluded, single-code failure taxonomy, dry-run mode, and a per-run FCC-vs-current comparison report. Provenance and methodology differences documented in `docs/fcc-broadband-provenance.md`. Live authoritative run pending FCC credentials. | ◑ blocked on credentials |
 | **Phase 6d**          | Internal geocode authority: `geocode_resolutions` keyed by server-side HMAC digest (no raw member address stored), `resolve-address` edge function moving member geocoding behind the server boundary, internal-first resolution order with external geocoders demoted to fallback, coordinate-lock/manual precedence enforced in resolver and trigger, distinguishable failure taxonomy, `/admin/geocode-health` aggregate surface (Ops read-only), 22 privacy/resolution/resilience/geography tests. Known locations now resolve with zero external calls, including when every external geocoder is unavailable. | ✅     |
 | **Phase 6d.1**        | Phase 2B.1 hardening: browser member path fails closed with no external geocoder calls, retry-variant + highway-alias chain moved server-side, production `canonicalMatch` against `verified_services`/`verified_bh`, `location_class` authorization (public callers pinned to `member_address`), payload/call caps, opaque error codes, 19 boundary tests in `src/test/geocodeBoundary.test.ts`. | ✅     |
-| **Phase 6d.2**        | Phase 2B.2 production-safety closure: `resolve-address` is a member-address-only resolver (no elevated classes, so Ops can never drive a service-role geocode write), public Nominatim and Census removed from `member_address` resolution (`member_address_external_provider = none_approved`), canonical exact matching extended to `facilities`/`rural_services` with mappable/deleted/lock/manual-coordinate semantics (matcher extracted to `resolve-address/canonicalMatch.ts`; `verified_services`/`verified_bh` additionally require `active_status = true`), client-side three-token fuzzy placement and `KNOWN_PROVIDER_COORDINATES` removed, anonymous unresolved searches no longer persisted, 25 policy tests in `src/test/memberGeocodePolicy.test.ts`. | ✅     |
+| **Phase 6d.2**        | Phase 2B.2 production-safety closure: `resolve-address` is a member-address-only resolver (no elevated classes, so Ops can never drive a service-role geocode write), public Nominatim and Census removed from `member_address` resolution (`member_address_external_provider = none_approved`), canonical exact matching extended to `facilities`/`rural_services` with mappable/deleted/lock/manual-coordinate semantics (matcher extracted to `resolve-address/canonicalMatch.ts`; `verified_services`/`verified_bh` additionally require `active_status = true`), client-side three-token fuzzy placement and `KNOWN_PROVIDER_COORDINATES` removed, anonymous unresolved searches no longer persisted, 25 policy tests in `src/test/memberGeocodePolicy.test.ts` plus 19 behavioral matcher tests in `src/test/memberCanonicalMatch.test.ts`. | ✅     |
 
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.
@@ -574,7 +575,7 @@ Before changing any component, verify:
 
 ## 19. Geocoding Pipeline
 
-Address-to-coordinate enrichment for `facilities` and `staging_providers` records.
+Administrative address-to-coordinate enrichment for **public resource records** (never member addresses — those are handled only by `resolve-address`).
 
 ### Provider
 - **Google Geocoding API** is the sole provider.
@@ -584,7 +585,9 @@ Address-to-coordinate enrichment for `facilities` and `staging_providers` record
 ### Edge function
 - Path: `supabase/functions/geocode-address/index.ts`
 - Deployed name: `geocode-address`
-- Accepts `POST { table: "facilities" | "staging_providers", id: string, force?: boolean }`
+- Accepts `POST { table, id, force? }` where `table` is one of `facilities`, `rural_services`, `verified_services`, `verified_bh`, `staging_providers`.
+- Requires a bearer token belonging to an active `admin` or `sysop` role; all other callers receive 401/403.
+- Column semantics: `facilities` / `rural_services` use `lat`/`lng`; `verified_services`, `verified_bh`, `staging_providers` use `latitude`/`longitude`.
 - Calls Google with Nevada/US component bias, maps `location_type` → `coordinate_confidence` (`rooftop` | `range` | `geometric` | `approximate`).
 
 ### Trigger path
@@ -616,6 +619,6 @@ Re-geocoding only happens when `street_address` changes (which re-triggers the h
 - Map rendering reads from these display columns, not from `geocoded_*`.
 
 ### Manual corrections
-- `manual_lat`, `manual_lng` exist on `facilities` only.
+- `manual_lat`, `manual_lng` exist on `facilities`, `rural_services`, `verified_services`, and `verified_bh` (per generated database types); curated manual coordinates are preferred over automated ones by the canonical matcher.
 - Used for human-entered corrections that should survive re-geocoding.
 - Staging providers have no manual override columns — corrections happen at promotion or after live.
