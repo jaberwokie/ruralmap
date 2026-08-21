@@ -15,6 +15,8 @@
 
 export type LocationClass =
   | 'member_address'
+  /** Phase 2C — public facility/service/provider address reuse namespace. */
+  | 'resource_address'
   | 'facility'
   | 'rural_service'
   | 'provider'
