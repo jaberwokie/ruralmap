@@ -75,8 +75,11 @@ const CONFIDENCE_STYLES: Record<string, string> = {
   failed: 'bg-red-200 text-red-950 border-red-500',
 };
 
+// Phase 2C: a low-confidence result must stay reviewable even when this record
+// received it from the internal resource cache rather than a fresh provider call.
 const REVIEW_OR_FILTER =
-  'coordinate_source.eq.failed,and(coordinate_source.eq.google,coordinate_confidence.in.(geometric,approximate))';
+  'coordinate_source.eq.failed,and(coordinate_source.in.(google,internal_cache),coordinate_confidence.in.(geometric,approximate,low))';
+
 
 const confidenceLabel = (row: ReviewRow): string => {
   if (row.coordinate_source === 'failed') return 'failed';
