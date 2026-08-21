@@ -4,7 +4,7 @@
  * Mirrors the Service / BH staging stores but is intentionally narrower:
  *   - inserts CSV rows into `staging_providers`
  *   - validates required fields + coordinate ranges
- *   - bulk-geocodes mappable rows missing coords (Nominatim, reused util)
+ *   - bulk-geocodes mappable rows missing coords (server-side: internal cache → Census)
  *   - on promote, writes the row into the existing imported facilities
  *     store (`appendImportedFacilities`) so it appears as a pin on the map
  *     immediately, exactly like the legacy import path
@@ -25,9 +25,10 @@ import {
 } from '@/utils/importedFacilitiesStore';
 import { findProviderMatch } from '@/utils/providerMatchKey';
 import {
-  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, spotCheckCoordinate,
+  summarizeGeocodeRun, stampGeocodeTag,
   type GeocodeOutcome, type GeocodeRunSummary,
 } from '@/utils/serviceGeocode';
+import { geocodeResourceIds } from '@/utils/resourceGeocodeClient';
 import type { Facility, FacilityType } from '@/data/facilities';
 import { triggerGeocodeAddress } from '@/utils/triggerGeocode';
 
@@ -367,84 +368,17 @@ export const promoteStagingProvidersBulk = async (
 
 export const geocodeStagingProvidersBulk = async (
   ids: string[],
-  options?: { onProgress?: (done: number, total: number, last: GeocodeOutcome) => void },
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
 ): Promise<GeocodeRunSummary> => {
-  const all = await listStagingProviders();
-  const byId = new Map(all.map((r) => [r.id, r] as const));
-  const targets = ids.map((id) => byId.get(id)).filter((r): r is StagingProviderRow => !!r);
-
-  // Adapt rows to the GeocodeCandidate shape; provider rows always treated as mappable.
-  const candidates = targets.map((r) => ({
-    id: r.id,
-    mappable: true as const,
-    latitude: r.latitude,
-    longitude: r.longitude,
-    street_address: r.street_address,
-    city: r.city,
-    state: r.state,
-    zip: r.zip,
-    county: r.county,
-    access_notes: r.access_notes,
-  }));
-
-  const outcomes = await geocodeMany(candidates, options?.onProgress);
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (!row) continue;
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' =
-        oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await editProviderStaging(row.id, {
-        latitude: oc.latitude,
-        longitude: oc.longitude,
-        access_notes: stampedNotes,
-      });
-
-      // Reverse geocode spot-check
-      const spotCheck = await spotCheckCoordinate(
-        oc.latitude,
-        oc.longitude,
-        row.zip,
-        row.street_address,
-      );
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await editProviderStaging(row.id, {
-          access_notes: downgradedNotes,
-        });
-      }
-
-      await writeAudit({
-        pipeline: 'provider_mapping',
-        action: 'record_edited',
-        target_table: 'staging_providers',
-        target_row_id: row.id,
-        details: {
-          geocode: true,
-          strategy: oc.strategy,
-          confidence: publicConfidence,
-          latitude: oc.latitude,
-          longitude: oc.longitude,
-          spotCheck,
-        },
-      });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await editProviderStaging(row.id, {
-        access_notes: stampedNotes,
-      });
-      await writeAudit({
-        pipeline: 'provider_mapping',
-        action: 'record_edited',
-        target_table: 'staging_providers',
-        target_row_id: row.id,
-        details: { geocode: true, status: 'none', reason: oc.reason },
-      });
-    }
-  }
-  return summarizeGeocodeRun(outcomes);
+  /**
+   * Phase 2D — server-side only (internal approved cache → Census). No browser
+   * geocoding, no reverse spot check, stable explicit IDs.
+   */
+  return await geocodeResourceIds('staging_providers', ids, {
+    onProgress: options?.onProgress,
+  });
 };
 
 export const listProviderAudit = (limit = 200): Promise<AuditLogRow[]> =>

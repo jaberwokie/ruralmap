@@ -69,9 +69,10 @@ const cacheRow = (
   location_class: 'resource_address',
   latitude: 39.1638,
   longitude: -119.7674,
-  geocode_source: 'google',
-  confidence: 'rooftop',
-  precision: 'rooftop',
+  // Phase 2D: only `census` / `manual_verified` rows are reusable authority.
+  geocode_source: 'census',
+  confidence: 'low',
+  precision: 'approximate',
   county_name: 'Carson City',
   county_fips: '32510',
   state: 'NV',
@@ -79,26 +80,34 @@ const cacheRow = (
   is_manual: false,
   is_coordinate_locked: false,
   verified_at: null,
-  source_metadata: { match_type: 'ROOFTOP' },
+  source_metadata: { match_type: 'census_onelineaddress' },
   ...over,
 });
 
-const googleOk: ResourceExternalPort = {
-  name: 'google',
-  run: async () => ({ lat: 39.1, lng: -119.7, confidence: 'rooftop', match_type: 'ROOFTOP' }),
+/**
+ * Phase 2D: the approved external public-resource provider is the U.S. Census
+ * Geocoder. Google is retired as an ACTIVE provider, so these ports model
+ * Census availability instead.
+ */
+const providerOk: ResourceExternalPort = {
+  name: 'census',
+  run: async () => ({
+    lat: 39.1, lng: -119.7, confidence: 'low',
+    match_type: 'census_onelineaddress', precision: 'approximate',
+  }),
 };
-const googleDown: ResourceExternalPort = {
-  name: 'google',
+const providerDown: ResourceExternalPort = {
+  name: 'census',
   run: async () => { throw new Error('provider unavailable'); },
 };
 
 /* ───────────── 1-3. cache reuse must not depend on Google ───────────── */
 
-describe('cache availability is independent of the Google credential', () => {
-  it('1. cache hit resolves with an EMPTY provider chain (no Google key configured)', async () => {
+describe('cache availability is independent of any provider credential', () => {
+  it('1. cache hit resolves with an EMPTY provider chain (no external provider available)', async () => {
     const key = await computeResourceLookupKey(ADDR, SECRET);
-    // No geocoders at all — this is exactly the shape produced when
-    // GOOGLE_GEOCODING_API_KEY is absent.
+    // No geocoders at all — this is exactly the shape produced when every
+    // external provider is unavailable.
     const h = harness([], [cacheRow(key)]);
     const r = await resolveResourceAddress(h.ports, { address: ADDR });
     expect(r.resolved).toBe(true);
@@ -109,7 +118,7 @@ describe('cache availability is independent of the Google credential', () => {
   });
 
   it('2. cache miss requires an available external provider', async () => {
-    const withProvider = harness([googleOk]);
+    const withProvider = harness([providerOk]);
     const ok = await resolveResourceAddress(withProvider.ports, { address: ADDR });
     expect(ok.resolved).toBe(true);
     expect(ok.external_calls).toBe(1);
@@ -122,31 +131,21 @@ describe('cache availability is independent of the Google credential', () => {
     expect(noProvider.rows.size).toBe(0); // no false cache row
   });
 
-  it('3. geocode-address evaluates the credential only inside the provider chain', () => {
-    const keyIdx = ADDRESS_FN.indexOf("Deno.env.get('GOOGLE_GEOCODING_API_KEY')");
+  it('3. geocode-address consults the internal cache before any provider', () => {
     const secretIdx = ADDRESS_FN.indexOf("Deno.env.get('GEOCODE_CACHE_HMAC_SECRET')");
     const resolveIdx = ADDRESS_FN.indexOf('resolveResourceAddress(');
-    expect(keyIdx).toBeGreaterThan(-1);
-    // The credential is no longer a hard precondition of the whole request…
-    expect(ADDRESS_FN).not.toMatch(/GOOGLE_GEOCODING_API_KEY not configured/);
-    // …it is only used to decide whether a provider exists.
-    expect(ADDRESS_FN).toContain('apiKey ? [googlePort] : []');
     expect(secretIdx).toBeGreaterThan(-1);
     expect(resolveIdx).toBeGreaterThan(secretIdx);
+    // No provider credential is a precondition of the request any more.
+    expect(ADDRESS_FN).not.toMatch(/GOOGLE_GEOCODING_API_KEY not configured/);
+    expect(ADDRESS_FN).not.toMatch(/apiKey \? \[googlePort\] : \[\]/);
   });
 
-  it('3b. missing credential yields a stable code only on a cache miss', () => {
-    expect(ADDRESS_FN).toContain("error: 'google_credentials_missing'");
-    // The credential-missing branch lives inside the unresolved path, before
-    // any record stamp or cache mutation.
-    const unresolvedIdx = ADDRESS_FN.indexOf('if (!resolution.resolved');
-    const missingIdx = ADDRESS_FN.indexOf("error: 'google_credentials_missing'");
-    const stampIdx = ADDRESS_FN.indexOf("coordinate_source: 'failed'");
-    expect(missingIdx).toBeGreaterThan(unresolvedIdx);
-    expect(missingIdx).toBeLessThan(stampIdx);
-    // The credential is only interpolated into the provider request URL — it is
-    // never placed in a response body, and its presence is reported as a boolean.
-    expect(ADDRESS_FN).toContain('google_credentials_missing: !apiKey ? true : undefined');
+  it('3b. Google is retired as the active provider; Census is used instead', () => {
+    expect(ADDRESS_FN).not.toMatch(/maps\.googleapis\.com/);
+    expect(ADDRESS_FN).not.toContain("error: 'google_credentials_missing'");
+    expect(ADDRESS_FN).toContain('createCensusPort');
+    // No credential value can reach a response body.
     const responses = ADDRESS_FN.match(/return json\([\s\S]*?\);/g) ?? [];
     for (const r of responses) expect(r).not.toMatch(/\$\{apiKey\}|apiKey,|: apiKey/);
   });
@@ -157,7 +156,7 @@ describe('cache availability is independent of the Google credential', () => {
 describe('force with the provider unavailable', () => {
   it('4. failed forced refresh preserves last-known-good cache', async () => {
     const key = await computeResourceLookupKey(ADDR, SECRET);
-    const h = harness([googleDown], [cacheRow(key, { confidence: 'range' })]);
+    const h = harness([providerDown], [cacheRow(key, { confidence: 'range' })]);
     const r = await resolveResourceAddress(h.ports, { address: ADDR, force: true });
     expect(r.resolved).toBe(true);
     expect(r.lat).toBe(39.1638);
@@ -168,13 +167,13 @@ describe('force with the provider unavailable', () => {
 
   it('5. failed force is distinguishable from a successful fresh refresh', async () => {
     const key = await computeResourceLookupKey(ADDR, SECRET);
-    const failed = harness([googleDown], [cacheRow(key)]);
+    const failed = harness([providerDown], [cacheRow(key)]);
     const f = await resolveResourceAddress(failed.ports, { address: ADDR, force: true });
     expect(f.forced_refresh_failed).toBe(true);
     expect(f.cache_hit).toBe(true);
     expect(f.external_calls).toBe(1);
 
-    const fresh = harness([googleOk], [cacheRow(key)]);
+    const fresh = harness([providerOk], [cacheRow(key)]);
     const s = await resolveResourceAddress(fresh.ports, { address: ADDR, force: true });
     expect(s.forced_refresh_failed).toBe(false);
     expect(s.cache_hit).toBe(false);
@@ -186,7 +185,7 @@ describe('force with the provider unavailable', () => {
 
   it('5b. protected manual_verified authority still outranks force entirely', async () => {
     const key = await computeResourceLookupKey(ADDR, SECRET);
-    const h = harness([googleOk], [cacheRow(key, {
+    const h = harness([providerOk], [cacheRow(key, {
       geocode_source: 'manual_verified', is_manual: true, is_coordinate_locked: true, confidence: 'manual',
     })]);
     const r = await resolveResourceAddress(h.ports, { address: ADDR, force: true });
@@ -206,16 +205,16 @@ describe('geocode-bulk record provenance', () => {
   );
 
   it('6. cache hit writes geocoded_lat / geocoded_lng', () => {
-    expect(successBranch).toContain('geocoded_lat: resolution.lat');
-    expect(successBranch).toContain('geocoded_lng: resolution.lng');
+    expect(successBranch).toContain('update.geocoded_lat = resolution.lat');
+    expect(successBranch).toContain('update.geocoded_lng = resolution.lng');
   });
 
   it('7. cache hit writes coordinate_source = internal_cache', () => {
-    expect(successBranch).toContain("resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider");
+    expect(successBranch).toContain("update.coordinate_source = resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider");
   });
 
   it('8. cache hit preserves the ORIGINAL geocode_provider', async () => {
-    expect(successBranch).toContain('geocode_provider: resolution.geocode_provider');
+    expect(successBranch).toContain('update.geocode_provider = resolution.geocode_provider');
     const key = await computeResourceLookupKey(ADDR, SECRET);
     const h = harness([], [cacheRow(key, { geocode_source: 'census', confidence: 'low' })]);
     const r = await resolveResourceAddress(h.ports, { address: ADDR });
@@ -226,17 +225,17 @@ describe('geocode-bulk record provenance', () => {
 
   it('9. a fresh Nominatim result carries provider / confidence / match fields', async () => {
     const nominatim: ResourceExternalPort = {
-      name: 'nominatim',
+      name: 'census',
       run: async () => ({ lat: 38.9877, lng: -119.1626, confidence: 'high', match_type: 'address_full', precision: 'street' }),
     };
     const h = harness([nominatim]);
     const r = await resolveResourceAddress(h.ports, { address: ADDR });
-    expect(r.coordinate_source).toBe('nominatim');
-    expect(r.geocode_provider).toBe('nominatim');
+    expect(r.coordinate_source).toBe('census');
+    expect(r.geocode_provider).toBe('census');
     expect(r.confidence).toBe('high');
     expect(r.match_type).toBe('address_full');
-    expect(successBranch).toContain('coordinate_confidence: resolution.confidence');
-    expect(successBranch).toContain('geocode_match_type: resolution.match_type');
+    expect(successBranch).toContain('update.coordinate_confidence = resolution.confidence');
+    expect(successBranch).toContain('update.geocode_match_type = resolution.match_type');
     expect(successBranch).toContain('last_geocoded_at');
   });
 
@@ -255,15 +254,15 @@ describe('geocode-bulk record provenance', () => {
   });
 
   it('10b. access_notes tagging is retained for downstream UI', () => {
-    expect(successBranch).toContain('access_notes: tag');
+    expect(successBranch).toContain('update.access_notes = stampGeocodeTag(');
   });
 
   it('10c. bulk failure stamps the record but writes no cache row', async () => {
-    const h = harness([googleDown]);
+    const h = harness([providerDown]);
     const r = await resolveResourceAddress(h.ports, { address: ADDR });
     expect(r.resolved).toBe(false);
     expect(h.rows.size).toBe(0);
-    expect(BULK_FN).toContain("coordinate_source: 'failed'");
+    expect(BULK_FN).toContain("update.coordinate_source = 'failed'");
   });
 });
 
@@ -314,9 +313,10 @@ describe('Geocode Static Data is non-destructive', () => {
   it('15. no global coordinate erase remains anywhere in the handler', () => {
     expect(handler).not.toMatch(/lat:\s*null/);
     expect(handler).not.toMatch(/lng:\s*null/);
-    // Eligibility is now a read-only count of records already missing coords.
-    expect(handler).toContain(".is('lat', null)");
-    expect(handler).toContain("count: 'exact', head: true");
+    // Eligibility is now a read-only ID listing of records missing coords,
+    // established once and submitted as stable explicit batches.
+    expect(handler).toContain('listUnresolvedResourceIds');
+    expect(handler).toContain('geocodeResourceIds');
   });
 
   it('16. access_notes are not globally erased as preparation', () => {
@@ -324,7 +324,10 @@ describe('Geocode Static Data is non-destructive', () => {
   });
 
   it('16b. server-side lock protection still governs display columns', () => {
-    expect(BULK_FN).toContain('if (!row.coordinate_locked)');
+    // Bulk now enforces protection via the shared table contract (locks AND
+    // curated manual coordinates); single-record still guards the display write.
+    expect(BULK_FN).toContain('isRecordCoordinateProtected(record, contract)');
+    expect(BULK_FN).toContain('protected_manual_or_locked_coordinate');
     expect(ADDRESS_FN).toContain('if (!record.coordinate_locked)');
   });
 });

@@ -31,6 +31,7 @@ import { seedFacilities, seedRuralServices, patchFailedCoordinates } from '@/uti
 import type { HeaderResolutionResult } from '@/utils/serviceHeaderResolver';
 import type { StagingServiceRow, VerifiedServiceRow, AuditLogRow } from '@/types/mappingPipeline';
 import { SERVICE_CATEGORIES } from '@/utils/serviceCategoryMap';
+import { geocodeResourceIds, listUnresolvedResourceIds } from '@/utils/resourceGeocodeClient';
 
 const SCHEMA_SECTIONS = [
   {
@@ -345,94 +346,56 @@ export default function AdminMappingServices() {
   };
 
   const handleGeocodeStaticData = async () => {
-    toast.info('Starting server-side geocode — running in batches…');
+    toast.info('Starting server-side geocode — running in stable ID batches…');
     try {
-      const BATCH_SIZE = 80;
-
       /**
-       * Phase 2C.1 — NON-DESTRUCTIVE preparation.
+       * Phase 2D — NON-DESTRUCTIVE, STABLE-ID batching.
        *
-       * This handler previously nulled `lat`/`lng`/`access_notes` on EVERY
-       * facility and rural service to make them eligible for geocoding. That
-       * could erase manually curated and coordinate-locked display coordinates
-       * before the server-side lock protection ever ran.
+       * The eligible ID set is established ONCE up front, then submitted in
+       * explicit chunks. The retired offset pattern paginated a shrinking
+       * `lat IS NULL` result set and silently skipped records as earlier
+       * batches became resolved.
        *
-       * Eligibility is now server-side: `geocode-bulk` selects only records
-       * that are missing coordinates. Known-valid, manual and locked
-       * coordinates are left completely alone. A deliberate
-       * "refresh all automated coordinates" workflow would be a separate force
-       * operation that still respects manual/lock authority — it does not
-       * exist and must not be improvised here.
+       * Nothing is cleared as preparation: known-valid, manual and locked
+       * coordinates are left completely alone (server-side protection too).
        */
-      const { count: facilityPending } = await supabase
-        .from('facilities')
-        .select('id', { count: 'exact', head: true })
-        .is('lat', null);
-      const { count: ruralPending } = await supabase
-        .from('rural_services')
-        .select('id', { count: 'exact', head: true })
-        .is('lat', null);
+      const facilityIds = await listUnresolvedResourceIds('facilities', 'lat');
+      const ruralIds = await listUnresolvedResourceIds('rural_services', 'lat');
 
-      toast.info(`Geocoding ${facilityPending ?? 0} facilities missing coordinates…`);
-      const { data: facResult, error: facResultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'facilities', limit: BATCH_SIZE, offset: 0 } });
-      if (facResultErr) throw new Error(facResultErr.message);
-      toast.success(`Facilities: ${facResult.geocoded} geocoded, ${facResult.failed} failed, ${facResult.skipped} skipped`);
+      toast.info(`Geocoding ${facilityIds.length} facilities missing coordinates…`);
+      const facSummary = await geocodeResourceIds('facilities', facilityIds);
+      toast.success(`Facilities: ${facSummary.geocoded} geocoded, ${facSummary.failed} failed, ${facSummary.skipped} skipped`);
 
-      // Geocode rural services in batches
-      toast.info(`Geocoding ${ruralPending ?? 0} rural services missing coordinates, in batches…`);
-      let totalGeocoded = 0, totalFailed = 0, totalSkipped = 0;
-      let offset = 0;
-      let batchNum = 1;
-
-      while (true) {
-        toast.info(`Rural services batch ${batchNum}…`);
-        const { data: ruralResult, error: ruralResultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'rural_services', limit: BATCH_SIZE, offset } });
-        if (ruralResultErr) throw new Error(ruralResultErr.message);
-
-        totalGeocoded += ruralResult.geocoded ?? 0;
-        totalFailed += ruralResult.failed ?? 0;
-        totalSkipped += ruralResult.skipped ?? 0;
-
-        // If batch returned fewer than BATCH_SIZE records, we're done
-        if ((ruralResult.total ?? 0) < BATCH_SIZE) break;
-
-        offset += BATCH_SIZE;
-        batchNum++;
-      }
-
-      toast.success(`Rural services: ${totalGeocoded} geocoded, ${totalFailed} failed, ${totalSkipped} skipped`);
+      toast.info(`Geocoding ${ruralIds.length} rural services missing coordinates…`);
+      const ruralSummary = await geocodeResourceIds('rural_services', ruralIds);
+      toast.success(`Rural services: ${ruralSummary.geocoded} geocoded, ${ruralSummary.failed} failed, ${ruralSummary.skipped} skipped`);
     } catch (err) {
       toast.error(`Geocode failed: ${String(err)}`);
     }
   };
 
 const handleGeocodeUnresolved = async () => {
-  toast.info('Clearing failed stamps and re-geocoding unresolved rural services…');
+  toast.info('Re-geocoding unresolved rural services…');
   try {
-
-    // Clear access_notes on failed rural service records so they get a fresh attempt
-    await supabase
-      .from('rural_services')
-      .update({ access_notes: null })
-      .is('lat', null);
-
-    const { data: unresolved } = await supabase
-      .from('rural_services')
-      .select('id')
-      .is('lat', null);
-    const count = (unresolved ?? []).length;
-    if (count === 0) {
+    /**
+     * Phase 2D — `access_notes` is NEVER wiped as preparation. It can contain
+     * human operational content; only the structured `[geocode:...]` token is
+     * ever replaced, and the server does that per record on write. No clearing
+     * step is needed to retry.
+     */
+    const ids = await listUnresolvedResourceIds('rural_services', 'lat');
+    if (ids.length === 0) {
       toast.info('No unresolved rural services found.');
       return;
     }
-    toast.info(`Found ${count} unresolved — geocoding now…`);
-    const { data: result, error: resultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'rural_services', limit: 100, offset: 0 } });
-    if (resultErr) throw new Error(resultErr.message);
-    toast.success(`Done: ${result.geocoded} geocoded, ${result.failed} failed, ${result.skipped} skipped`);
+    toast.info(`Found ${ids.length} unresolved — geocoding now…`);
+    const summary = await geocodeResourceIds('rural_services', ids);
+    toast.success(`Done: ${summary.geocoded} geocoded, ${summary.failed} failed, ${summary.skipped} skipped`);
   } catch (err) {
     toast.error(`Failed: ${String(err)}`);
   }
 };
+
 
 const handlePatchFailed = async () => {
   toast.info('Patching unresolvable records with verified coordinates…');
