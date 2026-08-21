@@ -173,13 +173,14 @@ describe('resolver uses variants but caches under the original identity', () => 
 describe('resolve-address server boundary configuration', () => {
   const fn = readFileSync('supabase/functions/resolve-address/index.ts', 'utf8');
 
-  it('pins anonymous callers to member_address', () => {
-    expect(fn).toContain("let locationClass: LocationClass = 'member_address'");
+  it('is a member-address-only resolver', () => {
+    expect(fn).toContain("const MEMBER_CLASS: LocationClass = 'member_address'");
     expect(fn).toContain('location_class_forbidden');
   });
 
-  it('requires an internal role for elevated classes', () => {
-    expect(fn).toMatch(/\['admin', 'ops', 'sysop'\]/);
+  it('exposes no elevated location classes to any role', () => {
+    expect(fn).not.toMatch(/\['admin', 'ops', 'sysop'\]/);
+    expect(fn).not.toMatch(/ELEVATED_CLASSES/);
   });
 
   it('does not echo internal errors to callers', () => {
@@ -190,3 +191,4 @@ describe('resolve-address server boundary configuration', () => {
     expect(fn).toContain('payload_too_large');
   });
 });
+
