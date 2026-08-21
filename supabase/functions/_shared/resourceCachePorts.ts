@@ -122,7 +122,9 @@ export const createResourceCachePorts = (
   upsert: async (row) => {
     const { data: existing } = await db
       .from('geocode_resolutions')
-      .select('id, is_manual, is_coordinate_locked, geocode_source, use_count')
+      .select(
+        'id, is_manual, is_coordinate_locked, geocode_source, use_count, latitude, longitude, confidence, precision, source_metadata',
+      )
       .eq('lookup_key', row.lookup_key)
       .eq('location_class', RESOURCE_LOCATION_CLASS)
       .maybeSingle();
@@ -136,6 +138,15 @@ export const createResourceCachePorts = (
     const protectedRow =
       existing.is_manual || existing.is_coordinate_locked || existing.geocode_source === 'manual_verified';
     if (protectedRow && row.geocode_source !== 'manual_verified') return;
+
+    // Phase 2D.1: preserve superseded legacy (google | nominatim) provenance
+    // BEFORE current authority changes.
+    const source_metadata = buildSupersededMetadata(
+      existing,
+      row.source_metadata ?? {},
+      row.geocode_source,
+      new Date().toISOString(),
+    );
 
     await db
       .from('geocode_resolutions')
@@ -152,12 +163,13 @@ export const createResourceCachePorts = (
         is_manual: row.is_manual,
         is_coordinate_locked: row.is_coordinate_locked,
         verified_at: row.verified_at,
-        source_metadata: row.source_metadata,
+        source_metadata,
         use_count: (existing.use_count ?? 1) + 1,
         last_used_at: new Date().toISOString(),
       })
       .eq('id', existing.id);
   },
+
 
   touch: async (lookupKey) => {
     const { data: existing } = await db
