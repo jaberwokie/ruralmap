@@ -83,6 +83,8 @@ export interface FccIngestionPorts {
   insertSnapshot(input: Record<string, unknown>): Promise<string>;
   /** Rural Tool interpretation values currently in effect (never invented). */
   getCarriedValues(): Promise<CarriedRuralToolValues[]>;
+  /** Tier percentages currently in effect, for the comparison report. */
+  getPreviousTiers(): Promise<PreviousTierRow[]>;
   replaceNormalized(input: {
     source_id: string;
     snapshot_id: string;
@@ -402,15 +404,7 @@ export const runFccBroadbandIngestion = async (
 
     // ── 8. Compatibility boundary + atomic replacement ──
     const carried = await ports.getCarriedValues();
-    const comparison = buildComparison(
-      metrics,
-      carried.map((c) => ({
-        county_key: c.county_key,
-        pct_100_20_plus: (c as unknown as Record<string, number>).pct_100_20_plus ?? null,
-        pct_25_3_to_100_20: (c as unknown as Record<string, number>).pct_25_3_to_100_20 ?? null,
-        pct_below_25_3: (c as unknown as Record<string, number>).pct_below_25_3 ?? null,
-      })) as never,
-    );
+    const comparison = buildComparison(metrics, await ports.getPreviousTiers());
     const rows = toNormalizedRows(metrics, carried);
 
     if (options.dryRun) {
