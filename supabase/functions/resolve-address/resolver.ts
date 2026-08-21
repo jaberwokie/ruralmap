@@ -91,6 +91,10 @@ export interface ResolveRequest {
   locationClass?: LocationClass;
   /** Member addresses are Nevada-scoped per current Rural Tool behavior. */
   requireNevada?: boolean;
+  /** Override the query-variant chain (tests only). */
+  variants?: QueryVariant[];
+  /** Hard cap on external provider calls per request (abuse resistance). */
+  maxExternalCalls?: number;
 }
 
 export interface ResolveResult {
@@ -107,9 +111,18 @@ export interface ResolveResult {
   is_coordinate_locked: boolean;
   is_manual: boolean;
   failures: GeocodeFailureCode[];
+  /** Which query strategy produced the result. */
+  strategy: ResolutionStrategy | null;
+  /** True when the winning query was coarser than the requested street. */
+  is_approximate: boolean;
+  /** True when the caller should fall back to manual map placement. */
+  manual_placement_required: boolean;
+  /** True when the address looks like a Nevada highway/milepost location. */
+  highway_address: boolean;
   /** Present only for non-member classes; member addresses stay opaque. */
   label?: string | null;
 }
+
 
 const isUsable = (r: CachedResolution | null): r is CachedResolution =>
   !!r && typeof r.latitude === 'number' && typeof r.longitude === 'number';
