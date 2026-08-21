@@ -1,5 +1,12 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  buildResourceAddress,
+  resolveResourceAddress,
+  type ResourceExternalHit,
+  type ResourceExternalPort,
+} from '../_shared/resourceGeocodeCache.ts';
+import { createResourceCachePorts } from '../_shared/resourceCachePorts.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +27,7 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+
 
 /**
  * Verifies the caller's JWT and requires an active admin/sysop role.
