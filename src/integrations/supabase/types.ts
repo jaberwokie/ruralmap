@@ -96,6 +96,7 @@ export type Database = {
           created_at: string
           error_count: number
           error_summary: string | null
+          failure_code: string | null
           id: string
           initiated_by: string | null
           records_accepted: number | null
@@ -119,6 +120,7 @@ export type Database = {
           created_at?: string
           error_count?: number
           error_summary?: string | null
+          failure_code?: string | null
           id?: string
           initiated_by?: string | null
           records_accepted?: number | null
@@ -142,6 +144,7 @@ export type Database = {
           created_at?: string
           error_count?: number
           error_summary?: string | null
+          failure_code?: string | null
           id?: string
           initiated_by?: string | null
           records_accepted?: number | null
@@ -171,46 +174,70 @@ export type Database = {
       }
       data_source_snapshots: {
         Row: {
+          acquisition_protocol: Json
+          byte_size: number | null
           content_hash: string
           content_type: string | null
           created_at: string
           effective_date: string | null
           http_status: number | null
           id: string
-          raw_payload: Json
+          raw_payload: Json | null
           record_count: number | null
           retrieved_at: string
+          source_artifacts: Json
+          source_file_id: string | null
+          source_file_name: string | null
           source_id: string
           source_url: string | null
           source_version: string | null
+          storage_bucket: string | null
+          storage_path: string | null
+          transformation_version: string | null
         }
         Insert: {
+          acquisition_protocol?: Json
+          byte_size?: number | null
           content_hash: string
           content_type?: string | null
           created_at?: string
           effective_date?: string | null
           http_status?: number | null
           id?: string
-          raw_payload: Json
+          raw_payload?: Json | null
           record_count?: number | null
           retrieved_at?: string
+          source_artifacts?: Json
+          source_file_id?: string | null
+          source_file_name?: string | null
           source_id: string
           source_url?: string | null
           source_version?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          transformation_version?: string | null
         }
         Update: {
+          acquisition_protocol?: Json
+          byte_size?: number | null
           content_hash?: string
           content_type?: string | null
           created_at?: string
           effective_date?: string | null
           http_status?: number | null
           id?: string
-          raw_payload?: Json
+          raw_payload?: Json | null
           record_count?: number | null
           retrieved_at?: string
+          source_artifacts?: Json
+          source_file_id?: string | null
+          source_file_name?: string | null
           source_id?: string
           source_url?: string | null
           source_version?: string | null
+          storage_bucket?: string | null
+          storage_path?: string | null
+          transformation_version?: string | null
         }
         Relationships: [
           {
