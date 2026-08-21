@@ -139,41 +139,61 @@ serve(async (req) => {
       .range(offset, offset + limit - 1);
     const targets = rows ?? [];
 
-    let geocoded = 0, failed = 0, skipped = 0;
+    const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
+    if (!secret) return jsonRes({ error: 'geocode_cache_secret_missing' }, 500);
+
+    // Single shared internal resource cache — identical to geocode-address.
+    const ports = createResourceCachePorts(supabase, secret, [
+      nominatimPort(true),
+      censusPort,
+      nominatimPort(false),
+    ]);
+
+    let geocoded = 0, failed = 0, skipped = 0, cacheHits = 0, externalCalls = 0;
 
     for (const row of targets) {
       if (!row.street_address) { skipped++; continue; }
 
-      const result = await geocodeAddress(
-        row.street_address,
-        row.city ?? '',
-        row.state ?? 'NV',
-        row.zip ?? null,
-      );
+      const resolution = await resolveResourceAddress(ports, {
+        address: buildResourceAddress(row),
+        requireNevada: true,
+      });
 
       const now = new Date().toISOString().slice(0, 10);
+      externalCalls += resolution.external_calls;
 
-      if (result) {
-        const confidence = result.strategy === 'address_full' ? 'high' : 'low';
-        const tag = `[geocode:${result.strategy}|${confidence}|${now}]`;
-        await supabase.from(table).update({
-          lat: result.lat,
-          lng: result.lng,
-          access_notes: tag,
-        }).eq('id', row.id);
+      if (resolution.resolved && resolution.lat !== null && resolution.lng !== null) {
+        const strategy = resolution.cache_hit
+          ? 'internal_cache'
+          : (resolution.match_type ?? resolution.geocode_provider ?? 'external');
+        const confidence = resolution.confidence ?? 'low';
+        const tag = `[geocode:${strategy}|${confidence}|${now}]`;
+        const update: Record<string, unknown> = { access_notes: tag };
+        if (!row.coordinate_locked) {
+          update.lat = resolution.lat;
+          update.lng = resolution.lng;
+        }
+        await supabase.from(table).update(update).eq('id', row.id);
         geocoded++;
+        if (resolution.cache_hit) cacheHits++;
       } else {
         const tag = `[geocode:failed|low|${now}]`;
         await supabase.from(table).update({ access_notes: tag }).eq('id', row.id);
         failed++;
       }
 
-      await delay(1100);
+      // Provider courtesy delay applies only when an external call happened.
+      if (resolution.external_calls > 0) await delay(1100);
     }
 
-    return new Response(JSON.stringify({ geocoded, failed, skipped, total: targets.length, offset, limit }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({
+        geocoded, failed, skipped, total: targets.length, offset, limit,
+        cache_hits: cacheHits, external_calls: externalCalls,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+
   } catch (err) {
     return new Response(JSON.stringify({ error: String(err) }), {
       status: 500,
