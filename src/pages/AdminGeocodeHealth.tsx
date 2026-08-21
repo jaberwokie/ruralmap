@@ -285,6 +285,87 @@ export default function AdminGeocodeHealth() {
           <Breakdown title="By location class" rows={tally(rows, r => r.location_class)} />
         </div>
 
+        {canWrite && (
+          <div className="mt-4 rounded border border-border bg-card p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-sm font-medium">Legacy provenance dry-run</div>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Compares every record still carrying Google/Nominatim provenance against the
+                  approved Census geocoder across all resource tables. Read-only — no coordinate,
+                  provenance, review status, or cache row is changed.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {dryRun && (
+                  <Button variant="outline" size="sm" onClick={downloadDryRun}>
+                    <Download className="mr-1.5 h-3.5 w-3.5" /> JSON
+                  </Button>
+                )}
+                <Button size="sm" onClick={() => void runDryRun()} disabled={dryRunBusy}>
+                  <FlaskConical className="mr-1.5 h-3.5 w-3.5" />
+                  {dryRunBusy ? 'Running…' : 'Run dry-run'}
+                </Button>
+              </div>
+            </div>
+            {dryRunBusy && dryRunProgress && (
+              <div className="mt-2 text-xs text-muted-foreground">{dryRunProgress}</div>
+            )}
+            {dryRun && (
+              <div className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                  {Object.entries(dryRun.totals as Record<string, unknown>).map(([k, v]) => (
+                    <Stat key={k} label={k.replace(/_/g, ' ')} value={String(v ?? '—')} />
+                  ))}
+                </div>
+                <div className="grid gap-3 md:grid-cols-2">
+                  <Breakdown
+                    title="Distance buckets (existing vs Census)"
+                    rows={Object.entries(
+                      ((dryRun.distance_distribution as Record<string, unknown>)?.buckets ?? {}) as Record<string, number>,
+                    )}
+                  />
+                  <Breakdown
+                    title="Validation rejection reasons"
+                    rows={Object.entries((dryRun.validation_rejection_reasons ?? {}) as Record<string, number>)}
+                  />
+                </div>
+                <div className="overflow-x-auto rounded border border-border">
+                  <table className="w-full text-xs">
+                    <thead className="bg-muted/50 text-left">
+                      <tr>
+                        <th className="px-2 py-1.5">Table</th>
+                        <th className="px-2 py-1.5">Name</th>
+                        <th className="px-2 py-1.5">Existing provider</th>
+                        <th className="px-2 py-1.5">Census</th>
+                        <th className="px-2 py-1.5">Distance (m)</th>
+                        <th className="px-2 py-1.5">Protected</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {((dryRun.largest_differences as Record<string, unknown>[]) ?? []).map((c, i) => (
+                        <tr key={`${String(c.table)}-${String(c.id)}-${i}`} className="border-t border-border">
+                          <td className="px-2 py-1.5">{String(c.table)}</td>
+                          <td className="px-2 py-1.5 truncate">{String(c.name ?? '')}</td>
+                          <td className="px-2 py-1.5">{String(c.existing_provider ?? '—')}</td>
+                          <td className="px-2 py-1.5">
+                            {c.census_resolved ? String(c.census_validation_status ?? 'accepted') : 'unresolved'}
+                          </td>
+                          <td className="px-2 py-1.5 tabular-nums">
+                            {typeof c.distance_meters === 'number' ? c.distance_meters : '—'}
+                          </td>
+                          <td className="px-2 py-1.5">{c.protected ? 'yes' : 'no'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+
         {loading && <div className="mt-4 text-sm text-muted-foreground">Loading…</div>}
         {!loading && rows.length === 0 && (
           <div className="mt-4 rounded border border-border bg-card p-4 text-sm text-muted-foreground">
