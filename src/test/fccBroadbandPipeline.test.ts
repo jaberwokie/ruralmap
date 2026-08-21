@@ -264,8 +264,8 @@ describe('successful FCC ingestion', () => {
     const { ports, state } = makeHarness();
     await runFccBroadbandIngestion(ports);
     const patch = state.sourcePatches.at(-1) as Record<string, unknown>;
-    expect(patch.status).toBe('active');
-    expect(patch.internalization_target).toBe('internalized');
+    expect(patch.status).toBe('current');
+    expect(patch.internalization_target).toBe('fully_internal');
     expect(patch.is_stale).toBe(false);
     expect(patch.transformation_version).toBe(DERIVATION_VERSION);
   });
@@ -350,7 +350,7 @@ describe('failure isolation', () => {
     expect(run.status).toBe('failed');
     expect(run.failure_code).toBe('fcc_download_failed');
     expect(run.run_metadata.stage).toBe('download');
-    expect((state.sourcePatches.at(-1) as Record<string, unknown>).status).toBe('degraded');
+    expect((state.sourcePatches.at(-1) as Record<string, unknown>).status).toBe('failing');
   });
 
   it('never leaks credential values into any persisted record or response', async () => {

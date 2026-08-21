@@ -215,7 +215,7 @@ export const runFccBroadbandIngestion = async (
     }
     if (sourceId) {
       await ports.updateSourceHealth(sourceId, {
-        status: 'degraded',
+        status: 'failing',
         last_failed_ingestion_at: ports.now().toISOString(),
         notes: `Last ingestion failed at stage "${e.stage}" (${e.code}). Application continues on the previous normalized dataset.`,
       });
@@ -472,7 +472,7 @@ export const runFccBroadbandIngestion = async (
       run_metadata: { derivation: summary, artifacts: stored, comparison_rows: comparison.length },
     });
     await ports.updateSourceHealth(source.id, {
-      status: 'active',
+      status: 'current',
       last_retrieved_at: completedAt,
       last_successful_ingestion_at: completedAt,
       last_record_count: written,
@@ -481,7 +481,7 @@ export const runFccBroadbandIngestion = async (
       transformation_version: DERIVATION_VERSION,
       effective_date: asOfDate,
       is_stale: false,
-      internalization_target: 'internalized',
+      internalization_target: 'fully_internal',
     });
 
     return {
