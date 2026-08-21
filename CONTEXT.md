@@ -217,6 +217,9 @@ When `?public=1` or equivalent logic is active:
 | `user_roles`                                          | Role definitions for RBAC                               |
 | `data_sources`                                        | Source Registry — provenance/governance metadata (Phase 6a) |
 | `data_source_runs`                                    | Append-only source retrieval/ingestion health history       |
+| `data_source_snapshots`                               | Immutable raw retrieval evidence per ingestion (Phase 6b)   |
+| `broadband_county_coverage`                           | Normalized internalized FCC broadband dataset, 17 counties (Phase 6b) |
+
 
 All seven data tables (`facilities`, `rural_services`, `verified_bh`, `verified_services`, `staging_bh`, `staging_services`, `staging_providers`) carry soft-delete columns: `deleted_at` (TIMESTAMPTZ), `deleted_by` (TEXT), `deleted_reason` (TEXT). RLS hides soft-deleted rows from all roles except sysop. No hard DELETEs are issued from the application layer on these tables.
 
@@ -230,6 +233,21 @@ Rules:
 - `credential_reference` stores a variable **name** only (e.g. `GOOGLE_GEOCODING_API_KEY`). Secret values are never stored, fetched, or rendered.
 - Source health is **calculated**, never hand-edited. `src/lib/sources/sourceHealth.ts` is the single source of truth: Current / Review Due / Stale / Failing / Unknown, derived from `status`, `last_verified_at`, `last_successful_ingestion_at`, `last_failed_ingestion_at`, `next_review_at`, and `stale_after_days`.
 - Access: anon/viewer/staff none · ops read-only · admin read/write · sysop inherits admin. Enforced in RLS, not only in the UI. Public Safe Mode never reaches `/admin/data-sources`.
+
+### Internalized ingestion (Phase 6b — FCC broadband)
+
+Pipeline: authoritative source → server-side retrieval (`supabase/functions/ingest-fcc-broadband`) → immutable snapshot in `data_source_snapshots` → SHA-256 content hash → validation → transformation → atomic replacement of `broadband_county_coverage` → application read path → static JSON fallback.
+
+Rules:
+
+- Ingestion is admin/sysop-authenticated and runs server-side only. The service-role key never reaches the browser. Clients have `SELECT` only on `broadband_county_coverage` and no access at all to snapshots.
+- Snapshots are append-only and immutable: every retrieval is preserved, none are deduplicated or overwritten. No UPDATE/DELETE policies exist for application roles.
+- Replacement is all-or-nothing via `replace_broadband_county_coverage` (invoker rights, service-role only, refuses an empty dataset). A failed ingestion can never leave partial data or destroy the last known good dataset.
+- A run is `success` only after retrieval **and** validation **and** transformation **and** normalized persistence succeed. HTTP 200 alone is not success.
+- Validation requires exactly the 17 Nevada counties, each once, with finite in-range numeric metrics. An invalid upstream response is rejected before it can touch the normalized table.
+- `src/data/broadband-coverage.ts` reads the normalized table first and falls back to `public/data/nevada_broadband.json` on error, empty result, or failed validation. The map is never dependent on live FCC availability. The fallback must not be removed.
+- Source-health fields on `data_sources` are written only from actual ingestion evidence. `fcc_broadband.source_url` remains **UNKNOWN** — the authoritative FCC endpoint is not recorded anywhere in the repository, so ingestion fails explicitly with `source_url_unknown` until an operator records it. No URL is invented.
+
 - Unknown provenance is stored as NULL and surfaced as a visible governance gap. Do not invent dates, cadences, URLs, or ownership.
 
 
@@ -380,6 +398,8 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 5 (partial)** | Sentry integrated; ErrorBoundary wired; admin navigation normalized                                                | ✅     |
 | **Phase 6a**          | Source Registry foundation: `data_sources` + `data_source_runs` with role-scoped RLS, deterministic source-health helper, `/admin/data-sources` governance surface, admin-only gap warnings, 19 seeded sources from repository evidence. No live data source changed. | ✅     |
 | **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
+| **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC URL still UNKNOWN. | ✅     |
+
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.
 
