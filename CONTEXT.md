@@ -219,6 +219,7 @@ When `?public=1` or equivalent logic is active:
 | `data_source_runs`                                    | Append-only source retrieval/ingestion health history       |
 | `data_source_snapshots`                               | Immutable raw retrieval evidence per ingestion (Phase 6b)   |
 | `broadband_county_coverage`                           | Normalized internalized FCC broadband dataset, 17 counties (Phase 6b) |
+| `geocode_resolutions`                                 | Internal geocode authority/cache, HMAC-keyed, no raw addresses (Phase 6d) |
 
 
 All seven data tables (`facilities`, `rural_services`, `verified_bh`, `verified_services`, `staging_bh`, `staging_services`, `staging_providers`) carry soft-delete columns: `deleted_at` (TIMESTAMPTZ), `deleted_by` (TEXT), `deleted_reason` (TEXT). RLS hides soft-deleted rows from all roles except sysop. No hard DELETEs are issued from the application layer on these tables.
@@ -271,6 +272,34 @@ Rules:
 - Every failure resolves to exactly one code in `failureCodes.ts` (`fcc_credentials_missing`, `fcc_authentication_failed`, `fcc_release_discovery_failed`, `fcc_no_valid_release`, `fcc_manifest_failed`, `fcc_nevada_files_missing`, `fcc_download_failed`, `fcc_source_hash_failed`, `fcc_source_parse_failed`, `fcc_validation_failed`, `fcc_transformation_failed`, `fcc_persistence_failed`), stored in `data_source_runs.failure_code` with the stage in `run_metadata`. A failed run never mutates `broadband_county_coverage`; the source is marked `failing` and the application keeps reading the previous dataset, then the static JSON.
 - `POST { "dry_run": true }` acquires, hashes, stores evidence, and derives without replacing the dataset. `POST { "as_of_date": "YYYY-MM-DD" }` pins a release.
 - Live authoritative ingestion is blocked until the two FCC secrets are configured. Unauthenticated probes of the FCC API return HTTP 401, confirming the credential boundary.
+
+
+
+### Internal geocode authority (Phase 6d — Phase 2B)
+
+Address resolution is internal-first. The browser no longer calls an external geocoder as its first dependency for member addresses; it calls the `resolve-address` edge function, which owns normalization, cache lookup, and the external chain.
+
+Resolution order (fixed, do not reorder):
+
+1. canonical Rural Tool resource coordinates (`facilities` / `rural_services` own their own coordinates — the cache is never a competing authority for them)
+2. verified / manual / coordinate-locked internal coordinates
+3. internal geocode cache (`geocode_resolutions`)
+4. approved external chain — Nominatim bounded → Nominatim unbounded → Census
+5. approved approximate fallback from that chain
+6. unresolved → manual placement
+
+Rules:
+
+- **Privacy.** `geocode_resolutions` stores no raw address text for `member_address` records. The key is `lookup_key = "v1:" + HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "<location_class>|<canonical address>")`. A plain unsalted SHA-256 of an address is forbidden — addresses are dictionary-reconstructable. The secret is server-only: never returned to the browser, never written to `source_metadata`, never logged.
+- **Normalization** lives in one place: `supabase/functions/_shared/geocodeNormalize.ts`. It only trims, collapses whitespace, lowercases, drops periods, standardizes the state token to `nv`, and reduces ZIP+4 to ZIP5. It never rewrites highway or route names — that would change what the address means. Highway aliasing stays a query-time fallback in `useMemberAccess`.
+- **Coordinate locks and manual coordinates outrank all automation.** A later automated result returns the locked record instead of overwriting it, enforced both in the resolver and by a database trigger.
+- **No invented coordinates.** An unresolved attempt is persisted as an unresolved row (null lat/lng) so it stays reportable; it never receives a guessed centroid.
+- Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `manual_resolution_required`. Secret values never appear in an error.
+- **Self-reliance condition:** when every external geocoder is unavailable but the location is already known internally, resolution still succeeds. This is covered by tests in `src/test/geocodeInternalAuthority.test.ts`.
+- `expires_at` is nullable and unset — no Rural Tool cache-expiration policy exists yet. Do not invent a duration without recording it here first.
+- Admin surface `/admin/geocode-health` shows aggregate counts by source, confidence, county, and location class. Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode. It renders no address text because none is stored.
+
+
 
 
 ### Key Files and Hooks
@@ -422,6 +451,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
 | **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC URL still UNKNOWN. | ✅     |
 | **Phase 6c**          | FCC broadband bound to the real BDC Public Data API: credentialed server-side acquisition (fail-closed on missing secrets), release discovery, county summary artifact selection, immutable hashed raw evidence in the private `source-evidence` bucket, reproducible `fcc-bdc-summary-county-v1` derivation with satellite excluded, single-code failure taxonomy, dry-run mode, and a per-run FCC-vs-current comparison report. Provenance and methodology differences documented in `docs/fcc-broadband-provenance.md`. Live authoritative run pending FCC credentials. | ◑ blocked on credentials |
+| **Phase 6d**          | Internal geocode authority: `geocode_resolutions` keyed by server-side HMAC digest (no raw member address stored), `resolve-address` edge function moving member geocoding behind the server boundary, internal-first resolution order with external geocoders demoted to fallback, coordinate-lock/manual precedence enforced in resolver and trigger, distinguishable failure taxonomy, `/admin/geocode-health` aggregate surface (Ops read-only), 22 privacy/resolution/resilience/geography tests. Known locations now resolve with zero external calls, including when every external geocoder is unavailable. | ✅     |
 
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.

@@ -498,6 +498,81 @@ export type Database = {
         }
         Relationships: []
       }
+      geocode_resolutions: {
+        Row: {
+          cache_hit_count: number
+          confidence: string | null
+          county_fips: string | null
+          county_name: string | null
+          created_at: string
+          expires_at: string | null
+          geocode_source: string
+          id: string
+          is_coordinate_locked: boolean
+          is_manual: boolean
+          last_used_at: string
+          latitude: number | null
+          location_class: string
+          longitude: number | null
+          lookup_key: string
+          postal_code: string | null
+          precision: string | null
+          source_metadata: Json
+          state: string | null
+          updated_at: string
+          use_count: number
+          verified_at: string | null
+        }
+        Insert: {
+          cache_hit_count?: number
+          confidence?: string | null
+          county_fips?: string | null
+          county_name?: string | null
+          created_at?: string
+          expires_at?: string | null
+          geocode_source: string
+          id?: string
+          is_coordinate_locked?: boolean
+          is_manual?: boolean
+          last_used_at?: string
+          latitude?: number | null
+          location_class: string
+          longitude?: number | null
+          lookup_key: string
+          postal_code?: string | null
+          precision?: string | null
+          source_metadata?: Json
+          state?: string | null
+          updated_at?: string
+          use_count?: number
+          verified_at?: string | null
+        }
+        Update: {
+          cache_hit_count?: number
+          confidence?: string | null
+          county_fips?: string | null
+          county_name?: string | null
+          created_at?: string
+          expires_at?: string | null
+          geocode_source?: string
+          id?: string
+          is_coordinate_locked?: boolean
+          is_manual?: boolean
+          last_used_at?: string
+          latitude?: number | null
+          location_class?: string
+          longitude?: number | null
+          lookup_key?: string
+          postal_code?: string | null
+          precision?: string | null
+          source_metadata?: Json
+          state?: string | null
+          updated_at?: string
+          use_count?: number
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       mapping_audit_log: {
         Row: {
           action: string

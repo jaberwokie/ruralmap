@@ -43,6 +43,7 @@ const AdminMappingRuralServicesStaging = lazy(() => import("./pages/AdminMapping
 const AdminMappingBehavioralHealthLive = lazy(() => import("./pages/AdminMappingBehavioralHealthLive.tsx"));
 const AdminTraining = lazy(() => import("./pages/AdminTraining.tsx"));
 const AdminGeocodeReview = lazy(() => import("./pages/AdminGeocodeReview.tsx"));
+const AdminGeocodeHealth = lazy(() => import("./pages/AdminGeocodeHealth.tsx"));
 const AdminDataSources = lazy(() => import("./pages/AdminDataSources.tsx"));
 
 const AdminMetrics = lazy(() => import("./pages/AdminMetrics.tsx"));
@@ -104,6 +105,7 @@ const App = () => {
                 <Route path="/admin/ops-access" element={<AdminOpsAccess />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
                 <Route path="/admin/geocode-review" element={<AdminGeocodeReview />} />
+                <Route path="/admin/geocode-health" element={<AdminGeocodeHealth />} />
                 <Route path="/admin/data-sources" element={<AdminDataSources />} />
 
 
