@@ -182,16 +182,18 @@ export default function AdminDataSources() {
   const save = async () => {
     if (!selected || !canWrite) return;
     setSaving(true);
-    const patch: Record<string, unknown> = {};
+    type SourceUpdate = Database['public']['Tables']['data_sources']['Update'];
+    const patch: SourceUpdate = {};
     for (const field of EDITABLE_FIELDS) {
       const value = (draft[field.key] ?? '').trim();
       if (field.kind === 'number') {
-        patch[field.key] = value === '' ? null : Number(value);
+        (patch as Record<string, number | null>)[field.key] = value === '' ? null : Number(value);
       } else {
-        patch[field.key] = value === '' ? null : value;
+        (patch as Record<string, string | null>)[field.key] = value === '' ? null : value;
       }
     }
     const { error: err } = await supabase.from('data_sources').update(patch).eq('id', selected.id);
+
     setSaving(false);
     if (err) {
       toast({ title: 'Save failed', description: err.message, variant: 'destructive' });
