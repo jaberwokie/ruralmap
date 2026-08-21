@@ -189,7 +189,9 @@ const loadFromDatabase = async (): Promise<CountyBroadbandData[] | null> => {
       );
     if (error) throw new Error(error.message);
     if (!Array.isArray(data) || data.length === 0) return null;
-    const records = parseRecords(normalizedRowsToRaw(data as NormalizedRow[]));
+    const rows = data as NormalizedRow[];
+    if (!rows.every(isUsableNormalizedRow)) return null;
+    const records = parseRecords(normalizedRowsToRaw(rows));
     return isUsableBroadbandDataset(records) ? records : null;
   } catch (err) {
     console.warn('[Broadband] Normalized dataset unavailable:', err);
