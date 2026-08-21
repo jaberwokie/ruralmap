@@ -199,9 +199,10 @@ describe('force with the provider unavailable', () => {
 /* ───────────── 6-10. geocode-bulk record provenance ───────────── */
 
 describe('geocode-bulk record provenance', () => {
+  const resolvedIdx = BULK_FN.indexOf('if (resolution.resolved');
   const successBranch = BULK_FN.slice(
-    BULK_FN.indexOf('if (resolution.resolved'),
-    BULK_FN.indexOf('} else {'),
+    resolvedIdx,
+    BULK_FN.indexOf('} else {', resolvedIdx),
   );
 
   it('6. cache hit writes geocoded_lat / geocoded_lng', () => {
