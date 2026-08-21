@@ -73,6 +73,86 @@ const tally = (rows: ResolutionRow[], pick: (r: ResolutionRow) => string | null)
   return [...map.entries()].sort((a, b) => b[1] - a[1]);
 };
 
+/**
+ * Phase 2D.1 §9-§12 — combined legacy revalidation dry-run.
+ *
+ * Strictly read-only: the endpoint mutates nothing. Slices exist only to bound
+ * external Census work per invocation; grouping/inventory are always computed
+ * across every table, so merging slices yields one combined report.
+ */
+type DryRunReport = Record<string, unknown>;
+
+const mergeSlices = (slices: DryRunReport[]): DryRunReport => {
+  const first = slices[0] ?? {};
+  const sumKeys = [
+    'census_attempted', 'census_resolved', 'census_unresolved',
+    'validation_rejected', 'records_compared',
+  ];
+  const totals: Record<string, unknown> = { ...(first.totals as Record<string, unknown> ?? {}) };
+  for (const k of sumKeys) {
+    totals[k] = slices.reduce(
+      (s, sl) => s + Number((sl.totals as Record<string, unknown> | undefined)?.[k] ?? 0), 0,
+    );
+  }
+  delete totals.slice_offset;
+  delete totals.next_offset;
+  delete totals.addresses_not_attempted_in_this_slice;
+  totals.slices_executed = slices.length;
+
+  const comparisons = slices.flatMap((s) => (s.comparisons as Record<string, unknown>[]) ?? []);
+  const anomalies = slices.flatMap((s) => (s.anomalies as Record<string, unknown>[]) ?? []);
+  const unresolved = slices.flatMap((s) => (s.unresolved_addresses as Record<string, unknown>[]) ?? []);
+
+  const buckets: Record<string, number> = {};
+  const reasons: Record<string, number> = {};
+  for (const s of slices) {
+    const dist = (s.distance_distribution as Record<string, unknown> | undefined)?.buckets as
+      Record<string, number> | undefined;
+    for (const [k, v] of Object.entries(dist ?? {})) buckets[k] = (buckets[k] ?? 0) + v;
+    for (const [k, v] of Object.entries(
+      (s.validation_rejection_reasons as Record<string, number>) ?? {},
+    )) reasons[k] = (reasons[k] ?? 0) + v;
+  }
+
+  const distances = comparisons
+    .map((c) => c.distance_meters)
+    .filter((d): d is number => typeof d === 'number')
+    .sort((a, b) => a - b);
+  const pct = (p: number) =>
+    distances.length === 0
+      ? null
+      : distances[Math.min(distances.length - 1, Math.max(0, Math.ceil((p / 100) * distances.length) - 1))];
+
+  return {
+    ...first,
+    mode: 'dry_run_revalidation',
+    mutated: false,
+    read_only: true,
+    totals,
+    per_table: first.per_table,
+    resource_cache_provenance: first.resource_cache_provenance,
+    distance_distribution: {
+      count: distances.length,
+      minimum: distances[0] ?? null,
+      median: pct(50),
+      p75: pct(75),
+      p90: pct(90),
+      p95: pct(95),
+      maximum: distances[distances.length - 1] ?? null,
+      buckets,
+    },
+    validation_rejection_reasons: reasons,
+    unresolved_addresses: unresolved,
+    anomalies,
+    comparisons,
+    largest_differences: [...comparisons]
+      .filter((c) => typeof c.distance_meters === 'number')
+      .sort((a, b) => (b.distance_meters as number) - (a.distance_meters as number))
+      .slice(0, 25),
+  };
+};
+
+
 export default function AdminGeocodeHealth() {
   const perms = usePermissions();
   const [rows, setRows] = useState<ResolutionRow[]>([]);
