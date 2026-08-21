@@ -220,7 +220,7 @@ When `?public=1` or equivalent logic is active:
 | `data_source_runs`                                    | Append-only source retrieval/ingestion health history       |
 | `data_source_snapshots`                               | Immutable raw retrieval evidence per ingestion (Phase 6b)   |
 | `broadband_county_coverage`                           | Normalized internalized FCC broadband dataset, 17 counties (Phase 6b) |
-| `geocode_resolutions`                                 | Internal geocode authority/cache, HMAC-keyed, no raw addresses (Phase 6d) |
+| `geocode_resolutions`                                 | Internal geocode authority/cache, HMAC-keyed, no raw addresses. Namespaces: `member_address` (Phase 6d), `resource_address` (Phase 6e) |
 
 
 All seven data tables (`facilities`, `rural_services`, `verified_bh`, `verified_services`, `staging_bh`, `staging_services`, `staging_providers`) carry soft-delete columns: `deleted_at` (TIMESTAMPTZ), `deleted_by` (TEXT), `deleted_reason` (TEXT). RLS hides soft-deleted rows from all roles except sysop. No hard DELETEs are issued from the application layer on these tables.
@@ -313,6 +313,28 @@ Rules:
 - Admin surface `/admin/geocode-health` shows aggregate counts only (Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode).
 - The `service_role` key is used only inside `resolve-address` for cache reads/writes. It is never returned, logged, or exposed.
 - Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`, `src/test/memberCanonicalMatch.test.ts` (behavioral canonical-matcher coverage).
+
+### Internal public-resource geocode reuse (Phase 6e — Phase 2C)
+
+Public facility/service/provider addresses are externally geocoded **once**, validated once, then reused as internal geospatial knowledge. This is a separate namespace from member addresses.
+
+- **Cache namespace:** `geocode_resolutions.location_class = 'resource_address'`, keyed by `HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "resource_address|<canonical address>")`. The member namespace (`member_address`) and the resource namespace never read or write each other's rows. `member_address_external_provider = none_approved` is unchanged.
+- **Shared core:** `supabase/functions/_shared/resourceGeocodeCache.ts` (pure, port-injected) plus the Supabase adapter `supabase/functions/_shared/resourceCachePorts.ts`. Both `geocode-address` (Google) and `geocode-bulk` (Nominatim bounded → Census → Nominatim unbounded) use this one core and one cache; neither calls the member `resolve-address` endpoint.
+- **Resource resolution order:** manual/locked canonical record coordinates → protected (manual_verified) cache authority → internal `resource_address` cache → approved external provider → unresolved/reviewable.
+- **Identity is exact only.** Deterministic canonical address equality (street + city required). No fuzzy name, county-only, or ZIP-only collapsing. Records without a deterministic identity still geocode, but are not cached.
+- **Cross-record / cross-table / cross-function reuse.** The same exact canonical address in `facilities`, `rural_services`, `verified_services`, `verified_bh` or `staging_providers` reuses one entry, in either direction between `geocode-address` and `geocode-bulk`. Within a bulk batch, only the first occurrence of an address can cost an external call.
+- **Provenance is two-valued.** `coordinate_source` = how *this record* received the coordinate (`google` | `internal_cache` | `failed`); `geocode_provider` = how it was *originally* resolved (`google` | `nominatim` | `census`). `coordinate_confidence` and `geocode_match_type` are preserved from the original resolution; a low-confidence cached result is never upgraded. Cache `source_metadata` carries `match_type`, `resolved_at`, `resolved_by`.
+- **Review is preserved.** `AdminGeocodeReview` accepts `internal_cache` as a receiving source, so a reused low-confidence (geometric/approximate/low) result stays in the review queue.
+- **Manual/locked precedence.** Display coordinate columns are never overwritten when `coordinate_locked = true`; a `manual_verified` cache row is never replaced by Google, Nominatim, Census, or automated cache refresh (enforced in the adapter and by the existing `geocode_resolutions_protect_locked` trigger).
+- **Force semantics.** `force: true` bypasses automated cache reuse to obtain a fresh provider result, but never bypasses protected/manual cache authority. A failed force preserves the last known good cache entry.
+- **Never cached:** failed provider responses, missing/non-finite coordinates, `0,0`, out-of-Nevada results, malformed payloads.
+- **Failure behavior.** External provider unavailable + known address → resolves from cache. Unknown address + external failure → unresolved and reviewable, with no false cache row.
+- **Authorization unchanged:** `geocode-address` and `geocode-bulk` remain Admin/SysOp only; all cache writes happen server-side through those functions. No client writes `geocode_resolutions`; no SECURITY DEFINER function was added.
+- **Error hygiene:** both functions now return stable codes (`geocode_unresolved`, `geocode_internal_error`, `geocode_bulk_internal_error`, `record_update_failed`) and never echo the Google request URL, API key, service-role credentials, or database internals.
+- `/admin/geocode-health` distinguishes member cache vs resource cache counts; `resource_address` appears in the location-class breakdown.
+- Record-level fields (`geocoded_lat/lng`, `coordinate_source`, `coordinate_confidence`, `geocode_provider`, `geocode_match_type`, `last_geocoded_at`) are retained — Phase 2C adds cross-record reuse on top of them.
+- Existing-data bootstrap (seeding the cache from trustworthy existing rows) is implemented as a library primitive only (`seedManualResourceResolution`) and is **not** wired to an admin operation yet — recommended follow-up.
+- Tests: `src/test/resourceGeocodeCache.test.ts` (28 tests: identity, cross-record/cross-table/cross-function reuse, manual/lock precedence, force, provenance, failures, authorization, member-boundary regression).
 
 
 
@@ -471,6 +493,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 6d**          | Internal geocode authority: `geocode_resolutions` keyed by server-side HMAC digest (no raw member address stored), `resolve-address` edge function moving member geocoding behind the server boundary, internal-first resolution order with external geocoders demoted to fallback, coordinate-lock/manual precedence enforced in resolver and trigger, distinguishable failure taxonomy, `/admin/geocode-health` aggregate surface (Ops read-only), 22 privacy/resolution/resilience/geography tests. Known locations now resolve with zero external calls, including when every external geocoder is unavailable. | ✅     |
 | **Phase 6d.1**        | Phase 2B.1 hardening: browser member path fails closed with no external geocoder calls, retry-variant + highway-alias chain moved server-side, production `canonicalMatch` against `verified_services`/`verified_bh`, `location_class` authorization (public callers pinned to `member_address`), payload/call caps, opaque error codes, 19 boundary tests in `src/test/geocodeBoundary.test.ts`. | ✅     |
 | **Phase 6d.2**        | Phase 2B.2 production-safety closure: `resolve-address` is a member-address-only resolver (no elevated classes, so Ops can never drive a service-role geocode write), public Nominatim and Census removed from `member_address` resolution (`member_address_external_provider = none_approved`), canonical exact matching extended to `facilities`/`rural_services` with mappable/deleted/lock/manual-coordinate semantics (matcher extracted to `resolve-address/canonicalMatch.ts`; `verified_services`/`verified_bh` additionally require `active_status = true`), client-side three-token fuzzy placement and `KNOWN_PROVIDER_COORDINATES` removed, anonymous unresolved searches no longer persisted, 25 policy tests in `src/test/memberGeocodePolicy.test.ts` plus 19 behavioral matcher tests in `src/test/memberCanonicalMatch.test.ts`. | ✅     |
+| **Phase 6e**          | Phase 2C internal public-resource geocode reuse: `resource_address` cache namespace, shared `_shared/resourceGeocodeCache.ts` + `_shared/resourceCachePorts.ts` used by both `geocode-address` and `geocode-bulk`, cache-first resolution with exact canonical identity, cross-record/cross-table/cross-function reuse, two-valued provenance (`coordinate_source` = internal_cache vs `geocode_provider` = original resolver), manual/locked and force semantics preserved, low-confidence reuse still reviewable, no caching of failures/out-of-bounds/null coordinates, stable error codes, 28 tests in `src/test/resourceGeocodeCache.test.ts`. A second identical public resource address costs zero external geocoder calls. | ✅     |
 
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.

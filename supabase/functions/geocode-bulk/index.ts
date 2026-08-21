@@ -1,5 +1,12 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import {
+  buildResourceAddress,
+  resolveResourceAddress,
+  type ResourceExternalHit,
+  type ResourceExternalPort,
+} from '../_shared/resourceGeocodeCache.ts';
+import { createResourceCachePorts } from '../_shared/resourceCachePorts.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -17,75 +24,54 @@ const isInNevada = (lat: number, lng: number) =>
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-const normalizeAddress = (street: string): string => {
-  return street
-    // Strip suite/unit with optional # and alphanumeric identifier
-    .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?)\s*#?\s*[\w-]*/gi, '')
-    // Strip standalone # followed by identifier
-    .replace(/#\s*[\w-]+/g, '')
-    .replace(/\s+,/g, ',')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+/**
+ * Phase 2C — approved public-resource external providers, unchanged in scope:
+ * Nominatim (bounded → unbounded) and the Census onelineaddress geocoder.
+ * Only reached on an internal resource-cache MISS.
+ */
+const nominatimPort = (bounded: boolean): ResourceExternalPort => ({
+  name: 'nominatim',
+  run: async (address): Promise<ResourceExternalHit | null> => {
+    const url = `${NOMINATIM_URL}?q=${encodeURIComponent(address)}&format=json&limit=5&addressdetails=1&countrycodes=us&viewbox=${NV_VIEWBOX}${bounded ? '&bounded=1' : ''}`;
+    const res = await fetch(url, { headers: { 'User-Agent': 'NovumHealth-RuralMap/1.0' } });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const hit = (data as Array<{ lat: string; lon: string }>).find((r) => {
+      const lat = parseFloat(r.lat);
+      const lng = parseFloat(r.lon);
+      return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
+    });
+    if (!hit) return null;
+    return {
+      lat: parseFloat(hit.lat),
+      lng: parseFloat(hit.lon),
+      confidence: bounded ? 'high' : 'low',
+      match_type: bounded ? 'address_full' : 'city_county_fallback',
+      precision: bounded ? 'street' : 'approximate',
+    };
+  },
+});
+
+const censusPort: ResourceExternalPort = {
+  name: 'census',
+  run: async (address): Promise<ResourceExternalHit | null> => {
+    const res = await fetch(`${CENSUS_URL}?address=${encodeURIComponent(address)}&benchmark=2020&format=json`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const match = data?.result?.addressMatches?.[0];
+    const lat = match?.coordinates?.y;
+    const lng = match?.coordinates?.x;
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+    return {
+      lat,
+      lng,
+      confidence: 'low',
+      match_type: 'census_onelineaddress',
+      precision: 'approximate',
+    };
+  },
 };
 
-const geocodeAddress = async (streetAddress: string, city: string, state: string, zip: string | null): Promise<{ lat: number; lng: number; strategy: string } | null> => {
-  const normalized = normalizeAddress(streetAddress ?? '');
-  const parts = [normalized, city, state, zip].filter(Boolean).join(', ');
-  if (!parts) return null;
-
-  // Stage 1 — Nominatim bounded
-  try {
-    const url = `${NOMINATIM_URL}?q=${encodeURIComponent(parts)}&format=json&limit=5&addressdetails=1&countrycodes=us&viewbox=${NV_VIEWBOX}&bounded=1`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'NovumHealth-RuralMap/1.0' } });
-    if (res.ok) {
-      const data = await res.json();
-      const hit = data.find((r: { lat: string; lon: string }) => {
-        const lat = parseFloat(r.lat);
-        const lng = parseFloat(r.lon);
-        return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-      });
-      if (hit) return { lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), strategy: 'address_full' };
-    }
-  } catch { /* continue */ }
-
-  await delay(500);
-
-  // Stage 2 — Census Geocoder
-  try {
-    const censusUrl = `${CENSUS_URL}?address=${encodeURIComponent(parts)}&benchmark=2020&format=json`;
-    const res = await fetch(censusUrl);
-    if (res.ok) {
-      const data = await res.json();
-      const match = data?.result?.addressMatches?.[0];
-      if (match) {
-        const lat = match.coordinates?.y;
-        const lng = match.coordinates?.x;
-        if (Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng)) {
-          return { lat, lng, strategy: 'census_onelineaddress' };
-        }
-      }
-    }
-  } catch { /* continue */ }
-
-  await delay(500);
-
-  // Stage 3 — Nominatim unbounded
-  try {
-    const url = `${NOMINATIM_URL}?q=${encodeURIComponent(parts)}&format=json&limit=5&addressdetails=1&countrycodes=us&viewbox=${NV_VIEWBOX}`;
-    const res = await fetch(url, { headers: { 'User-Agent': 'NovumHealth-RuralMap/1.0' } });
-    if (res.ok) {
-      const data = await res.json();
-      const hit = data.find((r: { lat: string; lon: string }) => {
-        const lat = parseFloat(r.lat);
-        const lng = parseFloat(r.lon);
-        return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-      });
-      if (hit) return { lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), strategy: 'city_county_fallback' };
-    }
-  } catch { /* continue */ }
-
-  return null;
-};
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -142,43 +128,63 @@ serve(async (req) => {
       .range(offset, offset + limit - 1);
     const targets = rows ?? [];
 
-    let geocoded = 0, failed = 0, skipped = 0;
+    const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
+    if (!secret) return jsonRes({ error: 'geocode_cache_secret_missing' }, 500);
+
+    // Single shared internal resource cache — identical to geocode-address.
+    const ports = createResourceCachePorts(supabase, secret, [
+      nominatimPort(true),
+      censusPort,
+      nominatimPort(false),
+    ]);
+
+    let geocoded = 0, failed = 0, skipped = 0, cacheHits = 0, externalCalls = 0;
 
     for (const row of targets) {
       if (!row.street_address) { skipped++; continue; }
 
-      const result = await geocodeAddress(
-        row.street_address,
-        row.city ?? '',
-        row.state ?? 'NV',
-        row.zip ?? null,
-      );
+      const resolution = await resolveResourceAddress(ports, {
+        address: buildResourceAddress(row),
+        requireNevada: true,
+      });
 
       const now = new Date().toISOString().slice(0, 10);
+      externalCalls += resolution.external_calls;
 
-      if (result) {
-        const confidence = result.strategy === 'address_full' ? 'high' : 'low';
-        const tag = `[geocode:${result.strategy}|${confidence}|${now}]`;
-        await supabase.from(table).update({
-          lat: result.lat,
-          lng: result.lng,
-          access_notes: tag,
-        }).eq('id', row.id);
+      if (resolution.resolved && resolution.lat !== null && resolution.lng !== null) {
+        const strategy = resolution.cache_hit
+          ? 'internal_cache'
+          : (resolution.match_type ?? resolution.geocode_provider ?? 'external');
+        const confidence = resolution.confidence ?? 'low';
+        const tag = `[geocode:${strategy}|${confidence}|${now}]`;
+        const update: Record<string, unknown> = { access_notes: tag };
+        if (!row.coordinate_locked) {
+          update.lat = resolution.lat;
+          update.lng = resolution.lng;
+        }
+        await supabase.from(table).update(update).eq('id', row.id);
         geocoded++;
+        if (resolution.cache_hit) cacheHits++;
       } else {
         const tag = `[geocode:failed|low|${now}]`;
         await supabase.from(table).update({ access_notes: tag }).eq('id', row.id);
         failed++;
       }
 
-      await delay(1100);
+      // Provider courtesy delay applies only when an external call happened.
+      if (resolution.external_calls > 0) await delay(1100);
     }
 
-    return new Response(JSON.stringify({ geocoded, failed, skipped, total: targets.length, offset, limit }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
-  } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+    return new Response(
+      JSON.stringify({
+        geocoded, failed, skipped, total: targets.length, offset, limit,
+        cache_hits: cacheHits, external_calls: externalCalls,
+      }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+    );
+
+  } catch {
+    return new Response(JSON.stringify({ error: 'geocode_bulk_internal_error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
