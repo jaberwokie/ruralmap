@@ -105,35 +105,17 @@ const callerIdentity = async (req: Request, admin: Db) => {
 
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
-/** Which records this run is allowed to touch, and why not. */
+/**
+ * Phase 2D.1 — eligibility now lives in `_shared/resourceEligibility.ts` so the
+ * single-record function enforces identical semantics.
+ */
 const eligibility = (
   record: Record<string, unknown>,
   contract: ResourceTableContract,
   force: boolean,
-): { eligible: boolean; reason?: string } => {
-  if (contract.hasSoftDelete && record.deleted_at) {
-    return { eligible: false, reason: 'soft_deleted' };
-  }
-  if (contract.hasMappable && record.mappable === false) {
-    return { eligible: false, reason: 'list-only (mappable=false)' };
-  }
-  if (contract.hasActiveStatus && record.active_status === false) {
-    return { eligible: false, reason: 'inactive_record' };
-  }
-  // Manual / locked display coordinates outrank cache, Census, retry and force.
-  if (isRecordCoordinateProtected(record, contract)) {
-    return { eligible: false, reason: 'protected_manual_or_locked_coordinate' };
-  }
-  if (!record.street_address) {
-    return { eligible: false, reason: 'no_street_address' };
-  }
-  const lat = record[contract.latColumn];
-  const lng = record[contract.lngColumn];
-  if (!force && finite(lat) && finite(lng)) {
-    return { eligible: false, reason: 'already has coordinates' };
-  }
-  return { eligible: true };
-};
+): { eligible: boolean; reason?: string } =>
+  evaluateResourceEligibility(record, contract, { force });
+
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
