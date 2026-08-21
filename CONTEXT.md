@@ -286,7 +286,7 @@ Member address resolution is internal-only. The browser calls exactly one endpoi
 member_address_external_provider = none_approved
 ```
 
-Public Nominatim is prohibited for this purpose (OSMF policy forbids submitting personal/confidential material). The Census Geocoder has no documented project approval to receive member addresses, so it is disabled for `member_address` as well. Both remain available for **public business/resource** geocoding through the dedicated administrative functions (`geocode-address`, `geocode-bulk`, `census-geocode`). Do not add an external provider to the member path without recording the approval here first.
+Public Nominatim is prohibited for this purpose (OSMF policy forbids submitting personal/confidential material). The Census Geocoder has no documented project approval to receive member addresses, so it is disabled for `member_address` as well. For **public business/resource** addresses, the Census Geocoder is the approved external provider, reached only server-side through the administrative functions (`geocode-address`, `geocode-bulk`); public Nominatim is retired there too (Phase 2D). Do not add an external provider to the member path without recording the approval here first.
 
 Member resolution order (fixed, do not reorder):
 
@@ -536,7 +536,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | Audit log UI                                            | `mapping_audit_log` written but no display component                   | Medium       |
 | CSV export on Facilities and Rural Services admin pages | `csvExport.ts` exists; not wired in                                    | Low          |
 | Multi-tenant scoping                                    | No tenant model; `organization_name` is descriptive text only          | Future       |
-| Rate limiting on Edge Functions                         | None on `census-geocode`, `geocode-bulk`, `invite-user`                | Medium       |
+| Rate limiting on Edge Functions                         | None on `geocode-bulk`, `invite-user` (both admin/sysop-gated; `census-geocode` is decommissioned) | Medium       |
 | CI/CD and staging environment                           | Manual publish only                                                    | Future       |
 | DB backup / PITR verification                           | Unconfirmed                                                            | Pre-contract |
 | Formal availability / recovery documentation            | Not written                                                            | Pre-contract |
