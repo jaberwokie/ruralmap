@@ -410,3 +410,302 @@ const writeAudit = async (
   }
 };
 
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Phase 2D.1 §6-§12 — COMBINED, READ-ONLY legacy revalidation dry-run.
+ *
+ * One report across every canonical resource table. Guarantees:
+ *   - address identity uses the SAME canonical identity as the real cache
+ *     (buildResourceAddress → canonicalizeAddress), never raw formatting
+ *   - Census is called once per unique canonical address, deduplicated ACROSS
+ *     tables
+ *   - EVERY record sharing an address gets its own existing-coordinate
+ *     comparison and its own distance_meters
+ *   - counters are truthful and distinct
+ *   - ZERO writes: no cache upsert, no `touch`, no counter increments, no
+ *     canonical/staging/manual coordinate or provenance changes
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+interface DryRunRecordRef {
+  table: string;
+  contract: ResourceTableContract;
+  record: Record<string, unknown>;
+}
+
+const DRY_RUN_MAX_ROWS_PER_TABLE = 2000;
+/** Full per-record comparisons inlined in the response before summarizing. */
+const DRY_RUN_MAX_INLINE_COMPARISONS = 400;
+
+const percentile = (sorted: number[], p: number): number | null => {
+  if (sorted.length === 0) return null;
+  const idx = Math.min(sorted.length - 1, Math.max(0, Math.ceil((p / 100) * sorted.length) - 1));
+  return sorted[idx];
+};
+
+/** Factual reporting buckets only — no bucket is labelled correct/incorrect. */
+const bucketDistance = (m: number): string => {
+  if (m <= 25) return '0-25m';
+  if (m <= 100) return '25-100m';
+  if (m <= 500) return '100-500m';
+  if (m <= 1000) return '500m-1km';
+  if (m <= 5000) return '1-5km';
+  return '>5km';
+};
+
+const runCombinedDryRun = async (
+  db: Db,
+  tables: string[],
+  limit?: number,
+): Promise<Response> => {
+  const cap = Math.min(
+    Math.max(Number(limit ?? MAX_DRY_RUN_ADDRESSES) || MAX_DRY_RUN_ADDRESSES, 1),
+    MAX_DRY_RUN_ADDRESSES,
+  );
+
+  const perTable: Record<string, Record<string, number>> = {};
+  /** canonical address identity → every record sharing it, across tables. */
+  const groups = new Map<string, { source: Record<string, unknown>; refs: DryRunRecordRef[] }>();
+
+  let recordsWithLegacy = 0;
+  let recordsMissingStreet = 0;
+  let recordsWithoutIdentity = 0;
+  let protectedRecords = 0;
+
+  for (const table of tables) {
+    const contract = getResourceTableContract(table)!;
+    const { data: rows, error } = await db
+      .from(table)
+      .select('*')
+      .in('geocode_provider', ['google', 'nominatim'])
+      .limit(DRY_RUN_MAX_ROWS_PER_TABLE);
+
+    if (error) {
+      perTable[table] = { lookup_failed: 1 };
+      continue;
+    }
+
+    const records = (rows ?? []) as Record<string, unknown>[];
+    const t = {
+      records_with_legacy_provenance: records.length,
+      records_missing_street_address: 0,
+      records_without_deterministic_address_identity: 0,
+      protected_records: 0,
+      google_records: 0,
+      nominatim_records: 0,
+    };
+
+    for (const r of records) {
+      if (r.geocode_provider === 'google') t.google_records++;
+      if (r.geocode_provider === 'nominatim') t.nominatim_records++;
+      if (isRecordCoordinateProtected(r, contract)) {
+        t.protected_records++;
+        protectedRecords++;
+      }
+      if (!r.street_address) {
+        t.records_missing_street_address++;
+        recordsMissingStreet++;
+        continue;
+      }
+      const assembled = buildResourceAddress(r as never);
+      if (!hasDeterministicIdentity(assembled)) {
+        t.records_without_deterministic_address_identity++;
+        recordsWithoutIdentity++;
+        continue;
+      }
+      // SAME identity function the real cache keys on.
+      const identity = canonicalizeAddress(assembled).canonical;
+      const g = groups.get(identity);
+      if (g) g.refs.push({ table, contract, record: r });
+      else groups.set(identity, { source: r, refs: [{ table, contract, record: r }] });
+    }
+
+    recordsWithLegacy += records.length;
+    perTable[table] = t;
+  }
+
+  // Cache-side provenance tally (provenance only; addresses are HMAC-keyed and
+  // are NOT readable, so cache rows cannot be revalidated on their own).
+  const { data: cacheRows } = await db
+    .from('geocode_resolutions')
+    .select('geocode_source')
+    .eq('location_class', 'resource_address')
+    .limit(5000);
+  const cacheTally: Record<string, number> = {
+    manual_verified: 0, census: 0, google: 0, nominatim: 0, other_unclassified: 0,
+  };
+  for (const c of (cacheRows ?? []) as { geocode_source: string }[]) {
+    if (Object.prototype.hasOwnProperty.call(cacheTally, c.geocode_source)) {
+      cacheTally[c.geocode_source] += 1;
+    } else {
+      cacheTally.other_unclassified += 1;
+    }
+  }
+
+  const uniqueGoogleAddresses = new Set<string>();
+  const uniqueNominatimAddresses = new Set<string>();
+  for (const [identity, g] of groups) {
+    for (const ref of g.refs) {
+      if (ref.record.geocode_provider === 'google') uniqueGoogleAddresses.add(identity);
+      if (ref.record.geocode_provider === 'nominatim') uniqueNominatimAddresses.add(identity);
+    }
+  }
+
+  const comparisons: Record<string, unknown>[] = [];
+  const anomalies: Record<string, unknown>[] = [];
+  const distances: number[] = [];
+  const rejectionReasons: Record<string, number> = {};
+  const unresolvedAddresses: Record<string, unknown>[] = [];
+
+  let censusAttempted = 0, censusResolved = 0, censusUnresolved = 0;
+  let validationRejected = 0, recordsCompared = 0;
+
+  for (const [identity, g] of groups) {
+    if (censusAttempted >= cap) break;
+    censusAttempted++;
+
+    const src = g.source;
+    let validation: CensusValidationDetail | null = null;
+    const port = createCensusPort({
+      source: {
+        street_address: src.street_address as string | null,
+        city: src.city as string | null,
+        state: (src.state as string | null) ?? 'NV',
+        zip: src.zip as string | null,
+      },
+      requireNevada: true,
+      onValidation: (d) => { validation = d; },
+    });
+
+    // ONE Census call per unique canonical address, across all tables.
+    const hit = await port.run(buildResourceAddress(src as never)).catch(() => null);
+    if (hit) censusResolved++;
+    else censusUnresolved++;
+
+    const v = validation as CensusValidationDetail | null;
+    if (v && v.validation_status === 'rejected') {
+      validationRejected++;
+      const reason = v.rejection_reason ?? 'unspecified';
+      rejectionReasons[reason] = (rejectionReasons[reason] ?? 0) + 1;
+    }
+    if (!hit) {
+      unresolvedAddresses.push({
+        record_count: g.refs.length,
+        tables: [...new Set(g.refs.map((r) => r.table))],
+        city: src.city ?? null,
+        zip: src.zip ?? null,
+        validation: v,
+      });
+    }
+
+    // EVERY record sharing this address is compared on its OWN coordinate.
+    for (const ref of g.refs) {
+      const r = ref.record;
+      const existingLat = r[ref.contract.latColumn];
+      const existingLng = r[ref.contract.lngColumn];
+      const mLat = ref.contract.manualLatColumn ? r[ref.contract.manualLatColumn] : null;
+      const mLng = ref.contract.manualLngColumn ? r[ref.contract.manualLngColumn] : null;
+      const distance =
+        hit && finite(existingLat) && finite(existingLng)
+          ? Math.round(geodesicMeters(existingLat as number, existingLng as number, hit.lat, hit.lng))
+          : null;
+      if (distance !== null) distances.push(distance);
+      recordsCompared++;
+
+      const row = {
+        table: ref.table,
+        id: r.id,
+        name: r.name,
+        existing_provider: r.geocode_provider ?? null,
+        existing_coordinate_source: r.coordinate_source ?? null,
+        existing_confidence: r.coordinate_confidence ?? null,
+        existing_latitude: finite(existingLat) ? existingLat : null,
+        existing_longitude: finite(existingLng) ? existingLng : null,
+        coordinate_locked: r.coordinate_locked ?? null,
+        manual_coordinate_present: finite(mLat) && finite(mLng),
+        protected: isRecordCoordinateProtected(r, ref.contract),
+        existing_provenance_class: classifyResourceCacheSource(r.geocode_provider as string | null),
+        census_resolved: !!hit,
+        census_latitude: hit ? hit.lat : null,
+        census_longitude: hit ? hit.lng : null,
+        census_validation_status: v?.validation_status ?? null,
+        census_rejection_reason: v?.rejection_reason ?? null,
+        house_number_match: v?.house_number_match ?? null,
+        street_name_match: v?.street_name_match ?? null,
+        state_match: v?.state_match ?? null,
+        zip_match: v?.zip_match ?? null,
+        distance_meters: distance,
+        distance_bucket: distance === null ? null : bucketDistance(distance),
+        address_identity: identity,
+      };
+      comparisons.push(row);
+      // Anomalies are never omitted from the response.
+      if (!hit || v?.validation_status === 'rejected' || distance === null || distance > 500) {
+        anomalies.push(row);
+      }
+    }
+
+    await delay(400);
+  }
+
+  const sorted = [...distances].sort((a, b) => a - b);
+  const buckets: Record<string, number> = {
+    '0-25m': 0, '25-100m': 0, '100-500m': 0, '500m-1km': 0, '1-5km': 0, '>5km': 0,
+  };
+  for (const d of distances) buckets[bucketDistance(d)] += 1;
+
+  const largest = [...comparisons]
+    .filter((c) => typeof c.distance_meters === 'number')
+    .sort((a, b) => (b.distance_meters as number) - (a.distance_meters as number))
+    .slice(0, 25);
+
+  const inlineComparisons = comparisons.length <= DRY_RUN_MAX_INLINE_COMPARISONS
+    ? comparisons
+    : anomalies;
+
+  return json({
+    mode: 'dry_run_revalidation',
+    mutated: false,
+    read_only: true,
+    generated_at: new Date().toISOString(),
+    tables_included: tables,
+    active_external_provider: 'census',
+    identity_methodology: 'buildResourceAddress -> canonicalizeAddress (same identity as resource_address cache)',
+    census_call_dedup: 'one call per unique canonical address, deduplicated across all tables',
+    totals: {
+      records_with_legacy_provenance: recordsWithLegacy,
+      records_missing_street_address: recordsMissingStreet,
+      records_without_deterministic_address_identity: recordsWithoutIdentity,
+      unique_canonical_legacy_addresses: groups.size,
+      unique_google_addresses: uniqueGoogleAddresses.size,
+      unique_nominatim_addresses: uniqueNominatimAddresses.size,
+      census_attempted: censusAttempted,
+      census_resolved: censusResolved,
+      census_unresolved: censusUnresolved,
+      validation_rejected: validationRejected,
+      protected_records: protectedRecords,
+      records_compared: recordsCompared,
+      attempt_cap: cap,
+      addresses_not_attempted_due_to_cap: Math.max(0, groups.size - censusAttempted),
+    },
+    resource_cache_provenance: cacheTally,
+    cache_revalidation_note:
+      'resource_address cache rows are HMAC-keyed; a cache row cannot be externally revalidated without a corresponding canonical address record.',
+    per_table: perTable,
+    distance_distribution: {
+      count: sorted.length,
+      minimum: sorted[0] ?? null,
+      median: percentile(sorted, 50),
+      p75: percentile(sorted, 75),
+      p90: percentile(sorted, 90),
+      p95: percentile(sorted, 95),
+      maximum: sorted[sorted.length - 1] ?? null,
+      buckets,
+    },
+    largest_differences: largest,
+    validation_rejection_reasons: rejectionReasons,
+    unresolved_addresses: unresolvedAddresses,
+    anomalies,
+    comparisons: inlineComparisons,
+    omitted_comparison_count: comparisons.length - inlineComparisons.length,
+  });
+};
