@@ -106,28 +106,16 @@ describe('location_class authorization is role-independent', () => {
 });
 
 // ── Canonical coverage ────────────────────────────────────────────────
+// Behavioral coverage of the canonical matcher (table set, deleted/mappable/
+// active gating, exact equality, manual coordinates, Nevada bounds) lives in
+// `src/test/memberCanonicalMatch.test.ts`.
 
-describe('canonical matching covers the live map resource tables', () => {
-  it('queries facilities, rural_services, verified_services and verified_bh', () => {
-    for (const t of ['facilities', 'rural_services', 'verified_services', 'verified_bh']) {
-      expect(resolverFn).toContain(`table: '${t}'`);
-    }
-  });
-
-  it('uses exact canonical equality, never fuzzy comparison', () => {
-    expect(resolverFn).toContain('rowCanon.canonical !== canon.canonical');
-  });
-
-  it('excludes deleted and non-mappable canonical records', () => {
-    expect(resolverFn).toContain(".is('deleted_at', null)");
-    expect(resolverFn).toContain(".eq('mappable', true)");
-  });
-
-  it('prefers curated manual coordinates and validates Nevada', () => {
-    expect(resolverFn).toContain('manual_lat');
-    expect(resolverFn).toContain('isInNevada(lat, lng)');
+describe('canonical matching is the only in-repo coordinate authority', () => {
+  it('delegates canonical matching to the shared extracted matcher', () => {
+    expect(resolverFn).toContain('createCanonicalMatch');
   });
 });
+
 
 // ── Resolver behavior with no approved external provider ──────────────
 
