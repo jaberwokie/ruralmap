@@ -7,6 +7,7 @@ import { useRuralServiceData } from '@/hooks/useRuralServiceData';
 import { facilityOffersBehavioralHealth } from '@/utils/facilityBehavioralHealth';
 import { getCountyForLocation } from '@/utils/countyLookup';
 import { logEvent } from '@/lib/metrics/logEvent';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface MemberLocation {
   lat: number;
