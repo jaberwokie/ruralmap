@@ -30,11 +30,11 @@
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { type LocationClass } from '../_shared/geocodeNormalize.ts';
 import {
-  canonicalizeAddress,
-  isInNevada,
-  type LocationClass,
-} from '../_shared/geocodeNormalize.ts';
+  createCanonicalMatch,
+  type CanonicalDbClient,
+} from './canonicalMatch.ts';
 import {
   resolveAddress,
   type CachedResolution,
