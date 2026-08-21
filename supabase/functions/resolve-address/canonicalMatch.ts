@@ -95,11 +95,15 @@ export const createCanonicalMatch = (
 
       // Curated/manual coordinates outrank automated ones; a coordinate
       // lock means the curated value is the only acceptable answer.
-      const manualLat = Number(row.manual_lat);
-      const manualLng = Number(row.manual_lng);
+      // NB: Number(null) is 0, so null curated columns must be rejected
+      // explicitly or a member would be placed at lat/lng 0,0.
+      const manualLat = row.manual_lat == null ? NaN : Number(row.manual_lat);
+      const manualLng = row.manual_lng == null ? NaN : Number(row.manual_lng);
       const hasManual = Number.isFinite(manualLat) && Number.isFinite(manualLng);
-      const lat = hasManual ? manualLat : Number(row[spec.latCol]);
-      const lng = hasManual ? manualLng : Number(row[spec.lngCol]);
+      const rawLat = row[spec.latCol];
+      const rawLng = row[spec.lngCol];
+      const lat = hasManual ? manualLat : (rawLat == null ? NaN : Number(rawLat));
+      const lng = hasManual ? manualLng : (rawLng == null ? NaN : Number(rawLng));
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
       if (!isInNevada(lat, lng)) continue;
 
