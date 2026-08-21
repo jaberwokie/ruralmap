@@ -6,9 +6,9 @@
  * validated once, and then reusable across records, tables and functions.
  *
  * HARD SEPARATION: this module only ever touches the `resource_address`
- * location_class namespace. It never reads or writes `member_address` cache
- * rows, and the Phase 2B member boundary
- * (`member_address_external_provider = none_approved`) is untouched.
+ * location_class namespace. It never reads or writes private member cache
+ * rows, and the Phase 2B member boundary (no approved external provider for
+ * member addresses) is untouched.
  *
  * Cache identity is deterministic EXACT canonical address equality. No fuzzy,
  * name, county-only or ZIP-only matching: wrong coordinates are worse than
@@ -39,11 +39,14 @@ export interface ResourceAddressParts {
 }
 
 /** Canonical resource tables own the address text; we only derive identity. */
-export const buildResourceAddress = (parts: ResourceAddressParts): string =>
-  [parts.street_address, parts.city, parts.state ?? 'NV', parts.zip]
-    .map((p) => (typeof p === 'string' ? p.trim() : p))
-    .filter(Boolean)
-    .join(', ');
+export const buildResourceAddress = (parts: ResourceAddressParts): string => {
+  const clean = (v: unknown) => (typeof v === 'string' ? v.trim() : v ? String(v) : '');
+  const state = clean(parts.state) || 'NV';
+  const zip = clean(parts.zip);
+  // `STATE ZIP` (space, not comma) so identity matches the ordinary written form.
+  const tail = zip ? `${state} ${zip}` : state;
+  return [clean(parts.street_address), clean(parts.city), tail].filter(Boolean).join(', ');
+};
 
 /**
  * Deterministic keyed identity for a public resource address.
