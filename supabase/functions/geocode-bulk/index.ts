@@ -656,7 +656,7 @@ const runCombinedDryRun = async (
       }
     }
 
-    await delay(400);
+    await delay(200);
   }
 
   const sorted = [...distances].sort((a, b) => a - b);
@@ -697,7 +697,9 @@ const runCombinedDryRun = async (
       protected_records: protectedRecords,
       records_compared: recordsCompared,
       attempt_cap: cap,
-      addresses_not_attempted_due_to_cap: Math.max(0, groups.size - censusAttempted),
+      slice_offset: startAt,
+      addresses_not_attempted_in_this_slice: Math.max(0, groups.size - (startAt + censusAttempted)),
+      next_offset: startAt + censusAttempted < groups.size ? startAt + censusAttempted : null,
     },
     resource_cache_provenance: cacheTally,
     cache_revalidation_note:
