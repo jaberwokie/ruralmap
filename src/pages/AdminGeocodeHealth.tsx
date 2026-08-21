@@ -157,9 +157,54 @@ export default function AdminGeocodeHealth() {
   const perms = usePermissions();
   const [rows, setRows] = useState<ResolutionRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dryRun, setDryRun] = useState<DryRunReport | null>(null);
+  const [dryRunBusy, setDryRunBusy] = useState(false);
+  const [dryRunProgress, setDryRunProgress] = useState('');
 
   const canRead = perms.canAccessOps;
   const canWrite = perms.isAdmin;
+
+  /** Read-only. Runs slices until the canonical address list is exhausted. */
+  const runDryRun = async () => {
+    setDryRunBusy(true);
+    setDryRun(null);
+    try {
+      const slices: DryRunReport[] = [];
+      let offset: number | null = 0;
+      let guard = 0;
+      while (offset !== null && guard < 20) {
+        guard += 1;
+        setDryRunProgress(`Comparing addresses from ${offset}…`);
+        const slice = await runCombinedLegacyDryRun({ limit: 100, offset });
+        slices.push(slice);
+        const t = slice.totals as Record<string, unknown> | undefined;
+        const next = t?.next_offset;
+        offset = typeof next === 'number' ? next : null;
+      }
+      setDryRun(mergeSlices(slices));
+      setDryRunProgress('');
+    } catch (e) {
+      toast({
+        title: 'Dry-run failed',
+        description: e instanceof Error ? e.message : 'Unknown error',
+        variant: 'destructive',
+      });
+      setDryRunProgress('');
+    } finally {
+      setDryRunBusy(false);
+    }
+  };
+
+  const downloadDryRun = () => {
+    if (!dryRun) return;
+    const blob = new Blob([JSON.stringify(dryRun, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `legacy-geocode-dry-run-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
 
   const load = async () => {
     setLoading(true);
