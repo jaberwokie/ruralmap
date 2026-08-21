@@ -799,9 +799,11 @@ export const editFacilityRecord = async (
     target_row_id: id,
     details: changes,
   });
-  // Background re-geocode when the address actually changed.
+  // Address deliberately changed → the stored automated coordinate now
+  // describes the wrong place, so force a re-resolution. Manual/locked
+  // coordinates remain protected server-side.
   if (Object.prototype.hasOwnProperty.call(changes, 'street_address') && changes.street_address) {
-    triggerGeocodeAddress('facilities', id);
+    triggerGeocodeAddress('facilities', id, { force: true });
   }
   notifyFacilitiesChanged();
 };
@@ -911,6 +913,8 @@ export const promoteStagingFacility = async (id: string): Promise<void> => {
 
   const upsertRes = await (supabase as any).from('facilities').upsert(upsertPayload, { onConflict: 'id' });
   if (upsertRes.error) throw new Error(`Failed to write facility: ${upsertRes.error.message}`);
+  // Promotion = new-record enrichment, NOT an address change: stays non-force
+  // so coordinates carried over from staging are preserved.
   if ((upsertPayload as Record<string, unknown>).street_address) {
     triggerGeocodeAddress('facilities', liveId);
   }

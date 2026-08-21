@@ -3,9 +3,9 @@
  *
  * Review queue across facilities, rural_services, verified_services, verified_bh,
  * and staging_providers for low-confidence (geometric / approximate / low) or
- * failed geocoding results from any approved resource provider (Google,
- * Nominatim, Census) including results reused from the internal resource
- * cache. Admins can:
+ * failed geocoding results. Census is the ACTIVE external resource provider;
+ * historical Google / Nominatim provenance is retired but stays reviewable.
+ * Results reused from the internal resource cache are included. Admins can:
  *   - Lock & Approve the current geocoded coordinates
  *   - Re-geocode (force) via the geocode-address edge function
  *   - Edit coordinates manually (writes manual_lat/manual_lng + locks)
@@ -78,8 +78,9 @@ const CONFIDENCE_STYLES: Record<string, string> = {
 };
 
 // Phase 2C.1: a low-confidence result must stay reviewable regardless of which
-// approved provider produced it (Google, Nominatim, Census) and regardless of
-// whether THIS record received it fresh or from the internal resource cache.
+// provider produced it and regardless of whether THIS record received it fresh
+// or from the internal resource cache. Census is the active external provider;
+// `google` / `nominatim` are retired legacy provenance kept reviewable here.
 const REVIEW_OR_FILTER =
   'coordinate_source.eq.failed,and(coordinate_source.in.(google,nominatim,census,internal_cache),coordinate_confidence.in.(geometric,approximate,low))';
 
@@ -439,8 +440,9 @@ export default function AdminGeocodeReview() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
             Facilities, rural services, verified services, verified BH, and staging providers with low-confidence or
-            failed geocoding results from any approved provider (Google, Nominatim, Census), including coordinates
-            reused from the internal resource cache. Approve, re-geocode, or manually correct coordinates.
+            failed geocoding results. Census is the active external provider; retired Google and Nominatim
+            provenance stays reviewable. Includes coordinates reused from the internal resource cache. Approve,
+            re-geocode, or manually correct coordinates.
           </p>
         </header>
 
