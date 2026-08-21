@@ -96,6 +96,13 @@ export interface ResolveRequest {
   variants?: QueryVariant[];
   /** Hard cap on external provider calls per request (abuse resistance). */
   maxExternalCalls?: number;
+  /**
+   * Phase 2B.2 — whether an unresolved (null-coordinate) row may be written to
+   * the internal cache. Defaults to false: a null-coordinate row is never a
+   * valid cache hit, so persisting one for every anonymous miss only lets an
+   * unauthenticated caller grow the table without operational benefit.
+   */
+  persistUnresolved?: boolean;
 }
 
 export interface ResolveResult {
