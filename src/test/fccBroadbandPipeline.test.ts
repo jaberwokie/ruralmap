@@ -245,9 +245,11 @@ describe('successful FCC ingestion', () => {
     expect(snap.effective_date).toBe('2025-06-30');
     expect(snap.source_version).toBe('2025-06-30');
     expect(snap.content_hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(snap.source_artifacts.auth_header_names).toEqual(['username', 'hash_value']);
-    expect(snap.source_artifacts.artifacts[0].sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(snap.source_artifacts.derivation.version).toBe(DERIVATION_VERSION);
+    expect(snap.raw_payload.auth_header_names).toEqual(['username', 'hash_value']);
+    expect(Array.isArray(snap.source_artifacts)).toBe(true);
+    expect(snap.source_artifacts[0].sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(snap.source_artifacts[0].storage_path).toBe(snap.storage_path);
+    expect(snap.raw_payload.derivation.version).toBe(DERIVATION_VERSION);
   });
 
   it('produces a county comparison against the values previously in effect', async () => {

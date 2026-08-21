@@ -423,9 +423,9 @@ export const runFccBroadbandIngestion = async (
 
     if (options.dryRun) {
       await ports.completeRun(runId, {
-        status: 'succeeded',
+        status: 'success',
         completed_at: ports.now().toISOString(),
-        run_type: 'dry_run',
+        run_type: 'validate',
         records_received: metrics.length,
         records_accepted: metrics.length,
         records_rejected: 0,
@@ -467,7 +467,7 @@ export const runFccBroadbandIngestion = async (
     // ── 9. Run + source health ──
     const completedAt = ports.now().toISOString();
     await ports.completeRun(runId, {
-      status: 'succeeded',
+      status: 'success',
       completed_at: completedAt,
       records_received: metrics.length,
       records_accepted: metrics.length,
