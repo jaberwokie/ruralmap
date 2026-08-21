@@ -7,6 +7,7 @@
  */
 import { describe, it, expect } from "vitest";
 import html from "../../index.html?raw";
+import shareHtml from "../../public/share.html?raw";
 
 const PUBLIC_CANONICAL = "https://ruraltool.iterum.systems/";
 
@@ -48,5 +49,29 @@ describe("index.html public metadata", () => {
     expect(head).not.toContain("unverified");
     expect(head).not.toContain("audit");
     expect(head).not.toContain("staging");
+  });
+});
+
+describe("public/share.html metadata", () => {
+  const SHARE_URL = "https://ruraltool.iterum.systems/share.html";
+
+  it("canonical, og:url and twitter:url use the current production domain", () => {
+    expect(shareHtml).toContain(`<link rel="canonical" href="${SHARE_URL}" />`);
+    expect(shareHtml).toContain(`content="${SHARE_URL}"`);
+    expect(shareHtml).not.toContain("ruralmap.opsframe.io");
+  });
+
+  it("share images are absolute on the current production domain", () => {
+    const images = [...shareHtml.matchAll(/(?:og:image|og:image:secure_url|twitter:image)"\s+content="([^"]+)"/g)]
+      .map((m) => m[1]);
+    expect(images.length).toBeGreaterThan(0);
+    for (const url of images) {
+      expect(url.startsWith("https://ruraltool.iterum.systems/")).toBe(true);
+    }
+  });
+
+  it("preserves the redirect into /public", () => {
+    expect(shareHtml).toContain('content="0; url=/public"');
+    expect(shareHtml).toContain('window.location.replace("/public")');
   });
 });
