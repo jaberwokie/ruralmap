@@ -7,8 +7,10 @@ import {
 import { createResourceCachePorts } from '../_shared/resourceCachePorts.ts';
 import {
   createCensusPort,
+  geodesicMeters,
   type CensusValidationDetail,
 } from '../_shared/censusResourceGeocoder.ts';
+
 import { getResourceTableContract, RESOURCE_TABLES } from '../_shared/resourceTableContracts.ts';
 import { evaluateResourceEligibility } from '../_shared/resourceEligibility.ts';
 
