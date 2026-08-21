@@ -567,9 +567,13 @@ const runCombinedDryRun = async (
   let censusAttempted = 0, censusResolved = 0, censusUnresolved = 0;
   let validationRejected = 0, recordsCompared = 0;
 
-  for (const [identity, g] of groups) {
-    if (censusAttempted >= cap) break;
+  const orderedIdentities = [...groups.keys()].sort();
+  const slice = orderedIdentities.slice(startAt, startAt + cap);
+
+  for (const identity of slice) {
+    const g = groups.get(identity)!;
     censusAttempted++;
+
 
     const src = g.source;
     let validation: CensusValidationDetail | null = null;
