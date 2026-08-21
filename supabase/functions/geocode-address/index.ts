@@ -100,16 +100,20 @@ serve(async (req) => {
     if (!record) return json({ error: 'Record not found' }, 404);
 
     /**
-     * Phase 2D.1 — ONE eligibility/protection contract shared with
-     * `geocode-bulk`. Manual/locked authority outranks cache, Census and
-     * `force`; soft-deleted, inactive and non-mappable records are never sent
-     * to an external provider. `force` only permits re-resolving a record that
-     * already has coordinates.
+     * Phase 2D.1 closure — ONE eligibility/protection contract shared with
+     * `geocode-bulk`, using the REAL request force flag.
+     *
+     * Non-force (background enrichment after insert/promotion): a record that
+     * already has coordinates is skipped with `already_has_coordinates` — zero
+     * Census calls, zero provenance mutation. Imported coordinates are never
+     * silently replaced.
+     * Force (deliberate re-geocode, or an address that actually changed): may
+     * re-resolve an automated coordinate.
+     * Manual/locked authority outranks cache, Census and `force`; soft-deleted,
+     * inactive and non-mappable records are never sent to an external provider.
      */
-    const gate = evaluateResourceEligibility(record, contract, {
-      force: true,
-      allowExistingCoordinates: true,
-    });
+    const gate = evaluateResourceEligibility(record, contract, { force: !!force });
+
     if (!gate.eligible) {
       return json({
         success: true,
