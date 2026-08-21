@@ -1,9 +1,15 @@
 /**
  * County-level broadband coverage data for rural Nevada.
  *
- * Loads real FCC-derived data from /data/nevada_broadband.json at runtime.
- * Uses distribution-based model — NOT max-value-across-technologies.
+ * Read path (Phase 2A):
+ *   1. normalized `broadband_county_coverage` table (internalized dataset)
+ *   2. fallback: /data/nevada_broadband.json (unchanged static snapshot)
+ *
+ * The map never calls FCC directly. Uses distribution-based model —
+ * NOT max-value-across-technologies.
  */
+import { supabase } from '@/integrations/supabase/client';
+
 
 export type OperationalBroadbandReadiness = 'High' | 'Mixed' | 'Low';
 export type BroadbandStatus = 'Served' | 'Underserved' | 'Unserved';
