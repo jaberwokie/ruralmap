@@ -339,10 +339,34 @@ serve(async (req) => {
         validation_status: validation?.validation_status ?? null,
         state_match: validation?.state_match ?? null,
         zip_match: validation?.zip_match ?? null,
+        house_number_match: validation?.house_number_match ?? null,
+        street_name_match: validation?.street_name_match ?? null,
         matched_address_available: validation?.matched_address_available ?? null,
+        // Phase 2D.1 §5 — legacy provider supersession visibility.
+        previous_provider: (record.geocode_provider as string | null) ?? null,
+        previous_coordinate_source: (record.coordinate_source as string | null) ?? null,
+        new_provider: resolution.geocode_provider,
+        new_coordinate_source: resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider,
+        previous_latitude: finite(record[contract.latColumn]) ? record[contract.latColumn] : null,
+        previous_longitude: finite(record[contract.lngColumn]) ? record[contract.lngColumn] : null,
+        new_latitude: resolution.lat,
+        new_longitude: resolution.lng,
+        distance_meters:
+          finite(record[contract.latColumn]) && finite(record[contract.lngColumn]) &&
+          finite(resolution.lat) && finite(resolution.lng)
+            ? Math.round(geodesicMeters(
+                record[contract.latColumn] as number,
+                record[contract.lngColumn] as number,
+                resolution.lat as number,
+                resolution.lng as number,
+              ))
+            : null,
+        legacy_provider_superseded:
+          record.geocode_provider === 'google' || record.geocode_provider === 'nominatim',
         status: resolution.resolved ? 'resolved' : 'failed',
         forced: force,
       });
+
 
       // Provider courtesy delay only when an external call actually happened.
       if (resolution.external_calls > 0) await delay(400);
