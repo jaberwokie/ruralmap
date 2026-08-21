@@ -246,7 +246,10 @@ describe('Phase 2B resolution order', () => {
 
   it('leaves an unresolvable address unresolved instead of inventing coordinates', async () => {
     const h = makeHarness({ geocoders: [failingGeocoder('nominatim', 'nominatim_failed')] });
-    const result = await resolveAddress(h.ports, { address: 'nowhere at all, NV' });
+    const result = await resolveAddress(h.ports, {
+      address: 'nowhere at all, NV',
+      persistUnresolved: true,
+    });
 
     expect(result.resolved).toBe(false);
     expect(result.lat).toBeNull();
@@ -254,6 +257,7 @@ describe('Phase 2B resolution order', () => {
     expect(result.failures).toContain('manual_resolution_required');
     expect(h.upserts[0].latitude).toBeNull();
   });
+
 
   it('rejects an out-of-Nevada hit for member addresses rather than accepting it', async () => {
     const h = makeHarness({ geocoders: [okGeocoder({ lat: 34.05, lng: -118.24 })] });
