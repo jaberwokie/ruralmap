@@ -14,6 +14,203 @@ export type Database = {
   }
   public: {
     Tables: {
+      data_source_runs: {
+        Row: {
+          completed_at: string | null
+          content_hash: string | null
+          created_at: string
+          error_count: number
+          error_summary: string | null
+          id: string
+          initiated_by: string | null
+          records_accepted: number | null
+          records_created: number | null
+          records_received: number | null
+          records_rejected: number | null
+          records_unchanged: number | null
+          records_updated: number | null
+          run_metadata: Json
+          run_type: string
+          source_id: string
+          source_version: string | null
+          started_at: string
+          status: string
+          transformation_version: string | null
+          warning_count: number
+        }
+        Insert: {
+          completed_at?: string | null
+          content_hash?: string | null
+          created_at?: string
+          error_count?: number
+          error_summary?: string | null
+          id?: string
+          initiated_by?: string | null
+          records_accepted?: number | null
+          records_created?: number | null
+          records_received?: number | null
+          records_rejected?: number | null
+          records_unchanged?: number | null
+          records_updated?: number | null
+          run_metadata?: Json
+          run_type: string
+          source_id: string
+          source_version?: string | null
+          started_at?: string
+          status?: string
+          transformation_version?: string | null
+          warning_count?: number
+        }
+        Update: {
+          completed_at?: string | null
+          content_hash?: string | null
+          created_at?: string
+          error_count?: number
+          error_summary?: string | null
+          id?: string
+          initiated_by?: string | null
+          records_accepted?: number | null
+          records_created?: number | null
+          records_received?: number | null
+          records_rejected?: number | null
+          records_unchanged?: number | null
+          records_updated?: number | null
+          run_metadata?: Json
+          run_type?: string
+          source_id?: string
+          source_version?: string | null
+          started_at?: string
+          status?: string
+          transformation_version?: string | null
+          warning_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_source_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_sources: {
+        Row: {
+          authority_name: string | null
+          content_hash: string | null
+          created_at: string
+          credential_reference: string | null
+          data_classification: string
+          effective_date: string | null
+          failure_impact: string | null
+          fallback_available: boolean
+          fallback_description: string | null
+          id: string
+          internalization_target: string
+          is_public_safe: boolean
+          is_stale: boolean
+          last_failed_ingestion_at: string | null
+          last_record_count: number | null
+          last_retrieved_at: string | null
+          last_successful_ingestion_at: string | null
+          last_verified_at: string | null
+          next_review_at: string | null
+          notes: string | null
+          owner_name: string | null
+          owner_role: string | null
+          refresh_cadence: string | null
+          refresh_method: string | null
+          requires_credentials: boolean
+          runtime_dependency: boolean
+          source_category: string
+          source_key: string
+          source_name: string
+          source_type: string
+          source_url: string | null
+          source_version: string | null
+          stale_after_days: number | null
+          status: string
+          transformation_version: string | null
+          updated_at: string
+        }
+        Insert: {
+          authority_name?: string | null
+          content_hash?: string | null
+          created_at?: string
+          credential_reference?: string | null
+          data_classification?: string
+          effective_date?: string | null
+          failure_impact?: string | null
+          fallback_available?: boolean
+          fallback_description?: string | null
+          id?: string
+          internalization_target?: string
+          is_public_safe?: boolean
+          is_stale?: boolean
+          last_failed_ingestion_at?: string | null
+          last_record_count?: number | null
+          last_retrieved_at?: string | null
+          last_successful_ingestion_at?: string | null
+          last_verified_at?: string | null
+          next_review_at?: string | null
+          notes?: string | null
+          owner_name?: string | null
+          owner_role?: string | null
+          refresh_cadence?: string | null
+          refresh_method?: string | null
+          requires_credentials?: boolean
+          runtime_dependency?: boolean
+          source_category?: string
+          source_key: string
+          source_name: string
+          source_type?: string
+          source_url?: string | null
+          source_version?: string | null
+          stale_after_days?: number | null
+          status?: string
+          transformation_version?: string | null
+          updated_at?: string
+        }
+        Update: {
+          authority_name?: string | null
+          content_hash?: string | null
+          created_at?: string
+          credential_reference?: string | null
+          data_classification?: string
+          effective_date?: string | null
+          failure_impact?: string | null
+          fallback_available?: boolean
+          fallback_description?: string | null
+          id?: string
+          internalization_target?: string
+          is_public_safe?: boolean
+          is_stale?: boolean
+          last_failed_ingestion_at?: string | null
+          last_record_count?: number | null
+          last_retrieved_at?: string | null
+          last_successful_ingestion_at?: string | null
+          last_verified_at?: string | null
+          next_review_at?: string | null
+          notes?: string | null
+          owner_name?: string | null
+          owner_role?: string | null
+          refresh_cadence?: string | null
+          refresh_method?: string | null
+          requires_credentials?: boolean
+          runtime_dependency?: boolean
+          source_category?: string
+          source_key?: string
+          source_name?: string
+          source_type?: string
+          source_url?: string | null
+          source_version?: string | null
+          stale_after_days?: number | null
+          status?: string
+          transformation_version?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       facilities: {
         Row: {
           access_notes: string | null

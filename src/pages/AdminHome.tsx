@@ -6,7 +6,7 @@
  */
 
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowRight, BookOpen, Layers, ListChecks, MapPin, ShieldCheck, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, Database, Layers, ListChecks, MapPin, ShieldCheck, Users } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
@@ -87,6 +87,13 @@ export default function AdminHome() {
             description="Approve, re-geocode, or manually correct low-confidence Google geocoding results."
             icon={<MapPin className="h-4 w-4" />}
           />
+          <ToolCard
+            to="/admin/data-sources"
+            title="Data Sources"
+            description="Source Registry: where every dataset originates, freshness, ownership, and internalization targets."
+            icon={<Database className="h-4 w-4" />}
+          />
+
           {perms.isAdmin && (
             <ToolCard
               to="/admin/training"
