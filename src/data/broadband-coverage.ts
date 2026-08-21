@@ -122,34 +122,116 @@ const parseRecords = (raw: unknown[]): CountyBroadbandData[] =>
     })
     .filter((d) => d.countyName.length > 0);
 
+/** Row shape of the normalized `broadband_county_coverage` table. */
+interface NormalizedRow {
+  county_name: string;
+  pct_100_20_plus: number | null;
+  pct_25_3_to_100_20: number | null;
+  pct_below_25_3: number | null;
+  fiber_share: number | null;
+  cable_share: number | null;
+  fixed_wireless_share: number | null;
+  satellite_share: number | null;
+  coverage_unevenness: boolean | null;
+  notes: string | null;
+}
+
+/** Map normalized DB rows onto the raw record shape parseRecords expects. */
+export const normalizedRowsToRaw = (rows: NormalizedRow[]): Record<string, unknown>[] =>
+  rows.map((r) => ({
+    countyName: r.county_name,
+    pct_100_20_plus: r.pct_100_20_plus,
+    pct_25_3_to_100_20: r.pct_25_3_to_100_20,
+    pct_below_25_3: r.pct_below_25_3,
+    fiberShare: r.fiber_share,
+    cableShare: r.cable_share,
+    fixedWirelessShare: r.fixed_wireless_share,
+    satelliteShare: r.satellite_share,
+    coverageUnevenness: r.coverage_unevenness ?? false,
+    notes: r.notes ?? undefined,
+  }));
+
+/** A usable dataset has rows and finite core metrics on every row. */
+export const isUsableBroadbandDataset = (records: CountyBroadbandData[]): boolean =>
+  records.length > 0 &&
+  records.every((d) =>
+    d.countyName.length > 0 &&
+    Number.isFinite(d.pct_100_20_plus) &&
+    Number.isFinite(d.pct_25_3_to_100_20) &&
+    Number.isFinite(d.pct_below_25_3),
+  );
+
+const publish = (records: CountyBroadbandData[]): void => {
+  COUNTY_BROADBAND_DATA.length = 0;
+  COUNTY_BROADBAND_DATA.push(...records);
+  BROADBAND_BY_COUNTY.clear();
+  records.forEach((d) => BROADBAND_BY_COUNTY.set(d.countyName, d));
+};
+
+/** Attempt the normalized internalized dataset. Returns null when unusable. */
+const loadFromDatabase = async (): Promise<CountyBroadbandData[] | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('broadband_county_coverage')
+      .select(
+        'county_name, pct_100_20_plus, pct_25_3_to_100_20, pct_below_25_3, fiber_share, cable_share, fixed_wireless_share, satellite_share, coverage_unevenness, notes',
+      );
+    if (error) throw new Error(error.message);
+    if (!Array.isArray(data) || data.length === 0) return null;
+    const records = parseRecords(normalizedRowsToRaw(data as NormalizedRow[]));
+    return isUsableBroadbandDataset(records) ? records : null;
+  } catch (err) {
+    console.warn('[Broadband] Normalized dataset unavailable:', err);
+    return null;
+  }
+};
+
+/** Static fallback — unchanged behaviour. */
+const loadFromStaticJson = async (): Promise<CountyBroadbandData[] | null> => {
+  try {
+    const resp = await fetch('/data/nevada_broadband.json');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    if (!Array.isArray(json)) throw new Error('Expected array');
+    const records = parseRecords(json);
+    return isUsableBroadbandDataset(records) ? records : null;
+  } catch (err) {
+    console.warn('[Broadband] Failed to load static fallback:', err);
+    return null;
+  }
+};
+
 /**
- * Fetch the broadband dataset from /data/nevada_broadband.json.
+ * Load the broadband dataset: normalized table first, static JSON fallback.
  * Safe to call multiple times — deduplicates.
  */
 export const loadBroadbandData = (): Promise<boolean> => {
   if (_loadPromise) return _loadPromise;
   _loadPromise = (async () => {
-    try {
-      const resp = await fetch('/data/nevada_broadband.json');
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const json = await resp.json();
-      if (!Array.isArray(json)) throw new Error('Expected array');
-      const records = parseRecords(json);
-
-      COUNTY_BROADBAND_DATA.length = 0;
-      COUNTY_BROADBAND_DATA.push(...records);
-      BROADBAND_BY_COUNTY.clear();
-      records.forEach((d) => BROADBAND_BY_COUNTY.set(d.countyName, d));
-
-      console.info('[Broadband] Loaded', records.length, 'county records from /data/nevada_broadband.json');
+    const fromDb = await loadFromDatabase();
+    if (fromDb) {
+      publish(fromDb);
+      console.info('[Broadband] Loaded', fromDb.length, 'county records from normalized dataset');
       return true;
-    } catch (err) {
-      console.warn('[Broadband] Failed to load dataset:', err);
-      return false;
     }
+    const fromStatic = await loadFromStaticJson();
+    if (fromStatic) {
+      publish(fromStatic);
+      console.info('[Broadband] Loaded', fromStatic.length, 'county records from /data/nevada_broadband.json (fallback)');
+      return true;
+    }
+    return false;
   })();
   return _loadPromise;
 };
+
+/** Test-only: clear the memoized load so a fresh path can be exercised. */
+export const __resetBroadbandLoadForTests = (): void => {
+  _loadPromise = null;
+  COUNTY_BROADBAND_DATA.length = 0;
+  BROADBAND_BY_COUNTY.clear();
+};
+
 
 /** Get broadband data for a county, returns undefined if not found. */
 export const getCountyBroadband = (countyName: string): CountyBroadbandData | undefined =>
