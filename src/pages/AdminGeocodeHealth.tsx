@@ -13,12 +13,14 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw } from 'lucide-react';
+import { ArrowLeft, RefreshCw, FlaskConical, Download } from 'lucide-react';
 import { usePermissions } from '@/contexts/AuthContext';
 import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
+import { runCombinedLegacyDryRun } from '@/utils/resourceGeocodeClient';
+
 
 interface ResolutionRow {
   id: string;
