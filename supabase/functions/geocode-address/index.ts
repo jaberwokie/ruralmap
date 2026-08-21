@@ -188,13 +188,59 @@ serve(async (req) => {
       last_geocoded_at: new Date().toISOString(),
     };
 
-    if (!record.coordinate_locked) {
-      update[latCol] = lat;
-      update[lngCol] = lng;
+    // Reached only for unprotected records (protection short-circuits above).
+    update[latCol] = lat;
+    update[lngCol] = lng;
+
+    /**
+     * Phase 2D.1 §5 — record-level legacy supersession must be visible in the
+     * existing mapping audit history AS the record fields change. No new
+     * schema; historical audit rows are never rewritten.
+     */
+    const prevLat = record[latCol];
+    const prevLng = record[lngCol];
+    const prevProvider = (record.geocode_provider as string | null) ?? null;
+    const prevSource = (record.coordinate_source as string | null) ?? null;
+    const newProvider = resolution.geocode_provider;
+    const newSource = resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider;
+    const movedMeters =
+      typeof prevLat === 'number' && Number.isFinite(prevLat) &&
+      typeof prevLng === 'number' && Number.isFinite(prevLng)
+        ? Math.round(geodesicMeters(prevLat, prevLng, lat, lng))
+        : null;
+
+    try {
+      await supabase.from('mapping_audit_log').insert({
+        pipeline: contract.auditPipeline,
+        action: 'record_edited',
+        target_table: table,
+        target_row_id: id,
+        details: {
+          geocode: true,
+          previous_provider: prevProvider,
+          previous_coordinate_source: prevSource,
+          new_provider: newProvider,
+          new_coordinate_source: newSource,
+          previous_latitude: typeof prevLat === 'number' ? prevLat : null,
+          previous_longitude: typeof prevLng === 'number' ? prevLng : null,
+          new_latitude: lat,
+          new_longitude: lng,
+          distance_meters: movedMeters,
+          legacy_provider_superseded:
+            prevProvider === 'google' || prevProvider === 'nominatim',
+          validation_status: validation?.validation_status ?? null,
+          house_number_match: validation?.house_number_match ?? null,
+          street_name_match: validation?.street_name_match ?? null,
+          forced: !!force,
+        },
+      });
+    } catch {
+      // Audit failure must never abort geocoding.
     }
 
     const { error: updateErr } = await supabase.from(table).update(update).eq('id', id);
     if (updateErr) return json({ error: 'record_update_failed' }, 500);
+
 
     return json({
       success: true,
