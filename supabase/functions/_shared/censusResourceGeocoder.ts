@@ -12,6 +12,7 @@
  * address.
  */
 import { isInNevada } from './geocodeNormalize.ts';
+import { compareStreetIdentity, type StreetVerdict } from './streetIdentity.ts';
 import type { ResourceExternalHit, ResourceExternalPort } from './resourceGeocodeCache.ts';
 
 export const CENSUS_URL =
@@ -29,10 +30,15 @@ export interface CensusValidationDetail {
   state_match: boolean | null;
   zip_match: boolean | null;
   street_identity_present: boolean;
+  /** Phase 2D.1 — physical street identity comparison against matchedAddress. */
+  house_number_match: boolean | null;
+  street_name_match: boolean | null;
+  street_verdict: StreetVerdict | null;
   in_nevada: boolean | null;
   validation_status: 'accepted' | 'rejected';
   rejection_reason: string | null;
 }
+
 
 export interface CensusSourceAddress {
   street_address?: string | null;
