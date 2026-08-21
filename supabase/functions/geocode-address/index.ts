@@ -95,25 +95,35 @@ serve(async (req) => {
     if (fetchErr) return json({ error: `Lookup failed: ${fetchErr.message}` }, 500);
     if (!record) return json({ error: 'Record not found' }, 404);
 
-    if (record.coordinate_locked && !force) {
+    /**
+     * Phase 2D.1 — ONE eligibility/protection contract shared with
+     * `geocode-bulk`. Manual/locked authority outranks cache, Census and
+     * `force`; soft-deleted, inactive and non-mappable records are never sent
+     * to an external provider. `force` only permits re-resolving a record that
+     * already has coordinates.
+     */
+    const gate = evaluateResourceEligibility(record, contract, {
+      force: true,
+      allowExistingCoordinates: true,
+    });
+    if (!gate.eligible) {
       return json({
         success: true,
-        locked: true,
-        lat: record[latCol],
-        lng: record[lngCol],
-        confidence: record.coordinate_confidence,
-        match_type: record.geocode_match_type,
+        skipped: true,
+        reason: gate.reason,
+        protected: gate.reason === 'protected_manual_or_locked_coordinate',
+        lat: record[latCol] ?? null,
+        lng: record[lngCol] ?? null,
+        confidence: record.coordinate_confidence ?? null,
+        match_type: record.geocode_match_type ?? null,
       });
-    }
-
-    if (!record.street_address) {
-      return json({ error: 'Record has no street_address' }, 400);
     }
 
     const addressParts = buildResourceAddress(record);
 
     const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
     if (!secret) return json({ error: 'geocode_cache_secret_missing' }, 500);
+
 
     /**
      * Ordering: the internal approved cache is consulted FIRST (inside
