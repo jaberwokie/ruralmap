@@ -112,58 +112,72 @@ serve(async (req) => {
       return json({ error: 'Record has no street_address' }, 400);
     }
 
-    const addressParts = [
-      record.street_address,
-      record.city,
-      record.state ?? 'NV',
-      record.zip,
-    ].filter(Boolean).join(', ');
+    const addressParts = buildResourceAddress(record);
 
-    const url = `${GOOGLE_URL}?address=${encodeURIComponent(addressParts)}&components=administrative_area:NV|country:US&key=${apiKey}`;
+    // ── Phase 2C: shared internal resource-address authority ───────────────
+    const googlePort: ResourceExternalPort = {
+      name: 'google',
+      run: async (address): Promise<ResourceExternalHit | null> => {
+        const url = `${GOOGLE_URL}?address=${encodeURIComponent(address)}&components=administrative_area:NV|country:US&key=${apiKey}`;
+        // NOTE: the request URL contains the API key and is never logged or returned.
+        const res = await fetch(url);
+        const data = await res.json().catch(() => null);
+        if (!data || data.status !== 'OK' || !data.results?.length) return null;
+        const g = data.results[0];
+        const lat = g.geometry?.location?.lat;
+        const lng = g.geometry?.location?.lng;
+        if (typeof lat !== 'number' || typeof lng !== 'number') return null;
+        const matchType = g.geometry?.location_type as string | undefined;
+        return {
+          lat,
+          lng,
+          confidence: matchType ? (CONFIDENCE_MAP[matchType] ?? 'approximate') : 'approximate',
+          match_type: matchType ?? null,
+          precision: matchType ? (CONFIDENCE_MAP[matchType] ?? 'approximate') : 'approximate',
+          county: null,
+          postal_code: record.zip ?? null,
+        };
+      },
+    };
 
-    let googleData: any;
-    try {
-      const res = await fetch(url);
-      googleData = await res.json();
-    } catch (e) {
-      return json({ error: `Google API request failed: ${String(e)}` }, 502);
-    }
+    const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
+    if (!secret) return json({ error: 'geocode_cache_secret_missing' }, 500);
 
-    if (googleData.status !== 'OK' || !googleData.results?.length) {
+    const ports = createResourceCachePorts(supabase, secret, [googlePort]);
+    const resolution = await resolveResourceAddress(ports, {
+      address: addressParts,
+      force: !!force,
+      requireNevada: true,
+    });
+
+    if (!resolution.resolved || resolution.lat === null || resolution.lng === null) {
       await supabase
         .from(table)
         .update({
           coordinate_source: 'failed',
           geocode_provider: 'google',
-          geocode_match_type: googleData.status ?? null,
+          geocode_match_type: null,
           last_geocoded_at: new Date().toISOString(),
         })
         .eq('id', id);
-      return json({
-        error: `Google returned no results (status: ${googleData.status ?? 'unknown'})`,
-        google_status: googleData.status,
-      }, 422);
+      return json({ error: 'geocode_unresolved', failure: resolution.failure }, 422);
     }
 
-    const result = googleData.results[0];
-    const lat = result.geometry?.location?.lat;
-    const lng = result.geometry?.location?.lng;
-    const matchType = result.geometry?.location_type as string | undefined;
-    const formattedAddress = result.formatted_address as string | undefined;
+    const { lat, lng } = resolution;
 
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
-      return json({ error: 'Google result missing coordinates' }, 502);
-    }
-
-    const confidence = matchType ? (CONFIDENCE_MAP[matchType] ?? 'approximate') : 'approximate';
-
+    /**
+     * Provenance mapping (Phase 2C §9):
+     *   coordinate_source  = HOW THIS RECORD received it (google | internal_cache)
+     *   geocode_provider   = HOW IT WAS ORIGINALLY resolved (google | census | …)
+     *   coordinate_confidence / geocode_match_type preserved from the original.
+     */
     const update: Record<string, unknown> = {
       geocoded_lat: lat,
       geocoded_lng: lng,
-      coordinate_source: 'google',
-      coordinate_confidence: confidence,
-      geocode_provider: 'google',
-      geocode_match_type: matchType ?? null,
+      coordinate_source: resolution.cache_hit ? 'internal_cache' : 'google',
+      coordinate_confidence: resolution.confidence,
+      geocode_provider: resolution.geocode_provider,
+      geocode_match_type: resolution.match_type,
       last_geocoded_at: new Date().toISOString(),
     };
 
@@ -173,17 +187,23 @@ serve(async (req) => {
     }
 
     const { error: updateErr } = await supabase.from(table).update(update).eq('id', id);
-    if (updateErr) return json({ error: `Update failed: ${updateErr.message}` }, 500);
+    if (updateErr) return json({ error: 'record_update_failed' }, 500);
 
     return json({
       success: true,
       lat,
       lng,
-      confidence,
-      match_type: matchType,
-      formatted_address: formattedAddress,
+      confidence: resolution.confidence,
+      match_type: resolution.match_type,
+      cache_hit: resolution.cache_hit,
+      external_calls: resolution.external_calls,
+      geocode_provider: resolution.geocode_provider,
+      review_required: resolution.review_required,
     });
-  } catch (err) {
-    return json({ error: String(err) }, 500);
+  } catch {
+    // Stable code only — never echo internal errors that could contain the
+    // request URL (API key), service-role credentials, or DB internals.
+    return json({ error: 'geocode_internal_error' }, 500);
   }
 });
+
