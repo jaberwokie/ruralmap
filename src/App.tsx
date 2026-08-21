@@ -105,6 +105,7 @@ const App = () => {
                 <Route path="/admin/ops-access" element={<AdminOpsAccess />} />
                 <Route path="/admin/unmapped-providers" element={<AdminUnmappedProviders />} />
                 <Route path="/admin/geocode-review" element={<AdminGeocodeReview />} />
+                <Route path="/admin/geocode-health" element={<AdminGeocodeHealth />} />
                 <Route path="/admin/data-sources" element={<AdminDataSources />} />
 
 
