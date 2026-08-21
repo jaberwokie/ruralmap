@@ -157,7 +157,28 @@ serve(async (req) => {
           : (resolution.match_type ?? resolution.geocode_provider ?? 'external');
         const confidence = resolution.confidence ?? 'low';
         const tag = `[geocode:${strategy}|${confidence}|${now}]`;
-        const update: Record<string, unknown> = { access_notes: tag };
+        /**
+         * Phase 2C.1 — record-level provenance so bulk results enter the same
+         * governance/review surface as `geocode-address`:
+         *   coordinate_source = how THIS record obtained it
+         *                       (internal_cache | nominatim | census)
+         *   geocode_provider  = original resolver that established the
+         *                       reusable coordinate (google | nominatim |
+         *                       census | manual_verified)
+         * Confidence and match type are preserved as-is — a low-confidence
+         * reuse is never upgraded.
+         * `access_notes` tagging is retained; downstream UI still reads it.
+         */
+        const update: Record<string, unknown> = {
+          access_notes: tag,
+          geocoded_lat: resolution.lat,
+          geocoded_lng: resolution.lng,
+          coordinate_source: resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider,
+          coordinate_confidence: resolution.confidence,
+          geocode_provider: resolution.geocode_provider,
+          geocode_match_type: resolution.match_type,
+          last_geocoded_at: new Date().toISOString(),
+        };
         if (!row.coordinate_locked) {
           update.lat = resolution.lat;
           update.lng = resolution.lng;
@@ -167,7 +188,14 @@ serve(async (req) => {
         if (resolution.cache_hit) cacheHits++;
       } else {
         const tag = `[geocode:failed|low|${now}]`;
-        await supabase.from(table).update({ access_notes: tag }).eq('id', row.id);
+        // A failure stamps the record only — reusable internal cache knowledge
+        // is never written or damaged on failure.
+        await supabase.from(table).update({
+          access_notes: tag,
+          coordinate_source: 'failed',
+          geocode_match_type: null,
+          last_geocoded_at: new Date().toISOString(),
+        }).eq('id', row.id);
         failed++;
       }
 

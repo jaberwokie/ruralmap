@@ -59,9 +59,6 @@ serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
   try {
-    const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
-    if (!apiKey) return json({ error: 'GOOGLE_GEOCODING_API_KEY not configured' }, 500);
-
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
@@ -114,6 +111,18 @@ serve(async (req) => {
 
     const addressParts = buildResourceAddress(record);
 
+    /**
+     * Phase 2C.1 — credential ordering.
+     *
+     * The Google credential is evaluated ONLY as part of the external provider
+     * chain, AFTER the internal `resource_address` authority has been consulted.
+     * A usable internal cache entry must resolve even when Google is
+     * unconfigured or unavailable. When the credential is absent the provider
+     * chain is simply empty, so a cache miss fails safely (stable code,
+     * no cache mutation, no invented coordinate).
+     */
+    const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
+
     // ── Phase 2C: shared internal resource-address authority ───────────────
     const googlePort: ResourceExternalPort = {
       name: 'google',
@@ -143,7 +152,7 @@ serve(async (req) => {
     const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
     if (!secret) return json({ error: 'geocode_cache_secret_missing' }, 500);
 
-    const ports = createResourceCachePorts(supabase, secret, [googlePort]);
+    const ports = createResourceCachePorts(supabase, secret, apiKey ? [googlePort] : []);
     const resolution = await resolveResourceAddress(ports, {
       address: addressParts,
       force: !!force,
@@ -151,6 +160,15 @@ serve(async (req) => {
     });
 
     if (!resolution.resolved || resolution.lat === null || resolution.lng === null) {
+      // Missing credential on a cache MISS is a configuration failure, not a
+      // geocoding verdict: do not stamp the record and do not touch the cache.
+      if (!apiKey) {
+        return json({
+          error: 'google_credentials_missing',
+          cache_hit: false,
+          external_calls: 0,
+        }, 503);
+      }
       await supabase
         .from(table)
         .update({
@@ -199,6 +217,15 @@ serve(async (req) => {
       external_calls: resolution.external_calls,
       geocode_provider: resolution.geocode_provider,
       review_required: resolution.review_required,
+      /**
+       * Phase 2C.1: distinguishes "fresh forced external result" from
+       * "forced refresh failed; existing internal result retained".
+       */
+      forced_refresh_failed: resolution.forced_refresh_failed,
+      refresh_status: force
+        ? (resolution.forced_refresh_failed ? 'forced_refresh_failed_cache_retained' : 'forced_refresh_succeeded')
+        : (resolution.cache_hit ? 'cache_reuse' : 'external_resolved'),
+      google_credentials_missing: !apiKey ? true : undefined,
     });
   } catch {
     // Stable code only — never echo internal errors that could contain the
