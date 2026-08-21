@@ -324,7 +324,8 @@ describe('Phase 2D.1 §5 — record-level legacy transition history', () => {
 // ── §6-§12 combined read-only dry-run ────────────────────────────────────────
 describe('Phase 2D.1 §6-§12 — combined dry-run', () => {
   it('uses the cache canonical identity, not raw address text', () => {
-    expect(bulkSrc).toMatch(/canonicalizeAddress\(buildResourceAddress/);
+    expect(bulkSrc).toMatch(/const assembled = buildResourceAddress/);
+    expect(bulkSrc).toMatch(/canonicalizeAddress\(assembled\)\.canonical/);
   });
 
   it('groups records by canonical identity across tables', () => {
