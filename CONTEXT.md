@@ -398,6 +398,8 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 5 (partial)** | Sentry integrated; ErrorBoundary wired; admin navigation normalized                                                | ✅     |
 | **Phase 6a**          | Source Registry foundation: `data_sources` + `data_source_runs` with role-scoped RLS, deterministic source-health helper, `/admin/data-sources` governance surface, admin-only gap warnings, 19 seeded sources from repository evidence. No live data source changed. | ✅     |
 | **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
+| **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC URL still UNKNOWN. | ✅     |
+
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.
 
