@@ -275,34 +275,44 @@ Rules:
 
 
 
-### Internal geocode authority (Phase 6d — Phase 2B / 2B.1)
+### Internal geocode authority (Phase 6d — Phase 2B / 2B.1 / 2B.2)
 
-Address resolution is internal-first and server-only. The browser calls exactly one endpoint — the `resolve-address` edge function — which owns normalization, canonical resource matching, cache lookup, the retry-variant chain, and the external geocoders.
+Member address resolution is internal-only. The browser calls exactly one endpoint — the `resolve-address` edge function — which owns normalization, canonical resource matching, and cache lookup. `resolve-address` is a **member-address resolver only**.
 
-Resolution order (fixed, do not reorder):
+**Member address data boundary (hard rule).** A member address may be sent to: the Rural Tool's own server boundary, its internal HMAC-keyed geocode authority, and canonical NovumHealth-controlled data. It may **not** be sent to public Nominatim, the Census Geocoder, any other public/undocumented third party, or any browser-side geocoder. Current status:
 
-1. canonical Rural Tool resource coordinates (exact canonical-address equality against `verified_services` / `verified_bh`; the cache is never a competing authority for them)
+```
+member_address_external_provider = none_approved
+```
+
+Public Nominatim is prohibited for this purpose (OSMF policy forbids submitting personal/confidential material). The Census Geocoder has no documented project approval to receive member addresses, so it is disabled for `member_address` as well. Both remain available for **public business/resource** geocoding through the dedicated administrative functions (`geocode-address`, `geocode-bulk`, `census-geocode`). Do not add an external provider to the member path without recording the approval here first.
+
+Member resolution order (fixed, do not reorder):
+
+1. exact canonical Rural Tool resource match — canonicalized-address equality against `facilities`, `rural_services`, `verified_services`, `verified_bh`
 2. verified / manual / coordinate-locked internal coordinates
 3. internal geocode cache (`geocode_resolutions`)
-4. approved external chain — Nominatim bounded → Nominatim unbounded → Census — run across the server-side query-variant chain
-5. approved approximate fallback from that chain
-6. unresolved → manual placement
+4. approved member-address geocoder — **none currently exists**
+5. unresolved → manual placement offered
 
 Rules:
 
-- **Hard privacy boundary (Phase 2B.1).** No member address is ever sent from the browser to an external geocoder. `src/hooks/useMemberAccess.ts` contains no Nominatim/Census call and no raw `fetch` of the address. If the server boundary is unreachable the path **fails closed** into manual map placement — it never falls back to a third-party geocoder. Enforced by `src/test/geocodeBoundary.test.ts`.
-- **Retry intelligence is server-side.** `buildQueryVariants` in `supabase/functions/_shared/geocodeNormalize.ts` owns the ordered strategies: `direct` → `abbreviation_variant` → `street_city_zip` → `city_zip` → `zip` → `highway_alias` → `highway_alias_without_number`. Variants are query strategies only; the result is always cached against the **original** canonical lookup key, so the second identical search is a pure cache hit with zero external calls.
-- **`location_class` is authorized, not trusted.** Public/anonymous callers are pinned to `member_address`. `facility`, `rural_service`, `provider`, `known_place`, and `manual` require a verified JWT with `admin`, `ops`, or `sysop`; otherwise the function returns `location_class_forbidden` (403).
-- **Abuse resistance.** Request bodies over 2000 bytes return `payload_too_large`; addresses over 300 characters return `invalid_address`; external provider calls are capped per request (default 18). Errors return stable codes only — no internal detail, no stack, no secret.
-- **Privacy.** `geocode_resolutions` stores no raw address text for `member_address` records. The key is `lookup_key = "v1:" + HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "<location_class>|<canonical address>")`. A plain unsalted SHA-256 of an address is forbidden — addresses are dictionary-reconstructable. The secret is server-only: never returned to the browser, never written to `source_metadata`, never logged.
-- **Normalization** lives in one place: `supabase/functions/_shared/geocodeNormalize.ts`. Canonicalization only trims, collapses whitespace, lowercases, drops periods, standardizes the state token to `nv`, and reduces ZIP+4 to ZIP5. It never rewrites highway or route names — that would change what the address means. Highway aliasing is a query-time variant, never part of cache identity.
-- **Coordinate locks and manual coordinates outrank all automation.** A later automated result returns the locked record instead of overwriting it, enforced both in the resolver and by a database trigger.
-- **No invented coordinates.** An unresolved attempt is persisted as an unresolved row (null lat/lng) so it stays reportable; it never receives a guessed centroid. The only client-side fallback left is exact/token matching against bundled Rural Tool records, which performs no network call.
-- Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `manual_resolution_required`. Secret values never appear in an error.
-- **Self-reliance condition:** when every external geocoder is unavailable but the location is already known internally, resolution still succeeds. Covered by `src/test/geocodeInternalAuthority.test.ts`.
-- `expires_at` is nullable and unset — no Rural Tool cache-expiration policy exists yet. Do not invent a duration without recording it here first.
-- Admin surface `/admin/geocode-health` shows aggregate counts by source, confidence, county, and location class. Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode. It renders no address text because none is stored.
-- The `service_role` key is used only inside `resolve-address` for cache reads/writes and the role check. It is never returned, logged, or exposed to the client.
+- **Hard privacy boundary.** `src/hooks/useMemberAccess.ts` contains no external geocoder call and no raw `fetch` of the address. If the server boundary is unreachable the path **fails closed** into manual map placement.
+- **One authority (Phase 2B.2).** The browser performs no second coordinate resolution. The former three-token fuzzy matching against `defaultFacilities` / `enrichedRuralServices` and the hardcoded `KNOWN_PROVIDER_COORDINATES` list are removed: they could place a member after the authoritative resolver returned unresolved. Wrong coordinates are worse than no coordinates. Coordinate ownership for those resources belongs to the canonical database tables, which the server now matches directly.
+- **Canonical matching is exact only.** Canonicalized-address equality, valid coordinates, Nevada validation, `deleted_at IS NULL`, `mappable = true` for live map tables, curated `manual_lat/lng` preferred over automated coordinates, coordinate locks respected. No fuzzy matching of member input to a resource, and no duplication of resource coordinates into a competing table.
+- **Retry intelligence is server-side.** `buildQueryVariants` in `supabase/functions/_shared/geocodeNormalize.ts` owns the ordered strategies (`direct` → `abbreviation_variant` → `street_city_zip` → `city_zip` → `zip` → `highway_alias` → `highway_alias_without_number`). It is retained for a future approved provider and for administrative resource geocoding; with no approved member provider it currently drives zero external calls.
+- **`location_class` is not exposed.** Every caller is pinned to `member_address`; any other supplied class returns `location_class_forbidden` (403) regardless of role. No role lookup occurs here, so **Ops cannot cause a service-role geocode write** — consistent with the project's role model (viewer/staff/ops read-only, admin/sysop write). Canonical resource maintenance uses the administrative geocoding pathways.
+- **Abuse resistance.** Bodies over 2000 bytes → `payload_too_large`; addresses over 300 characters → `invalid_address`. With no external provider in the member path, an anonymous request performs zero outbound calls. Unresolved anonymous searches are **not persisted** (`persistUnresolved: false`), so an anonymous caller cannot grow `geocode_resolutions` with unlimited null-coordinate rows. Privacy-safe aggregate failure telemetry is still logged.
+- **Privacy.** `geocode_resolutions` stores no raw address text for `member_address` records. The key is `lookup_key = "v1:" + HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "<location_class>|<canonical address>")`. The secret is server-only. Responses never return `lookup_key`, canonicalized address, `source_metadata`, database IDs, or HMAC material, and never echo the submitted address in an error.
+- **No permanent negative caching.** A null-coordinate row is never a valid cache hit; a later request stays eligible once canonical data improves or an approved provider is added.
+- **Coordinate locks and manual coordinates outrank all automation**, enforced in the resolver and by a database trigger.
+- Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `no_approved_external_provider`, `manual_resolution_required`.
+- **Self-reliance condition:** a known member location resolves from canonical data or the internal cache with zero external calls and zero external disclosure.
+- `expires_at` is nullable and unset — no cache-expiration policy exists yet.
+- Admin surface `/admin/geocode-health` shows aggregate counts only (Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode).
+- The `service_role` key is used only inside `resolve-address` for cache reads/writes. It is never returned, logged, or exposed.
+- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`.
+
 
 
 
