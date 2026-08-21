@@ -1,12 +1,18 @@
 /**
- * FCC broadband ingestion endpoint (server-side only).
+ * FCC broadband ingestion endpoint (server-side only) — Phase 2A.1.
  *
- * Admin/sysop authenticated. Privileged writes use the service-role key which
- * never leaves the edge runtime. No secret is stored in the registry tables.
+ * Admin/sysop authenticated. FCC BDC Public Data API credentials and the
+ * service-role key never leave the edge runtime and are never persisted.
  */
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { runBroadbandIngestion, type IngestionPorts } from './pipeline.ts';
+import { unzipSync, strFromU8 } from 'https://esm.sh/fflate@0.8.2';
+import {
+  EVIDENCE_BUCKET,
+  SOURCE_KEY,
+  runFccBroadbandIngestion,
+  type FccIngestionPorts,
+} from './fccPipeline.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,6 +24,9 @@ const json = (body: unknown, status = 200) =>
     status,
     headers: { ...corsHeaders, 'Content-Type': 'application/json' },
   });
+
+const toHex = (buf: ArrayBuffer) =>
+  Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
@@ -52,8 +61,9 @@ serve(async (req) => {
     auth: { persistSession: false },
   });
 
-  const ports: IngestionPorts = {
+  const ports: FccIngestionPorts = {
     now: () => new Date(),
+    readEnv: (name) => Deno.env.get(name),
 
     async getSource(sourceKey) {
       const { data, error } = await admin
@@ -65,14 +75,48 @@ serve(async (req) => {
       return data ?? null;
     },
 
-    async fetchSource(url) {
-      const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    async getJson(url, headers) {
+      const res = await fetch(url, { headers });
       return {
         ok: res.ok,
         status: res.status,
         contentType: res.headers.get('content-type'),
-        body: await res.text(),
+        text: await res.text(),
       };
+    },
+
+    async getBytes(url, headers) {
+      const res = await fetch(url, { headers });
+      const buf = res.ok ? new Uint8Array(await res.arrayBuffer()) : new Uint8Array();
+      return {
+        ok: res.ok,
+        status: res.status,
+        contentType: res.headers.get('content-type'),
+        bytes: buf,
+      };
+    },
+
+    async sha256(bytes) {
+      return toHex(await crypto.subtle.digest('SHA-256', bytes));
+    },
+
+    async putEvidence(path, bytes, contentType) {
+      const { error } = await admin.storage
+        .from(EVIDENCE_BUCKET)
+        .upload(path, bytes, { contentType, upsert: false });
+      // A duplicate path means identical bytes were already stored (the path
+      // embeds the content hash), so treat it as satisfied.
+      if (error && !/exists|duplicate/i.test(error.message)) {
+        throw new Error(`evidence write failed: ${error.message}`);
+      }
+      return path;
+    },
+
+    async unzipCsv(bytes) {
+      const files = unzipSync(bytes);
+      const name = Object.keys(files).find((n) => n.toLowerCase().endsWith('.csv'));
+      if (!name) throw new Error('archive contains no CSV member');
+      return strFromU8(files[name]);
     },
 
     async startRun(sourceId, startedAt) {
@@ -101,6 +145,22 @@ serve(async (req) => {
       return data.id as string;
     },
 
+    async getCarriedValues() {
+      const { data, error } = await admin
+        .from('broadband_county_coverage')
+        .select('county_key, fiber_share, cable_share, fixed_wireless_share, satellite_share, coverage_unevenness, notes');
+      if (error) throw new Error(`carried-value lookup failed: ${error.message}`);
+      return data ?? [];
+    },
+
+    async getPreviousTiers() {
+      const { data, error } = await admin
+        .from('broadband_county_coverage')
+        .select('county_key, pct_100_20_plus, pct_25_3_to_100_20, pct_below_25_3');
+      if (error) throw new Error(`comparison lookup failed: ${error.message}`);
+      return data ?? [];
+    },
+
     async replaceNormalized(input) {
       const { data, error } = await admin.rpc('replace_broadband_county_coverage', {
         _source_id: input.source_id,
@@ -125,14 +185,13 @@ serve(async (req) => {
   };
 
   try {
-    const result = await runBroadbandIngestion(ports, {
-      sourceUrl: typeof body.source_url === 'string' ? body.source_url : null,
-      effectiveDate: typeof body.effective_date === 'string' ? body.effective_date : null,
-      sourceVersion: typeof body.source_version === 'string' ? body.source_version : null,
+    const result = await runFccBroadbandIngestion(ports, {
+      asOfDate: typeof body.as_of_date === 'string' ? body.as_of_date : null,
+      dryRun: body.dry_run === true,
     });
     return json(result, result.ok ? 200 : 422);
   } catch (err) {
     console.error('[ingest-fcc-broadband] unexpected failure:', err);
-    return json({ ok: false, error: 'Ingestion failed' }, 500);
+    return json({ ok: false, source_key: SOURCE_KEY, error: 'Ingestion failed' }, 500);
   }
 });
