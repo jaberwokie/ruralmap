@@ -120,10 +120,17 @@ export interface CountyComparison {
   delta: number | null;
 }
 
+export interface PreviousTierRow {
+  county_key: string;
+  pct_100_20_plus: number | null;
+  pct_25_3_to_100_20: number | null;
+  pct_below_25_3: number | null;
+}
+
 /** Operational comparison of FCC-derived tiers vs. what was in effect. */
 export const buildComparison = (
   metrics: CountyFccMetrics[],
-  previous: { county_key: string; pct_100_20_plus: number; pct_25_3_to_100_20: number; pct_below_25_3: number }[],
+  previous: PreviousTierRow[],
 ): CountyComparison[] => {
   const prev = new Map(previous.map((p) => [p.county_key, p]));
   const fields: (keyof CountyFccMetrics & string)[] = [
