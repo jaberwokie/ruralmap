@@ -83,6 +83,11 @@ export interface UseMemberAccessReturn {
   setManualPlacementMode: (v: boolean) => void;
 }
 
+/**
+ * Local highway hints used ONLY to phrase the manual-placement message. The
+ * alias→route expansion itself lives server-side; nothing here resolves
+ * coordinates.
+ */
 const NV_HIGHWAY_ALIASES: Record<string, string> = {
   'schurz hwy': 'US-95',
   'schurz highway': 'US-95',
@@ -91,26 +96,6 @@ const NV_HIGHWAY_ALIASES: Record<string, string> = {
   'winnemucca ranch rd': 'NV-796',
   'battle mountain hwy': 'NV-305',
 };
-
-const KNOWN_PROVIDER_COORDINATES: Array<{
-  addressTokens: string[];
-  lat: number;
-  lng: number;
-  label: string;
-}> = [
-  {
-    addressTokens: ['1685', 'schurz', 'fallon', '89406'],
-    lat: 39.4600,
-    lng: -118.7800,
-    label: '1685 Schurz Hwy, Fallon, NV 89406',
-  },
-  {
-    addressTokens: ['mine', 'round', 'mountain'],
-    lat: 38.6943,
-    lng: -117.1614,
-    label: '1 Mine Rd, Round Mountain, NV (matched from provider records)',
-  },
-];
 
 export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn => {
   const [memberLocation, setMemberLocation] = useState<MemberLocation | null>(null);
