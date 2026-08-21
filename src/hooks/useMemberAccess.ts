@@ -196,54 +196,13 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         serverUnavailable = true;
       }
 
-      // --- Internal static resource match (local, no network) -----------
-      // Bundled Rural Tool records only. No address ever leaves the client.
-      const inputNormalized = normalized.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+      // --- NO SECOND COORDINATE AUTHORITY (Phase 2B.2) ------------------
+      // The server resolver is the single authority for member placement.
+      // The former client-side three-token fuzzy matching against bundled
+      // facilities/services and hardcoded provider coordinates is removed:
+      // it could place a member after the authoritative resolver returned
+      // unresolved. Wrong coordinates are worse than no coordinates.
 
-      const tokenMatch = (addrString: string) => {
-        const addrNorm = addrString.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
-        const inputTokens = inputNormalized.split(/\s+/);
-        const addrTokens = new Set(addrNorm.split(/\s+/));
-        const matchCount = inputTokens.filter(t => t.length > 2 && addrTokens.has(t)).length;
-        return matchCount >= 3;
-      };
-
-      const facilityMatch = defaultFacilities.find(f =>
-        f.lat && f.lng && f.address &&
-        tokenMatch(`${f.address} ${f.city} ${f.county}`)
-      );
-
-      if (facilityMatch) {
-        placeMember({
-          lat: facilityMatch.lat,
-          lng: facilityMatch.lng,
-          address: `${facilityMatch.address}, ${facilityMatch.city}, NV (matched from provider records)`,
-        });
-        return;
-      }
-
-      const serviceMatch = enrichedRuralServices.find(s =>
-        s.lat && s.lng && s.address &&
-        tokenMatch(`${s.address} ${s.city ?? ''} ${s.county ?? ''}`)
-      );
-
-      if (serviceMatch) {
-        placeMember({
-          lat: serviceMatch.lat,
-          lng: serviceMatch.lng,
-          address: `${serviceMatch.address}, ${serviceMatch.city ?? 'NV'}, NV (matched from provider records)`,
-        });
-        return;
-      }
-
-      const inputTokensLower = inputNormalized.split(/\s+/);
-      const knownMatch = KNOWN_PROVIDER_COORDINATES.find(entry =>
-        entry.addressTokens.every(token => inputTokensLower.includes(token))
-      );
-      if (knownMatch) {
-        placeMember({ lat: knownMatch.lat, lng: knownMatch.lng, address: knownMatch.label });
-        return;
-      }
 
       const isHighwayAddress = highwayHint ||
         Object.keys(NV_HIGHWAY_ALIASES).some(alias => normalized.toLowerCase().includes(alias)) ||
