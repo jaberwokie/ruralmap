@@ -246,9 +246,31 @@ Rules:
 - A run is `success` only after retrieval **and** validation **and** transformation **and** normalized persistence succeed. HTTP 200 alone is not success.
 - Validation requires exactly the 17 Nevada counties, each once, with finite in-range numeric metrics. An invalid upstream response is rejected before it can touch the normalized table.
 - `src/data/broadband-coverage.ts` reads the normalized table first and falls back to `public/data/nevada_broadband.json` on error, empty result, or failed validation. The map is never dependent on live FCC availability. The fallback must not be removed.
-- Source-health fields on `data_sources` are written only from actual ingestion evidence. `fcc_broadband.source_url` remains **UNKNOWN** — the authoritative FCC endpoint is not recorded anywhere in the repository, so ingestion fails explicitly with `source_url_unknown` until an operator records it. No URL is invented.
+- Source-health fields on `data_sources` are written only from actual ingestion evidence.
 
 - Unknown provenance is stored as NULL and surfaced as a visible governance gap. Do not invent dates, cadences, URLs, or ownership.
+
+### FCC authoritative binding (Phase 6c — Phase 2A.1)
+
+`fcc_broadband` is bound to the FCC Broadband Data Collection Public Data API, base `https://broadbandmap.fcc.gov/api/public/map`. Full field-level provenance, the derivation specification, and the methodology differences are in `docs/fcc-broadband-provenance.md` — read it before changing any broadband ingestion code.
+
+Acquisition protocol (`fcc-bdc-public-data-api-v1`), server-side only:
+
+1. `GET /listAsOfDates` → newest `data_type = "availability"` release, never a future date, never a filing deadline.
+2. `GET /downloads/listAvailabilityData/{as_of_date}` → manifest.
+3. Select only the **Fixed Broadband Summary by Geography Type** artifact — the one public file carrying the county denominator. Other states' availability files are never downloaded.
+4. `GET /downloads/downloadFile/availability/{file_id}` → raw bytes.
+
+Rules:
+
+- Credentials are the edge-runtime secrets `FCC_BDC_API_USERNAME` and `FCC_BDC_API_HASH_VALUE`, sent as the `username` / `hash_value` request headers. Values are never stored in the database, logged, or returned; every operator-facing message passes through credential redaction. If either is unset the run fails closed with `fcc_credentials_missing` and nothing else executes.
+- Raw retrieved bytes are SHA-256 hashed and written unmodified to the private `source-evidence` bucket **before** any parsing or transformation. `data_source_snapshots.source_artifacts` is a JSONB **array** of `{file_name, file_id, role, sha256, byte_size, storage_bucket, storage_path}`.
+- Derivation (`fcc-bdc-summary-county-v1`): rows where `geography_type = County`, `area_data_type = Total`, `biz_res = R`, `geography_id` in the 17 Nevada county FIPS. Denominator is the FCC's `total_units` (Broadband Serviceable Location units). Speed tiers use `technology = "All Terrestrial"` — satellite codes 60/61 are excluded because `pct_below_25_3` means "satellite-only or no coverage".
+- `pct_100_20_plus = speed_100_20 × 100`, `pct_25_3_to_100_20 = (speed_25_3 − speed_100_20) × 100`, `pct_below_25_3 = (1 − speed_25_3) × 100`. Half-up rounding to 1 decimal, applied once.
+- The `*_share` values, `coverage_unevenness`, and `notes` are Rural Tool interpretation, not FCC measurements. They are **carried forward** from the dataset in effect. FCC per-technology availability is overlapping and must never be converted into a share that sums to 100. If carried values are missing for a county the run fails rather than inventing shares.
+- Every failure resolves to exactly one code in `failureCodes.ts` (`fcc_credentials_missing`, `fcc_authentication_failed`, `fcc_release_discovery_failed`, `fcc_no_valid_release`, `fcc_manifest_failed`, `fcc_nevada_files_missing`, `fcc_download_failed`, `fcc_source_hash_failed`, `fcc_source_parse_failed`, `fcc_validation_failed`, `fcc_transformation_failed`, `fcc_persistence_failed`), stored in `data_source_runs.failure_code` with the stage in `run_metadata`. A failed run never mutates `broadband_county_coverage`; the source is marked `failing` and the application keeps reading the previous dataset, then the static JSON.
+- `POST { "dry_run": true }` acquires, hashes, stores evidence, and derives without replacing the dataset. `POST { "as_of_date": "YYYY-MM-DD" }` pins a release.
+- Live authoritative ingestion is blocked until the two FCC secrets are configured. Unauthenticated probes of the FCC API return HTTP 401, confirming the credential boundary.
 
 
 ### Key Files and Hooks
@@ -399,6 +421,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 6a**          | Source Registry foundation: `data_sources` + `data_source_runs` with role-scoped RLS, deterministic source-health helper, `/admin/data-sources` governance surface, admin-only gap warnings, 19 seeded sources from repository evidence. No live data source changed. | ✅     |
 | **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
 | **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC URL still UNKNOWN. | ✅     |
+| **Phase 6c**          | FCC broadband bound to the real BDC Public Data API: credentialed server-side acquisition (fail-closed on missing secrets), release discovery, county summary artifact selection, immutable hashed raw evidence in the private `source-evidence` bucket, reproducible `fcc-bdc-summary-county-v1` derivation with satellite excluded, single-code failure taxonomy, dry-run mode, and a per-run FCC-vs-current comparison report. Provenance and methodology differences documented in `docs/fcc-broadband-provenance.md`. Live authoritative run pending FCC credentials. | ◑ blocked on credentials |
 
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.

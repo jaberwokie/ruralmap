@@ -130,3 +130,121 @@ geographic grouping, technology treatment, and speed threshold.
    methodology, because they are a mix model that sums to 100. Reproducing them
    would require changing what the Rural Tool means by "share" — a business
    logic change, which Phase 2A.1 does not make.
+
+---
+
+## 6. Confirmed FCC source contract (Phase 2A.1)
+
+Verified by live probing of the API plus the FCC's own "Broadband Data
+Collection: Specifications for Data Downloads from the National Broadband Map"
+(June 28, 2024). Items that could not be confirmed against literal FCC document
+text are marked **unconfirmed**.
+
+| Element | Value | Status |
+|---|---|---|
+| Base URL | `https://broadbandmap.fcc.gov/api/public/map` (no version segment) | Confirmed live (401 on unauthenticated GET, not 404) |
+| Auth | request headers `username` and `hash_value` (not `Authorization`) | Confirmed live that credentials are required; header names corroborated, **unconfirmed** against Swagger text |
+| Credential source | FCC user account registered on the National Broadband Map | Confirmed (BDC Help Center) |
+| Release discovery | `GET /listAsOfDates` → rows with `as_of_date`, `data_type` | Endpoint confirmed live; full field list **unconfirmed** |
+| File manifest | `GET /downloads/listAvailabilityData/{as_of_date}` | Endpoint confirmed live; state-filter query parameter **unconfirmed**, so filtering is done client-side |
+| File download | `GET /downloads/downloadFile/availability/{file_id}` | Confirmed live (401, not 404); path segment names **unconfirmed** |
+| Format | ZIP archives containing CSV | Confirmed (FCC spec §2–3) |
+| Rate limits | none documented in the retrievable FCC material | **Unconfirmed** — review the FCC Swagger before high-volume automation |
+
+## 7. Denominator provenance — resolved
+
+The FCC publishes **Fixed Broadband Summary by Geography Type**
+(`bdc_us_fixed_broadband_summary_by_geography_{as_of}_{revision}.zip`), a single
+nationwide artifact with `geography_type` values including `County`. Confirmed
+columns: `area_data_type`, `geography_type`, `geography_id`, `geography_desc`,
+`total_units`, `biz_res`, `technology`, and per-tier fractions `speed_02_02`,
+`speed_10_1`, `speed_25_3`, `speed_100_20`, `speed_250_25`, `speed_1000_10`.
+
+`total_units` is defined by the FCC as "a sum of the units in all of the
+broadband serviceable locations, taken from the Broadband Serviceable Location
+Fabric, in the geography", and the tier columns are already expressed as
+percentages of it.
+
+Consequence: the licensed Fabric is **not** required, because the FCC has
+already applied the denominator. The Fabric would only be needed to recompute
+county percentages from the raw per-location availability CSVs, which carry
+`location_id` and `block_geoid` but no unit counts and no county identifier.
+This is why Phase 2A.1 downloads the summary artifact and nothing else.
+
+## 8. Implemented derivation (`fcc-bdc-summary-county-v1`)
+
+Row selection: `geography_type = County`, `area_data_type = Total`,
+`biz_res = R`, `geography_id` ∈ the 17 Nevada county FIPS codes.
+
+| Output | Formula | Source |
+|---|---|---|
+| `pct_100_20_plus` | `speed_100_20 × 100` | FCC, technology `All Terrestrial` |
+| `pct_25_3_to_100_20` | `(speed_25_3 − speed_100_20) × 100` | FCC, technology `All Terrestrial` |
+| `pct_below_25_3` | `(1 − speed_25_3) × 100` | FCC, technology `All Terrestrial` |
+| `fiber_share`, `cable_share`, `fixed_wireless_share`, `satellite_share` | carried forward unchanged | Rural Tool interpretation |
+| `coverage_unevenness`, `notes` | carried forward unchanged | Rural Tool editorial |
+
+Rounding: half-up to 1 decimal, applied once at the end. The three tiers
+partition the county and sum to 100 by construction.
+
+Technology treatment recorded with every run:
+
+- Speed tiers include copper (10), cable (40), fiber (50), and fixed wireless
+  (70/71/72); they exclude geostationary (60) and non-geostationary (61)
+  satellite.
+- Per-technology values derived alongside the tiers
+  (`fcc_fiber_availability`, `fcc_cable_availability`,
+  `fcc_fixed_wireless_availability`, `fcc_satellite_availability`) are
+  **overlapping availability at the 25/3 tier**. They routinely sum above 100
+  and are not the Rural Tool `*_share` mix. The pipeline never converts one into
+  the other.
+
+FCC fixed technology codes used for the crosswalk: 0 Other, 10 Copper Wire,
+40 Coaxial Cable/HFC, 50 Fiber to the Premises, 60 Geostationary Satellite,
+61 Non-geostationary Satellite, 70 Unlicensed Fixed Wireless, 71 Licensed Fixed
+Wireless, 72 Licensed-by-Rule Fixed Wireless. (Note: there is no generic "70 =
+fixed wireless" code; 70/71/72 are distinct.)
+
+Validation refuses, rather than repairing: a missing county, an empty
+percentage treated as 0, a non-positive `total_units`, non-nested tiers
+(`speed_100_20 > speed_25_3`), or a duplicate county/technology row.
+
+## 9. Comparison report — FCC-derived vs. values in effect
+
+Every successful or dry run returns a `comparison` array of
+`{county_name, field, previous, fcc_derived, delta}` for all 17 counties across
+the three tier fields, and the row count is recorded in `run_metadata`.
+
+Structural differences that will show up and must **not** be tuned away:
+
+1. The current tier values are editorial estimates (§1–2). Any delta is expected
+   and is not evidence of a derivation error.
+2. `*_share` fields are not comparable at all: FCC publishes overlapping
+   availability, the Rural Tool publishes a mix summing to 100. No FCC value can
+   validate or invalidate them.
+3. `coverage_unevenness` and `notes` have no FCC counterpart.
+4. Satellite exclusion means the FCC-derived `pct_below_25_3` counts
+   satellite-only locations as below 25/3, which is what the Rural Tool contract
+   already states.
+
+A populated comparison report will be attached to the first authoritative run.
+It cannot be produced before credentials exist, because fabricating one would
+misrepresent FCC data.
+
+## 10. Live-proof status
+
+Blocked at the credential boundary, by design:
+
+- `FCC_BDC_API_USERNAME` and `FCC_BDC_API_HASH_VALUE` are not configured.
+- `GET https://broadbandmap.fcc.gov/api/public/map/listAsOfDates` →
+  HTTP 401 `{"status":"fail","status_code":401,"message":"Unauthorized"}`.
+- `POST /functions/v1/ingest-fcc-broadband` without a bearer token →
+  HTTP 401 `{"error":"Unauthorized"}` (admin/sysop gate intact).
+- With an admin token and no FCC secrets, the run returns
+  `{ ok: false, failure_code: "fcc_credentials_missing", stage: "credentials" }`
+  and performs no network call, no evidence write, and no dataset change.
+
+To complete Phase 2A.1's live proof: register an FCC National Broadband Map
+account, add both secrets, then `POST { "dry_run": true }` (acquires, hashes,
+stores evidence, derives, produces the comparison report without replacing the
+dataset), review the comparison, then `POST {}` to replace.

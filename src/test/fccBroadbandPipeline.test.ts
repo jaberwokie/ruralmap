@@ -245,9 +245,11 @@ describe('successful FCC ingestion', () => {
     expect(snap.effective_date).toBe('2025-06-30');
     expect(snap.source_version).toBe('2025-06-30');
     expect(snap.content_hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(snap.source_artifacts.auth_header_names).toEqual(['username', 'hash_value']);
-    expect(snap.source_artifacts.artifacts[0].sha256).toMatch(/^[0-9a-f]{64}$/);
-    expect(snap.source_artifacts.derivation.version).toBe(DERIVATION_VERSION);
+    expect(snap.raw_payload.auth_header_names).toEqual(['username', 'hash_value']);
+    expect(Array.isArray(snap.source_artifacts)).toBe(true);
+    expect(snap.source_artifacts[0].sha256).toMatch(/^[0-9a-f]{64}$/);
+    expect(snap.source_artifacts[0].storage_path).toBe(snap.storage_path);
+    expect(snap.raw_payload.derivation.version).toBe(DERIVATION_VERSION);
   });
 
   it('produces a county comparison against the values previously in effect', async () => {
@@ -264,8 +266,8 @@ describe('successful FCC ingestion', () => {
     const { ports, state } = makeHarness();
     await runFccBroadbandIngestion(ports);
     const patch = state.sourcePatches.at(-1) as Record<string, unknown>;
-    expect(patch.status).toBe('active');
-    expect(patch.internalization_target).toBe('internalized');
+    expect(patch.status).toBe('current');
+    expect(patch.internalization_target).toBe('fully_internal');
     expect(patch.is_stale).toBe(false);
     expect(patch.transformation_version).toBe(DERIVATION_VERSION);
   });
@@ -350,7 +352,7 @@ describe('failure isolation', () => {
     expect(run.status).toBe('failed');
     expect(run.failure_code).toBe('fcc_download_failed');
     expect(run.run_metadata.stage).toBe('download');
-    expect((state.sourcePatches.at(-1) as Record<string, unknown>).status).toBe('degraded');
+    expect((state.sourcePatches.at(-1) as Record<string, unknown>).status).toBe('failing');
   });
 
   it('never leaks credential values into any persisted record or response', async () => {

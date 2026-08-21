@@ -215,7 +215,7 @@ export const runFccBroadbandIngestion = async (
     }
     if (sourceId) {
       await ports.updateSourceHealth(sourceId, {
-        status: 'degraded',
+        status: 'failing',
         last_failed_ingestion_at: ports.now().toISOString(),
         notes: `Last ingestion failed at stage "${e.stage}" (${e.code}). Application continues on the previous normalized dataset.`,
       });
@@ -386,8 +386,16 @@ export const runFccBroadbandIngestion = async (
       http_status: 200,
       content_type: 'application/zip',
       raw_payload: {
-        note: 'Raw bytes are stored immutably in Storage; see storage_bucket/storage_path and source_artifacts.',
+        note: 'Raw bytes are stored immutably in Storage; see storage_bucket / storage_path / source_artifacts.',
         as_of_date: asOfDate,
+        endpoints: {
+          list_as_of_dates: fccEndpoints.listAsOfDates(),
+          list_availability_data: fccEndpoints.listAvailabilityData(asOfDate),
+          download_file: fccEndpoints.downloadFile('{file_id}'),
+        },
+        auth_header_names: ['username', 'hash_value'],
+        derivation: summary,
+        technology_treatment: TECHNOLOGY_TREATMENT,
       },
       content_hash: contentHash,
       record_count: metrics.length,
@@ -396,17 +404,16 @@ export const runFccBroadbandIngestion = async (
       storage_bucket: EVIDENCE_BUCKET,
       storage_path: stored[0]?.storagePath ?? null,
       acquisition_protocol: ACQUISITION_PROTOCOL_VERSION,
-      source_artifacts: {
-        endpoints: {
-          list_as_of_dates: fccEndpoints.listAsOfDates(),
-          list_availability_data: fccEndpoints.listAvailabilityData(asOfDate),
-          download_file: fccEndpoints.downloadFile('{file_id}'),
-        },
-        auth_header_names: ['username', 'hash_value'],
-        artifacts: stored,
-        derivation: summary,
-        technology_treatment: TECHNOLOGY_TREATMENT,
-      },
+      /** JSONB ARRAY — the table's evidence constraint measures its length. */
+      source_artifacts: stored.map((s) => ({
+        file_name: s.fileName,
+        file_id: s.fileId,
+        role: s.role,
+        sha256: s.sha256,
+        byte_size: s.byteSize,
+        storage_bucket: EVIDENCE_BUCKET,
+        storage_path: s.storagePath,
+      })),
     });
 
     // ── 8. Compatibility boundary + atomic replacement ──
@@ -416,9 +423,9 @@ export const runFccBroadbandIngestion = async (
 
     if (options.dryRun) {
       await ports.completeRun(runId, {
-        status: 'succeeded',
+        status: 'success',
         completed_at: ports.now().toISOString(),
-        run_type: 'dry_run',
+        run_type: 'validate',
         records_received: metrics.length,
         records_accepted: metrics.length,
         records_rejected: 0,
@@ -460,7 +467,7 @@ export const runFccBroadbandIngestion = async (
     // ── 9. Run + source health ──
     const completedAt = ports.now().toISOString();
     await ports.completeRun(runId, {
-      status: 'succeeded',
+      status: 'success',
       completed_at: completedAt,
       records_received: metrics.length,
       records_accepted: metrics.length,
@@ -472,7 +479,7 @@ export const runFccBroadbandIngestion = async (
       run_metadata: { derivation: summary, artifacts: stored, comparison_rows: comparison.length },
     });
     await ports.updateSourceHealth(source.id, {
-      status: 'active',
+      status: 'current',
       last_retrieved_at: completedAt,
       last_successful_ingestion_at: completedAt,
       last_record_count: written,
@@ -481,7 +488,7 @@ export const runFccBroadbandIngestion = async (
       transformation_version: DERIVATION_VERSION,
       effective_date: asOfDate,
       is_stale: false,
-      internalization_target: 'internalized',
+      internalization_target: 'fully_internal',
     });
 
     return {
