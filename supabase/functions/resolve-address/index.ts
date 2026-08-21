@@ -118,59 +118,9 @@ serve(async (req) => {
 
     const ports: ResolverPorts = {
       secret,
-      // ── Canonical Rural Tool resource coordinates ─────────────────────
-      // Exact canonicalized-address equality only. No fuzzy matching: a wrong
-      // canonical match would place a member at the wrong location.
-      canonicalMatch: async (canonical) => {
-        const canon = canonicalizeAddress(canonical);
-        if (!canon.street) return null;
+      // Canonical Rural Tool resource coordinates (see canonicalMatch.ts).
+      canonicalMatch: createCanonicalMatch(admin as unknown as CanonicalDbClient),
 
-        for (const spec of CANONICAL_TABLES) {
-          let query = admin
-            .from(spec.table)
-            .select(
-              `street_address, city, state, zip, county, ${spec.latCol}, ${spec.lngCol}, manual_lat, manual_lng, coordinate_locked, coordinate_confidence`,
-            )
-            .is('deleted_at', null)
-            .limit(50);
-          if (spec.requireMappable) query = query.eq('mappable', true);
-          if (canon.zip) query = query.eq('zip', canon.zip);
-          else if (canon.city) query = query.ilike('city', canon.city);
-          else continue;
-
-          const { data } = await query;
-          for (const row of (data ?? []) as Array<Record<string, unknown>>) {
-            const street = String(row.street_address ?? '');
-            const city = String(row.city ?? '');
-            const zip = String(row.zip ?? '');
-            if (!street) continue;
-            const rowCanon = canonicalizeAddress(`${street}, ${city}, NV ${zip}`);
-            if (rowCanon.canonical !== canon.canonical) continue;
-
-            // Curated/manual coordinates outrank automated ones; a coordinate
-            // lock means the curated value is the only acceptable answer.
-            const manualLat = Number(row.manual_lat);
-            const manualLng = Number(row.manual_lng);
-            const hasManual = Number.isFinite(manualLat) && Number.isFinite(manualLng);
-            const lat = hasManual ? manualLat : Number(row[spec.latCol]);
-            const lng = hasManual ? manualLng : Number(row[spec.lngCol]);
-            if (!Number.isFinite(lat) || !Number.isFinite(lng)) continue;
-            if (!isInNevada(lat, lng)) continue;
-
-            return {
-              lat,
-              lng,
-              confidence: String(row.coordinate_confidence ?? 'high'),
-              precision: 'rooftop',
-              county: (row.county as string | null) ?? null,
-              postal_code: zip || null,
-              label: `${street}, ${city}, NV`,
-              source: 'canonical_resource' as const,
-            };
-          }
-        }
-        return null;
-      },
       cacheLookup: async (lookupKey) => {
         const { data } = await admin
           .from('geocode_resolutions')
