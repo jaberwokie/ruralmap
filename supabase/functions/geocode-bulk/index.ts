@@ -455,11 +455,20 @@ const runCombinedDryRun = async (
   db: Db,
   tables: string[],
   limit?: number,
+  offset?: number,
 ): Promise<Response> => {
   const cap = Math.min(
     Math.max(Number(limit ?? MAX_DRY_RUN_ADDRESSES) || MAX_DRY_RUN_ADDRESSES, 1),
     MAX_DRY_RUN_ADDRESSES,
   );
+  /**
+   * Deterministic slicing over the canonical address list. Inventory and
+   * cross-table grouping are always computed over EVERY table, so slicing can
+   * never change how addresses are deduplicated — it only bounds how many
+   * Census calls a single invocation performs.
+   */
+  const startAt = Math.max(0, Number(offset ?? 0) || 0);
+
 
   const perTable: Record<string, Record<string, number>> = {};
   /** canonical address identity → every record sharing it, across tables. */
