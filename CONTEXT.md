@@ -215,8 +215,23 @@ When `?public=1` or equivalent logic is active:
 | `rural_services`                                      | 172 records (seeded Phase 3)                            |
 | `mapping_audit_log`                                   | Pipeline audit trail (written; not yet displayed in UI) |
 | `user_roles`                                          | Role definitions for RBAC                               |
+| `data_sources`                                        | Source Registry — provenance/governance metadata (Phase 6a) |
+| `data_source_runs`                                    | Append-only source retrieval/ingestion health history       |
 
 All seven data tables (`facilities`, `rural_services`, `verified_bh`, `verified_services`, `staging_bh`, `staging_services`, `staging_providers`) carry soft-delete columns: `deleted_at` (TIMESTAMPTZ), `deleted_by` (TEXT), `deleted_reason` (TEXT). RLS hides soft-deleted rows from all roles except sysop. No hard DELETEs are issued from the application layer on these tables.
+
+### Source Registry (Phase 6a)
+
+`data_sources` is the authoritative registry of where the Rural Tool's information originates. `data_source_runs` is its append-only retrieval/ingestion health history — it does **not** replace `mapping_audit_log`, which remains the application-data audit trail.
+
+Rules:
+
+- **No live rendering may depend on the registry.** The map, Decision Assist, coverage, Tier 1, Access Gap, and SSHP logic must all keep working with an empty registry. This is deliberate — the registry must not become a new single point of failure.
+- `credential_reference` stores a variable **name** only (e.g. `GOOGLE_GEOCODING_API_KEY`). Secret values are never stored, fetched, or rendered.
+- Source health is **calculated**, never hand-edited. `src/lib/sources/sourceHealth.ts` is the single source of truth: Current / Review Due / Stale / Failing / Unknown, derived from `status`, `last_verified_at`, `last_successful_ingestion_at`, `last_failed_ingestion_at`, `next_review_at`, and `stale_after_days`.
+- Access: anon/viewer/staff none · ops read-only · admin read/write · sysop inherits admin. Enforced in RLS, not only in the UI. Public Safe Mode never reaches `/admin/data-sources`.
+- Unknown provenance is stored as NULL and surfaced as a visible governance gap. Do not invent dates, cadences, URLs, or ownership.
+
 
 ### Key Files and Hooks
 
