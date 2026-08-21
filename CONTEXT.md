@@ -321,6 +321,7 @@ Every admin page follows this exact structure — no exceptions:
 | User Management    | `/admin/users`                  | ← Admin            |
 | Unmapped Providers | `/admin/unmapped`               | ← Admin            |
 | Staff Training     | `/admin/training`               | ← Admin / Training |
+| Data Sources       | `/admin/data-sources`           | ← Admin            |
 
 #### Mapping nav — grouped dropdowns
 
@@ -377,6 +378,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 3**           | Admin UI for Facilities (53 records) and Rural Services (172 records); pipeline pattern; geocode confidence column | ✅     |
 | **Phase 4**           | All map-rendering consumers migrated to Supabase hooks; `Sidebar.tsx` and `Index.tsx` off static imports           | ✅     |
 | **Phase 5 (partial)** | Sentry integrated; ErrorBoundary wired; admin navigation normalized                                                | ✅     |
+| **Phase 6a**          | Source Registry foundation: `data_sources` + `data_source_runs` with role-scoped RLS, deterministic source-health helper, `/admin/data-sources` governance surface, admin-only gap warnings, 19 seeded sources from repository evidence. No live data source changed. | ✅     |
 | **Phase 5b**          | SysOp role tier added (sysop > admin > ops > staff > viewer); soft delete implemented on 7 tables; `/sysop` deletion recovery queue built; auto-assign trigger hardcoded to operator emails; admin RPCs hardened to refuse sysop targets; audit log captures delete and restore events | ✅     |
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.
