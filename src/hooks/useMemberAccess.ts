@@ -180,6 +180,30 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         ? normalized
         : `${normalized}, Nevada`;
 
+      // --- Stage 0 — internal geocode authority (Phase 2B) -------------
+      // Server-side: canonical normalization → HMAC cache lookup → external
+      // geocoder chain only on a cache miss. The browser never sees the cache
+      // secret or any credential. Falls through to the legacy client chain
+      // only when the server boundary itself is unreachable.
+      try {
+        const { data: internal, error: internalError } = await supabase.functions.invoke(
+          'resolve-address',
+          { body: { address: query, location_class: 'member_address' } },
+        );
+        if (!internalError && internal?.resolved && Number.isFinite(internal.lat) && Number.isFinite(internal.lng)) {
+          placeMember({
+            lat: internal.lat,
+            lng: internal.lng,
+            address: query,
+            isApproximate: !!internal.is_approximate,
+          });
+          return;
+        }
+      } catch {
+        // Server boundary unavailable — continue with the existing chain.
+      }
+
+
       // Nevada bounding box
       const NV_WEST = -120.0064, NV_EAST = -114.0396, NV_SOUTH = 35.0019, NV_NORTH = 42.0022;
 
