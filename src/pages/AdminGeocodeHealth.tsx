@@ -110,7 +110,11 @@ export default function AdminGeocodeHealth() {
     const needsReview = resolved.filter(
       r => !r.is_manual && !r.is_coordinate_locked && (r.confidence === 'low' || r.precision === 'approximate'),
     );
-    return { resolved, unresolved, verified, automated, cacheHits, externalLookups, needsReview };
+    // Phase 2C: the private member namespace and the public resource namespace
+    // are separate caches and are counted separately.
+    const memberCache = rows.filter(r => r.location_class === 'member_address');
+    const resourceCache = rows.filter(r => r.location_class === 'resource_address');
+    return { resolved, unresolved, verified, automated, cacheHits, externalLookups, needsReview, memberCache, resourceCache };
   }, [rows]);
 
   if (isPublicSafeModeActive()) return <Navigate to="/public" replace />;
@@ -135,7 +139,7 @@ export default function AdminGeocodeHealth() {
           </Button>
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-9">
           <Stat label="Cached resolutions" value={metrics.resolved.length} />
           <Stat label="Verified / manual" value={metrics.verified.length} />
           <Stat label="Automated" value={metrics.automated.length} />
@@ -143,6 +147,8 @@ export default function AdminGeocodeHealth() {
           <Stat label="External lookups" value={metrics.externalLookups} />
           <Stat label="Unresolved attempts" value={metrics.unresolved.length} />
           <Stat label="Needs review" value={metrics.needsReview.length} />
+          <Stat label="Member cache" value={metrics.memberCache.length} />
+          <Stat label="Resource cache" value={metrics.resourceCache.length} />
         </div>
 
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
