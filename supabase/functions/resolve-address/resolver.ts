@@ -17,6 +17,7 @@
  * coordinates.
  */
 import {
+  buildQueryVariants,
   canonicalizeAddress,
   computeLookupKey,
   isInNevada,
@@ -24,7 +25,10 @@ import {
   type GeocodeFailureCode,
   type GeocodeSource,
   type LocationClass,
+  type QueryVariant,
+  type ResolutionStrategy,
 } from '../_shared/geocodeNormalize.ts';
+
 
 export interface CachedResolution {
   id?: string;
