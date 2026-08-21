@@ -88,6 +88,12 @@ export default function AdminHome() {
             icon={<MapPin className="h-4 w-4" />}
           />
           <ToolCard
+            to="/admin/geocode-health"
+            title="Geocode Health"
+            description="Internal geocode authority: cache reuse, sources, confidence, and unresolved attempts. No addresses shown."
+            icon={<MapPin className="h-4 w-4" />}
+          />
+          <ToolCard
             to="/admin/data-sources"
             title="Data Sources"
             description="Source Registry: where every dataset originates, freshness, ownership, and internalization targets."
