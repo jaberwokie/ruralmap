@@ -13,7 +13,7 @@ const PUBLIC_CANONICAL = "https://ruraltool.iterum.systems/";
 describe("index.html public metadata", () => {
   it("has canonical pointing to the public domain", () => {
     expect(html).toMatch(
-      /<link\s+rel="canonical"\s+href="https:\/\/ruralmap\.opsframe\.io\/?"\s*\/?>/
+      /<link\s+rel="canonical"\s+href="https:\/\/ruraltool\.iterum\.systems\/?"\s*\/?>/
     );
   });
 
@@ -30,11 +30,14 @@ describe("index.html public metadata", () => {
     expect(url).not.toContain("lovable.dev");
   });
 
-  it("title uses NovumHealth Rural Access Operations framing", () => {
+  it("title uses the deployed Rural Access Operations framing", () => {
     const titleMatch = html.match(/<title>([^<]+)<\/title>/);
     expect(titleMatch).toBeTruthy();
     const title = titleMatch![1];
-    expect(title).toBe("NovumHealth Rural Access Operations");
+    // Deployed production title, set via "Update site info for publish".
+    // The NovumHealth prefix remains on meta[name=title], og:image:alt and the
+    // WebApplication JSON-LD name.
+    expect(title).toBe("Rural Access Operations");
     expect(title).not.toContain("Nevada Behavioral Health");
   });
 
