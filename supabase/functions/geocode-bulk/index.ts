@@ -133,7 +133,7 @@ serve(async (req) => {
     if (denied) return denied;
 
     const payload = await req.json().catch(() => null) as
-      | { table?: string; tables?: unknown; ids?: unknown; force?: boolean; mode?: string; limit?: number }
+      | { table?: string; tables?: unknown; ids?: unknown; force?: boolean; mode?: string; limit?: number; offset?: number }
       | null;
 
     const secretEarly = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
@@ -154,7 +154,7 @@ serve(async (req) => {
       if (tables.length === 0) {
         return json({ error: 'invalid_table', supported_tables: RESOURCE_TABLES }, 400);
       }
-      return await runCombinedDryRun(supabase, tables, payload?.limit);
+      return await runCombinedDryRun(supabase, tables, payload?.limit, payload?.offset);
     }
 
     const table = payload?.table;
