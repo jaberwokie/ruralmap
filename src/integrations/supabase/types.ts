@@ -14,6 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      broadband_county_coverage: {
+        Row: {
+          cable_share: number
+          county_key: string
+          county_name: string
+          coverage_unevenness: boolean
+          effective_date: string | null
+          fiber_share: number
+          fixed_wireless_share: number
+          id: string
+          ingested_at: string
+          notes: string | null
+          pct_100_20_plus: number
+          pct_25_3_to_100_20: number
+          pct_below_25_3: number
+          satellite_share: number
+          snapshot_id: string
+          source_id: string
+          source_version: string | null
+        }
+        Insert: {
+          cable_share: number
+          county_key: string
+          county_name: string
+          coverage_unevenness?: boolean
+          effective_date?: string | null
+          fiber_share: number
+          fixed_wireless_share: number
+          id?: string
+          ingested_at?: string
+          notes?: string | null
+          pct_100_20_plus: number
+          pct_25_3_to_100_20: number
+          pct_below_25_3: number
+          satellite_share: number
+          snapshot_id: string
+          source_id: string
+          source_version?: string | null
+        }
+        Update: {
+          cable_share?: number
+          county_key?: string
+          county_name?: string
+          coverage_unevenness?: boolean
+          effective_date?: string | null
+          fiber_share?: number
+          fixed_wireless_share?: number
+          id?: string
+          ingested_at?: string
+          notes?: string | null
+          pct_100_20_plus?: number
+          pct_25_3_to_100_20?: number
+          pct_below_25_3?: number
+          satellite_share?: number
+          snapshot_id?: string
+          source_id?: string
+          source_version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "broadband_county_coverage_snapshot_id_fkey"
+            columns: ["snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "data_source_snapshots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "broadband_county_coverage_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       data_source_runs: {
         Row: {
           completed_at: string | null
@@ -87,6 +162,59 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "data_source_runs_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "data_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      data_source_snapshots: {
+        Row: {
+          content_hash: string
+          content_type: string | null
+          created_at: string
+          effective_date: string | null
+          http_status: number | null
+          id: string
+          raw_payload: Json
+          record_count: number | null
+          retrieved_at: string
+          source_id: string
+          source_url: string | null
+          source_version: string | null
+        }
+        Insert: {
+          content_hash: string
+          content_type?: string | null
+          created_at?: string
+          effective_date?: string | null
+          http_status?: number | null
+          id?: string
+          raw_payload: Json
+          record_count?: number | null
+          retrieved_at?: string
+          source_id: string
+          source_url?: string | null
+          source_version?: string | null
+        }
+        Update: {
+          content_hash?: string
+          content_type?: string | null
+          created_at?: string
+          effective_date?: string | null
+          http_status?: number | null
+          id?: string
+          raw_payload?: Json
+          record_count?: number | null
+          retrieved_at?: string
+          source_id?: string
+          source_url?: string | null
+          source_version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "data_source_snapshots_source_id_fkey"
             columns: ["source_id"]
             isOneToOne: false
             referencedRelation: "data_sources"
@@ -1789,6 +1917,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      replace_broadband_county_coverage: {
+        Args: {
+          _effective_date?: string
+          _rows: Json
+          _snapshot_id: string
+          _source_id: string
+          _source_version?: string
+        }
+        Returns: number
       }
       sysop_list_deleted: {
         Args: never
