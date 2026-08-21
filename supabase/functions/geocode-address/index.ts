@@ -3,24 +3,28 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import {
   buildResourceAddress,
   resolveResourceAddress,
-  type ResourceExternalHit,
-  type ResourceExternalPort,
 } from '../_shared/resourceGeocodeCache.ts';
 import { createResourceCachePorts } from '../_shared/resourceCachePorts.ts';
+import {
+  createCensusPort,
+  type CensusValidationDetail,
+} from '../_shared/censusResourceGeocoder.ts';
+import { getResourceTableContract, RESOURCE_TABLES } from '../_shared/resourceTableContracts.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const GOOGLE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
-
-const CONFIDENCE_MAP: Record<string, string> = {
-  ROOFTOP: 'rooftop',
-  RANGE_INTERPOLATED: 'range',
-  GEOMETRIC_CENTER: 'geometric',
-  APPROXIMATE: 'approximate',
-};
+/**
+ * Phase 2D — single-record public-resource geocoder.
+ *
+ * Active provider chain: internal approved `resource_address` cache → U.S.
+ * Census Geocoder (server-side, validated). Google Geocoding is RETIRED as an
+ * active provider here; `GOOGLE_GEOCODING_API_KEY` is legacy / no longer used by
+ * the active resource-geocoding path (credential cleanup is a deployment task).
+ * Public Nominatim is not used. Member-address resolution is untouched.
+ */
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -75,15 +79,12 @@ serve(async (req) => {
       return json({ error: 'Missing required fields: table, id' }, 400);
     }
     const { table, id, force } = body;
-    const ALLOWED = ['facilities', 'rural_services', 'verified_services', 'verified_bh', 'staging_providers'] as const;
-    if (!ALLOWED.includes(table as typeof ALLOWED[number])) {
-      return json({ error: `Invalid table. Must be one of: ${ALLOWED.join(', ')}` }, 400);
+    const contract = getResourceTableContract(table);
+    if (!contract) {
+      return json({ error: 'invalid_table', supported_tables: RESOURCE_TABLES }, 400);
     }
-
-    // facilities and rural_services use lat/lng; all others use latitude/longitude
-    const usesLatLng = table === 'facilities' || table === 'rural_services';
-    const latCol = usesLatLng ? 'lat' : 'latitude';
-    const lngCol = usesLatLng ? 'lng' : 'longitude';
+    const latCol = contract.latColumn;
+    const lngCol = contract.lngColumn;
 
     const { data: record, error: fetchErr } = await supabase
       .from(table)
@@ -111,48 +112,27 @@ serve(async (req) => {
 
     const addressParts = buildResourceAddress(record);
 
-    /**
-     * Phase 2C.1 — credential ordering.
-     *
-     * The Google credential is evaluated ONLY as part of the external provider
-     * chain, AFTER the internal `resource_address` authority has been consulted.
-     * A usable internal cache entry must resolve even when Google is
-     * unconfigured or unavailable. When the credential is absent the provider
-     * chain is simply empty, so a cache miss fails safely (stable code,
-     * no cache mutation, no invented coordinate).
-     */
-    const apiKey = Deno.env.get('GOOGLE_GEOCODING_API_KEY');
-
-    // ── Phase 2C: shared internal resource-address authority ───────────────
-    const googlePort: ResourceExternalPort = {
-      name: 'google',
-      run: async (address): Promise<ResourceExternalHit | null> => {
-        const url = `${GOOGLE_URL}?address=${encodeURIComponent(address)}&components=administrative_area:NV|country:US&key=${apiKey}`;
-        // NOTE: the request URL contains the API key and is never logged or returned.
-        const res = await fetch(url);
-        const data = await res.json().catch(() => null);
-        if (!data || data.status !== 'OK' || !data.results?.length) return null;
-        const g = data.results[0];
-        const lat = g.geometry?.location?.lat;
-        const lng = g.geometry?.location?.lng;
-        if (typeof lat !== 'number' || typeof lng !== 'number') return null;
-        const matchType = g.geometry?.location_type as string | undefined;
-        return {
-          lat,
-          lng,
-          confidence: matchType ? (CONFIDENCE_MAP[matchType] ?? 'approximate') : 'approximate',
-          match_type: matchType ?? null,
-          precision: matchType ? (CONFIDENCE_MAP[matchType] ?? 'approximate') : 'approximate',
-          county: null,
-          postal_code: record.zip ?? null,
-        };
-      },
-    };
-
     const secret = Deno.env.get('GEOCODE_CACHE_HMAC_SECRET');
     if (!secret) return json({ error: 'geocode_cache_secret_missing' }, 500);
 
-    const ports = createResourceCachePorts(supabase, secret, apiKey ? [googlePort] : []);
+    /**
+     * Ordering: the internal approved cache is consulted FIRST (inside
+     * `resolveResourceAddress`); Census is only contacted on a miss or a
+     * deliberate force. No credential is required to reuse internal knowledge.
+     */
+    let validation: CensusValidationDetail | null = null;
+    const censusPort = createCensusPort({
+      source: {
+        street_address: record.street_address as string | null,
+        city: record.city as string | null,
+        state: (record.state as string | null) ?? 'NV',
+        zip: record.zip as string | null,
+      },
+      requireNevada: true,
+      onValidation: (d) => { validation = d; },
+    });
+
+    const ports = createResourceCachePorts(supabase, secret, [censusPort]);
     const resolution = await resolveResourceAddress(ports, {
       address: addressParts,
       force: !!force,
@@ -160,39 +140,36 @@ serve(async (req) => {
     });
 
     if (!resolution.resolved || resolution.lat === null || resolution.lng === null) {
-      // Missing credential on a cache MISS is a configuration failure, not a
-      // geocoding verdict: do not stamp the record and do not touch the cache.
-      if (!apiKey) {
-        return json({
-          error: 'google_credentials_missing',
-          cache_hit: false,
-          external_calls: 0,
-        }, 503);
-      }
       await supabase
         .from(table)
         .update({
           coordinate_source: 'failed',
-          geocode_provider: 'google',
+          // Never attribute a failure to a provider that was not called.
+          geocode_provider: null,
+          coordinate_confidence: 'failed',
           geocode_match_type: null,
           last_geocoded_at: new Date().toISOString(),
         })
         .eq('id', id);
-      return json({ error: 'geocode_unresolved', failure: resolution.failure }, 422);
+      return json({
+        error: 'geocode_unresolved',
+        failure: resolution.failure,
+        validation,
+      }, 422);
     }
 
     const { lat, lng } = resolution;
 
     /**
      * Provenance mapping (Phase 2C §9):
-     *   coordinate_source  = HOW THIS RECORD received it (google | internal_cache)
-     *   geocode_provider   = HOW IT WAS ORIGINALLY resolved (google | census | …)
+     *   coordinate_source  = HOW THIS RECORD received it (census | internal_cache)
+     *   geocode_provider   = HOW IT WAS ORIGINALLY resolved (census | manual_verified | legacy google/nominatim)
      *   coordinate_confidence / geocode_match_type preserved from the original.
      */
     const update: Record<string, unknown> = {
       geocoded_lat: lat,
       geocoded_lng: lng,
-      coordinate_source: resolution.cache_hit ? 'internal_cache' : 'google',
+      coordinate_source: resolution.cache_hit ? 'internal_cache' : resolution.geocode_provider,
       coordinate_confidence: resolution.confidence,
       geocode_provider: resolution.geocode_provider,
       geocode_match_type: resolution.match_type,
@@ -225,7 +202,8 @@ serve(async (req) => {
       refresh_status: force
         ? (resolution.forced_refresh_failed ? 'forced_refresh_failed_cache_retained' : 'forced_refresh_succeeded')
         : (resolution.cache_hit ? 'cache_reuse' : 'external_resolved'),
-      google_credentials_missing: !apiKey ? true : undefined,
+      cache_classification: resolution.cache_classification ?? null,
+      validation,
     });
   } catch {
     // Stable code only — never echo internal errors that could contain the

@@ -25,11 +25,51 @@ import {
 /** Dedicated cache namespace for public/business resource addresses. */
 export const RESOURCE_LOCATION_CLASS = 'resource_address' as const;
 
+/**
+ * Phase 2D — approved reusable resource cache authority.
+ *
+ * Google Geocoding results must NOT be treated as permanent cross-record
+ * internal authority in this application, and public Nominatim is retired as
+ * the general-purpose resource geocoder. Their rows are RETAINED as historical
+ * evidence but are no longer approved reusable authority.
+ *
+ * historical evidence retained  ≠  approved reusable authority
+ */
+export const APPROVED_RESOURCE_CACHE_SOURCES: readonly GeocodeSource[] = [
+  'manual_verified',
+  'census',
+];
+
+/** Retired providers whose historical rows require Census revalidation. */
+export const LEGACY_RESOURCE_CACHE_SOURCES: readonly GeocodeSource[] = ['google', 'nominatim'];
+
+export type ResourceCacheClassification =
+  | 'approved_authority'
+  | 'legacy_google_revalidation_required'
+  | 'legacy_nominatim_revalidation_required'
+  | 'unclassified_revalidation_required';
+
+/**
+ * Classify a resource cache row WITHOUT mutating it. The dry-run inventory and
+ * the resolver both read this; no schema redesign and no provenance rewrite.
+ */
+export const classifyResourceCacheSource = (
+  source: string | null | undefined,
+): ResourceCacheClassification => {
+  if (source === 'google') return 'legacy_google_revalidation_required';
+  if (source === 'nominatim') return 'legacy_nominatim_revalidation_required';
+  if (source && (APPROVED_RESOURCE_CACHE_SOURCES as readonly string[]).includes(source)) {
+    return 'approved_authority';
+  }
+  return 'unclassified_revalidation_required';
+};
+
 /** Confidence levels that must stay visible to Admin > Geocode Review. */
 export const REVIEW_CONFIDENCES = ['geometric', 'approximate', 'low', 'failed'] as const;
 
 export const isReviewConfidence = (confidence: string | null | undefined): boolean =>
   !!confidence && (REVIEW_CONFIDENCES as readonly string[]).includes(confidence);
+
 
 export interface ResourceAddressParts {
   street_address?: string | null;
@@ -107,7 +147,15 @@ export interface ResourceCachePorts {
   touch: (lookupKey: string) => Promise<void>;
   geocoders: ResourceExternalPort[];
   now: () => string;
+  /**
+   * Phase 2D — which cache provenances count as reusable authority.
+   * Defaults to APPROVED_RESOURCE_CACHE_SOURCES so legacy Google/Nominatim rows
+   * are never silently reused as permanent authority. Tests exercising retired
+   * provider mechanics may widen this explicitly.
+   */
+  approvedCacheSources?: readonly GeocodeSource[];
 }
+
 
 export interface ResolveResourceRequest {
   address: string;
@@ -145,6 +193,8 @@ export interface ResolveResourceResult {
    * present this as a fresh provider refresh.
    */
   forced_refresh_failed: boolean;
+  /** Phase 2D — provenance class of the internal row that answered, if any. */
+  cache_classification?: ResourceCacheClassification;
 }
 
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
@@ -186,6 +236,7 @@ const fromCache = (row: ResourceCacheRow): ResolveResourceResult => ({
   failure: null,
   cache_written: false,
   forced_refresh_failed: false,
+  cache_classification: classifyResourceCacheSource(row.geocode_source),
 });
 
 /**
@@ -229,16 +280,28 @@ export const resolveResourceAddress = async (
   const lookupKey = identity ? await computeResourceLookupKey(address, ports.secret) : null;
   const existing = lookupKey ? await ports.lookup(lookupKey) : null;
 
+  const approvedSources = ports.approvedCacheSources ?? APPROVED_RESOURCE_CACHE_SOURCES;
+  /**
+   * Phase 2D reuse eligibility: a row is reusable authority only when its
+   * ORIGINAL provider is approved. Legacy Google/Nominatim rows stay in the
+   * table as historical evidence but do not satisfy a lookup, so the address
+   * falls through to the approved external provider (Census).
+   */
+  const isApproved = (row: ResourceCacheRow): boolean =>
+    isProtectedCacheRow(row) ||
+    (approvedSources as readonly string[]).includes(row.geocode_source);
+
   // Protected (manual/verified) cache authority is never bypassed, even by force.
   if (isCacheHitUsable(existing, requireNevada) && isProtectedCacheRow(existing)) {
     if (lookupKey) await ports.touch(lookupKey);
     return fromCache(existing);
   }
 
-  if (!req.force && isCacheHitUsable(existing, requireNevada)) {
+  if (!req.force && isCacheHitUsable(existing, requireNevada) && isApproved(existing)) {
     if (lookupKey) await ports.touch(lookupKey);
     return fromCache(existing);
   }
+
 
   // ── Cache miss (or deliberate force) → approved external provider chain ──
   let externalCalls = 0;
@@ -262,7 +325,10 @@ export const resolveResourceAddress = async (
 
   if (!hit || !provider) {
     // Failure must never damage reusable internal knowledge.
-    if (isCacheHitUsable(existing, requireNevada)) {
+    // Phase 2D: only APPROVED (or protected) rows may be retained as the
+    // answer — a legacy Google/Nominatim row is historical evidence, not a
+    // fallback authority, so it resolves as unresolved/reviewable instead.
+    if (isCacheHitUsable(existing, requireNevada) && isApproved(existing)) {
       // Phase 2C.1: a failed FORCED refresh must never destroy last-known-good
       // internal knowledge, and must not masquerade as a fresh provider result.
       if (lookupKey) await ports.touch(lookupKey);
@@ -272,6 +338,7 @@ export const resolveResourceAddress = async (
         forced_refresh_failed: !!req.force,
       };
     }
+
     return { ...unresolved('external_geocoding_unavailable'), external_calls: externalCalls };
   }
 

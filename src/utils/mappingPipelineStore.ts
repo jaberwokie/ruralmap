@@ -24,9 +24,10 @@ import { controlledAppend, normalizeTags } from './serviceNormalize';
 import { isServiceCategory } from './serviceCategoryMap';
 import { isBHCategory } from './bhCategoryMap';
 import {
-  geocodeMany, summarizeGeocodeRun, stampGeocodeTag, spotCheckCoordinate,
+  summarizeGeocodeRun, stampGeocodeTag,
   type GeocodeOutcome, type GeocodeRunSummary, type GeocodeCandidate,
 } from './serviceGeocode';
+import { geocodeResourceIds } from './resourceGeocodeClient';
 import { parseBhAccessTags } from './bhAccessTags';
 import { triggerGeocodeAddress } from './triggerGeocode';
 
@@ -252,8 +253,9 @@ export const promoteStagingServicesBulk = async (
 
 /**
  * Bulk-geocode STAGING service rows only. Targets records where
- * mappable=true and lat/lng are blank. Uses Nominatim with a 1.1s
- * delay between calls to honor public usage policy.
+ * mappable=true and lat/lng are blank. Resolution runs entirely server-side
+ * (internal approved `resource_address` cache → U.S. Census Geocoder).
+
  *
  * Scope rules (enforced):
  *  - Operates on `staging_services` only. Verified rows are never touched
@@ -277,80 +279,16 @@ export const geocodeStagingServicesBulk = async (
     onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
   },
 ): Promise<GeocodeRunSummary> => {
-  // Pull staging rows only — verified is intentionally excluded.
-  const stagingAll = await listStagingServices();
-  const stgById = new Map(stagingAll.map((r) => [r.id, r] as const));
-
-  const targets: StagingServiceRow[] = ids
-    .map((id) => stgById.get(id))
-    .filter((r): r is StagingServiceRow => !!r);
-
-  const outcomes = await geocodeMany(targets, options?.onProgress);
-
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (!row) continue;
-
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      // Public confidence model = high | low | none.
-      // Street-level match → high. City/county fallback → low.
-      // (The scorer's internal "medium" is collapsed to "high" so the
-      // operator-facing model stays strictly 3-valued.)
-      const publicConfidence: 'high' | 'low' =
-        oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await editServiceRecord('staging_services', row.id, {
-        latitude: oc.latitude,
-        longitude: oc.longitude,
-        access_notes: stampedNotes,
-      } as Partial<StagingServiceRow>);
-      // Reverse geocode spot-check
-      const spotCheck = await spotCheckCoordinate(
-        oc.latitude,
-        oc.longitude,
-        row.zip,
-        row.street_address,
-      );
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await editServiceRecord('staging_services', row.id, {
-          access_notes: downgradedNotes,
-        } as Partial<StagingServiceRow>);
-      }
-      await writeAudit({
-        pipeline: 'services',
-        action: 'record_edited',
-        target_table: 'staging_services',
-        target_row_id: row.id,
-        details: {
-          geocode: true,
-          strategy: oc.strategy,
-          confidence: publicConfidence,
-          latitude: oc.latitude,
-          longitude: oc.longitude,
-          spotCheck,
-        },
-      });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await editServiceRecord('staging_services', row.id, {
-        access_notes: stampedNotes,
-      } as Partial<StagingServiceRow>);
-      await writeAudit({
-        pipeline: 'services',
-        action: 'record_edited',
-        target_table: 'staging_services',
-        target_row_id: row.id,
-        details: { geocode: true, status: 'none', reason: oc.reason },
-      });
-    }
-  }
-
-  // Intentionally NOT calling notifyVerifiedRecordsChanged() — staging
-  // edits do not change live map data. The bus only fires when
-  // verified_services actually changes (promotion / deactivation / edit).
-  return summarizeGeocodeRun(outcomes);
+  /**
+   * Phase 2D — server-side only. Stable explicit IDs are submitted to the
+   * authenticated `geocode-bulk` pipeline (internal approved cache → Census).
+   * Eligibility, manual/lock protection, provenance columns, tag-only
+   * `access_notes` edits and audit rows are all handled server-side.
+   */
+  const summary = await geocodeResourceIds('staging_services', ids, {
+    onProgress: options?.onProgress,
+  });
+  return summary;
 };
 
 export const rejectStagingService = async (id: string, reason?: string): Promise<void> => {
@@ -737,8 +675,8 @@ export const editBhRecord = async (
 
 /**
  * Bulk-geocode STAGING behavioral health rows. Mirrors the Services
- * geocoding workflow exactly: Nominatim primary + city/county fallback,
- * 1.1s throttle, structured `[geocode:...]` tag stamped into access_notes,
+ * geocoding workflow exactly: server-side internal cache → Census,
+ * structured `[geocode:...]` tag stamped into access_notes,
  * one audit row per outcome, no broadcast (staging-only edits).
  *
  * Eligibility:
@@ -754,95 +692,16 @@ export const geocodeStagingBhBulk = async (
     onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
   },
 ): Promise<GeocodeRunSummary> => {
-  const stagingAll = await listStagingBh();
-  const stgById = new Map(stagingAll.map((r) => [r.id, r] as const));
-
-  const targets: StagingBhRow[] = ids
-    .map((id) => stgById.get(id))
-    .filter((r): r is StagingBhRow => !!r);
-
-  // Adapt BH rows into the geocoder's candidate shape. BH has no
-  // `mappable` column — derive: row is mappable unless it is a
-  // telehealth-only record without a street address.
-  const candidates: GeocodeCandidate[] = targets.map((r) => {
-    const tags = parseBhAccessTags(r.service_tags);
-    const telehealthOnly =
-      (tags.includes('telehealth') || r.telehealth_available === true) &&
-      (!r.street_address || r.street_address.trim() === '');
-    const mappable = !telehealthOnly;
-    return {
-      id: r.id,
-      mappable,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      street_address: r.street_address,
-      city: r.city,
-      state: r.state,
-      zip: r.zip,
-      county: r.county,
-      access_notes: r.access_notes,
-    };
+  /**
+   * Phase 2D — server-side only. Stable explicit IDs are submitted to the
+   * authenticated `geocode-bulk` pipeline (internal approved cache → Census).
+   * Eligibility, manual/lock protection, provenance columns, tag-only
+   * `access_notes` edits and audit rows are all handled server-side.
+   */
+  const summary = await geocodeResourceIds('staging_bh', ids, {
+    onProgress: options?.onProgress,
   });
-
-  const outcomes = await geocodeMany(candidates, options?.onProgress);
-
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (!row) continue;
-
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' =
-        oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await editBhRecord('staging_bh', row.id, {
-        latitude: oc.latitude,
-        longitude: oc.longitude,
-        access_notes: stampedNotes,
-      } as Partial<StagingBhRow>);
-      // Reverse geocode spot-check
-      const spotCheck = await spotCheckCoordinate(
-        oc.latitude,
-        oc.longitude,
-        row.zip,
-        row.street_address,
-      );
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await editBhRecord('staging_bh', row.id, {
-          access_notes: downgradedNotes,
-        } as Partial<StagingBhRow>);
-      }
-      await writeAudit({
-        pipeline: 'behavioral_health',
-        action: 'record_edited',
-        target_table: 'staging_bh',
-        target_row_id: row.id,
-        details: {
-          geocode: true,
-          strategy: oc.strategy,
-          confidence: publicConfidence,
-          latitude: oc.latitude,
-          longitude: oc.longitude,
-          spotCheck,
-        },
-      });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await editBhRecord('staging_bh', row.id, {
-        access_notes: stampedNotes,
-      } as Partial<StagingBhRow>);
-      await writeAudit({
-        pipeline: 'behavioral_health',
-        action: 'record_edited',
-        target_table: 'staging_bh',
-        target_row_id: row.id,
-        details: { geocode: true, status: 'none', reason: oc.reason },
-      });
-    }
-  }
-
-  return summarizeGeocodeRun(outcomes);
+  return summary;
 };
 
 export const geocodeFacilitiesBulk = async (
@@ -851,66 +710,16 @@ export const geocodeFacilitiesBulk = async (
     onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
   },
 ): Promise<GeocodeRunSummary> => {
-  const { data: allRows } = await supabase.from('facilities').select('*');
-  const byId = new Map((allRows ?? []).map((r) => [r.id, r] as const));
-  const targets = ids
-    .map((id) => byId.get(id))
-    .filter((r): r is NonNullable<typeof r> => !!r)
-    .map((r) => ({
-      id: r.id,
-      mappable: r.mappable,
-      latitude: r.lat,
-      longitude: r.lng,
-      street_address: r.street_address,
-      city: r.city,
-      state: r.state,
-      zip: r.zip,
-      county: r.county,
-      access_notes: r.access_notes,
-    }));
-
-  const outcomes = await geocodeMany(targets, options?.onProgress);
-  const summary = summarizeGeocodeRun(outcomes);
-
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' =
-        oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await supabase.from('facilities').update({
-        lat: oc.latitude,
-        lng: oc.longitude,
-        access_notes: stampedNotes,
-      }).eq('id', row.id);
-      const spotCheck = await spotCheckCoordinate(
-        oc.latitude, oc.longitude, row.zip, row.street_address,
-      );
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await supabase.from('facilities').update({ access_notes: downgradedNotes }).eq('id', row.id);
-      }
-      await writeAudit({
-        pipeline: 'provider_mapping',
-        action: 'record_edited',
-        target_table: 'facilities',
-        target_row_id: row.id,
-        details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck },
-      });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await supabase.from('facilities').update({ access_notes: stampedNotes }).eq('id', row.id);
-      await writeAudit({
-        pipeline: 'provider_mapping',
-        action: 'record_edited',
-        target_table: 'facilities',
-        target_row_id: row.id,
-        details: { geocode: true, status: 'none', reason: oc.reason },
-      });
-    }
-  }
-
+  /**
+   * Phase 2D — server-side only. Stable explicit IDs are submitted to the
+   * authenticated `geocode-bulk` pipeline (internal approved cache → Census).
+   * Eligibility, manual/lock protection, provenance columns, tag-only
+   * `access_notes` edits and audit rows are all handled server-side.
+   */
+  const summary = await geocodeResourceIds('facilities', ids, {
+    onProgress: options?.onProgress,
+  });
+  if (summary.geocoded > 0) notifyFacilitiesChanged();
   return summary;
 };
 
@@ -920,66 +729,16 @@ export const geocodeRuralServicesBulk = async (
     onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
   },
 ): Promise<GeocodeRunSummary> => {
-  const { data: allRows } = await supabase.from('rural_services').select('*');
-  const byId = new Map((allRows ?? []).map((r) => [r.id, r] as const));
-  const targets = ids
-    .map((id) => byId.get(id))
-    .filter((r): r is NonNullable<typeof r> => !!r)
-    .map((r) => ({
-      id: r.id,
-      mappable: r.mappable,
-      latitude: r.lat,
-      longitude: r.lng,
-      street_address: r.street_address,
-      city: r.city,
-      state: r.state,
-      zip: r.zip,
-      county: r.county,
-      access_notes: r.access_notes,
-    }));
-
-  const outcomes = await geocodeMany(targets, options?.onProgress);
-  const summary = summarizeGeocodeRun(outcomes);
-
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' =
-        oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await supabase.from('rural_services').update({
-        lat: oc.latitude,
-        lng: oc.longitude,
-        access_notes: stampedNotes,
-      }).eq('id', row.id);
-      const spotCheck = await spotCheckCoordinate(
-        oc.latitude, oc.longitude, row.zip, row.street_address,
-      );
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await supabase.from('rural_services').update({ access_notes: downgradedNotes }).eq('id', row.id);
-      }
-      await writeAudit({
-        pipeline: 'provider_mapping',
-        action: 'record_edited',
-        target_table: 'rural_services',
-        target_row_id: row.id,
-        details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck },
-      });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await supabase.from('rural_services').update({ access_notes: stampedNotes }).eq('id', row.id);
-      await writeAudit({
-        pipeline: 'provider_mapping',
-        action: 'record_edited',
-        target_table: 'rural_services',
-        target_row_id: row.id,
-        details: { geocode: true, status: 'none', reason: oc.reason },
-      });
-    }
-  }
-
+  /**
+   * Phase 2D — server-side only. Stable explicit IDs are submitted to the
+   * authenticated `geocode-bulk` pipeline (internal approved cache → Census).
+   * Eligibility, manual/lock protection, provenance columns, tag-only
+   * `access_notes` edits and audit rows are all handled server-side.
+   */
+  const summary = await geocodeResourceIds('rural_services', ids, {
+    onProgress: options?.onProgress,
+  });
+  if (summary.geocoded > 0) notifyRuralServicesChanged();
   return summary;
 };
 
@@ -1194,50 +953,19 @@ export const promoteStagingFacilitiesBulk = async (
 
 export const geocodeStagingFacilitiesBulk = async (
   ids: string[],
-  options?: { onProgress?: (done: number, total: number, last: GeocodeOutcome) => void },
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
 ): Promise<GeocodeRunSummary> => {
-  const allRows = await listStagingFacilities();
-  const byId = new Map(allRows.map((r) => [r.id, r] as const));
-  const targets = ids
-    .map((id) => byId.get(id))
-    .filter((r): r is NonNullable<typeof r> => !!r)
-    .map((r) => ({
-      id: r.id,
-      mappable: r.mappable,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      street_address: r.street_address,
-      city: r.city,
-      state: r.state,
-      zip: r.zip,
-      county: r.county,
-      access_notes: r.access_notes,
-    }));
-
-  const outcomes = await geocodeMany(targets, options?.onProgress);
-  const summary = summarizeGeocodeRun(outcomes);
-
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' = oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await supabase.from('staging_facilities').update({
-        latitude: oc.latitude, longitude: oc.longitude, access_notes: stampedNotes,
-      }).eq('id', row.id);
-      const spotCheck = await spotCheckCoordinate(oc.latitude, oc.longitude, row.zip, row.street_address);
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await supabase.from('staging_facilities').update({ access_notes: downgradedNotes }).eq('id', row.id);
-      }
-      await writeAudit({ pipeline: 'facilities', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await supabase.from('staging_facilities').update({ access_notes: stampedNotes }).eq('id', row.id);
-      await writeAudit({ pipeline: 'facilities', action: 'record_edited', target_table: 'staging_facilities', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
-    }
-  }
+  /**
+   * Phase 2D — server-side only. Stable explicit IDs are submitted to the
+   * authenticated `geocode-bulk` pipeline (internal approved cache → Census).
+   * Eligibility, manual/lock protection, provenance columns, tag-only
+   * `access_notes` edits and audit rows are all handled server-side.
+   */
+  const summary = await geocodeResourceIds('staging_facilities', ids, {
+    onProgress: options?.onProgress,
+  });
   return summary;
 };
 
@@ -1354,50 +1082,19 @@ export const promoteStagingRuralServicesBulk = async (
 
 export const geocodeStagingRuralServicesBulk = async (
   ids: string[],
-  options?: { onProgress?: (done: number, total: number, last: GeocodeOutcome) => void },
+  options?: {
+    onProgress?: (done: number, total: number, last: GeocodeOutcome) => void;
+  },
 ): Promise<GeocodeRunSummary> => {
-  const allRows = await listStagingRuralServices();
-  const byId = new Map(allRows.map((r) => [r.id, r] as const));
-  const targets = ids
-    .map((id) => byId.get(id))
-    .filter((r): r is NonNullable<typeof r> => !!r)
-    .map((r) => ({
-      id: r.id,
-      mappable: r.mappable,
-      latitude: r.latitude,
-      longitude: r.longitude,
-      street_address: r.street_address,
-      city: r.city,
-      state: r.state,
-      zip: r.zip,
-      county: r.county,
-      access_notes: r.access_notes,
-    }));
-
-  const outcomes = await geocodeMany(targets, options?.onProgress);
-  const summary = summarizeGeocodeRun(outcomes);
-
-  for (let i = 0; i < outcomes.length; i++) {
-    const oc = outcomes[i];
-    const row = targets[i];
-    if (oc.status === 'geocoded' && oc.latitude != null && oc.longitude != null) {
-      const publicConfidence: 'high' | 'low' = oc.strategy === 'address_full' ? 'high' : 'low';
-      const stampedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, publicConfidence);
-      await supabase.from('staging_rural_services').update({
-        latitude: oc.latitude, longitude: oc.longitude, access_notes: stampedNotes,
-      }).eq('id', row.id);
-      const spotCheck = await spotCheckCoordinate(oc.latitude, oc.longitude, row.zip, row.street_address);
-      if (!spotCheck.passed && publicConfidence === 'high') {
-        const downgradedNotes = stampGeocodeTag(row.access_notes, oc.strategy!, 'low');
-        await supabase.from('staging_rural_services').update({ access_notes: downgradedNotes }).eq('id', row.id);
-      }
-      await writeAudit({ pipeline: 'rural_services', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, strategy: oc.strategy, confidence: publicConfidence, latitude: oc.latitude, longitude: oc.longitude, spotCheck } });
-    } else if (oc.status === 'failed' || (oc.status === 'skipped' && oc.reason !== 'list-only (mappable=false)')) {
-      const stampedNotes = stampGeocodeTag(row.access_notes, 'failed', 'low');
-      await supabase.from('staging_rural_services').update({ access_notes: stampedNotes }).eq('id', row.id);
-      await writeAudit({ pipeline: 'rural_services', action: 'record_edited', target_table: 'staging_rural_services', target_row_id: row.id, details: { geocode: true, status: 'none', reason: oc.reason } });
-    }
-  }
+  /**
+   * Phase 2D — server-side only. Stable explicit IDs are submitted to the
+   * authenticated `geocode-bulk` pipeline (internal approved cache → Census).
+   * Eligibility, manual/lock protection, provenance columns, tag-only
+   * `access_notes` edits and audit rows are all handled server-side.
+   */
+  const summary = await geocodeResourceIds('staging_rural_services', ids, {
+    onProgress: options?.onProgress,
+  });
   return summary;
 };
 

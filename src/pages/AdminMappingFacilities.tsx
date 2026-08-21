@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { geocodeResourceIds } from '@/utils/resourceGeocodeClient';
 import { toast } from 'sonner';
 import AdminMappingLayout from '@/components/admin/AdminMappingLayout';
 import PipelineWorkspace from '@/components/admin/PipelineWorkspace';
@@ -70,10 +71,20 @@ export default function AdminMappingFacilities() {
   });
 
   const handleGeocodeBulk = async (ids: string[]) => {
-    await supabase.from('facilities').update({ lat: null, lng: null, access_notes: null }).in('id', ids);
-    const { data: result, error: resultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'facilities', limit: 100, offset: 0 } });
-    if (resultErr) throw new Error(resultErr.message);
-    toast.success(`Geocoded: ${result.geocoded} success, ${result.failed} failed`);
+    /**
+     * Phase 2D — deliberate Admin re-geocode of the SELECTED ids only.
+     *
+     * The previous implementation cleared `lat`/`lng`/`access_notes` first and
+     * then geocoded an unrelated offset window. That destroyed known-good and
+     * manually placed coordinates plus human notes, and did not necessarily
+     * touch the selected records at all. `force: true` now re-resolves exactly
+     * the selected records server-side; manual/locked coordinates stay
+     * protected and only the structured geocode tag in `access_notes` changes.
+     */
+    const summary = await geocodeResourceIds('facilities', ids, { force: true });
+    toast.success(
+      `Geocoded: ${summary.geocoded} success, ${summary.failed} failed, ${summary.skipped} skipped`,
+    );
     await refresh();
   };
 
