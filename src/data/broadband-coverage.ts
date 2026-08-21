@@ -151,6 +151,16 @@ export const normalizedRowsToRaw = (rows: NormalizedRow[]): Record<string, unkno
     notes: r.notes ?? undefined,
   }));
 
+const DB_NUMERIC_FIELDS: (keyof NormalizedRow)[] = [
+  'pct_100_20_plus', 'pct_25_3_to_100_20', 'pct_below_25_3',
+  'fiber_share', 'cable_share', 'fixed_wireless_share', 'satellite_share',
+];
+
+/** A normalized DB row is usable only when it already carries real numbers. */
+export const isUsableNormalizedRow = (row: NormalizedRow): boolean =>
+  typeof row.county_name === 'string' && row.county_name.trim().length > 0 &&
+  DB_NUMERIC_FIELDS.every((f) => typeof row[f] === 'number' && Number.isFinite(row[f] as number));
+
 /** A usable dataset has rows and finite core metrics on every row. */
 export const isUsableBroadbandDataset = (records: CountyBroadbandData[]): boolean =>
   records.length > 0 &&
@@ -160,6 +170,7 @@ export const isUsableBroadbandDataset = (records: CountyBroadbandData[]): boolea
     Number.isFinite(d.pct_25_3_to_100_20) &&
     Number.isFinite(d.pct_below_25_3),
   );
+
 
 const publish = (records: CountyBroadbandData[]): void => {
   COUNTY_BROADBAND_DATA.length = 0;
