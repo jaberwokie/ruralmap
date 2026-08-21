@@ -3,6 +3,8 @@
  *
  * Behavioral tests for the shared resource-address authority used by both
  * `geocode-address` and `geocode-bulk`, plus regression guards proving the
+ * (Phase 2D: the approved external provider modelled here is the U.S. Census
+ * Geocoder; Google and public Nominatim are retired as active providers.)
  * Phase 2B member-address boundary is untouched.
  */
 import { describe, it, expect } from 'vitest';
@@ -69,8 +71,8 @@ const harness = (
   };
 };
 
-const googleOk: ResourceExternalPort = {
-  name: 'google',
+const providerOk: ResourceExternalPort = {
+  name: 'census',
   run: async () => ({
     lat: 39.1638,
     lng: -119.7674,
@@ -81,8 +83,8 @@ const googleOk: ResourceExternalPort = {
   }),
 };
 
-const googleGeometric: ResourceExternalPort = {
-  name: 'google',
+const providerGeometric: ResourceExternalPort = {
+  name: 'census',
   run: async () => ({
     lat: 39.1638,
     lng: -119.7674,
@@ -92,24 +94,24 @@ const googleGeometric: ResourceExternalPort = {
   }),
 };
 
-const googleDown: ResourceExternalPort = {
-  name: 'google',
+const providerDown: ResourceExternalPort = {
+  name: 'census',
   run: async () => { throw new Error('network down'); },
 };
 
-const googleOutOfBounds: ResourceExternalPort = {
-  name: 'google',
+const providerOutOfBounds: ResourceExternalPort = {
+  name: 'census',
   run: async () => ({ lat: 34.05, lng: -118.24, confidence: 'rooftop', match_type: 'ROOFTOP' }),
 };
 
-const googleNullCoords: ResourceExternalPort = {
-  name: 'google',
+const providerNullCoords: ResourceExternalPort = {
+  name: 'census',
   // deno-lint-ignore no-explicit-any
   run: async () => ({ lat: null as unknown as number, lng: null as unknown as number, confidence: 'rooftop' }),
 };
 
-const nominatimOk: ResourceExternalPort = {
-  name: 'nominatim',
+const provider2Ok: ResourceExternalPort = {
+  name: 'census',
   run: async () => ({ lat: 38.9877, lng: -119.1626, confidence: 'high', match_type: 'address_full' }),
 };
 
@@ -137,7 +139,7 @@ describe('cache identity', () => {
 
   it('4. the resource path never queries the member_address class', async () => {
     const classes: string[] = [];
-    const h = harness([googleOk]);
+    const h = harness([providerOk]);
     const ports: ResourceCachePorts = {
       ...h.ports,
       lookup: async (key) => { classes.push(key); return null; },
@@ -162,7 +164,7 @@ describe('cache identity', () => {
 
 describe('cross-record reuse', () => {
   it('5-7. first address calls external, caches, second identical address is a zero-call cache hit', async () => {
-    const h = harness([googleOk]);
+    const h = harness([providerOk]);
     const first = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(first.cache_hit).toBe(false);
     expect(first.external_calls).toBe(1);
@@ -172,13 +174,13 @@ describe('cross-record reuse', () => {
     const second = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(second.cache_hit).toBe(true);
     expect(second.external_calls).toBe(0);
-    expect(h.calls).toEqual(['google']);
+    expect(h.calls).toEqual(['census']);
     expect(second.lat).toBe(first.lat);
     expect(second.lng).toBe(first.lng);
   });
 
   it('8-9. any resource table reuses the same entry — identity is the address, not the table', async () => {
-    const h = harness([googleOk]);
+    const h = harness([providerOk]);
     await resolveResourceAddress(h.ports, { address: buildResourceAddress({ street_address: '1000 N Division St', city: 'Carson City', state: 'NV', zip: '89703' }) });
     // rural_service / verified service / provider row with the same address:
     const reuse = await resolveResourceAddress(h.ports, { address: ADDR_A });
@@ -192,7 +194,7 @@ describe('cross-record reuse', () => {
 
 describe('cross-function reuse', () => {
   it('10-11. geocode-address and geocode-bulk share one cache in both directions', async () => {
-    const shared = harness([googleOk]);
+    const shared = harness([providerOk]);
     // geocode-address style resolution (Google port)
     await resolveResourceAddress(shared.ports, { address: ADDR_A });
 
@@ -200,22 +202,22 @@ describe('cross-function reuse', () => {
     const bulkCalls: string[] = [];
     const bulkPorts: ResourceCachePorts = {
       ...shared.ports,
-      geocoders: [{ name: 'nominatim', run: async (a) => { bulkCalls.push('nominatim'); return nominatimOk.run(a); } }],
+      geocoders: [{ name: 'census', run: async (a) => { bulkCalls.push('census'); return provider2Ok.run(a); } }],
     };
     const viaBulk = await resolveResourceAddress(bulkPorts, { address: ADDR_A });
     expect(viaBulk.cache_hit).toBe(true);
     expect(bulkCalls).toEqual([]);
-    expect(viaBulk.geocode_provider).toBe('google');
+    expect(viaBulk.geocode_provider).toBe('census');
 
     // A bulk-created entry is reusable by the address function.
-    const bulkOnly = harness([nominatimOk]);
+    const bulkOnly = harness([provider2Ok]);
     await resolveResourceAddress(bulkOnly.ports, { address: ADDR_B });
     const viaAddress = await resolveResourceAddress(
-      { ...bulkOnly.ports, geocoders: [googleOk] },
+      { ...bulkOnly.ports, geocoders: [providerOk] },
       { address: ADDR_B },
     );
     expect(viaAddress.cache_hit).toBe(true);
-    expect(viaAddress.geocode_provider).toBe('nominatim');
+    expect(viaAddress.geocode_provider).toBe('census');
   });
 
   it('both edge functions build ports from the one shared adapter', () => {
@@ -258,12 +260,14 @@ describe('manual / locked precedence', () => {
     const addr = readFileSync('supabase/functions/geocode-address/index.ts', 'utf8');
     expect(addr).toContain('if (!record.coordinate_locked)');
     const bulk = readFileSync('supabase/functions/geocode-bulk/index.ts', 'utf8');
-    expect(bulk).toContain('if (!row.coordinate_locked)');
+    // Phase 2D: bulk protection is enforced through the shared table contract,
+    // covering locks AND curated manual coordinates on every resource table.
+    expect(bulk).toContain('isRecordCoordinateProtected(record, contract)');
   });
 
   it('14. automated results cannot replace manual_verified cache authority', async () => {
     const key = await computeResourceLookupKey(ADDR_A, SECRET);
-    const h = harness([googleOk], [manualRow(key)]);
+    const h = harness([providerOk], [manualRow(key)]);
     const res = await resolveResourceAddress(h.ports, { address: ADDR_A, force: true });
     expect(h.calls).toEqual([]);
     expect(res.lat).toBe(39.5);
@@ -272,18 +276,18 @@ describe('manual / locked precedence', () => {
   });
 
   it('15. force: true bypasses normal automated cache reuse', async () => {
-    const h = harness([googleOk]);
+    const h = harness([providerOk]);
     await resolveResourceAddress(h.ports, { address: ADDR_A });
     const forced = await resolveResourceAddress(h.ports, { address: ADDR_A, force: true });
     expect(forced.cache_hit).toBe(false);
     expect(forced.external_calls).toBe(1);
-    expect(h.calls).toEqual(['google', 'google']);
+    expect(h.calls).toEqual(['census', 'census']);
   });
 
   it('16. a failed force preserves the last known good cache entry', async () => {
-    const h = harness([googleOk]);
+    const h = harness([providerOk]);
     const good = await resolveResourceAddress(h.ports, { address: ADDR_A });
-    const failing: ResourceCachePorts = { ...h.ports, geocoders: [googleDown] };
+    const failing: ResourceCachePorts = { ...h.ports, geocoders: [providerDown] };
     const forced = await resolveResourceAddress(failing, { address: ADDR_A, force: true });
     expect(forced.resolved).toBe(true);
     expect(forced.cache_hit).toBe(true);
@@ -304,17 +308,17 @@ describe('manual / locked precedence', () => {
 
 describe('provenance', () => {
   it('17-18. cache hits preserve the original provider, confidence and precision', async () => {
-    const h = harness([googleGeometric]);
+    const h = harness([providerGeometric]);
     const first = await resolveResourceAddress(h.ports, { address: ADDR_A });
     const hit = await resolveResourceAddress(h.ports, { address: ADDR_A });
-    expect(hit.geocode_provider).toBe('google');
+    expect(hit.geocode_provider).toBe('census');
     expect(hit.confidence).toBe(first.confidence);
     expect(hit.precision).toBe(first.precision);
     expect(hit.match_type).toBe('GEOMETRIC_CENTER');
   });
 
   it('19. low-confidence cache reuse remains review-required', async () => {
-    const h = harness([googleGeometric]);
+    const h = harness([providerGeometric]);
     await resolveResourceAddress(h.ports, { address: ADDR_A });
     const hit = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(hit.review_required).toBe(true);
@@ -326,12 +330,12 @@ describe('provenance', () => {
   });
 
   it('20. cache reuse is distinguishable from a fresh external call', async () => {
-    const h = harness([googleOk]);
+    const h = harness([providerOk]);
     const fresh = await resolveResourceAddress(h.ports, { address: ADDR_A });
     const cached = await resolveResourceAddress(h.ports, { address: ADDR_A });
-    expect(fresh.coordinate_source).toBe('google');
+    expect(fresh.coordinate_source).toBe('census');
     expect(cached.coordinate_source).toBe('internal_cache');
-    expect(cached.geocode_provider).toBe('google');
+    expect(cached.geocode_provider).toBe('census');
   });
 });
 
@@ -340,14 +344,14 @@ describe('provenance', () => {
 describe('failure behavior', () => {
   it('21. external failure with a cache hit still resolves', async () => {
     const key = await computeResourceLookupKey(ADDR_A, SECRET);
-    const h = harness([googleDown], [{ ...manualRow(key), is_manual: false, is_coordinate_locked: false, geocode_source: 'google', confidence: 'rooftop' }]);
+    const h = harness([providerDown], [{ ...manualRow(key), is_manual: false, is_coordinate_locked: false, geocode_source: 'census', confidence: 'rooftop' }]);
     const res = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(res.resolved).toBe(true);
     expect(res.cache_hit).toBe(true);
   });
 
   it('22-23. external failure without a cache fails safely and writes nothing', async () => {
-    const h = harness([googleDown]);
+    const h = harness([providerDown]);
     const res = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(res.resolved).toBe(false);
     expect(res.lat).toBeNull();
@@ -356,7 +360,7 @@ describe('failure behavior', () => {
   });
 
   it('24. null coordinates are never coerced to 0 and never cached', async () => {
-    const h = harness([googleNullCoords]);
+    const h = harness([providerNullCoords]);
     const res = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(res.lat).toBeNull();
     expect(res.lng).toBeNull();
@@ -366,7 +370,7 @@ describe('failure behavior', () => {
   });
 
   it('25. out-of-Nevada results are not cached', async () => {
-    const h = harness([googleOutOfBounds]);
+    const h = harness([providerOutOfBounds]);
     const res = await resolveResourceAddress(h.ports, { address: ADDR_A });
     expect(res.resolved).toBe(false);
     expect(h.rows.size).toBe(0);
