@@ -39,7 +39,6 @@ import {
 import {
   getResourceTableContract,
   isRecordCoordinateProtected,
-  RESOURCE_TABLE_CONTRACTS,
   RESOURCE_TABLES,
   type ResourceTableContract,
 } from '../_shared/resourceTableContracts.ts';
@@ -64,7 +63,7 @@ const delay = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Max IDs accepted per request — bounds provider work per invocation. */
 const MAX_IDS = 200;
 /** Max unique addresses externally resolved per dry-run request. */
-const MAX_DRY_RUN_ADDRESSES = 60;
+const MAX_DRY_RUN_ADDRESSES = 250;
 
 interface Outcome {
   id: string;
