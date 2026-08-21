@@ -275,29 +275,35 @@ Rules:
 
 
 
-### Internal geocode authority (Phase 6d — Phase 2B)
+### Internal geocode authority (Phase 6d — Phase 2B / 2B.1)
 
-Address resolution is internal-first. The browser no longer calls an external geocoder as its first dependency for member addresses; it calls the `resolve-address` edge function, which owns normalization, cache lookup, and the external chain.
+Address resolution is internal-first and server-only. The browser calls exactly one endpoint — the `resolve-address` edge function — which owns normalization, canonical resource matching, cache lookup, the retry-variant chain, and the external geocoders.
 
 Resolution order (fixed, do not reorder):
 
-1. canonical Rural Tool resource coordinates (`facilities` / `rural_services` own their own coordinates — the cache is never a competing authority for them)
+1. canonical Rural Tool resource coordinates (exact canonical-address equality against `verified_services` / `verified_bh`; the cache is never a competing authority for them)
 2. verified / manual / coordinate-locked internal coordinates
 3. internal geocode cache (`geocode_resolutions`)
-4. approved external chain — Nominatim bounded → Nominatim unbounded → Census
+4. approved external chain — Nominatim bounded → Nominatim unbounded → Census — run across the server-side query-variant chain
 5. approved approximate fallback from that chain
 6. unresolved → manual placement
 
 Rules:
 
+- **Hard privacy boundary (Phase 2B.1).** No member address is ever sent from the browser to an external geocoder. `src/hooks/useMemberAccess.ts` contains no Nominatim/Census call and no raw `fetch` of the address. If the server boundary is unreachable the path **fails closed** into manual map placement — it never falls back to a third-party geocoder. Enforced by `src/test/geocodeBoundary.test.ts`.
+- **Retry intelligence is server-side.** `buildQueryVariants` in `supabase/functions/_shared/geocodeNormalize.ts` owns the ordered strategies: `direct` → `abbreviation_variant` → `street_city_zip` → `city_zip` → `zip` → `highway_alias` → `highway_alias_without_number`. Variants are query strategies only; the result is always cached against the **original** canonical lookup key, so the second identical search is a pure cache hit with zero external calls.
+- **`location_class` is authorized, not trusted.** Public/anonymous callers are pinned to `member_address`. `facility`, `rural_service`, `provider`, `known_place`, and `manual` require a verified JWT with `admin`, `ops`, or `sysop`; otherwise the function returns `location_class_forbidden` (403).
+- **Abuse resistance.** Request bodies over 2000 bytes return `payload_too_large`; addresses over 300 characters return `invalid_address`; external provider calls are capped per request (default 18). Errors return stable codes only — no internal detail, no stack, no secret.
 - **Privacy.** `geocode_resolutions` stores no raw address text for `member_address` records. The key is `lookup_key = "v1:" + HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "<location_class>|<canonical address>")`. A plain unsalted SHA-256 of an address is forbidden — addresses are dictionary-reconstructable. The secret is server-only: never returned to the browser, never written to `source_metadata`, never logged.
-- **Normalization** lives in one place: `supabase/functions/_shared/geocodeNormalize.ts`. It only trims, collapses whitespace, lowercases, drops periods, standardizes the state token to `nv`, and reduces ZIP+4 to ZIP5. It never rewrites highway or route names — that would change what the address means. Highway aliasing stays a query-time fallback in `useMemberAccess`.
+- **Normalization** lives in one place: `supabase/functions/_shared/geocodeNormalize.ts`. Canonicalization only trims, collapses whitespace, lowercases, drops periods, standardizes the state token to `nv`, and reduces ZIP+4 to ZIP5. It never rewrites highway or route names — that would change what the address means. Highway aliasing is a query-time variant, never part of cache identity.
 - **Coordinate locks and manual coordinates outrank all automation.** A later automated result returns the locked record instead of overwriting it, enforced both in the resolver and by a database trigger.
-- **No invented coordinates.** An unresolved attempt is persisted as an unresolved row (null lat/lng) so it stays reportable; it never receives a guessed centroid.
+- **No invented coordinates.** An unresolved attempt is persisted as an unresolved row (null lat/lng) so it stays reportable; it never receives a guessed centroid. The only client-side fallback left is exact/token matching against bundled Rural Tool records, which performs no network call.
 - Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `manual_resolution_required`. Secret values never appear in an error.
-- **Self-reliance condition:** when every external geocoder is unavailable but the location is already known internally, resolution still succeeds. This is covered by tests in `src/test/geocodeInternalAuthority.test.ts`.
+- **Self-reliance condition:** when every external geocoder is unavailable but the location is already known internally, resolution still succeeds. Covered by `src/test/geocodeInternalAuthority.test.ts`.
 - `expires_at` is nullable and unset — no Rural Tool cache-expiration policy exists yet. Do not invent a duration without recording it here first.
 - Admin surface `/admin/geocode-health` shows aggregate counts by source, confidence, county, and location class. Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode. It renders no address text because none is stored.
+- The `service_role` key is used only inside `resolve-address` for cache reads/writes and the role check. It is never returned, logged, or exposed to the client.
+
 
 
 
@@ -452,6 +458,7 @@ Ops cannot access: `/admin/*` routing, ingestion approval, staged-record promoti
 | **Phase 6b**          | FCC broadband internalized end-to-end: `data_source_snapshots` (immutable raw evidence) + `broadband_county_coverage` (17 normalized counties), server-side `ingest-fcc-broadband` edge function with atomic all-or-nothing replacement, application reads the normalized table with static JSON fallback retained. Authoritative FCC URL still UNKNOWN. | ✅     |
 | **Phase 6c**          | FCC broadband bound to the real BDC Public Data API: credentialed server-side acquisition (fail-closed on missing secrets), release discovery, county summary artifact selection, immutable hashed raw evidence in the private `source-evidence` bucket, reproducible `fcc-bdc-summary-county-v1` derivation with satellite excluded, single-code failure taxonomy, dry-run mode, and a per-run FCC-vs-current comparison report. Provenance and methodology differences documented in `docs/fcc-broadband-provenance.md`. Live authoritative run pending FCC credentials. | ◑ blocked on credentials |
 | **Phase 6d**          | Internal geocode authority: `geocode_resolutions` keyed by server-side HMAC digest (no raw member address stored), `resolve-address` edge function moving member geocoding behind the server boundary, internal-first resolution order with external geocoders demoted to fallback, coordinate-lock/manual precedence enforced in resolver and trigger, distinguishable failure taxonomy, `/admin/geocode-health` aggregate surface (Ops read-only), 22 privacy/resolution/resilience/geography tests. Known locations now resolve with zero external calls, including when every external geocoder is unavailable. | ✅     |
+| **Phase 6d.1**        | Phase 2B.1 hardening: browser member path fails closed with no external geocoder calls, retry-variant + highway-alias chain moved server-side, production `canonicalMatch` against `verified_services`/`verified_bh`, `location_class` authorization (public callers pinned to `member_address`), payload/call caps, opaque error codes, 19 boundary tests in `src/test/geocodeBoundary.test.ts`. | ✅     |
 
 
 **Note:** `CoverageDetailPanel` retains static data by design — baseline gap calculations require stable reference data. This is intentional, not a gap.

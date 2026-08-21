@@ -170,7 +170,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
     setGeocodeError(null);
     setMemberLocation(null);
     try {
-      // Normalize input — strip suite/unit tokens before geocoding
+      // Normalize input — strip suite/unit tokens before sending.
       const normalized = address
         .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?|#)\s*[\w-]*/gi, '')
         .replace(/\s+,/g, ',')
@@ -181,17 +181,22 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         ? normalized
         : `${normalized}, Nevada`;
 
-      // --- Stage 0 — internal geocode authority (Phase 2B) -------------
-      // Server-side: canonical normalization → HMAC cache lookup → external
-      // geocoder chain only on a cache miss. The browser never sees the cache
-      // secret or any credential. Falls through to the legacy client chain
-      // only when the server boundary itself is unreachable.
+      // --- HARD PRIVACY BOUNDARY (Phase 2B.1) --------------------------
+      // The member address is sent ONLY to the internal resolver. All
+      // external geocoding providers, retry variants, and highway
+      // alias handling run server-side. This path FAILS CLOSED: if the
+      // server boundary is unreachable, we ask for manual map placement
+      // rather than exposing the address to a third-party geocoder.
+      let serverUnavailable = false;
+      let highwayHint = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
-          { body: { address: query, location_class: 'member_address' } },
+          { body: { address: query } },
         );
-        if (!internalError && internal?.resolved && Number.isFinite(internal.lat) && Number.isFinite(internal.lng)) {
+        if (internalError) {
+          serverUnavailable = true;
+        } else if (internal?.resolved && Number.isFinite(internal.lat) && Number.isFinite(internal.lng)) {
           placeMember({
             lat: internal.lat,
             lng: internal.lng,
@@ -199,175 +204,15 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
             isApproximate: !!internal.is_approximate,
           });
           return;
+        } else {
+          highwayHint = !!internal?.highway_address;
         }
       } catch {
-        // Server boundary unavailable — continue with the existing chain.
+        serverUnavailable = true;
       }
 
-
-      // Nevada bounding box
-      const NV_WEST = -120.0064, NV_EAST = -114.0396, NV_SOUTH = 35.0019, NV_NORTH = 42.0022;
-
-      const isInNevada = (lat: number, lng: number) =>
-        lat >= NV_SOUTH && lat <= NV_NORTH && lng >= NV_WEST && lng <= NV_EAST;
-
-      // --- Retry variant chain (conservative, in order) ---
-      // 1. original  2. abbreviation-expanded  3. street+city+state+ZIP
-      // 4. city+state+ZIP  5. ZIP-only
-      const expandAbbrev = (s: string) => s
-        .replace(/\bRd\.?\b/gi, 'Road')
-        .replace(/\bSt\.?\b/gi, 'Street')
-        .replace(/\bAve\.?\b/gi, 'Avenue')
-        .replace(/\bHwy\.?\b/gi, 'Highway')
-        .replace(/\bBlvd\.?\b/gi, 'Boulevard')
-        .replace(/\bDr\.?\b/gi, 'Drive')
-        .replace(/\bLn\.?\b/gi, 'Lane')
-        .replace(/\bCt\.?\b/gi, 'Court')
-        .replace(/\bPkwy\.?\b/gi, 'Parkway');
-
-      const parseAddressParts = (s: string): { street: string | null; city: string | null; zip: string | null } => {
-        const zipMatch = s.match(/\b(\d{5})\b/);
-        const zip = zipMatch?.[1] ?? null;
-        const m1 = s.match(/^(.+?),\s*([^,]+?),\s*(?:NV|Nevada)\b/i);
-        if (m1) return { street: m1[1].trim(), city: m1[2].trim(), zip };
-        const m2 = s.match(/^([^,]+?),\s*(?:NV|Nevada)\b/i);
-        if (m2) return { street: null, city: m2[1].trim(), zip };
-        return { street: null, city: null, zip };
-      };
-
-      const parts = parseAddressParts(query);
-      const originalHadStreet = !!parts.street && /\d/.test(parts.street);
-
-      type VariantLevel = 'street' | 'city' | 'zip';
-      const variants: { q: string; level: VariantLevel }[] = [];
-      const pushUnique = (q: string, level: VariantLevel) => {
-        if (!q.trim()) return;
-        if (!variants.some(v => v.q.toLowerCase() === q.toLowerCase())) {
-          variants.push({ q, level });
-        }
-      };
-
-      const baseLevel: VariantLevel = parts.street ? 'street' : parts.city ? 'city' : 'zip';
-      pushUnique(query, baseLevel);
-      const expanded = expandAbbrev(query);
-      if (expanded !== query) pushUnique(expanded, baseLevel);
-      if (parts.street && parts.city && parts.zip) {
-        pushUnique(`${expandAbbrev(parts.street)}, ${parts.city}, NV ${parts.zip}`, 'street');
-      }
-      if (parts.city && parts.zip) {
-        pushUnique(`${parts.city}, NV ${parts.zip}`, 'city');
-      } else if (parts.city) {
-        pushUnique(`${parts.city}, NV`, 'city');
-      }
-      if (parts.zip) {
-        pushUnique(`${parts.zip}, NV`, 'zip');
-      }
-
-      const tryNominatim = async (q: string, bounded: boolean) => {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}${bounded ? '&bounded=1' : ''}`;
-        try {
-          const res = await fetch(url);
-          if (!res.ok) return null;
-          const data = await res.json();
-          const hit = data.find((r: { lat: string; lon: string }) => {
-            const lat = parseFloat(r.lat);
-            const lng = parseFloat(r.lon);
-            return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-          });
-          return hit ?? null;
-        } catch {
-          return null;
-        }
-      };
-
-      for (const variant of variants) {
-        // Try bounded first, then unbounded (still NV-validated) for rural fallback.
-        const hit = (await tryNominatim(variant.q, true)) ?? (await tryNominatim(variant.q, false));
-        if (hit) {
-          const isApproximate = originalHadStreet && variant.level !== 'street';
-          placeMember({
-            lat: parseFloat(hit.lat),
-            lng: parseFloat(hit.lon),
-            address: hit.display_name,
-            isApproximate,
-          });
-          return;
-        }
-      }
-
-
-      // Stage 2 — Census Geocoder fallback (via Supabase Edge Function proxy to avoid CORS)
-      try {
-        const censusProxyUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/census-geocode`;
-        const censusRes = await fetch(censusProxyUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address: query }),
-          signal: AbortSignal.timeout(8000),
-        });
-        if (censusRes.ok) {
-          const censusData = await censusRes.json();
-          const match = censusData?.result?.addressMatches?.[0];
-          if (match) {
-            const lat = match.coordinates?.y;
-            const lng = match.coordinates?.x;
-            if (Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng)) {
-              placeMember({ lat, lng, address: match.matchedAddress });
-              return;
-            }
-          }
-        }
-      } catch {
-        // Census proxy unavailable — continue to Stage 3
-      }
-
-      // (Stage 3 unbounded Nominatim retry is now covered by the variant chain above.)
-
-
-      // Stage 4 — Highway local-name alias retry
-      const lowerQuery = normalized.toLowerCase();
-      const aliasEntry = Object.entries(NV_HIGHWAY_ALIASES).find(([alias]) =>
-        lowerQuery.includes(alias)
-      );
-      if (aliasEntry) {
-        const [alias, canonical] = aliasEntry;
-        const aliasQuery = normalized.replace(new RegExp(alias, 'gi'), canonical);
-        const aliasUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(aliasQuery + ', Nevada')}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}`;
-        const aliasRes = await fetch(aliasUrl);
-        if (aliasRes.ok) {
-          const aliasData = await aliasRes.json();
-          const hit = aliasData.find((r: { lat: string; lon: string }) => {
-            const lat = parseFloat(r.lat);
-            const lng = parseFloat(r.lon);
-            return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-          });
-          if (hit) {
-            placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
-            return;
-          }
-        }
-
-        // Stage 4b — alias without house number (highway milepost addresses)
-        const noNumberQuery = aliasQuery.replace(/^\d+\s+/, '');
-        if (noNumberQuery !== aliasQuery) {
-          const noNumUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(noNumberQuery + ', Nevada')}&format=json&limit=5&countrycodes=us&viewbox=${NV_WEST},${NV_NORTH},${NV_EAST},${NV_SOUTH}`;
-          const noNumRes = await fetch(noNumUrl);
-          if (noNumRes.ok) {
-            const noNumData = await noNumRes.json();
-            const hit = noNumData.find((r: { lat: string; lon: string }) => {
-              const lat = parseFloat(r.lat);
-              const lng = parseFloat(r.lon);
-              return Number.isFinite(lat) && Number.isFinite(lng) && isInNevada(lat, lng);
-            });
-            if (hit) {
-              placeMember({ lat: parseFloat(hit.lat), lng: parseFloat(hit.lon), address: hit.display_name });
-              return;
-            }
-          }
-        }
-      }
-
-      // Stage 5 — Known provider address lookup
+      // --- Internal static resource match (local, no network) -----------
+      // Bundled Rural Tool records only. No address ever leaves the client.
       const inputNormalized = normalized.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
 
       const tokenMatch = (addrString: string) => {
@@ -406,9 +251,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         return;
       }
 
-      // Stage 5b — Hardcoded known unresolvable provider coordinates
       const inputTokensLower = inputNormalized.split(/\s+/);
-      
       const knownMatch = KNOWN_PROVIDER_COORDINATES.find(entry =>
         entry.addressTokens.every(token => inputTokensLower.includes(token))
       );
@@ -417,15 +260,16 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
         return;
       }
 
-      // All stages failed
-      const isHighwayAddress =
+      const isHighwayAddress = highwayHint ||
         Object.keys(NV_HIGHWAY_ALIASES).some(alias => normalized.toLowerCase().includes(alias)) ||
         /\b(hwy|highway|us-\d+|nv-\d+|sr-\d+|route\s+\d+)\b/i.test(normalized);
 
       setGeocodeError(
-        isHighwayAddress
-          ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
-          : 'Address not found. Refine the address or click the map to place member location.'
+        serverUnavailable
+          ? 'Address resolution service is unavailable. Click the map to place the member location manually.'
+          : isHighwayAddress
+            ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
+            : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {
@@ -435,6 +279,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       setIsGeocoding(false);
     }
   }, [placeMember]);
+
 
   return {
     memberLocation,

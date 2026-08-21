@@ -200,3 +200,126 @@ export const isInNevada = (lat: number, lng: number): boolean =>
   lat <= NV_BOUNDS.north &&
   lng >= NV_BOUNDS.west &&
   lng <= NV_BOUNDS.east;
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Phase 2B.1 — server-side rural retry intelligence.
+ *
+ * These query-time strategies were previously implemented in the browser
+ * (raw member addresses left the client to Nominatim/Census directly). They
+ * now live behind the `resolve-address` server boundary.
+ *
+ * IMPORTANT: variants are QUERY strategies only. They never change cache
+ * identity — a retry-derived result is always cached against the ORIGINAL
+ * canonical member-address lookup key.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+export type ResolutionStrategy =
+  | 'direct'
+  | 'abbreviation_variant'
+  | 'street_city_zip'
+  | 'city_zip'
+  | 'zip'
+  | 'highway_alias'
+  | 'highway_alias_without_number'
+  | 'canonical_resource'
+  | 'known_provider';
+
+/** Local Nevada highway names that public geocoders do not recognize. */
+export const NV_HIGHWAY_ALIASES: Record<string, string> = {
+  'schurz hwy': 'US-95',
+  'schurz highway': 'US-95',
+  'pyramid hwy': 'US-445',
+  'pyramid highway': 'US-445',
+  'winnemucca ranch rd': 'NV-796',
+  'battle mountain hwy': 'NV-305',
+};
+
+export const isHighwayAddress = (input: string): boolean => {
+  const s = (input ?? '').toLowerCase();
+  return (
+    Object.keys(NV_HIGHWAY_ALIASES).some((a) => s.includes(a)) ||
+    /\b(hwy|highway|us-\d+|nv-\d+|sr-\d+|route\s+\d+)\b/i.test(s)
+  );
+};
+
+/** Strip suite/unit tokens — never part of a geocodable location. */
+export const stripUnitTokens = (input: string): string =>
+  (input ?? '')
+    .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?|#)\s*[\w-]*/gi, '')
+    .replace(/\s+,/g, ',')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+
+export const expandAbbreviations = (s: string): string =>
+  s
+    .replace(/\bRd\.?\b/gi, 'Road')
+    .replace(/\bSt\.?\b/gi, 'Street')
+    .replace(/\bAve\.?\b/gi, 'Avenue')
+    .replace(/\bHwy\.?\b/gi, 'Highway')
+    .replace(/\bBlvd\.?\b/gi, 'Boulevard')
+    .replace(/\bDr\.?\b/gi, 'Drive')
+    .replace(/\bLn\.?\b/gi, 'Lane')
+    .replace(/\bCt\.?\b/gi, 'Court')
+    .replace(/\bPkwy\.?\b/gi, 'Parkway');
+
+export interface QueryVariant {
+  q: string;
+  strategy: ResolutionStrategy;
+  /** Precision level of the query itself, used for the approximate flag. */
+  level: 'street' | 'city' | 'zip';
+}
+
+/**
+ * Deterministic, conservative query-variant chain (order matters):
+ *   direct → abbreviation_variant → street_city_zip → city_zip → zip
+ *   → highway_alias → highway_alias_without_number
+ */
+export const buildQueryVariants = (rawAddress: string): QueryVariant[] => {
+  const normalized = stripUnitTokens(rawAddress);
+  const query = /\bnevada\b/i.test(normalized) || /,\s*NV\b/i.test(normalized)
+    ? normalized
+    : `${normalized}, Nevada`;
+
+  const canon = canonicalizeAddress(query);
+  const parts = {
+    street: canon.street,
+    city: canon.city,
+    zip: canon.zip,
+  };
+
+  const variants: QueryVariant[] = [];
+  const push = (q: string, strategy: ResolutionStrategy, level: QueryVariant['level']) => {
+    const trimmed = (q ?? '').trim();
+    if (!trimmed) return;
+    if (variants.some((v) => v.q.toLowerCase() === trimmed.toLowerCase())) return;
+    variants.push({ q: trimmed, strategy, level });
+  };
+
+  const baseLevel: QueryVariant['level'] = parts.street ? 'street' : parts.city ? 'city' : 'zip';
+  push(query, 'direct', baseLevel);
+
+  const expanded = expandAbbreviations(query);
+  if (expanded !== query) push(expanded, 'abbreviation_variant', baseLevel);
+
+  if (parts.street && parts.city && parts.zip) {
+    push(`${expandAbbreviations(parts.street)}, ${parts.city}, NV ${parts.zip}`, 'street_city_zip', 'street');
+  }
+  if (parts.city && parts.zip) push(`${parts.city}, NV ${parts.zip}`, 'city_zip', 'city');
+  else if (parts.city) push(`${parts.city}, NV`, 'city_zip', 'city');
+  if (parts.zip) push(`${parts.zip}, NV`, 'zip', 'zip');
+
+  // Highway alias retries — last, because they rewrite the street name.
+  const lower = normalized.toLowerCase();
+  const aliasEntry = Object.entries(NV_HIGHWAY_ALIASES).find(([alias]) => lower.includes(alias));
+  if (aliasEntry) {
+    const [alias, canonicalHwy] = aliasEntry;
+    const aliasQuery = normalized.replace(new RegExp(alias, 'gi'), canonicalHwy);
+    push(`${aliasQuery}, Nevada`, 'highway_alias', 'street');
+    const noNumber = aliasQuery.replace(/^\d+\s+/, '');
+    if (noNumber !== aliasQuery) {
+      push(`${noNumber}, Nevada`, 'highway_alias_without_number', 'street');
+    }
+  }
+
+  return variants;
+};
