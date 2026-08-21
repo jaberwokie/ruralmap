@@ -233,6 +233,21 @@ Rules:
 - `credential_reference` stores a variable **name** only (e.g. `GOOGLE_GEOCODING_API_KEY`). Secret values are never stored, fetched, or rendered.
 - Source health is **calculated**, never hand-edited. `src/lib/sources/sourceHealth.ts` is the single source of truth: Current / Review Due / Stale / Failing / Unknown, derived from `status`, `last_verified_at`, `last_successful_ingestion_at`, `last_failed_ingestion_at`, `next_review_at`, and `stale_after_days`.
 - Access: anon/viewer/staff none · ops read-only · admin read/write · sysop inherits admin. Enforced in RLS, not only in the UI. Public Safe Mode never reaches `/admin/data-sources`.
+
+### Internalized ingestion (Phase 6b — FCC broadband)
+
+Pipeline: authoritative source → server-side retrieval (`supabase/functions/ingest-fcc-broadband`) → immutable snapshot in `data_source_snapshots` → SHA-256 content hash → validation → transformation → atomic replacement of `broadband_county_coverage` → application read path → static JSON fallback.
+
+Rules:
+
+- Ingestion is admin/sysop-authenticated and runs server-side only. The service-role key never reaches the browser. Clients have `SELECT` only on `broadband_county_coverage` and no access at all to snapshots.
+- Snapshots are append-only and immutable: every retrieval is preserved, none are deduplicated or overwritten. No UPDATE/DELETE policies exist for application roles.
+- Replacement is all-or-nothing via `replace_broadband_county_coverage` (invoker rights, service-role only, refuses an empty dataset). A failed ingestion can never leave partial data or destroy the last known good dataset.
+- A run is `success` only after retrieval **and** validation **and** transformation **and** normalized persistence succeed. HTTP 200 alone is not success.
+- Validation requires exactly the 17 Nevada counties, each once, with finite in-range numeric metrics. An invalid upstream response is rejected before it can touch the normalized table.
+- `src/data/broadband-coverage.ts` reads the normalized table first and falls back to `public/data/nevada_broadband.json` on error, empty result, or failed validation. The map is never dependent on live FCC availability. The fallback must not be removed.
+- Source-health fields on `data_sources` are written only from actual ingestion evidence. `fcc_broadband.source_url` remains **UNKNOWN** — the authoritative FCC endpoint is not recorded anywhere in the repository, so ingestion fails explicitly with `source_url_unknown` until an operator records it. No URL is invented.
+
 - Unknown provenance is stored as NULL and surfaced as a visible governance gap. Do not invent dates, cadences, URLs, or ownership.
 
 
