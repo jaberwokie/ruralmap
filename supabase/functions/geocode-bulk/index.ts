@@ -24,17 +24,6 @@ const isInNevada = (lat: number, lng: number) =>
 
 const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-const normalizeAddress = (street: string): string => {
-  return street
-    // Strip suite/unit with optional # and alphanumeric identifier
-    .replace(/\b(suite|ste\.?|unit|apt\.?|apartment|bldg\.?|building|room|rm\.?)\s*#?\s*[\w-]*/gi, '')
-    // Strip standalone # followed by identifier
-    .replace(/#\s*[\w-]+/g, '')
-    .replace(/\s+,/g, ',')
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-};
-
 /**
  * Phase 2C — approved public-resource external providers, unchanged in scope:
  * Nominatim (bounded → unbounded) and the Census onelineaddress geocoder.
@@ -194,8 +183,8 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
     );
 
-  } catch (err) {
-    return new Response(JSON.stringify({ error: String(err) }), {
+  } catch {
+    return new Response(JSON.stringify({ error: 'geocode_bulk_internal_error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
