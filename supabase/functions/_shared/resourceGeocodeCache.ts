@@ -139,6 +139,12 @@ export interface ResolveResourceResult {
   /** Stable failure code — never a provider URL or raw provider payload. */
   failure: string | null;
   cache_written: boolean;
+  /**
+   * Phase 2C.1 — true when `force` was requested, the external refresh did NOT
+   * succeed, and the previous internal result was retained. Callers must not
+   * present this as a fresh provider refresh.
+   */
+  forced_refresh_failed: boolean;
 }
 
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
@@ -179,6 +185,7 @@ const fromCache = (row: ResourceCacheRow): ResolveResourceResult => ({
   review_required: !isProtectedCacheRow(row) && isReviewConfidence(row.confidence),
   failure: null,
   cache_written: false,
+  forced_refresh_failed: false,
 });
 
 /**
@@ -213,6 +220,7 @@ export const resolveResourceAddress = async (
     review_required: true,
     failure,
     cache_written: false,
+    forced_refresh_failed: false,
   });
 
   if (!address) return unresolved('missing_address');
@@ -255,8 +263,14 @@ export const resolveResourceAddress = async (
   if (!hit || !provider) {
     // Failure must never damage reusable internal knowledge.
     if (isCacheHitUsable(existing, requireNevada)) {
+      // Phase 2C.1: a failed FORCED refresh must never destroy last-known-good
+      // internal knowledge, and must not masquerade as a fresh provider result.
       if (lookupKey) await ports.touch(lookupKey);
-      return { ...fromCache(existing), external_calls: externalCalls };
+      return {
+        ...fromCache(existing),
+        external_calls: externalCalls,
+        forced_refresh_failed: !!req.force,
+      };
     }
     return { ...unresolved('external_geocoding_unavailable'), external_calls: externalCalls };
   }
@@ -308,6 +322,7 @@ export const resolveResourceAddress = async (
     review_required: isReviewConfidence(hit.confidence),
     failure: null,
     cache_written: cacheWritten,
+    forced_refresh_failed: false,
   };
 };
 
