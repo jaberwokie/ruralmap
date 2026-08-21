@@ -2,8 +2,10 @@
  * Admin > Geocode Review
  *
  * Review queue across facilities, rural_services, verified_services, verified_bh,
- * and staging_providers for low-confidence (geometric / approximate) or failed
- * Google geocoding results. Admins can:
+ * and staging_providers for low-confidence (geometric / approximate / low) or
+ * failed geocoding results from any approved resource provider (Google,
+ * Nominatim, Census) including results reused from the internal resource
+ * cache. Admins can:
  *   - Lock & Approve the current geocoded coordinates
  *   - Re-geocode (force) via the geocode-address edge function
  *   - Edit coordinates manually (writes manual_lat/manual_lng + locks)
@@ -75,10 +77,11 @@ const CONFIDENCE_STYLES: Record<string, string> = {
   failed: 'bg-red-200 text-red-950 border-red-500',
 };
 
-// Phase 2C: a low-confidence result must stay reviewable even when this record
-// received it from the internal resource cache rather than a fresh provider call.
+// Phase 2C.1: a low-confidence result must stay reviewable regardless of which
+// approved provider produced it (Google, Nominatim, Census) and regardless of
+// whether THIS record received it fresh or from the internal resource cache.
 const REVIEW_OR_FILTER =
-  'coordinate_source.eq.failed,and(coordinate_source.in.(google,internal_cache),coordinate_confidence.in.(geometric,approximate,low))';
+  'coordinate_source.eq.failed,and(coordinate_source.in.(google,nominatim,census,internal_cache),coordinate_confidence.in.(geometric,approximate,low))';
 
 
 const confidenceLabel = (row: ReviewRow): string => {
@@ -436,7 +439,8 @@ export default function AdminGeocodeReview() {
           </h1>
           <p className="mt-1 text-sm text-muted-foreground max-w-2xl">
             Facilities, rural services, verified services, verified BH, and staging providers with low-confidence or
-            failed Google geocoding results. Approve, re-geocode, or manually correct coordinates.
+            failed geocoding results from any approved provider (Google, Nominatim, Census), including coordinates
+            reused from the internal resource cache. Approve, re-geocode, or manually correct coordinates.
           </p>
         </header>
 

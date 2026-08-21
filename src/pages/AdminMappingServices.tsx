@@ -349,23 +349,37 @@ export default function AdminMappingServices() {
     try {
       const BATCH_SIZE = 80;
 
-      // Clear existing coordinates first
-      const { data: facilityRows } = await supabase.from('facilities').select('id');
-      const facilityIds = (facilityRows ?? []).map(r => r.id);
-      await supabase.from('facilities').update({ lat: null, lng: null, access_notes: null }).in('id', facilityIds);
+      /**
+       * Phase 2C.1 — NON-DESTRUCTIVE preparation.
+       *
+       * This handler previously nulled `lat`/`lng`/`access_notes` on EVERY
+       * facility and rural service to make them eligible for geocoding. That
+       * could erase manually curated and coordinate-locked display coordinates
+       * before the server-side lock protection ever ran.
+       *
+       * Eligibility is now server-side: `geocode-bulk` selects only records
+       * that are missing coordinates. Known-valid, manual and locked
+       * coordinates are left completely alone. A deliberate
+       * "refresh all automated coordinates" workflow would be a separate force
+       * operation that still respects manual/lock authority — it does not
+       * exist and must not be improvised here.
+       */
+      const { count: facilityPending } = await supabase
+        .from('facilities')
+        .select('id', { count: 'exact', head: true })
+        .is('lat', null);
+      const { count: ruralPending } = await supabase
+        .from('rural_services')
+        .select('id', { count: 'exact', head: true })
+        .is('lat', null);
 
-      const { data: ruralRows } = await supabase.from('rural_services').select('id');
-      const ruralIds = (ruralRows ?? []).map(r => r.id);
-      await supabase.from('rural_services').update({ lat: null, lng: null, access_notes: null }).in('id', ruralIds);
-
-      // Geocode facilities (53 records — single batch)
-      toast.info(`Geocoding ${facilityIds.length} facilities…`);
+      toast.info(`Geocoding ${facilityPending ?? 0} facilities missing coordinates…`);
       const { data: facResult, error: facResultErr } = await supabase.functions.invoke('geocode-bulk', { body: { table: 'facilities', limit: BATCH_SIZE, offset: 0 } });
       if (facResultErr) throw new Error(facResultErr.message);
       toast.success(`Facilities: ${facResult.geocoded} geocoded, ${facResult.failed} failed, ${facResult.skipped} skipped`);
 
       // Geocode rural services in batches
-      toast.info(`Geocoding ${ruralIds.length} rural services in batches…`);
+      toast.info(`Geocoding ${ruralPending ?? 0} rural services missing coordinates, in batches…`);
       let totalGeocoded = 0, totalFailed = 0, totalSkipped = 0;
       let offset = 0;
       let batchNum = 1;
