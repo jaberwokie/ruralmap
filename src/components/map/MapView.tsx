@@ -1234,6 +1234,14 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
 
+    // OSM tile data requires visible attribution. The map's attribution
+    // control is intentionally disabled (operational UI), so render a small
+    // unobtrusive attribution chip in the bottom-left corner instead.
+    const attrDiv = L.DomUtil.create('div', 'map-attribution-chip', map.getContainer());
+    attrDiv.innerHTML = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>';
+    L.DomEvent.disableClickPropagation(attrDiv);
+    L.DomEvent.disableScrollPropagation(attrDiv);
+
     // Strict pane hierarchy prevents path/marker draw-order drift as layers toggle on/off.
     // Marker panes must use pointer-events: none so higher-z empty panes
     // don't block clicks on markers in lower-z panes. Individual marker
