@@ -183,6 +183,29 @@
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+/* Unobtrusive OSM attribution chip (attributionControl is disabled) */
+.map-attribution-chip {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  z-index: 1000;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: hsl(60 14% 97% / 0.8);
+  box-shadow: var(--shadow-panel);
+  font-size: 9px;
+  line-height: 14px;
+  color: hsl(215 16% 42%);
+  pointer-events: auto;
+}
+.map-attribution-chip a {
+  color: hsl(var(--brand-health));
+  text-decoration: none;
+}
+.map-attribution-chip a:hover {
+  text-decoration: underline;
+}
+
 .leaflet-control-zoom {
   border: none !important;
   box-shadow: var(--shadow-panel) !important;
