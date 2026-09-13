@@ -1229,9 +1229,18 @@ const MapView = ({ facilities, allFacilities, layers, typeFilters, countyFilters
     });
     new MapControlStack().addTo(map);
 
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
+
+    // OSM tile data requires visible attribution. The map's attribution
+    // control is intentionally disabled (operational UI), so render a small
+    // unobtrusive attribution chip in the bottom-left corner instead.
+    const attrDiv = L.DomUtil.create('div', 'map-attribution-chip', map.getContainer());
+    attrDiv.innerHTML = '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OpenStreetMap</a>';
+    L.DomEvent.disableClickPropagation(attrDiv);
+    L.DomEvent.disableScrollPropagation(attrDiv);
 
     // Strict pane hierarchy prevents path/marker draw-order drift as layers toggle on/off.
     // Marker panes must use pointer-events: none so higher-z empty panes
