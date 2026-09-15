@@ -139,17 +139,19 @@ export const normalizeZipPlus4 = (input: string): string =>
  * fallback strategies, not identity transformations.
  */
 export const canonicalizeAddress = (input: string): CanonicalAddress => {
-  const base = normalizeZipPlus4(input ?? '')
-    .normalize('NFKC')
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2010-\u2015]/g, '-')
-    .replace(/\./g, ' ')
-    .replace(/\s*,\s*/g, ', ')
-    .replace(/,{2,}/g, ',')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .toLowerCase();
+  const base = normalizeZipPlus4(
+    (input ?? '')
+      .normalize('NFKC')
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2010-\u2015]/g, '-')
+      .replace(/\./g, ' ')
+      .replace(/\s*,\s*/g, ', ')
+      .replace(/,{2,}/g, ',')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+      .toLowerCase(),
+  );
 
   const zipMatch = base.match(/\b(\d{5})(?:-\d{4})?\b/);
   const zip = zipMatch?.[1] ?? null;
