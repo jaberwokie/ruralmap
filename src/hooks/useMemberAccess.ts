@@ -171,6 +171,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       // rather than exposing the address to a third-party geocoder.
       let serverUnavailable = false;
       let highwayHint = false;
+      let geocoderNotConfigured = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
@@ -188,6 +189,14 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           return;
         } else {
           highwayHint = !!internal?.highway_address;
+          // Capability vs. validity: the resolver reports explicitly when no
+          // approved member-address geocoder is configured. In that case the
+          // address was never actually looked up, so it must NOT be described
+          // as not found.
+          const failures: string[] = Array.isArray(internal?.failures) ? internal.failures : [];
+          geocoderNotConfigured =
+            failures.includes('member_geocoder_not_configured') ||
+            failures.includes('no_approved_external_provider');
         }
       } catch {
         serverUnavailable = true;
