@@ -7,6 +7,8 @@
  */
 export {
   canonicalizeAddress,
+  normalizeZipPlus4,
+  buildQueryVariants,
   computeLookupKey,
   isInNevada,
   resolveNevadaCounty,

@@ -42,6 +42,12 @@ export type GeocodeFailureCode =
   | 'external_geocoding_unavailable'
   /** Phase 2B.2: no external provider is approved to receive this class. */
   | 'no_approved_external_provider'
+  /**
+   * Capability failure, NOT an invalid address: internal/canonical/cache lookup
+   * missed and no approved member-address geocoder is configured. The UI must
+   * distinguish this from "the address does not exist".
+   */
+  | 'member_geocoder_not_configured'
   | 'manual_resolution_required';
 
 /** Canonical Nevada county → FIPS. 32025 (Ormsby) is intentionally absent. */
@@ -104,6 +110,21 @@ export interface CanonicalAddress {
 const STATE_TOKENS = /\b(nevada|nev\.?|nv)\b/gi;
 
 /**
+ * Repair malformed / truncated ZIP+4 suffixes before lookup.
+ *
+ * A ZIP+4 add-on is exactly four digits. Real member records frequently carry a
+ * truncated add-on (`89801-1`, `89801-12`, `89801-123`), which is not a valid
+ * postal token and defeats both cache identity and any geocoder query. Those
+ * are reduced to the base 5-digit ZIP. A complete `89801-1234` is left intact
+ * here (canonical identity separately reduces it to ZIP5), and plain 5-digit
+ * ZIPs are untouched.
+ *
+ * Pure string transformation — nothing is logged or persisted.
+ */
+export const normalizeZipPlus4 = (input: string): string =>
+  (input ?? '').replace(/(\b\d{5})-(\d{1,3})(?!\d)/g, '$1');
+
+/**
  * Deterministic canonical normalization.
  *
  * Applied transformations (all reversible in meaning):
@@ -118,17 +139,19 @@ const STATE_TOKENS = /\b(nevada|nev\.?|nv)\b/gi;
  * fallback strategies, not identity transformations.
  */
 export const canonicalizeAddress = (input: string): CanonicalAddress => {
-  const base = (input ?? '')
-    .normalize('NFKC')
-    .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
-    .replace(/[\u201C\u201D]/g, '"')
-    .replace(/[\u2010-\u2015]/g, '-')
-    .replace(/\./g, ' ')
-    .replace(/\s*,\s*/g, ', ')
-    .replace(/,{2,}/g, ',')
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .toLowerCase();
+  const base = normalizeZipPlus4(
+    (input ?? '')
+      .normalize('NFKC')
+      .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2010-\u2015]/g, '-')
+      .replace(/\./g, ' ')
+      .replace(/\s*,\s*/g, ', ')
+      .replace(/,{2,}/g, ',')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+      .toLowerCase(),
+  );
 
   const zipMatch = base.match(/\b(\d{5})(?:-\d{4})?\b/);
   const zip = zipMatch?.[1] ?? null;
@@ -279,7 +302,7 @@ export interface QueryVariant {
  *   → highway_alias → highway_alias_without_number
  */
 export const buildQueryVariants = (rawAddress: string): QueryVariant[] => {
-  const normalized = stripUnitTokens(rawAddress);
+  const normalized = normalizeZipPlus4(stripUnitTokens(rawAddress));
   const query = /\bnevada\b/i.test(normalized) || /,\s*NV\b/i.test(normalized)
     ? normalized
     : `${normalized}, Nevada`;

@@ -171,6 +171,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       // rather than exposing the address to a third-party geocoder.
       let serverUnavailable = false;
       let highwayHint = false;
+      let geocoderNotConfigured = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
@@ -188,6 +189,14 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           return;
         } else {
           highwayHint = !!internal?.highway_address;
+          // Capability vs. validity: the resolver reports explicitly when no
+          // approved member-address geocoder is configured. In that case the
+          // address was never actually looked up, so it must NOT be described
+          // as not found.
+          const failures: string[] = Array.isArray(internal?.failures) ? internal.failures : [];
+          geocoderNotConfigured =
+            failures.includes('member_geocoder_not_configured') ||
+            failures.includes('no_approved_external_provider');
         }
       } catch {
         serverUnavailable = true;
@@ -210,11 +219,13 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           ? 'Address resolution service is unavailable. Click the map to place the member location manually.'
           : isHighwayAddress
             ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
-            : 'Address not found. Refine the address or click the map to place member location.'
+            : geocoderNotConfigured
+              ? 'Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually.'
+              : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {
-      setGeocodeError('Address not found. Refine the address or click the map to place member location.');
+      setGeocodeError('Address resolution could not be completed. Click the map to place the member location manually.');
       setManualPlacementMode(true);
     } finally {
       setIsGeocoding(false);

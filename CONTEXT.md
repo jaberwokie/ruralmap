@@ -307,12 +307,14 @@ Rules:
 - **Privacy.** `geocode_resolutions` stores no raw address text for `member_address` records. The key is `lookup_key = "v1:" + HMAC-SHA-256(GEOCODE_CACHE_HMAC_SECRET, "<location_class>|<canonical address>")`. The secret is server-only. Responses never return `lookup_key`, canonicalized address, `source_metadata`, database IDs, or HMAC material, and never echo the submitted address in an error.
 - **No permanent negative caching.** A null-coordinate row is never a valid cache hit; a later request stays eligible once canonical data improves or an approved provider is added.
 - **Coordinate locks and manual coordinates outrank all automation**, enforced in the resolver and by a database trigger.
-- Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `no_approved_external_provider`, `manual_resolution_required`.
+- Failures are distinguishable: `internal_cache_miss`, `nominatim_failed`, `census_failed`, `google_failed`, `external_geocoding_unavailable`, `no_approved_external_provider`, `member_geocoder_not_configured`, `manual_resolution_required`.
+- **Capability failure is never reported as an invalid address.** When canonical/internal lookup misses and no approved member geocoder is configured, the resolver returns `member_geocoder_not_configured` and the client shows: "Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually." Client failure modes are distinct: internal service unavailable, not-configured/exhausted resolver, highway/manual placement, and genuinely unresolved when a configured provider actually attempted the lookup.
+- **Malformed ZIP+4 is repaired before lookup.** `normalizeZipPlus4` in `_shared/geocodeNormalize.ts` reduces truncated add-ons (`89801-1`, `-12`, `-123`) to the base ZIP, preserves a complete `89801-1234` and plain 5-digit ZIPs, and runs inside both `canonicalizeAddress` (cache identity) and `buildQueryVariants` (query chain). Pure string transformation; nothing raw is logged or persisted.
 - **Self-reliance condition:** a known member location resolves from canonical data or the internal cache with zero external calls and zero external disclosure.
 - `expires_at` is nullable and unset — no cache-expiration policy exists yet.
 - Admin surface `/admin/geocode-health` shows aggregate counts only (Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode).
 - The `service_role` key is used only inside `resolve-address` for cache reads/writes. It is never returned, logged, or exposed.
-- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`, `src/test/memberCanonicalMatch.test.ts` (behavioral canonical-matcher coverage).
+- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`, `src/test/memberCanonicalMatch.test.ts` (behavioral canonical-matcher coverage), `src/test/memberZipNormalization.test.ts` (ZIP+4 repair, capability-vs-validity semantics, PII, provider/resource-pipeline regressions).
 
 ### Internal public-resource geocode reuse (Phase 6e — Phase 2C)
 
