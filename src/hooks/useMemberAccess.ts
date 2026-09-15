@@ -219,11 +219,13 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           ? 'Address resolution service is unavailable. Click the map to place the member location manually.'
           : isHighwayAddress
             ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
-            : 'Address not found. Refine the address or click the map to place member location.'
+            : geocoderNotConfigured
+              ? 'Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually.'
+              : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {
-      setGeocodeError('Address not found. Refine the address or click the map to place member location.');
+      setGeocodeError('Address resolution could not be completed. Click the map to place the member location manually.');
       setManualPlacementMode(true);
     } finally {
       setIsGeocoding(false);
