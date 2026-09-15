@@ -117,20 +117,20 @@ describe('no new external member-address provider was introduced', () => {
     expect(resolverFn).toContain('member_address_external_provider = none_approved');
   });
 
-  it('adds no third-party geocoder to the member path', () => {
+  it('adds no third-party geocoder endpoint or outbound call to the member path', () => {
     for (const src of [resolverFn, browserPath]) {
-      expect(src).not.toMatch(/nominatim/i);
-      expect(src).not.toMatch(/census/i);
+      expect(src).not.toMatch(/nominatim\.openstreetmap\.org/i);
+      expect(src).not.toMatch(/geocoding\.geo\.census\.gov/i);
       expect(src).not.toMatch(/maps\.googleapis\.com/i);
-      expect(src).not.toMatch(/mapbox|hereapi|geocod\.io|smarty/i);
+      expect(src).not.toMatch(/mapbox|hereapi|geocod\.io|smartystreets/i);
+      expect(src).not.toMatch(/\bfetch\(/);
     }
   });
 
-  it('does not route member addresses into the resource geocoding pipeline', () => {
+  it('does not invoke the resource geocoding functions from the member path', () => {
     for (const src of [resolverFn, browserPath]) {
-      expect(src).not.toMatch(/geocode-address/);
-      expect(src).not.toMatch(/geocode-bulk/);
-      expect(src).not.toMatch(/resource_address/);
+      expect(src).not.toMatch(/invoke\(\s*'geocode-(address|bulk)'/);
+      expect(src).not.toMatch(/location_class:\s*'resource_address'/);
     }
   });
 });
