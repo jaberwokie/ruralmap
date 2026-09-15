@@ -314,7 +314,7 @@ Rules:
 - `expires_at` is nullable and unset — no cache-expiration policy exists yet.
 - Admin surface `/admin/geocode-health` shows aggregate counts only (Ops read-only, Admin/SysOp maintenance, Viewer/Staff denied, suppressed in Public Safe Mode).
 - The `service_role` key is used only inside `resolve-address` for cache reads/writes. It is never returned, logged, or exposed.
-- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`, `src/test/memberCanonicalMatch.test.ts` (behavioral canonical-matcher coverage).
+- Tests: `src/test/geocodeInternalAuthority.test.ts`, `src/test/geocodeBoundary.test.ts`, `src/test/memberGeocodePolicy.test.ts`, `src/test/memberCanonicalMatch.test.ts` (behavioral canonical-matcher coverage), `src/test/memberZipNormalization.test.ts` (ZIP+4 repair, capability-vs-validity semantics, PII, provider/resource-pipeline regressions).
 
 ### Internal public-resource geocode reuse (Phase 6e — Phase 2C)
 
