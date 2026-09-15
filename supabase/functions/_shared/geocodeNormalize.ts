@@ -110,6 +110,21 @@ export interface CanonicalAddress {
 const STATE_TOKENS = /\b(nevada|nev\.?|nv)\b/gi;
 
 /**
+ * Repair malformed / truncated ZIP+4 suffixes before lookup.
+ *
+ * A ZIP+4 add-on is exactly four digits. Real member records frequently carry a
+ * truncated add-on (`89801-1`, `89801-12`, `89801-123`), which is not a valid
+ * postal token and defeats both cache identity and any geocoder query. Those
+ * are reduced to the base 5-digit ZIP. A complete `89801-1234` is left intact
+ * here (canonical identity separately reduces it to ZIP5), and plain 5-digit
+ * ZIPs are untouched.
+ *
+ * Pure string transformation — nothing is logged or persisted.
+ */
+export const normalizeZipPlus4 = (input: string): string =>
+  (input ?? '').replace(/(\b\d{5})-(\d{1,3})(?!\d)/g, '$1');
+
+/**
  * Deterministic canonical normalization.
  *
  * Applied transformations (all reversible in meaning):
