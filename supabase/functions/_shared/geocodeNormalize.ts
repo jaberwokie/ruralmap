@@ -42,6 +42,12 @@ export type GeocodeFailureCode =
   | 'external_geocoding_unavailable'
   /** Phase 2B.2: no external provider is approved to receive this class. */
   | 'no_approved_external_provider'
+  /**
+   * Capability failure, NOT an invalid address: internal/canonical/cache lookup
+   * missed and no approved member-address geocoder is configured. The UI must
+   * distinguish this from "the address does not exist".
+   */
+  | 'member_geocoder_not_configured'
   | 'manual_resolution_required';
 
 /** Canonical Nevada county → FIPS. 32025 (Ormsby) is intentionally absent. */
