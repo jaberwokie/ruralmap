@@ -302,7 +302,7 @@ export interface QueryVariant {
  *   → highway_alias → highway_alias_without_number
  */
 export const buildQueryVariants = (rawAddress: string): QueryVariant[] => {
-  const normalized = stripUnitTokens(rawAddress);
+  const normalized = normalizeZipPlus4(stripUnitTokens(rawAddress));
   const query = /\bnevada\b/i.test(normalized) || /,\s*NV\b/i.test(normalized)
     ? normalized
     : `${normalized}, Nevada`;
