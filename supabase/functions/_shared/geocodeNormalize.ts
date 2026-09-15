@@ -139,7 +139,7 @@ export const normalizeZipPlus4 = (input: string): string =>
  * fallback strategies, not identity transformations.
  */
 export const canonicalizeAddress = (input: string): CanonicalAddress => {
-  const base = (input ?? '')
+  const base = normalizeZipPlus4(input ?? '')
     .normalize('NFKC')
     .replace(/[\u2018\u2019\u201A\u201B]/g, "'")
     .replace(/[\u201C\u201D]/g, '"')
