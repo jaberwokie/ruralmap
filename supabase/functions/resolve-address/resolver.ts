@@ -392,7 +392,12 @@ export const resolveAddress = async (
 
   // ── 6. Unresolved. No coordinates are invented. ──────────────────────
   if (externalCalls > 0) addFailure('external_geocoding_unavailable');
-  if (ports.geocoders.length === 0) addFailure('no_approved_external_provider');
+  if (ports.geocoders.length === 0) {
+    addFailure('no_approved_external_provider');
+    // Capability failure, not an invalid address: nothing ever attempted a
+    // street-level lookup, so the caller must not be told the address is bad.
+    if (isMember) addFailure('member_geocoder_not_configured');
+  }
   addFailure('manual_resolution_required');
 
   // Negative caching is deliberately NOT permanent: a null-coordinate row is
