@@ -195,16 +195,16 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           return;
         } else {
           highwayHint = !!internal?.highway_address;
-          // Capability vs. validity: the resolver reports explicitly when no
-          // approved member-address geocoder is configured. In that case the
-          // address was never actually looked up, so it must NOT be described
-          // as not found.
+          // Every message below reflects a REAL outcome of the internal Nevada
+          // street-range lookup. The address was actually looked up, so
+          // "not configured" is no longer a possible explanation.
           const failures: string[] = Array.isArray(internal?.failures) ? internal.failures : [];
-          geocoderNotConfigured =
-            failures.includes('member_geocoder_not_configured') ||
-            failures.includes('no_approved_external_provider');
-          // Configured-and-attempted, but the approved private provider errored
-          // or timed out. Distinct from "not configured" and from "not found".
+          ambiguous = failures.includes('tiger_ambiguous');
+          outOfRange = failures.includes('tiger_out_of_range');
+          outOfState = failures.includes('tiger_out_of_state');
+          notStreetLevel = failures.includes('tiger_not_a_street_address');
+          referenceUnavailable = failures.includes('tiger_unavailable');
+          // An approved private provider, when configured, errored or timed out.
           geocoderFailed = failures.includes('member_geocoder_failed');
         }
       } catch {
