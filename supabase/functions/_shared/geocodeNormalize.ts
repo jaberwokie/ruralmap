@@ -38,6 +38,12 @@ export type GeocodeSource =
    * naming credentials or storing the address.
    */
   | 'private_member_geocoder'
+  /**
+   * Phase 2E — the project's OWN Nevada TIGER/Line street-range geocoder,
+   * running entirely inside this server boundary against public Census
+   * reference data. No third party receives the address.
+   */
+  | 'internal_tiger'
   | 'unresolved';
 
 export type GeocodeFailureCode =
@@ -61,6 +67,21 @@ export type GeocodeFailureCode =
    * nothing was ever attempted.
    */
   | 'member_geocoder_failed'
+  /* ── Phase 2E — internal Nevada TIGER street-range geocoder outcomes ──
+   * Each is a real, distinct outcome the UI can explain truthfully. None of
+   * them means "an external provider is missing". */
+  /** Input carried no numeric house number + street (city/ZIP/PO box only). */
+  | 'tiger_not_a_street_address'
+  /** Input named a state other than Nevada. */
+  | 'tiger_out_of_state'
+  /** The street is not present in the Nevada reference data. */
+  | 'tiger_no_match'
+  /** The street is known, but the house number is outside every range. */
+  | 'tiger_out_of_range'
+  /** Several distinct real locations matched; refused rather than guessed. */
+  | 'tiger_ambiguous'
+  /** The internal reference dataset could not be queried. */
+  | 'tiger_unavailable'
   | 'manual_resolution_required';
 
 /** Canonical Nevada county → FIPS. 32025 (Ormsby) is intentionally absent. */
