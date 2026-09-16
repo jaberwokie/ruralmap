@@ -124,9 +124,29 @@ serve(async (req) => {
       MEMBER_GEOCODER_AUTH_SCHEME: Deno.env.get('MEMBER_GEOCODER_AUTH_SCHEME') ?? undefined,
       MEMBER_GEOCODER_TIMEOUT_MS: Deno.env.get('MEMBER_GEOCODER_TIMEOUT_MS') ?? undefined,
     });
-    const memberGeocoders: GeocoderPort[] = memberGeocoderStatus.enabled
-      ? [createPrivateMemberGeocoder(memberGeocoderStatus.config)]
-      : [];
+    // ── Native Azure Maps member geocoder (Phase 2B.4) ───────────────────
+    // A SEPARATE explicit provider option, not a loosening of the generic
+    // adapter above. Activates ONLY with MEMBER_GEOCODER_APPROVED=true,
+    // MEMBER_GEOCODER_PROVIDER=azure_maps, a server-side Azure Maps key, and a
+    // valid Azure endpoint/api-version. The credential is header-only and the
+    // member address travels in the request body only.
+    const azureStatus = readAzureMapsConfig({
+      MEMBER_GEOCODER_APPROVED: Deno.env.get('MEMBER_GEOCODER_APPROVED') ?? undefined,
+      MEMBER_GEOCODER_PROVIDER: Deno.env.get('MEMBER_GEOCODER_PROVIDER') ?? undefined,
+      AZURE_MAPS_SUBSCRIPTION_KEY: Deno.env.get('AZURE_MAPS_SUBSCRIPTION_KEY') ?? undefined,
+      AZURE_MAPS_ENDPOINT: Deno.env.get('AZURE_MAPS_ENDPOINT') ?? undefined,
+      AZURE_MAPS_API_VERSION: Deno.env.get('AZURE_MAPS_API_VERSION') ?? undefined,
+      MEMBER_GEOCODER_TIMEOUT_MS: Deno.env.get('MEMBER_GEOCODER_TIMEOUT_MS') ?? undefined,
+    });
+
+    // Exactly one member provider may be active. Azure is selected explicitly
+    // by provider token; the generic private endpoint covers every other
+    // approved NovumHealth-hosted geocoder.
+    const memberGeocoders: GeocoderPort[] = azureStatus.enabled
+      ? [createAzureMapsMemberGeocoder(azureStatus.config)]
+      : memberGeocoderStatus.enabled
+        ? [createPrivateMemberGeocoder(memberGeocoderStatus.config)]
+        : [];
 
     const ports: ResolverPorts = {
       secret,
