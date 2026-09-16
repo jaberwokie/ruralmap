@@ -101,6 +101,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // ── Approved PRIVATE member geocoder (Phase 2B.3) ────────────────────
+    // Activates ONLY with MEMBER_GEOCODER_APPROVED=true plus complete private
+    // config. Absent that, the chain stays empty and the resolver keeps its
+    // fail-closed `member_geocoder_not_configured` behavior. No public
+    // geocoder (Google, Census, Nominatim, Mapbox, HERE) can be configured
+    // here — the adapter refuses those hosts.
+    const memberGeocoderStatus = readMemberGeocoderConfig({
+      MEMBER_GEOCODER_APPROVED: Deno.env.get('MEMBER_GEOCODER_APPROVED') ?? undefined,
+      MEMBER_GEOCODER_PROVIDER: Deno.env.get('MEMBER_GEOCODER_PROVIDER') ?? undefined,
+      MEMBER_GEOCODER_ENDPOINT: Deno.env.get('MEMBER_GEOCODER_ENDPOINT') ?? undefined,
+      MEMBER_GEOCODER_API_KEY: Deno.env.get('MEMBER_GEOCODER_API_KEY') ?? undefined,
+      MEMBER_GEOCODER_AUTH_HEADER: Deno.env.get('MEMBER_GEOCODER_AUTH_HEADER') ?? undefined,
+      MEMBER_GEOCODER_AUTH_SCHEME: Deno.env.get('MEMBER_GEOCODER_AUTH_SCHEME') ?? undefined,
+      MEMBER_GEOCODER_TIMEOUT_MS: Deno.env.get('MEMBER_GEOCODER_TIMEOUT_MS') ?? undefined,
+    });
+    const memberGeocoders: GeocoderPort[] = memberGeocoderStatus.enabled
+      ? [createPrivateMemberGeocoder(memberGeocoderStatus.config)]
+      : [];
+
     const ports: ResolverPorts = {
       secret,
       // Canonical Rural Tool resource coordinates (see canonicalMatch.ts).
