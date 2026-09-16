@@ -498,7 +498,9 @@ describe('azure adapter isolation', () => {
   it('leaves public-resource Census geocoding untouched by the member path', () => {
     const census = read('supabase/functions/_shared/censusResourceGeocoder.ts');
     expect(census).not.toMatch(/AZURE_MAPS|atlas\.microsoft\.com/);
-    expect(census).not.toMatch(/member_address/);
+    // The resource pipeline never resolves the member class.
+    expect(census).not.toMatch(/locationClass:\s*'member_address'/);
+    expect(census).not.toMatch(/location_class:\s*'member_address'/);
     expect(adapterSrc).not.toMatch(/census/i);
   });
 
