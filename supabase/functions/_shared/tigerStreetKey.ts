@@ -150,7 +150,7 @@ export interface StreetKeys {
  * produces the same keys.
  */
 export const normalizeStreetName = (name: string | null | undefined): StreetKeys => {
-  const tokens = tokenize(name ?? '').map(expand);
+  const tokens = foldCompoundOrdinals(tokenize(name ?? '')).map(expand);
   if (tokens.length === 0) return { streetKey: '', streetCore: '' };
 
   const streetKey = tokens.join(' ').toUpperCase();
