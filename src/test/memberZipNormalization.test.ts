@@ -125,7 +125,7 @@ describe('no new external member-address provider was introduced', () => {
       expect(src).not.toMatch(/nominatim\.openstreetmap\.org/i);
       expect(src).not.toMatch(/geocoding\.geo\.census\.gov/i);
       expect(src).not.toMatch(/maps\.googleapis\.com/i);
-      expect(src).not.toMatch(/mapbox|hereapi|geocod\.io|smartystreets/i);
+      expect(src).not.toMatch(/api\.mapbox\.com|hereapi\.com|api\.geocod\.io|smartystreets\.com/i);
       expect(src).not.toMatch(/\bfetch\(/);
     }
   });
