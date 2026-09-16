@@ -270,7 +270,12 @@ export const resolveAddress = async (
       }
 
       const county = countyOf(hit.county);
-      const isApproximate = canon.hasStreet && variant.level !== 'street';
+      // A street-level INPUT is only precise when the winning query was
+      // street-level AND the provider reported an address/rooftop-level match.
+      // A locality/postal-level provider result for a numbered street address
+      // is approximate, never a precise pin.
+      const isApproximate = canon.hasStreet &&
+        (variant.level !== 'street' || hit.precision !== 'rooftop');
 
       // A later automated result must never silently overwrite locked/manual
       // coordinates. If a locked record exists we return IT, not the new hit.

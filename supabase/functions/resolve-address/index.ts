@@ -49,6 +49,10 @@ import {
   createPrivateMemberGeocoder,
   readMemberGeocoderConfig,
 } from './privateMemberGeocoder.ts';
+import {
+  createAzureMapsMemberGeocoder,
+  readAzureMapsConfig,
+} from './azureMapsMemberGeocoder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
