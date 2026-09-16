@@ -228,11 +228,19 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           ? 'Address resolution service is unavailable. Click the map to place the member location manually.'
           : isHighwayAddress
             ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
-            : geocoderNotConfigured
-              ? 'Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually.'
-              : geocoderFailed
-                ? 'Automatic address lookup did not complete. Click the map to place the member location manually.'
-                : 'Address not found. Refine the address or click the map to place member location.'
+            : referenceUnavailable
+              ? 'Address lookup is temporarily unavailable. Click the map to place the member location manually.'
+              : outOfState
+                ? 'This tool covers Nevada addresses only. Enter a Nevada address or click the map to place the member location manually.'
+                : ambiguous
+                  ? 'This street name matches more than one location. Add the ZIP code or city, or click the map to place the member location manually.'
+                  : outOfRange
+                    ? 'That street was found, but the house number is outside the known range. Check the number or click the map to place the member location manually.'
+                    : notStreetLevel
+                      ? 'A street number and street name are needed to place the member automatically. Add them or click the map to place the member location manually.'
+                      : geocoderFailed
+                        ? 'Automatic address lookup did not complete. Click the map to place the member location manually.'
+                        : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {
