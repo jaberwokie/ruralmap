@@ -32,6 +32,14 @@ export const getSharedPinSvgMarkup = (
   const hitSize = Math.max(resolvedSize, 28);
   const offset = (hitSize - resolvedSize) / 2;
 
+  // Contrast strategy (no size change, no palette change):
+  //  1. a light halo stroke drawn underneath the pin outline, so the pin
+  //     separates from dark/busy tiles (roads, terrain, shaded polygons);
+  //  2. a light body fill, so the pin separates from mid-tone tiles instead of
+  //     letting map detail read straight through the outline;
+  //  3. a tight drop shadow for edge separation over light tiles.
+  const halo = 'hsl(0 0% 100%)';
+
   return `
     <div style="width:${hitSize}px;height:${hitSize}px;position:relative;cursor:pointer;pointer-events:auto;">
       <div style="position:absolute;top:0;left:0;width:100%;height:100%;background:transparent;pointer-events:auto;" aria-hidden="true"></div>
@@ -45,11 +53,17 @@ export const getSharedPinSvgMarkup = (
         stroke-width="1.75"
         stroke-linecap="round"
         stroke-linejoin="round"
-        style="display:block;opacity:${opacity};overflow:visible;position:absolute;top:${offset}px;left:${offset}px;pointer-events:none;"
+        style="display:block;opacity:${opacity};overflow:visible;position:absolute;top:${offset}px;left:${offset}px;pointer-events:none;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,0.45));"
         aria-hidden="true"
       >
+        <path
+          d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"
+          fill="${halo}"
+          stroke="${halo}"
+          stroke-width="4"
+        ></path>
         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
-        <circle cx="12" cy="10" r="3"></circle>
+        <circle cx="12" cy="10" r="3" fill="${color}"></circle>
       </svg>
     </div>
   `.trim();
