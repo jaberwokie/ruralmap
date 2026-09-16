@@ -1524,6 +1524,63 @@ export type Database = {
         }
         Relationships: []
       }
+      tiger_street_ranges: {
+        Row: {
+          county_fips: string
+          created_at: string
+          from_hn: number
+          fullname: string
+          geom: Json
+          hi_hn: number | null
+          id: number
+          lo_hn: number | null
+          parity: string | null
+          side: string
+          street_core: string
+          street_key: string
+          tlid: string
+          to_hn: number
+          vintage: string
+          zip: string | null
+        }
+        Insert: {
+          county_fips: string
+          created_at?: string
+          from_hn: number
+          fullname: string
+          geom: Json
+          hi_hn?: number | null
+          id?: number
+          lo_hn?: number | null
+          parity?: string | null
+          side: string
+          street_core: string
+          street_key: string
+          tlid: string
+          to_hn: number
+          vintage: string
+          zip?: string | null
+        }
+        Update: {
+          county_fips?: string
+          created_at?: string
+          from_hn?: number
+          fullname?: string
+          geom?: Json
+          hi_hn?: number | null
+          id?: number
+          lo_hn?: number | null
+          parity?: string | null
+          side?: string
+          street_core?: string
+          street_key?: string
+          tlid?: string
+          to_hn?: number
+          vintage?: string
+          zip?: string | null
+        }
+        Relationships: []
+      }
       user_events: {
         Row: {
           created_at: string
@@ -2044,6 +2101,39 @@ export type Database = {
       sysop_restore_record: {
         Args: { _id: string; _table: string }
         Returns: undefined
+      }
+      tiger_interpolate_point: {
+        Args: { _frac: number; _geom: Json }
+        Returns: number[]
+      }
+      tiger_match_address: {
+        Args: {
+          _county_fips?: string
+          _house: number
+          _street_core?: string
+          _street_key: string
+          _zip?: string
+        }
+        Returns: {
+          county_fips: string
+          exact_key: boolean
+          from_hn: number
+          fullname: string
+          lat: number
+          lng: number
+          parity: string
+          side: string
+          street_core: string
+          street_key: string
+          tlid: string
+          to_hn: number
+          zip: string
+          zip_match: boolean
+        }[]
+      }
+      tiger_street_exists: {
+        Args: { _street_core?: string; _street_key: string; _zip?: string }
+        Returns: boolean
       }
     }
     Enums: {

@@ -171,8 +171,13 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       // rather than exposing the address to a third-party geocoder.
       let serverUnavailable = false;
       let highwayHint = false;
-      let geocoderNotConfigured = false;
       let geocoderFailed = false;
+      // Phase 2E — real outcomes of the internal Nevada street-range lookup.
+      let ambiguous = false;
+      let outOfRange = false;
+      let outOfState = false;
+      let notStreetLevel = false;
+      let referenceUnavailable = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
@@ -190,16 +195,16 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           return;
         } else {
           highwayHint = !!internal?.highway_address;
-          // Capability vs. validity: the resolver reports explicitly when no
-          // approved member-address geocoder is configured. In that case the
-          // address was never actually looked up, so it must NOT be described
-          // as not found.
+          // Every message below reflects a REAL outcome of the internal Nevada
+          // street-range lookup. The address was actually looked up, so
+          // "not configured" is no longer a possible explanation.
           const failures: string[] = Array.isArray(internal?.failures) ? internal.failures : [];
-          geocoderNotConfigured =
-            failures.includes('member_geocoder_not_configured') ||
-            failures.includes('no_approved_external_provider');
-          // Configured-and-attempted, but the approved private provider errored
-          // or timed out. Distinct from "not configured" and from "not found".
+          ambiguous = failures.includes('tiger_ambiguous');
+          outOfRange = failures.includes('tiger_out_of_range');
+          outOfState = failures.includes('tiger_out_of_state');
+          notStreetLevel = failures.includes('tiger_not_a_street_address');
+          referenceUnavailable = failures.includes('tiger_unavailable');
+          // An approved private provider, when configured, errored or timed out.
           geocoderFailed = failures.includes('member_geocoder_failed');
         }
       } catch {
@@ -223,11 +228,19 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           ? 'Address resolution service is unavailable. Click the map to place the member location manually.'
           : isHighwayAddress
             ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
-            : geocoderNotConfigured
-              ? 'Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually.'
-              : geocoderFailed
-                ? 'Automatic address lookup did not complete. Click the map to place the member location manually.'
-                : 'Address not found. Refine the address or click the map to place member location.'
+            : referenceUnavailable
+              ? 'Address lookup is temporarily unavailable. Click the map to place the member location manually.'
+              : outOfState
+                ? 'This tool covers Nevada addresses only. Enter a Nevada address or click the map to place the member location manually.'
+                : ambiguous
+                  ? 'This street name matches more than one location. Add the ZIP code or city, or click the map to place the member location manually.'
+                  : outOfRange
+                    ? 'That street was found, but the house number is outside the known range. Check the number or click the map to place the member location manually.'
+                    : notStreetLevel
+                      ? 'A street number and street name are needed to place the member automatically. Add them or click the map to place the member location manually.'
+                      : geocoderFailed
+                        ? 'Automatic address lookup did not complete. Click the map to place the member location manually.'
+                        : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {

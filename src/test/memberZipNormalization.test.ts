@@ -143,15 +143,17 @@ describe('client distinguishes resolver failure modes', () => {
     expect(browserPath).toContain('Address resolution service is unavailable.');
   });
 
-  it('has a truthful not-configured message that does not deny the address', () => {
-    expect(browserPath).toContain('Automatic member address lookup is not configured.');
+  it('explains ambiguity truthfully instead of denying the address (Phase 2E)', () => {
+    expect(browserPath).toContain('This street name matches more than one location.');
   });
 
   it('retains the highway manual-placement message', () => {
     expect(browserPath).toContain('Highway address could not be precisely located.');
   });
 
-  it('reads the stable resolver failure code', () => {
-    expect(browserPath).toContain('member_geocoder_not_configured');
+  it('reads the stable resolver failure codes', () => {
+    expect(browserPath).toContain('tiger_ambiguous');
+    expect(browserPath).toContain('tiger_out_of_range');
+    expect(browserPath).toContain('member_geocoder_failed');
   });
 });

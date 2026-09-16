@@ -351,9 +351,11 @@ describe('failure taxonomy stays distinct', () => {
   });
 
   it('gives the browser a distinct message per failure mode', () => {
-    expect(browserPath).toContain('member_geocoder_not_configured');
+    // Phase 2E replaced the "not configured" branch with real outcomes of the
+    // internal Nevada street-range lookup.
+    expect(browserPath).toContain('tiger_out_of_range');
     expect(browserPath).toContain('member_geocoder_failed');
-    expect(browserPath).toContain('Automatic member address lookup is not configured');
+    expect(browserPath).toContain('the house number is outside the known range');
     expect(browserPath).toContain('Automatic address lookup did not complete');
     expect(browserPath).toContain('Address resolution service is unavailable');
     expect(browserPath).toContain('place the member location manually — click the approximate location along the highway');

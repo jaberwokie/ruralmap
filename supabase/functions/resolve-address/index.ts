@@ -53,6 +53,10 @@ import {
   createAzureMapsMemberGeocoder,
   readAzureMapsConfig,
 } from './azureMapsMemberGeocoder.ts';
+import {
+  createTigerMemberGeocoder,
+  type TigerCandidate,
+} from './tigerMemberGeocoder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -139,14 +143,46 @@ serve(async (req) => {
       MEMBER_GEOCODER_TIMEOUT_MS: Deno.env.get('MEMBER_GEOCODER_TIMEOUT_MS') ?? undefined,
     });
 
-    // Exactly one member provider may be active. Azure is selected explicitly
-    // by provider token; the generic private endpoint covers every other
-    // approved NovumHealth-hosted geocoder.
-    const memberGeocoders: GeocoderPort[] = azureStatus.enabled
-      ? [createAzureMapsMemberGeocoder(azureStatus.config)]
-      : memberGeocoderStatus.enabled
-        ? [createPrivateMemberGeocoder(memberGeocoderStatus.config)]
-        : [];
+    // ── Internal Nevada TIGER/Line street-range geocoder (Phase 2E) ──────
+    // The DEFAULT automatic member path. Runs entirely inside this function
+    // against public Census reference data held in `tiger_street_ranges`; the
+    // member address is never disclosed to a third party and is never stored.
+    const tigerGeocoder = createTigerMemberGeocoder({
+      matchAddress: async ({ house, streetKey, streetCore, zip }) => {
+        const { data, error } = await admin.rpc('tiger_match_address', {
+          _house: house,
+          _street_key: streetKey,
+          _street_core: streetCore,
+          _zip: zip,
+          _county_fips: null,
+        });
+        if (error) throw new Error('tiger_lookup_failed'); // no address in the message
+        return (data ?? []) as TigerCandidate[];
+      },
+      streetExists: async ({ streetKey, streetCore, zip }) => {
+        const { data, error } = await admin.rpc('tiger_street_exists', {
+          _street_key: streetKey,
+          _street_core: streetCore,
+          _zip: zip,
+        });
+        if (error) throw new Error('tiger_lookup_failed');
+        return data === true;
+      },
+    });
+
+    // Internal authority first. An approved private provider (generic or
+    // Azure) is optional and only ever runs after the internal geocoder has
+    // failed to produce a deterministic match. Azure is selected explicitly by
+    // provider token; the generic private endpoint covers every other approved
+    // NovumHealth-hosted geocoder.
+    const memberGeocoders: GeocoderPort[] = [
+      tigerGeocoder,
+      ...(azureStatus.enabled
+        ? [createAzureMapsMemberGeocoder(azureStatus.config)]
+        : memberGeocoderStatus.enabled
+          ? [createPrivateMemberGeocoder(memberGeocoderStatus.config)]
+          : []),
+    ];
 
     const ports: ResolverPorts = {
       secret,
@@ -206,7 +242,8 @@ serve(async (req) => {
       // Public Nominatim: prohibited for personal/confidential material.
       // Census Geocoder: no documented project approval for member addresses.
       // Google Maps Platform: not acceptable for PHI/member-address processing.
-      // The ONLY populated entry is an approved private provider (above).
+      // The chain is the INTERNAL Nevada TIGER geocoder, optionally followed by
+      // an approved private provider. No entry can be a public geocoder.
       geocoders: memberGeocoders,
       // Safe metadata only: never the address, never a secret, never a credential.
       logEvent: (event) => {
@@ -220,6 +257,11 @@ serve(async (req) => {
       locationClass,
       // Anonymous misses do not create null-coordinate cache rows.
       persistUnresolved: false,
+      // Phase 2E — member addresses are EPHEMERAL. A successful automatic
+      // lookup writes no row: no raw address, no canonical address, no HMAC
+      // key, no coordinates, no source metadata. Existing human-curated
+      // manual/locked records remain and still outrank automation.
+      persistResolved: false,
     });
 
     return json({

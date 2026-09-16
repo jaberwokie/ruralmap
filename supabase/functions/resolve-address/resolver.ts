@@ -64,9 +64,20 @@ export interface ExternalHit {
 export interface GeocoderPort {
   name: Extract<
     GeocodeSource,
-    'nominatim' | 'census' | 'google' | 'known_provider' | 'private_member_geocoder'
+    | 'nominatim'
+    | 'census'
+    | 'google'
+    | 'known_provider'
+    | 'private_member_geocoder'
+    | 'internal_tiger'
   >;
   failureCode: GeocodeFailureCode;
+  /**
+   * Optional per-attempt failure detail (Phase 2E). When present it replaces
+   * the generic `failureCode` so the UI can explain the REAL outcome
+   * (ambiguous / out of range / unknown street) instead of a generic miss.
+   */
+  resolveFailureCode?: () => GeocodeFailureCode | null;
   run: (canonical: string, original: string) => Promise<ExternalHit | null>;
 }
 
@@ -106,6 +117,16 @@ export interface ResolveRequest {
    * unauthenticated caller grow the table without operational benefit.
    */
   persistUnresolved?: boolean;
+  /**
+   * Phase 2E — whether a SUCCESSFUL automatic resolution may be written to the
+   * internal cache. Defaults to true for administrative/resource classes.
+   *
+   * Member addresses pass `false`: they are ephemeral inputs. A member search
+   * must leave no new row — no raw address, no canonical address, no HMAC
+   * lookup key, no coordinates, no source metadata. Pre-existing manual/locked
+   * member records stay untouched and keep outranking automation.
+   */
+  persistResolved?: boolean;
 }
 
 export interface ResolveResult {
@@ -252,20 +273,28 @@ export const resolveAddress = async (
 
   for (const variant of variants) {
     for (const geocoder of ports.geocoders) {
-      if (externalCalls >= maxExternalCalls) break;
-      externalCalls++;
+      // Phase 2E: the internal Nevada TIGER geocoder makes NO network request
+      // and discloses nothing, so it is never counted as an external call and
+      // is never subject to the external-call budget.
+      const isInternal = geocoder.name === 'internal_tiger';
+      if (!isInternal) {
+        if (externalCalls >= maxExternalCalls) break;
+        externalCalls++;
+      }
       let hit: ExternalHit | null = null;
       try {
         hit = await geocoder.run(variant.q, variant.q);
       } catch {
         hit = null;
       }
+      const attemptFailure = (): GeocodeFailureCode =>
+        geocoder.resolveFailureCode?.() ?? geocoder.failureCode;
       if (!hit || !Number.isFinite(hit.lat) || !Number.isFinite(hit.lng)) {
-        addFailure(geocoder.failureCode);
+        addFailure(attemptFailure());
         continue;
       }
       if (requireNevada && !isInNevada(hit.lat, hit.lng)) {
-        addFailure(geocoder.failureCode);
+        addFailure(attemptFailure());
         continue;
       }
 
@@ -303,7 +332,11 @@ export const resolveAddress = async (
 
       // Cache identity is ALWAYS the original canonical address, never the
       // retry variant — so the next identical search is a pure cache hit.
-      await ports.cacheUpsert({
+      //
+      // Phase 2E: when `persistResolved` is false (member addresses) NOTHING is
+      // written here. The address, its HMAC key, and the coordinates stay in
+      // memory for this request only.
+      if (req.persistResolved !== false) await ports.cacheUpsert({
         lookup_key: lookupKey,
         location_class: locationClass,
         latitude: hit.lat,
