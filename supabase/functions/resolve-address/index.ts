@@ -174,10 +174,12 @@ serve(async (req) => {
           })
           .eq('id', row.id);
       },
-      // member_address_external_provider = none_approved.
+      // Public providers remain prohibited for member addresses:
       // Public Nominatim: prohibited for personal/confidential material.
       // Census Geocoder: no documented project approval for member addresses.
-      geocoders: [],
+      // Google Maps Platform: not acceptable for PHI/member-address processing.
+      // The ONLY populated entry is an approved private provider (above).
+      geocoders: memberGeocoders,
       // Safe metadata only: never the address, never a secret, never a credential.
       logEvent: (event) => {
         console.log(JSON.stringify({ scope: 'geocode', ...event }));
