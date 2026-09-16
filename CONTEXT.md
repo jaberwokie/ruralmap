@@ -292,9 +292,32 @@ Member resolution order (fixed, do not reorder):
 
 1. exact canonical Rural Tool resource match — canonicalized-address equality against `facilities`, `rural_services`, `verified_services`, `verified_bh`
 2. verified / manual / coordinate-locked internal coordinates
-3. internal geocode cache (`geocode_resolutions`)
-4. approved member-address geocoder — two adapters exist (generic private, Phase 2B.3; native Azure Maps, Phase 2B.4) and both are **disabled by default**; no provider is configured
-5. unresolved → manual placement offered
+3. internal geocode cache (`geocode_resolutions`) — pre-existing rows only; see Phase 2E, automatic member searches no longer write here
+4. **internal Nevada TIGER/Line street-range geocoder (Phase 2E)** — the live automatic path, in-database, no third party
+5. approved external member geocoder — optional; two adapters exist (generic private, Phase 2B.3; native Azure Maps, Phase 2B.4) and both are **disabled by default**; no provider is configured and none is required
+6. unresolved → manual placement offered
+
+### Phase 2E — internal Nevada TIGER/Line member geocoder (LIVE, no third party)
+
+Automatic member-address pinning works **without** any external geocoder and without a NovumHealth-hosted endpoint. `member_address_external_provider = none_approved` still holds and is no longer a blocker.
+
+**Compliance framing (do not overstate).** This is a set of technical safeguards — no third-party disclosure of member addresses, no member-address persistence, no PHI in logs. It does **not** by itself make the deployment HIPAA compliant; that depends on the hosting agreement/BAA and organizational controls.
+
+**Reference data.** `public.tiger_street_ranges` holds public U.S. Census TIGER/Line 2024 ADDRFEAT data for Nevada only: street identity, TLID, side, left/right house-number ranges, parity, ZIP, county FIPS, and line geometry (JSONB, 6-decimal). 273,192 range rows across all 17 Nevada counties. It contains **no member data**. RLS is enabled with no policies; only `service_role` may read it. Reload for a new vintage with `scripts/ingest-tiger-nevada.ts` (downloads, parses, and bulk-loads by county FIPS).
+
+**Matching (deterministic only).** `tiger_match_address(house, street_key, street_core, zip, county_fips)` filters on exact normalized street identity, house number inside the range, and odd/even parity, then interpolates a point along the matched segment from the number's position in the range. `tiger_street_exists(...)` separates "unknown street" from "house number out of range". Both are `SECURITY DEFINER`, `service_role`-only. `supabase/functions/_shared/tigerStreetKey.ts` is the **single** street-normalization implementation shared by ingestion and lookup — if they ever diverge, valid addresses silently stop matching.
+
+Candidate selection narrows by ZIP, then exact street identity, and accepts a result only when the surviving candidates describe one place (spread ≤ 0.5 mi). Several distinct real locations → `tiger_ambiguous`, no pin. No fuzzy street matching. Wrong pin remains worse than no pin.
+
+**Ephemeral member data (hard rule).** An ordinary automatic member search leaves **no new row**. `resolveAddress` takes `persistResolved: false` for `member_address`, so no raw address, canonical address, HMAC lookup key, coordinate, or source metadata is written on success, and unresolved searches are still not persisted. Existing manual/coordinate-locked member records stay as human-curated authority and still outrank automation. Logs carry safe metadata only; county-only `address_searched` telemetry after placement is unchanged.
+
+**Precision honesty.** Street-range interpolation is not rooftop: source `internal_tiger`, precision `street_range_interpolated`, confidence `medium`, `is_approximate = true`. City/ZIP-only input is never centroid-pinned — it fails closed into manual placement. Internal lookups are not counted as external calls (`external_calls = 0`).
+
+**Failure taxonomy (each a real outcome, all distinct from a missing provider).** `tiger_not_a_street_address`, `tiger_out_of_state`, `tiger_no_match`, `tiger_out_of_range`, `tiger_ambiguous`, `tiger_unavailable`. The "Automatic member address lookup is not configured" message is **removed** — `useMemberAccess.ts` now shows the real outcome (ambiguous / out of range / Nevada-only / needs street number / temporarily unavailable), keeping service-unavailable and highway/manual messages distinct.
+
+Tests: `src/test/memberTigerGeocoder.test.ts` (28) — no member row/cache write, no address or HMAC key in logs, in-range match, parity, out-of-range, ambiguity refusal, out-of-state, ZIP+4 normalization parity, precision never rooftop, manual/locked and canonical short-circuits, zero external calls, no public geocoder host, Census/OSM isolation.
+
+Verified in the browser (resolved, pin placed, map panned, `external_calls: 0`, zero new `member_address` rows): 1800 Griswold Dr Elko 89801 → 40.849687, -115.761499 (Elko); 1500 Avenue F Ely 89301 → 39.258036, -114.860167 (White Pine); 825 6th St Hawthorne 89415 → 38.526041, -118.620972 (Mineral); the truncated `89801-1` form resolves identically to the valid ZIP form.
 
 **Phase 2B.3 — private member geocoder boundary (provider-ready, default off).**
 `supabase/functions/resolve-address/privateMemberGeocoder.ts` is a generic, server-only adapter that makes automatic member lookup switchable without weakening the boundary. It activates only when **all** of the following server-side secrets are present and `MEMBER_GEOCODER_APPROVED` is exactly `true`: `MEMBER_GEOCODER_PROVIDER`, `MEMBER_GEOCODER_ENDPOINT` (HTTPS), `MEMBER_GEOCODER_API_KEY`; optional `MEMBER_GEOCODER_AUTH_HEADER` (default `Authorization`), `MEMBER_GEOCODER_AUTH_SCHEME` (default `Bearer`), `MEMBER_GEOCODER_TIMEOUT_MS` (clamped 1000–10000 ms). Otherwise the geocoder list stays empty and existing fail-closed `member_geocoder_not_configured` behavior is unchanged.
