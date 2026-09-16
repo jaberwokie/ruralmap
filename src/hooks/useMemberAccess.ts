@@ -225,7 +225,9 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
             ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
             : geocoderNotConfigured
               ? 'Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually.'
-              : 'Address not found. Refine the address or click the map to place member location.'
+              : geocoderFailed
+                ? 'Automatic address lookup did not complete. Click the map to place the member location manually.'
+                : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {
