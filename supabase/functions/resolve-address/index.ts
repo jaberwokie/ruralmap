@@ -53,6 +53,10 @@ import {
   createAzureMapsMemberGeocoder,
   readAzureMapsConfig,
 } from './azureMapsMemberGeocoder.ts';
+import {
+  createTigerMemberGeocoder,
+  type TigerCandidate,
+} from './tigerMemberGeocoder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
