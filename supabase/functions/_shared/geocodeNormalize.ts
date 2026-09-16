@@ -80,6 +80,8 @@ export type GeocodeFailureCode =
   | 'tiger_out_of_range'
   /** Several distinct real locations matched; refused rather than guessed. */
   | 'tiger_ambiguous'
+  /** A ZIP was supplied and no candidate belongs to it; no statewide fallback. */
+  | 'tiger_zip_mismatch'
   /** The internal reference dataset could not be queried. */
   | 'tiger_unavailable'
   | 'manual_resolution_required';
