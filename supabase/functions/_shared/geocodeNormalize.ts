@@ -32,6 +32,12 @@ export type GeocodeSource =
   | 'nominatim'
   | 'known_provider'
   | 'legacy_static'
+  /**
+   * Phase 2B.3 — a NovumHealth-approved PRIVATE member-address geocoder,
+   * enabled only by server-side secrets. Recorded as provenance without ever
+   * naming credentials or storing the address.
+   */
+  | 'private_member_geocoder'
   | 'unresolved';
 
 export type GeocodeFailureCode =
@@ -48,6 +54,13 @@ export type GeocodeFailureCode =
    * distinguish this from "the address does not exist".
    */
   | 'member_geocoder_not_configured'
+  /**
+   * An APPROVED and fully configured private member geocoder was attempted and
+   * failed (timeout, transport error, non-2xx, malformed or out-of-bounds
+   * response). Distinct from `member_geocoder_not_configured`, which means
+   * nothing was ever attempted.
+   */
+  | 'member_geocoder_failed'
   | 'manual_resolution_required';
 
 /** Canonical Nevada county → FIPS. 32025 (Ormsby) is intentionally absent. */
