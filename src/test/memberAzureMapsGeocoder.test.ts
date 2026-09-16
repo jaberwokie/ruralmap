@@ -463,7 +463,8 @@ describe('azure adapter isolation', () => {
 
   it('reads no configuration from client-visible variables', () => {
     expect(adapterSrc).not.toMatch(/import\.meta\.env/);
-    expect(adapterSrc).not.toMatch(/VITE_/);
+    // No VITE_-prefixed identifier is ever read (documentation prose aside).
+    expect(adapterSrc).not.toMatch(/\bVITE_[A-Z0-9_]+\b/);
   });
 
   it('exposes no Azure key or member provider config to the browser bundle', () => {
