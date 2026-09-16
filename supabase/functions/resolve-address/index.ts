@@ -1,23 +1,27 @@
 /**
- * Phase 2B / 2B.1 / 2B.2 — `resolve-address` edge function.
+ * Phase 2B / 2B.1 / 2B.2 / 2B.3 — `resolve-address` edge function.
  *
  * MEMBER-ADDRESS RESOLVER ONLY.
  *
- * Data-boundary rule (Phase 2B.2): a member address may be sent to the Rural
- * Tool's own server boundary, its internal HMAC-keyed geocode authority, and
- * canonical NovumHealth-controlled data — and to nothing else. There is
- * currently NO external provider approved to receive member addresses:
+ * Data-boundary rule: a member address may be sent to the Rural Tool's own
+ * server boundary, its internal HMAC-keyed geocode authority, canonical
+ * NovumHealth-controlled data, and — only once NovumHealth explicitly approves
+ * and configures one — a single PRIVATE, BAA-covered geocoding endpoint. And
+ * to nothing else. Default deployment state:
  *
- *   member_address_external_provider = none_approved
+ *   member_address_external_provider = none_approved (until
+ *   MEMBER_GEOCODER_APPROVED=true plus complete private config is present)
  *
  * Public Nominatim is prohibited (OSMF policy forbids personal/confidential
- * material) and the Census Geocoder has no documented project approval for
- * member data, so both are removed from this pipeline. They remain available
- * for public business/resource geocoding via the dedicated administrative
- * functions (`geocode-address`, `geocode-bulk`, `census-geocode`).
+ * material), the Census Geocoder has no documented project approval for member
+ * data, and Google Maps Platform is not acceptable for PHI/member-address
+ * processing here. All three remain available for public business/resource
+ * geocoding via the dedicated administrative functions (`geocode-address`,
+ * `geocode-bulk`, `census-geocode`) and are refused by the private adapter.
  *
  * Flow: normalize → HMAC lookup key → canonical Rural Tool resource match →
- *       internal authority/cache → unresolved (manual placement offered).
+ *       internal authority/cache → approved private provider (if enabled) →
+ *       unresolved (manual placement offered).
  *
  * Elevated `location_class` values are NOT exposed here: canonical resource
  * maintenance uses the administrative geocoding pathways. Any caller-supplied
