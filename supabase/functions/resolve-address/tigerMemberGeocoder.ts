@@ -96,6 +96,7 @@ export const TIGER_FAILURE_CODES: Record<TigerRejectReason, GeocodeFailureCode> 
   unknown_street: 'tiger_no_match',
   house_number_out_of_range: 'tiger_out_of_range',
   ambiguous: 'tiger_ambiguous',
+  zip_mismatch: 'tiger_zip_mismatch',
   reference_data_unavailable: 'tiger_unavailable',
 };
 
