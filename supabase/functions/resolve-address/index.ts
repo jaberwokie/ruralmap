@@ -256,6 +256,11 @@ serve(async (req) => {
       locationClass,
       // Anonymous misses do not create null-coordinate cache rows.
       persistUnresolved: false,
+      // Phase 2E — member addresses are EPHEMERAL. A successful automatic
+      // lookup writes no row: no raw address, no canonical address, no HMAC
+      // key, no coordinates, no source metadata. Existing human-curated
+      // manual/locked records remain and still outrank automation.
+      persistResolved: false,
     });
 
     return json({
