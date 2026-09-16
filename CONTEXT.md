@@ -293,8 +293,22 @@ Member resolution order (fixed, do not reorder):
 1. exact canonical Rural Tool resource match — canonicalized-address equality against `facilities`, `rural_services`, `verified_services`, `verified_bh`
 2. verified / manual / coordinate-locked internal coordinates
 3. internal geocode cache (`geocode_resolutions`)
-4. approved member-address geocoder — **none currently exists**
+4. approved **private** member-address geocoder — adapter exists (Phase 2B.3) but is **disabled by default**; no provider is configured
 5. unresolved → manual placement offered
+
+**Phase 2B.3 — private member geocoder boundary (provider-ready, default off).**
+`supabase/functions/resolve-address/privateMemberGeocoder.ts` is a generic, server-only adapter that makes automatic member lookup switchable without weakening the boundary. It activates only when **all** of the following server-side secrets are present and `MEMBER_GEOCODER_APPROVED` is exactly `true`: `MEMBER_GEOCODER_PROVIDER`, `MEMBER_GEOCODER_ENDPOINT` (HTTPS), `MEMBER_GEOCODER_API_KEY`; optional `MEMBER_GEOCODER_AUTH_HEADER` (default `Authorization`), `MEMBER_GEOCODER_AUTH_SCHEME` (default `Bearer`), `MEMBER_GEOCODER_TIMEOUT_MS` (clamped 1000–10000 ms). Otherwise the geocoder list stays empty and existing fail-closed `member_geocoder_not_configured` behavior is unchanged.
+
+Adapter rules:
+
+- **No vendor is hard-coded**, and known public consumer geocoders (Google, Census, Nominatim/OSM, Mapbox, HERE, Geocodio, Smarty, LocationIQ, OpenCage) are rejected as endpoints. Google Maps Platform is explicitly not acceptable for member-address processing.
+- Server-side HTTPS **POST only**, body is exactly `{ address: <canonical address> }` — no member name, member ID, insurance, diagnosis, program, or session context. Credentials never leave the server and never appear in client code or `VITE_` variables.
+- Strict timeout with abort; only a minimal normalized response is accepted (`resolved`, `lat`/`latitude`, `lng`/`longitude`, optional `confidence`/`precision`). Coordinates are validated (finite, in range, non-zero, Nevada-validated by the resolver); any formatted address returned is discarded. Malformed, non-2xx, out-of-bounds, and timed-out responses **fail closed**.
+- No raw address appears in logs, errors, or cache records. Provenance is the provider *name* only: `geocode_source = 'private_member_geocoder'` (added to the `geocode_resolutions` source constraint and to the locked/manual protection trigger, so manual and coordinate-locked records still outrank it).
+- Internal order is preserved: canonical match and internal cache short-circuit **before** any provider call.
+- New failure code `member_geocoder_failed` — an approved, configured provider was attempted and failed. Distinct from `member_geocoder_not_configured` (nothing attempted), service-unavailable, and highway/manual placement. Client message: "Automatic address lookup did not complete. Click the map to place the member location manually."
+- Tests: `src/test/memberPrivateGeocoderBoundary.test.ts` (activation gating, public-provider rejection, no browser credential/call, minimal payload, fail-closed validation, cache-first short-circuit, HMAC-keyed provenance, no raw address, Census/basemap isolation).
+- **Remaining external dependency to turn automatic lookup on:** a HIPAA/BAA-covered private geocoding endpoint and token supplied by NovumHealth, saved as the `MEMBER_GEOCODER_*` secrets with `MEMBER_GEOCODER_APPROVED=true`. Nothing else is required in code.
 
 Rules:
 
