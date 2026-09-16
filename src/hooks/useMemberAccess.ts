@@ -175,6 +175,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       // Phase 2E — real outcomes of the internal Nevada street-range lookup.
       let ambiguous = false;
       let outOfRange = false;
+      let zipMismatch = false;
       let outOfState = false;
       let notStreetLevel = false;
       let referenceUnavailable = false;
@@ -201,6 +202,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           const failures: string[] = Array.isArray(internal?.failures) ? internal.failures : [];
           ambiguous = failures.includes('tiger_ambiguous');
           outOfRange = failures.includes('tiger_out_of_range');
+          zipMismatch = failures.includes('tiger_zip_mismatch');
           outOfState = failures.includes('tiger_out_of_state');
           notStreetLevel = failures.includes('tiger_not_a_street_address');
           referenceUnavailable = failures.includes('tiger_unavailable');
@@ -232,7 +234,9 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
               ? 'Address lookup is temporarily unavailable. Click the map to place the member location manually.'
               : outOfState
                 ? 'This tool covers Nevada addresses only. Enter a Nevada address or click the map to place the member location manually.'
-                : ambiguous
+                : zipMismatch
+                  ? 'That street was not found in the ZIP code entered. Check the street name and ZIP, or click the map to place the member location manually.'
+                  : ambiguous
                   ? 'This street name matches more than one location. Add the ZIP code or city, or click the map to place the member location manually.'
                   : outOfRange
                     ? 'That street was found, but the house number is outside the known range. Check the number or click the map to place the member location manually.'
