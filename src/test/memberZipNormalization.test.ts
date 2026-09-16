@@ -112,9 +112,12 @@ const resolverFn = readFileSync('supabase/functions/resolve-address/index.ts', '
 const browserPath = readFileSync('src/hooks/useMemberAccess.ts', 'utf8');
 
 describe('no new external member-address provider was introduced', () => {
-  it('keeps the approved member geocoder list empty', () => {
-    expect(resolverFn).toMatch(/geocoders:\s*\[\]/);
-    expect(resolverFn).toContain('member_address_external_provider = none_approved');
+  it('keeps the approved member geocoder list empty unless privately approved', () => {
+    // Phase 2B.3: the list is populated ONLY when MEMBER_GEOCODER_APPROVED is
+    // exactly 'true' with complete private config; otherwise it stays empty.
+    expect(resolverFn).toMatch(/memberGeocoderStatus\.enabled/);
+    expect(resolverFn).toMatch(/:\s*\[\]/);
+    expect(resolverFn).toContain('MEMBER_GEOCODER_APPROVED');
   });
 
   it('adds no third-party geocoder endpoint or outbound call to the member path', () => {
