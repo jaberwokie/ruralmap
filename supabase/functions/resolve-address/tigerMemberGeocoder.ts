@@ -236,6 +236,7 @@ export const createTigerMemberGeocoder = (ports: TigerPorts): GeocoderPort => {
         lng: outcome.lng,
         confidence: outcome.confidence,
         precision: outcome.precision,
+        county: COUNTY_BY_FIPS[outcome.county_fips] ?? null,
         postal_code: outcome.zip,
         // No formatted/display address is ever produced for a member address.
         label: null,
