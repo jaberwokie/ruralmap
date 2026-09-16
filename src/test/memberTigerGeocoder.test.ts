@@ -291,7 +291,7 @@ describe('no third-party disclosure and no scope creep', () => {
   });
 
   it('public-resource Census geocoding is untouched', () => {
-    expect(src('supabase/functions/_shared/censusGeocoder.ts')).toMatch(/geocoding\.geo\.census\.gov/);
+    expect(src('supabase/functions/_shared/censusResourceGeocoder.ts')).toMatch(/geocoding\.geo\.census\.gov/);
   });
 
   it('the OSM basemap is untouched', () => {
