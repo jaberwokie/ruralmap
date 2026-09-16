@@ -25,7 +25,15 @@
  * agreement/BAA and organizational controls.
  */
 import { parseMemberAddress, type ParsedMemberAddress } from '../_shared/tigerStreetKey.ts';
-import type { GeocodeFailureCode } from '../_shared/geocodeNormalize.ts';
+import { NEVADA_COUNTY_FIPS, type GeocodeFailureCode } from '../_shared/geocodeNormalize.ts';
+
+/** FIPS → canonical Nevada county name (public geography, not member data). */
+const COUNTY_BY_FIPS: Record<string, string> = Object.fromEntries(
+  Object.entries(NEVADA_COUNTY_FIPS).map(([name, fips]) => [
+    fips,
+    name.replace(/\b\w/g, (c) => c.toUpperCase()),
+  ]),
+);
 import type { ExternalHit, GeocoderPort } from './resolver.ts';
 
 export interface TigerCandidate {
