@@ -293,7 +293,7 @@ Member resolution order (fixed, do not reorder):
 1. exact canonical Rural Tool resource match — canonicalized-address equality against `facilities`, `rural_services`, `verified_services`, `verified_bh`
 2. verified / manual / coordinate-locked internal coordinates
 3. internal geocode cache (`geocode_resolutions`)
-4. approved **private** member-address geocoder — adapter exists (Phase 2B.3) but is **disabled by default**; no provider is configured
+4. approved member-address geocoder — two adapters exist (generic private, Phase 2B.3; native Azure Maps, Phase 2B.4) and both are **disabled by default**; no provider is configured
 5. unresolved → manual placement offered
 
 **Phase 2B.3 — private member geocoder boundary (provider-ready, default off).**
