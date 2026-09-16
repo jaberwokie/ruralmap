@@ -504,9 +504,13 @@
   pointer-events: auto;
 }
 
-/* Selected pin visual state — subtle ring + scale */
+/* Selected pin visual state — scale (non-color cue) + high-contrast dual ring.
+   The dark outer ring keeps the selected pin readable on light tiles; the
+   light inner ring keeps it readable on dark/busy tiles. */
 .map-pin-selected {
-  filter: drop-shadow(0 0 4px hsl(var(--ring) / 0.7));
+  filter: drop-shadow(0 0 0 hsl(0 0% 100%))
+          drop-shadow(0 0 2px hsl(0 0% 0% / 0.85))
+          drop-shadow(0 0 5px hsl(var(--ring) / 0.85));
   transform: scale(1.25) !important;
   transform-origin: center bottom;
   z-index: 9999 !important;
