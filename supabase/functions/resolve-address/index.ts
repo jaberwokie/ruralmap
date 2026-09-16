@@ -38,8 +38,13 @@ import {
 import {
   resolveAddress,
   type CachedResolution,
+  type GeocoderPort,
   type ResolverPorts,
 } from './resolver.ts';
+import {
+  createPrivateMemberGeocoder,
+  readMemberGeocoderConfig,
+} from './privateMemberGeocoder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
