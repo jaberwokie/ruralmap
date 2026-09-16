@@ -75,6 +75,7 @@ export type TigerRejectReason =
   | 'unknown_street'
   | 'house_number_out_of_range'
   | 'ambiguous'
+  | 'zip_mismatch'
   | 'reference_data_unavailable';
 
 export type TigerOutcome =
