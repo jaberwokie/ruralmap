@@ -1,23 +1,27 @@
 /**
- * Phase 2B / 2B.1 / 2B.2 — `resolve-address` edge function.
+ * Phase 2B / 2B.1 / 2B.2 / 2B.3 — `resolve-address` edge function.
  *
  * MEMBER-ADDRESS RESOLVER ONLY.
  *
- * Data-boundary rule (Phase 2B.2): a member address may be sent to the Rural
- * Tool's own server boundary, its internal HMAC-keyed geocode authority, and
- * canonical NovumHealth-controlled data — and to nothing else. There is
- * currently NO external provider approved to receive member addresses:
+ * Data-boundary rule: a member address may be sent to the Rural Tool's own
+ * server boundary, its internal HMAC-keyed geocode authority, canonical
+ * NovumHealth-controlled data, and — only once NovumHealth explicitly approves
+ * and configures one — a single PRIVATE, BAA-covered geocoding endpoint. And
+ * to nothing else. Default deployment state:
  *
- *   member_address_external_provider = none_approved
+ *   member_address_external_provider = none_approved (until
+ *   MEMBER_GEOCODER_APPROVED=true plus complete private config is present)
  *
  * Public Nominatim is prohibited (OSMF policy forbids personal/confidential
- * material) and the Census Geocoder has no documented project approval for
- * member data, so both are removed from this pipeline. They remain available
- * for public business/resource geocoding via the dedicated administrative
- * functions (`geocode-address`, `geocode-bulk`, `census-geocode`).
+ * material), the Census Geocoder has no documented project approval for member
+ * data, and Google Maps Platform is not acceptable for PHI/member-address
+ * processing here. All three remain available for public business/resource
+ * geocoding via the dedicated administrative functions (`geocode-address`,
+ * `geocode-bulk`, `census-geocode`) and are refused by the private adapter.
  *
  * Flow: normalize → HMAC lookup key → canonical Rural Tool resource match →
- *       internal authority/cache → unresolved (manual placement offered).
+ *       internal authority/cache → approved private provider (if enabled) →
+ *       unresolved (manual placement offered).
  *
  * Elevated `location_class` values are NOT exposed here: canonical resource
  * maintenance uses the administrative geocoding pathways. Any caller-supplied
@@ -38,8 +42,13 @@ import {
 import {
   resolveAddress,
   type CachedResolution,
+  type GeocoderPort,
   type ResolverPorts,
 } from './resolver.ts';
+import {
+  createPrivateMemberGeocoder,
+  readMemberGeocoderConfig,
+} from './privateMemberGeocoder.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -96,6 +105,25 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
     );
 
+    // ── Approved PRIVATE member geocoder (Phase 2B.3) ────────────────────
+    // Activates ONLY with MEMBER_GEOCODER_APPROVED=true plus complete private
+    // config. Absent that, the chain stays empty and the resolver keeps its
+    // fail-closed `member_geocoder_not_configured` behavior. No public
+    // geocoder (Google, Census, Nominatim, Mapbox, HERE) can be configured
+    // here — the adapter refuses those hosts.
+    const memberGeocoderStatus = readMemberGeocoderConfig({
+      MEMBER_GEOCODER_APPROVED: Deno.env.get('MEMBER_GEOCODER_APPROVED') ?? undefined,
+      MEMBER_GEOCODER_PROVIDER: Deno.env.get('MEMBER_GEOCODER_PROVIDER') ?? undefined,
+      MEMBER_GEOCODER_ENDPOINT: Deno.env.get('MEMBER_GEOCODER_ENDPOINT') ?? undefined,
+      MEMBER_GEOCODER_API_KEY: Deno.env.get('MEMBER_GEOCODER_API_KEY') ?? undefined,
+      MEMBER_GEOCODER_AUTH_HEADER: Deno.env.get('MEMBER_GEOCODER_AUTH_HEADER') ?? undefined,
+      MEMBER_GEOCODER_AUTH_SCHEME: Deno.env.get('MEMBER_GEOCODER_AUTH_SCHEME') ?? undefined,
+      MEMBER_GEOCODER_TIMEOUT_MS: Deno.env.get('MEMBER_GEOCODER_TIMEOUT_MS') ?? undefined,
+    });
+    const memberGeocoders: GeocoderPort[] = memberGeocoderStatus.enabled
+      ? [createPrivateMemberGeocoder(memberGeocoderStatus.config)]
+      : [];
+
     const ports: ResolverPorts = {
       secret,
       // Canonical Rural Tool resource coordinates (see canonicalMatch.ts).
@@ -150,10 +178,12 @@ serve(async (req) => {
           })
           .eq('id', row.id);
       },
-      // member_address_external_provider = none_approved.
+      // Public providers remain prohibited for member addresses:
       // Public Nominatim: prohibited for personal/confidential material.
       // Census Geocoder: no documented project approval for member addresses.
-      geocoders: [],
+      // Google Maps Platform: not acceptable for PHI/member-address processing.
+      // The ONLY populated entry is an approved private provider (above).
+      geocoders: memberGeocoders,
       // Safe metadata only: never the address, never a secret, never a credential.
       logEvent: (event) => {
         console.log(JSON.stringify({ scope: 'geocode', ...event }));

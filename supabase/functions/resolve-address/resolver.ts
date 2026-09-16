@@ -62,7 +62,10 @@ export interface ExternalHit {
 }
 
 export interface GeocoderPort {
-  name: Extract<GeocodeSource, 'nominatim' | 'census' | 'google' | 'known_provider'>;
+  name: Extract<
+    GeocodeSource,
+    'nominatim' | 'census' | 'google' | 'known_provider' | 'private_member_geocoder'
+  >;
   failureCode: GeocodeFailureCode;
   run: (canonical: string, original: string) => Promise<ExternalHit | null>;
 }

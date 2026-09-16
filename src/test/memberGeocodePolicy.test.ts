@@ -34,8 +34,11 @@ describe('member-address resolver sends the address to no external provider', ()
     expect(resolverFn).not.toMatch(/censusPort/);
   });
 
-  it('registers an empty approved-geocoder list', () => {
-    expect(resolverFn).toMatch(/geocoders:\s*\[\]/);
+  it('registers an empty approved-geocoder list unless a private provider is approved', () => {
+    // Phase 2B.3: the only way the list is non-empty is an explicitly approved,
+    // fully configured PRIVATE provider (no public consumer geocoder allowed).
+    expect(resolverFn).toMatch(/memberGeocoderStatus\.enabled\s*\n?\s*\?\s*\[createPrivateMemberGeocoder/);
+    expect(resolverFn).toMatch(/:\s*\[\]/);
   });
 
   it('documents the provider status explicitly', () => {

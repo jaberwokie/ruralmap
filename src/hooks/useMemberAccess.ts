@@ -172,6 +172,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       let serverUnavailable = false;
       let highwayHint = false;
       let geocoderNotConfigured = false;
+      let geocoderFailed = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
@@ -197,6 +198,9 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           geocoderNotConfigured =
             failures.includes('member_geocoder_not_configured') ||
             failures.includes('no_approved_external_provider');
+          // Configured-and-attempted, but the approved private provider errored
+          // or timed out. Distinct from "not configured" and from "not found".
+          geocoderFailed = failures.includes('member_geocoder_failed');
         }
       } catch {
         serverUnavailable = true;
@@ -221,7 +225,9 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
             ? 'Highway address could not be precisely located. Use the map to place the member location manually — click the approximate location along the highway.'
             : geocoderNotConfigured
               ? 'Automatic member address lookup is not configured. Refine the address if needed or click the map to place the member location manually.'
-              : 'Address not found. Refine the address or click the map to place member location.'
+              : geocoderFailed
+                ? 'Automatic address lookup did not complete. Click the map to place the member location manually.'
+                : 'Address not found. Refine the address or click the map to place member location.'
       );
       setManualPlacementMode(true);
     } catch {
