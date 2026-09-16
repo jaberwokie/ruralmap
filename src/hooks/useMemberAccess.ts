@@ -171,8 +171,13 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       // rather than exposing the address to a third-party geocoder.
       let serverUnavailable = false;
       let highwayHint = false;
-      let geocoderNotConfigured = false;
       let geocoderFailed = false;
+      // Phase 2E — real outcomes of the internal Nevada street-range lookup.
+      let ambiguous = false;
+      let outOfRange = false;
+      let outOfState = false;
+      let notStreetLevel = false;
+      let referenceUnavailable = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
