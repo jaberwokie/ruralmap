@@ -91,6 +91,61 @@ describe('deterministic matching', () => {
     if (out.resolved) expect(out.lat).toBeCloseTo(38.526041, 4);
   });
 
+  // Regression — `150 Sixth St, Ely, NV 89301` was pinned outside Ely.
+  it('normalizes spelled-out numbered streets to the same identity as digits', () => {
+    expect(normalizeStreetName('Sixth St').streetKey).toBe(normalizeStreetName('6th St').streetKey);
+    expect(normalizeStreetName('Sixth St').streetKey).toBe('6TH STREET');
+    expect(normalizeStreetName('E First South St').streetKey).toBe('EAST 1ST SOUTH STREET');
+    expect(normalizeStreetName('Twelfth Ave').streetKey).toBe('12TH AVENUE');
+    expect(normalizeStreetName('Twenty First St').streetKey).toBe('21ST STREET');
+    expect(parseMemberAddress('150 Sixth St, Ely, NV 89301').streetKey).toBe('6TH STREET');
+  });
+
+  it('resolves the Ely address through the digit street key with its own ZIP', async () => {
+    const p = ports([
+      candidate({
+        street_key: '6TH STREET', street_core: '6TH', fullname: '6th St',
+        county_fips: '32033', zip: '89301', zip_match: true,
+        from_hn: 100, to_hn: 298, parity: 'E', lat: 39.249197, lng: -114.892101,
+      }),
+    ]);
+    const out = await geocodeMemberAddressLocally(p, '150 Sixth St, Ely, NV 89301');
+    expect(p.matchAddress).toHaveBeenCalledWith(
+      expect.objectContaining({ house: 150, streetKey: '6TH STREET', zip: '89301' }),
+    );
+    expect(out.resolved).toBe(true);
+    if (out.resolved) {
+      expect(out.county_fips).toBe('32033');
+      expect(out.lat).toBeCloseTo(39.249197, 4);
+      expect(out.lng).toBeCloseTo(-114.892101, 4);
+    }
+  });
+
+  it('never falls back statewide when the supplied ZIP matches no candidate', async () => {
+    const p = ports([
+      candidate({ zip: '89422', zip_match: false, county_fips: '32021', lat: 38.394001, lng: -118.111878 }),
+      candidate({ zip: '89835', zip_match: false, county_fips: '32007', lat: 41.116321, lng: -114.970871 }),
+    ]);
+    const out = await geocodeMemberAddressLocally(p, '150 Sixth St, Ely, NV 89301');
+    expect(out).toEqual({ resolved: false, reason: 'zip_mismatch' });
+  });
+
+  it('the same street name in several Nevada towns cannot cross the ZIP boundary', () => {
+    const out = decideTigerMatch(parseMemberAddress('150 6th St, Ely, NV 89301'), [
+      candidate({ zip: '89101', zip_match: false, county_fips: '32003', lat: 36.16, lng: -115.14 }),
+      candidate({ zip: '89801', zip_match: false, county_fips: '32007', lat: 40.83, lng: -115.76 }),
+    ]);
+    expect(out).toEqual({ resolved: false, reason: 'zip_mismatch' });
+  });
+
+  it('refuses ZIP-matching candidates that straddle two counties', () => {
+    const out = decideTigerMatch(parseMemberAddress('150 6th St, Ely, NV 89301'), [
+      candidate({ zip: '89301', zip_match: true, county_fips: '32033', lat: 39.249, lng: -114.892 }),
+      candidate({ zip: '89301', zip_match: true, county_fips: '32011', lat: 39.251, lng: -114.893 }),
+    ]);
+    expect(out).toEqual({ resolved: false, reason: 'ambiguous' });
+  });
+
   it('fails closed when the house number is outside every range', async () => {
     const p = ports([], true); // street known, no range covers the number
     const out = await geocodeMemberAddressLocally(p, '99999 Griswold Dr, Elko, NV 89801');

@@ -66,9 +66,60 @@ const DIRECTIONALS: Record<string, string> = {
 const UNIT_TOKENS =
   /\b(suite|ste|unit|apt|apartment|bldg|building|room|rm|floor|fl|lot|space|spc|trlr|#)\s*[\w-]*/gi;
 
+/**
+ * Ordinal words → digit ordinals, so `Sixth St` and `6th St` produce ONE
+ * street identity. TIGER/Line stores numbered streets both ways ("6th St" in
+ * Ely, "Sixth St" in Austin), and the member typing either spelling must reach
+ * the same key. Deterministic table lookup only — no fuzzy matching.
+ */
+const ORDINAL_WORDS: Record<string, string> = {
+  first: '1st', second: '2nd', third: '3rd', fourth: '4th', fifth: '5th',
+  sixth: '6th', seventh: '7th', eighth: '8th', ninth: '9th', tenth: '10th',
+  eleventh: '11th', twelfth: '12th', twelth: '12th', thirteenth: '13th',
+  fourteenth: '14th', fifteenth: '15th', sixteenth: '16th',
+  seventeenth: '17th', eighteenth: '18th', nineteenth: '19th',
+  twentieth: '20th', thirtieth: '30th', fortieth: '40th', fiftieth: '50th',
+  sixtieth: '60th', seventieth: '70th', eightieth: '80th', ninetieth: '90th',
+  hundredth: '100th',
+};
+
+/** Tens prefixes that can precede a unit ordinal: "twenty first" → 21st. */
+const TENS_WORDS: Record<string, number> = {
+  twenty: 20, thirty: 30, forty: 40, fifty: 50,
+  sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+};
+
+const UNIT_ORDINALS: Record<string, number> = {
+  first: 1, second: 2, third: 3, fourth: 4, fifth: 5,
+  sixth: 6, seventh: 7, eighth: 8, ninth: 9,
+};
+
+const ordinalSuffix = (n: number): string => {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return 'th';
+  return { 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] ?? 'th';
+};
+
+/** Collapse "twenty first" into a single "21st" token before expansion. */
+const foldCompoundOrdinals = (tokens: string[]): string[] => {
+  const out: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const tens = TENS_WORDS[tokens[i]];
+    const unit = UNIT_ORDINALS[tokens[i + 1] ?? ''];
+    if (tens && unit) {
+      const n = tens + unit;
+      out.push(`${n}${ordinalSuffix(n)}`);
+      i++;
+      continue;
+    }
+    out.push(tokens[i]);
+  }
+  return out;
+};
+
 /** Ordinal digits keep a single canonical spelling: 6TH, not SIXTH/6. */
-const normalizeOrdinal = (token: string): string =>
-  /^\d+(st|nd|rd|th)$/.test(token) ? token : token;
+const normalizeOrdinal = (token: string): string => ORDINAL_WORDS[token] ?? token;
+
 
 const tokenize = (input: string): string[] =>
   String(input ?? '')
@@ -99,7 +150,7 @@ export interface StreetKeys {
  * produces the same keys.
  */
 export const normalizeStreetName = (name: string | null | undefined): StreetKeys => {
-  const tokens = tokenize(name ?? '').map(expand);
+  const tokens = foldCompoundOrdinals(tokenize(name ?? '')).map(expand);
   if (tokens.length === 0) return { streetKey: '', streetCore: '' };
 
   const streetKey = tokens.join(' ').toUpperCase();
