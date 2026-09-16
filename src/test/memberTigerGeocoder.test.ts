@@ -164,9 +164,9 @@ describe('precision honesty', () => {
 describe('ZIP+4 normalization still applies', () => {
   it('truncated ZIP+4 forms normalize to the 5-digit ZIP', () => {
     for (const z of ['89801-1', '89801-12', '89801-123']) {
-      expect(normalizeAddress(`1800 Griswold Dr, Elko, NV ${z}`).zip).toBe('89801');
+      expect(canonicalizeAddress(`1800 Griswold Dr, Elko, NV ${z}`).zip).toBe('89801');
     }
-    expect(normalizeAddress('1800 Griswold Dr, Elko, NV 89801-1234').zip).toBe('89801');
+    expect(canonicalizeAddress('1800 Griswold Dr, Elko, NV 89801-1234').zip).toBe('89801');
   });
 
   it('a truncated ZIP+4 resolves identically to the valid ZIP form', async () => {
