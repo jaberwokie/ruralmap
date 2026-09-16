@@ -24,8 +24,11 @@ export const createMemberPinMarker = (
     className: '',
     iconSize: [size, size],
     iconAnchor: [half, size],
+    // Highest-contrast pin on the map: white halo ring under a heavy navy
+    // outline, white body, solid navy core, plus a firm shadow. Size is
+    // unchanged (32px) — the separation comes from the halo, not from scale.
     html: `<div style="position:relative;width:${size}px;height:${size}px;">
-        <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="white" stroke="${navy}" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1px 2px rgba(15,45,92,0.2));position:relative;z-index:1;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5" fill="${navy}"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="white" stroke="${navy}" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.5));position:relative;z-index:1;overflow:visible;"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" fill="hsl(0 0% 100%)" stroke="hsl(0 0% 100%)" stroke-width="5.5"/><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.75" fill="${navy}" stroke="none"/></svg>
       </div>`,
   });
 
