@@ -310,6 +310,23 @@ Adapter rules:
 - Tests: `src/test/memberPrivateGeocoderBoundary.test.ts` (activation gating, public-provider rejection, no browser credential/call, minimal payload, fail-closed validation, cache-first short-circuit, HMAC-keyed provenance, no raw address, Census/basemap isolation).
 - **Remaining external dependency to turn automatic lookup on:** a HIPAA/BAA-covered private geocoding endpoint and token supplied by NovumHealth, saved as the `MEMBER_GEOCODER_*` secrets with `MEMBER_GEOCODER_APPROVED=true`. Nothing else is required in code.
 
+**Phase 2B.4 — native Azure Maps member geocoder (approved-candidate, default off).**
+`supabase/functions/resolve-address/azureMapsMemberGeocoder.ts` is a dedicated, server-only Azure Maps adapter. Azure is the identified enterprise candidate because Azure Maps geocodes server-side and Azure offers HIPAA BAA coverage for in-scope services — but activation stays gated on NovumHealth approval/contract coverage plus a server-side key. It is a **separate explicit provider option**, added instead of loosening the generic adapter's public-host protections, which remain intact.
+
+Activation requires **all** of: `MEMBER_GEOCODER_APPROVED` exactly `true`, `MEMBER_GEOCODER_PROVIDER` exactly `azure_maps`, `AZURE_MAPS_SUBSCRIPTION_KEY` present server-side, and a valid HTTPS Azure host (`atlas.microsoft.com` / `atlas.azure.us`) with a valid `api-version`. Optional overrides: `AZURE_MAPS_ENDPOINT`, `AZURE_MAPS_API_VERSION` (default `2026-01-01`), `MEMBER_GEOCODER_TIMEOUT_MS`. `MEMBER_GEOCODER_API_KEY` is deliberately **not** repurposed — the Azure credential has its own dedicated name. When Azure is active it is the single member provider; otherwise the generic private adapter applies; otherwise the geocoder list stays empty and `member_geocoder_not_configured` behavior is unchanged.
+
+Adapter rules:
+
+- Transport is `POST https://atlas.microsoft.com/geocode:batch?api-version=<version>` — the member address travels in the **request body only**, never in a URL or query string. `api-version` is the only query parameter. The credential travels in the **`subscription-key` header only**, never in the URL or body. An endpoint carrying any query string is refused so a credential cannot be smuggled in.
+- The body is exactly one batch item: `{ query: <canonical address>, top: 1, countryRegion: 'US' }`. No member name, member ID, insurance, diagnosis, program, session, or user identity.
+- Nothing is logged by the module — not the address, body, credential, endpoint, or Azure's returned address text. The module contains no `console.*` call.
+- Only minimal coordinate/quality fields are parsed. Azure's formatted address is **discarded**. Fail closed on non-2xx, unparseable JSON, missing/multiple batch items, per-item error, no features, non-numeric or out-of-range coordinates, the `0,0` sentinel, `Low` confidence, an `Ambiguous` match code, and country/state/region-level result classes.
+- **Precision is reported honestly.** `rooftop` requires an address/house-number-level Azure class **with** a house number; anything coarser stays `approximate`. The resolver's `is_approximate` now requires both a street-level winning query **and** a rooftop-level provider result, so a locality-only Azure result for a numbered street address is never presented as a precise pin. Wrong pin remains worse than no pin.
+- Nevada bounds validation stays owned by `resolver.ts`; an out-of-state Azure coordinate is rejected as `member_geocoder_failed`.
+- Caching is unchanged: success is stored only under the existing HMAC `member_address` lookup key, with provenance `geocode_source = 'private_member_geocoder'` and no address text. Manual/locked internal coordinates and canonical resource matches short-circuit **before** any Azure call.
+- Tests: `src/test/memberAzureMapsGeocoder.test.ts` (approval/provider/key gate, header-only credential, body-only address, single-item batch, no identity fields, valid response accepted, malformed/no-result/non-2xx/timeout fail-closed, out-of-Nevada rejection, locality-not-mislabeled-as-rooftop, cache/manual/locked short-circuit, generic-adapter host protections retained, Census and OSM basemap isolation).
+- **Remaining external dependency for the Azure path:** NovumHealth approval/BAA coverage confirmation plus an Azure Maps key saved as `AZURE_MAPS_SUBSCRIPTION_KEY`, with `MEMBER_GEOCODER_PROVIDER=azure_maps` and `MEMBER_GEOCODER_APPROVED=true`. No Azure credential exists in this project today. Nothing else is required in code.
+
 Rules:
 
 - **Hard privacy boundary.** `src/hooks/useMemberAccess.ts` contains no external geocoder call and no raw `fetch` of the address. If the server boundary is unreachable the path **fails closed** into manual map placement.
