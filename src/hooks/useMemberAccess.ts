@@ -198,6 +198,9 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
           geocoderNotConfigured =
             failures.includes('member_geocoder_not_configured') ||
             failures.includes('no_approved_external_provider');
+          // Configured-and-attempted, but the approved private provider errored
+          // or timed out. Distinct from "not configured" and from "not found".
+          geocoderFailed = failures.includes('member_geocoder_failed');
         }
       } catch {
         serverUnavailable = true;
