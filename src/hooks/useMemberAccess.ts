@@ -172,6 +172,7 @@ export const useMemberAccess = (facilities: Facility[]): UseMemberAccessReturn =
       let serverUnavailable = false;
       let highwayHint = false;
       let geocoderNotConfigured = false;
+      let geocoderFailed = false;
       try {
         const { data: internal, error: internalError } = await supabase.functions.invoke(
           'resolve-address',
