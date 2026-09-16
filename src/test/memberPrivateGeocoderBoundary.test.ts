@@ -367,7 +367,7 @@ describe('resource geocoding and the basemap remain untouched', () => {
     const census = readFileSync('supabase/functions/_shared/censusResourceGeocoder.ts', 'utf8');
     expect(census).toMatch(/geocoding\.geo\.census\.gov/);
     expect(census).not.toMatch(/MEMBER_GEOCODER/);
-    expect(census).not.toMatch(/member_address/);
+    expect(census).not.toMatch(/createPrivateMemberGeocoder/);
   });
 
   it('does not let the member path invoke the resource geocoding functions', () => {
