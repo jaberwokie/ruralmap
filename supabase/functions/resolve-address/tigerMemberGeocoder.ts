@@ -144,10 +144,26 @@ export const decideTigerMatch = (
   if (usable.length === 0) return { resolved: false, reason: 'unknown_street' };
 
   // Narrow deterministically: ZIP first, then exact street identity.
-  const zipPool = parsed.zip ? usable.filter((c) => c.zip_match) : [];
-  let pool = zipPool.length > 0 ? zipPool : usable;
+  //
+  // FAIL CLOSED on ZIP: when the member supplied a ZIP, a candidate must
+  // belong to it. There is NO statewide fallback to a same-named street in
+  // another town — that is how "150 Sixth St, Ely, NV 89301" could land
+  // hundreds of miles away. A wrong pin is worse than no pin.
+  let pool = usable;
+  if (parsed.zip) {
+    const zipPool = usable.filter((c) => c.zip_match);
+    if (zipPool.length === 0) return { resolved: false, reason: 'zip_mismatch' };
+    pool = zipPool;
+  }
   const exact = pool.filter((c) => c.exact_key);
   if (exact.length > 0) pool = exact;
+
+  // Defensive county check: candidates surviving the ZIP filter must all sit
+  // in one county. Crossing a county line means the evidence is not
+  // deterministic, whatever the coordinate spread says.
+  if (new Set(pool.map((c) => c.county_fips)).size > 1) {
+    return { resolved: false, reason: 'ambiguous' };
+  }
 
   const first = pool[0];
   const spread = pool.reduce(
