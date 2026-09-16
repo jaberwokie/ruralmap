@@ -242,7 +242,8 @@ serve(async (req) => {
       // Public Nominatim: prohibited for personal/confidential material.
       // Census Geocoder: no documented project approval for member addresses.
       // Google Maps Platform: not acceptable for PHI/member-address processing.
-      // The ONLY populated entry is an approved private provider (above).
+      // The chain is the INTERNAL Nevada TIGER geocoder, optionally followed by
+      // an approved private provider. No entry can be a public geocoder.
       geocoders: memberGeocoders,
       // Safe metadata only: never the address, never a secret, never a credential.
       logEvent: (event) => {
