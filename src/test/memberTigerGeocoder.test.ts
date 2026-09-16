@@ -17,7 +17,7 @@ import {
 } from '../../supabase/functions/resolve-address/tigerMemberGeocoder.ts';
 import { parseMemberAddress, normalizeStreetName } from '../../supabase/functions/_shared/tigerStreetKey.ts';
 import { resolveAddress } from '../../supabase/functions/resolve-address/resolver.ts';
-import { normalizeAddress } from '../../supabase/functions/_shared/geocodeNormalize.ts';
+import { canonicalizeAddress } from '../../supabase/functions/_shared/geocodeNormalize.ts';
 
 const src = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 

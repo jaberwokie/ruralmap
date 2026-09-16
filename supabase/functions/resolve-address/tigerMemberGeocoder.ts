@@ -226,7 +226,7 @@ export const createTigerMemberGeocoder = (ports: TigerPorts): GeocoderPort => {
     resolveFailureCode: () => lastFailure,
     run: async (_canonical: string, original: string): Promise<ExternalHit | null> => {
       const outcome = await geocodeMemberAddressLocally(ports, original);
-      if (!outcome.resolved) {
+      if (outcome.resolved === false) {
         lastFailure = TIGER_FAILURE_CODES[outcome.reason];
         return null;
       }
