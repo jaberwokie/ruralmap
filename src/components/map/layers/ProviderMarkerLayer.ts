@@ -98,8 +98,8 @@ export function renderProviderMarkers({
     // Only applies when both the Provider Locations layer and the Tier 1
     // Highlight toggle are on. Never adds a new marker, never replaces the
     // pin color, never affects hospitals.
-    const isTier1Clinic = facility.type === 'clinic' && facility.tier === 'tier1';
-    const showTier1Ring = isTier1Clinic && showTier1Highlight;
+    const isTier1Clinic = false;
+    const showTier1Ring = false;
     const markerHtml = showTier1Ring
       ? `<div class="tier1-ring" aria-label="Tier 1 Provider">${baseMarkerHtml}</div>`
       : baseMarkerHtml;
@@ -164,10 +164,7 @@ export function renderProviderMarkers({
       }
     });
 
-    const classification = getFacilityClassification(facility);
-    const typeLabel = classification === 'clinic_provider' && facility.tier === 'tier1'
-      ? 'Clinic / Community Provider'
-      : getFacilityTypeLabel(facility);
+    const typeLabel = getFacilityTypeLabel(facility);
 
     const claimsMetrics = getProviderClaimsMetrics(facility);
      // PUBLIC_SAFE_MODE: hide claims-derived metrics (members attributed,
