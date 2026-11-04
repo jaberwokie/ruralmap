@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { subscribeRuralServicesChanged } from '@/utils/verifiedRecordsBus';
 import { RuralService } from '@/data/rural-services';
-import { enrichedRuralServices } from '@/data/enriched-rural-services';
+import { ruralServices as rawRuralServices } from '@/data/rural-services';
 import { listRuralServicesFromDb } from '@/utils/staticDataStore';
 
 export const useRuralServiceData = () => {
@@ -23,7 +23,8 @@ export const useRuralServiceData = () => {
     });
   }, []);
 
-  const ruralServices = dbServices.length > 0 ? dbServices : enrichedRuralServices;
+  // Keep published resource locations, not inherited payer/staffing enrichments.
+  const ruralServices = (dbServices.length > 0 ? dbServices : rawRuralServices).map(({ operational, operationalServiceClass, ...location }) => location);
 
   return { ruralServices, dbLoaded };
 };
