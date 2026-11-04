@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Independent deployment credentials (never commit environment settings)
+.env
+.env.*
+!.env.example
