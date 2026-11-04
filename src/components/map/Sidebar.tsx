@@ -873,7 +873,7 @@ const Sidebar = ({
               behavioralHealth: true,
               services: true,
               tribalNations: true,
-              tier1Highlight: true,
+              tier1Highlight: false,
             })),
           },
         ];
@@ -1022,25 +1022,7 @@ const Sidebar = ({
                               dependency: highlight has no visible effect when
                               Provider Locations is OFF.
                             */}
-                            {key === 'serviceLocations' && (() => {
-                              const tier1Count = allFacilities.filter(f => f.tier === 'tier1').length;
-                              const providersOff = !layers.serviceLocations;
-                              return (
-                                <div className="ml-5 mt-0.5">
-                                  {renderLayerToggleRow({
-                                    label: 'Tier 1 Providers',
-                                    icon: Circle,
-                                    iconClassName: 'text-tier1 translate-x-[5px]',
-                                    checked: layers.tier1Highlight,
-                                    onCheckedChange: () => onToggleLayer('tier1Highlight'),
-                                    subtitle: providersOff
-                                      ? `${tier1Count} Tier 1 · shown alone when Provider Access Infrastructure is off`
-                                      : `${tier1Count} Tier 1 · highlighted among provider access points`,
-                                    helpKey: 'tier1Providers',
-                                  })}
-                                </div>
-                              );
-                            })()}
+                            {/* Claims-derived Tier 1 designation intentionally excluded from independent edition. */}
                           </div>
                         );
                       })}
