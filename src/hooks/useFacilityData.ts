@@ -52,7 +52,8 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
   const facilities = useMemo(
     () => {
       const base = dbFacilities.length > 0 ? dbFacilities : defaultFacilities;
-      return enrichFacilities([...base, ...importedFacilities]);
+      // Retain locations while excluding inherited operational and payer fields.
+      return [...base, ...importedFacilities].map(({ operational, tier, volume, ...location }) => location);
     },
     [dbFacilities, importedFacilities],
   );
