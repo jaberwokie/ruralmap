@@ -5,8 +5,6 @@ import { getFacilityCoordinateSourceLabel, buildFacilityValidationIndex } from '
 
 type FacilityValidationIndex = ReturnType<typeof buildFacilityValidationIndex>;
 import { getFacilityUtilization, getScaledPinSize } from '@/utils/utilizationAggregation';
-import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
-import { isPublicSafeModeActive } from '@/hooks/usePublicSafeMode';
 import type { MapEntity } from '@/types/entities';
 
 export type ProviderPointMarkerKind =
@@ -166,14 +164,6 @@ export function renderProviderMarkers({
 
     const typeLabel = getFacilityTypeLabel(facility);
 
-    const claimsMetrics = getProviderClaimsMetrics(facility);
-     // PUBLIC_SAFE_MODE: hide claims-derived metrics (members attributed,
-     // penetration) from hover tooltips.
-     const publicMode = isPublicSafeModeActive();
-     const claimsDetail = (!publicMode && claimsMetrics)
-       ? `Members: ${claimsMetrics.totalMembersAttributed.toLocaleString()} · Seen: ${claimsMetrics.membersSeen.toLocaleString()} · Penetration: ${(claimsMetrics.visitPenetrationRate * 100).toFixed(1)}%`
-       : undefined;
-
     marker.on('mouseover', () => {
       const distInfo = getMemberDistanceInfo(facility.lat, facility.lng);
       markerHoverPreviewRef.current({
@@ -183,8 +173,6 @@ export function renderProviderMarkers({
         detail: typeLabel,
         extraHtml: [
           `Data Confidence: ${dataConfidence}`,
-          !publicMode && showUtilization && util ? `Members: ${util.totalMembers.toLocaleString()} · Visits: ${util.totalVisits.toLocaleString()} · Visits/Member: ${util.visitsPerMember}` : undefined,
-          claimsDetail,
         ].filter(Boolean).join('\n'),
         ...distInfo,
       });
