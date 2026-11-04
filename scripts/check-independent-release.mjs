@@ -44,7 +44,7 @@ for (const table of ['facilities', 'rural_services']) {
   failIf(!cleanSchema.includes(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;`), `Missing RLS for ${table}`);
   failIf(!cleanSchema.includes(`ALTER TABLE public.${table} FORCE ROW LEVEL SECURITY;`), `Missing enforced RLS for ${table}`);
 }
-failIf((cleanSchema.match(/USING \\(publication_status = 'approved'\\)/g) ?? []).length !== 2,
+failIf((cleanSchema.match(/USING \(publication_status = 'approved'\)/g) ?? []).length !== 2,
   'Independent schema must allow public reads only for approved records');
 const fallbackPolicy = read('src/lib/independentResourcePolicy.ts');
 failIf(!fallbackPolicy.includes('return isDevelopment && explicitOptIn'), 'Unreviewed static records are not limited to local opt-in');
