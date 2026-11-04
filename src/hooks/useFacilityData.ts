@@ -13,6 +13,7 @@ import {
 } from '@/utils/importedFacilitiesStore';
 import { listFacilitiesFromDb } from '@/utils/staticDataStore';
 import type { Filters } from '@/types/filters';
+import { allowLegacyStaticPreview } from '@/lib/independentResourcePolicy';
 import {
   matchesPsychiatryFilter, matchesVerifiedPsychiatry, matchesAcceptingPsych, matchesTelepsychiatry,
   matchesInpatientFilter, matchesVerifiedInpatient, matchesPsychiatricInpatient,
@@ -51,7 +52,9 @@ export const useFacilityData = (filters: Filters): UseFacilityDataReturn => {
 
   const facilities = useMemo(
     () => {
-      const base = dbFacilities.length > 0 ? dbFacilities : defaultFacilities;
+      const base = dbFacilities.length > 0
+        ? dbFacilities
+        : (allowLegacyStaticPreview(import.meta.env.DEV, import.meta.env.VITE_ENABLE_UNREVIEWED_DATA_PREVIEW) ? defaultFacilities : []);
       // Retain locations while excluding inherited operational and payer fields.
       return [...base, ...importedFacilities].map(({ operational, tier, volume, ...location }) => location);
     },
