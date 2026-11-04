@@ -19,11 +19,8 @@
 import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 import { getCountyForLocation } from '@/utils/countyLookup';
-import { getLoadStatus, LOAD_STATUS_LABELS } from '@/data/fte-capacity';
 import { checkHighwayAccess } from '@/utils/highwayProximity';
 import { mobilityManagers } from '@/data/mobility-managers';
-import { computeFieldResponseStrain, getCountyReachShape } from '@/utils/fieldResponseStrain';
-import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 import { isNearNevadaPlace } from '@/utils/nevadaPlaceNameValidation';
 import { findNeed } from './decisionAssistTaxonomy';
 import type {
@@ -231,12 +228,6 @@ export const deriveDecisionAssist = (
 
   const { member, facilities, services } = ctx;
   const county = getCountyForLocation(member.lat, member.lng);
-  // Site-based strain: use member point, not whole-county FTE assignment.
-  // County Discontinuity: mixed/large counties (e.g. Nye) cannot be summarised by one anchor FTE.
-  const strain = computeFieldResponseStrain(member, ACTIVE_COVERAGE_RADIUS_KM);
-  const fte = strain?.responder ?? null;
-  const fteLoad = fte ? getLoadStatus(fte.currentLoad, fte.capacity) : null;
-  const isRemoteOnly = !!strain && strain.responder === null;
   const highway = checkHighwayAccess(member.lat, member.lng);
 
   // Build candidates
@@ -283,47 +274,25 @@ export const deriveDecisionAssist = (
   const primaryTargets = allCandidates.slice(0, 3);
   const nearestGeo = allCandidates.find(t => t.distanceMi !== null);
 
-  // Confidence
-  let confidence: Confidence;
-  if (need.hotline) {
-    confidence = 'high'; // hotline always available
-  } else if (!nearestGeo) {
-    confidence = 'low';
-  } else if (
-    (nearestGeo.tier === 'Local Access' || nearestGeo.tier === 'Managed Access') &&
-    (!fteLoad || fteLoad !== 'over')
-  ) {
-    confidence = 'high';
-  } else if (nearestGeo.tier === 'High Friction' || fteLoad === 'near') {
-    confidence = 'medium';
-  } else {
-    confidence = 'low';
-  }
+  // Geographic proximity can support a routing suggestion but does not
+  // establish staffing, payer participation, admission or availability.
+  const confidence: Confidence = need.hotline
+    ? 'high'
+    : !nearestGeo
+      ? 'low'
+      : (nearestGeo.tier === 'Local Access' || nearestGeo.tier === 'Managed Access')
+        ? 'medium'
+        : 'low';
 
-  // County Discontinuity detection (e.g. Nye): one anchor cannot stand for whole county.
-  const reach = county ? getCountyReachShape(county, ACTIVE_COVERAGE_RADIUS_KM) : null;
-  const isMixedCounty = !!reach?.isMixed;
-
-  // Constraint — single short reason, no duplication.
   let constraint: string | null = null;
-  if (isRemoteOnly) {
-    constraint = 'Outside field FTE reach';
-  } else if (isMixedCounty) {
-    constraint = 'Field coverage varies by location within county';
-  } else if (strain && strain.coverage === 'strained') {
-    constraint = 'Field capacity strained';
-  } else if (fteLoad === 'over') {
-    constraint = 'Field capacity at limit';
-  } else if (fteLoad === 'near') {
-    constraint = 'Field capacity constrained';
-  } else if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
-    constraint = 'No in-network record for this need';
+  if (!nearestGeo && !need.hotline && !need.preferMobilityManager) {
+    constraint = 'No matching resource location found; availability unverified';
   } else if (nearestGeo?.tier === 'Non-Viable') {
-    constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — non-viable`;
+    constraint = `Nearest identified option ${nearestGeo.distanceMi} mi away — verify travel feasibility`;
   } else if (nearestGeo?.tier === 'High Friction') {
-    constraint = `Nearest in-person option ${nearestGeo.distanceMi} mi — confirm transport`;
+    constraint = `Nearest identified option ${nearestGeo.distanceMi} mi away — confirm transportation`;
   } else if (!highway.hasAccess && nearestGeo && (nearestGeo.distanceMi ?? 0) > 10) {
-    constraint = 'Off major highway — coordinate transport';
+    constraint = 'Off major highway — coordinate transportation';
   }
 
   // Order of operations
@@ -339,7 +308,7 @@ export const deriveDecisionAssist = (
       step: n++,
       action: mmTarget
         ? `Contact ${mmTarget.name} to coordinate transportation.`
-        : 'No county Mobility Manager assigned — escalate to NBH coordination.',
+        : 'No county Mobility Manager listed — verify local transportation coordination.',
     });
   }
 
@@ -355,75 +324,32 @@ export const deriveDecisionAssist = (
     steps.push({ step: n++, action: 'Confirm transportation, hours, and acceptance before scheduling.' });
   }
 
-  if (isRemoteOnly) {
-    steps.push({
-      step: n++,
-      action: 'No field response available at member location — coordinate remotely; consider scheduled outreach or reallocation if recurring need.',
-    });
-  } else if (strain && strain.coverage === 'strained' && strain.responder) {
-    const anchor = strain.responder.anchorSite?.name ?? strain.responder.label;
-    steps.push({
-      step: n++,
-      action: `Field response from ${anchor} is strained (~${strain.oneWayMi} mi) — schedule outreach or use alternative routing.`,
-    });
-  } else if (fteLoad && fteLoad !== 'available' && fte) {
-    steps.push({
-      step: n++,
-      action: `${fte.label}: ${LOAD_STATUS_LABELS[fteLoad]} — coordinate handoff accordingly.`,
-    });
-  }
-
   if (steps.length === 0) {
     steps.push({ step: n++, action: need.fallbackAction });
   }
-  steps.push({ step: n++, action: 'Document outcome in CHW notes.' });
+  steps.push({ step: n++, action: 'Document the referral outcome using the receiving organization's approved process.' });
 
   const nextStaffAction = steps[0].action;
 
-  // ── Tightened Primary / Backup ─────────────────────────────────────────
-  // Priority order: hotline → mobility manager → remote-only → mixed county
-  // → strained field → anchored field → nearest in-person → fallback.
+  // Resource-first output: never claim that partner staffing or payer networks exist.
   let primary: string;
   let backup: string | null = null;
-
   const firstFacilityOrService = primaryTargets.find(t => t.kind === 'facility' || t.kind === 'service');
-  const anchorName = strain?.responder
-    ? (strain.responder.anchorSite?.name ?? strain.responder.label)
-    : null;
 
   if (need.hotline) {
-    primary = `Connect member to ${need.hotline.name} (${need.hotline.line})`;
+    primary = `Contact ${need.hotline.name} (${need.hotline.line})`;
     backup = firstFacilityOrService
-      ? `Refer to ${firstFacilityOrService.name} (${firstFacilityOrService.distanceMi} mi)`
+      ? `Check ${firstFacilityOrService.name} (${firstFacilityOrService.distanceMi} mi) as a resource option`
       : null;
   } else if (need.preferMobilityManager) {
     const mmTarget = primaryTargets.find(t => t.kind === 'mobility_manager');
-    primary = mmTarget
-      ? `Contact ${mmTarget.name}`
-      : 'Escalate to NBH coordination — no county Mobility Manager';
-    backup = null;
-  } else if (isRemoteOnly) {
-    primary = 'Remote coordination';
-    backup = 'Schedule outreach if feasible';
-  } else if (isMixedCounty) {
-    primary = 'Use member location to determine responder';
-    backup = 'Remote coordination if outside local field zone';
-  } else if (strain && strain.coverage === 'strained' && anchorName) {
-    primary = `Route to ${anchorName}`;
-    backup = 'Schedule outreach within 24–48 hours';
-  } else if (anchorName) {
-    primary = `Route to ${anchorName} for same-day field response`;
-    backup = (fteLoad === 'near' || fteLoad === 'over')
-      ? 'Schedule outreach within 24–48 hours'
-      : null;
+    primary = mmTarget ? `Contact ${mmTarget.name}` : 'Verify available county transportation coordination';
   } else if (firstFacilityOrService) {
-    primary = `Refer to ${firstFacilityOrService.name} (${firstFacilityOrService.distanceMi} mi)`;
-    backup = nearestGeo?.tier === 'High Friction' || nearestGeo?.tier === 'Non-Viable'
-      ? 'Confirm transport before scheduling'
-      : null;
+    primary = `Verify services and availability at ${firstFacilityOrService.name} (${firstFacilityOrService.distanceMi} mi)`;
+    backup = 'Confirm eligibility, transportation and referral requirements before scheduling';
   } else {
     primary = need.fallbackAction;
-    backup = null;
+    backup = 'Verify alternatives directly; no receiving provider is confirmed';
   }
 
   return {
