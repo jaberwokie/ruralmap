@@ -87,6 +87,8 @@ export const useMapLayers = (): UseMapLayersReturn => {
 
   const toggleLayer = useCallback((layer: keyof LayerState) => {
     setLayers(prev => {
+      const prohibited = new Set<keyof LayerState>(['operationalCoverage', 'fteCapacity', 'utilizationIntensity', 'engagementGap', 'memberDemandZip', 'countyUtilization', 'providerUtilizationReach', 'tribalUtilization']);
+      if (prohibited.has(layer)) return prev;
       const next = { ...prev, [layer]: !prev[layer] };
       logToggleDiagnostic(layer, next[layer]);
       return next;
@@ -110,7 +112,7 @@ export const useMapLayers = (): UseMapLayersReturn => {
   }), [layers, coverageRadius, coverageGaps]);
 
   const restore = useCallback((snap: { layers: LayerState; coverageRadius: boolean; coverageGaps: boolean }) => {
-    setLayers(snap.layers);
+    setLayers({ ...snap.layers, operationalCoverage: false, fteCapacity: false, utilizationIntensity: false, engagementGap: false, memberDemandZip: false, countyUtilization: false, providerUtilizationReach: false, tribalUtilization: false });
     setCoverageRadiusRaw(snap.coverageRadius);
     setCoverageGapsRaw(snap.coverageGaps);
   }, []);
