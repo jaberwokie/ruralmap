@@ -5,6 +5,8 @@
 import { describe, it, expect } from 'vitest';
 import { fteCapacityData } from '@/data/fte-capacity';
 import { defaultFacilities } from '@/data/facilities';
+import { operationalTags } from '@/data/operational-metadata';
+import { COVERAGE_TYPE_LABELS, COVERAGE_TYPE_DESCRIPTIONS } from '@/data/operational-coverage';
 import { memberVolumeData } from '@/data/member-volume';
 import { engagedMemberVolumeData } from '@/data/engaged-member-volume';
 import { providerUtilizationData } from '@/data/provider-utilization';
@@ -15,6 +17,20 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 describe('independent implementation — staffing and payer isolation', () => {
+  it('has no inherited Medicaid verification or enrollment decisions', () => {
+    expect(operationalTags).toEqual([]);
+  });
+
+  it('never promises universal telehealth or same-day field access', () => {
+    expect(Object.values(COVERAGE_TYPE_LABELS).join(' ')).not.toMatch(/Same-day|Telehealth \\/ Remote Support/i);
+    expect(Object.values(COVERAGE_TYPE_DESCRIPTIONS).join(' ')).not.toMatch(/available statewide|same-day in-person response/i);
+  });
+
+  it('does not publish a 100% remote staffing claim in the county panel', () => {
+    const panel = readFileSync(resolve(__dirname, '../components/map/CoverageDetailPanel.tsx'), 'utf8');
+    const badgeSection = panel.split('/** Capacity Status section for county panel */')[0];
+    expect(badgeSection).not.toMatch(/Telehealth \\/ Remote<\\/span>|100%<\\/span>/);
+  });
   it('retains previously listed clinic location pins without claims ranking attributes', () => {
     const formerRankedClinics = defaultFacilities.filter(f => /^t[0-9]+$/.test(f.id));
     expect(formerRankedClinics).toHaveLength(15);
