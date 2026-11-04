@@ -3,6 +3,7 @@ import { subscribeRuralServicesChanged } from '@/utils/verifiedRecordsBus';
 import { RuralService } from '@/data/rural-services';
 import { ruralServices as rawRuralServices } from '@/data/rural-services';
 import { listRuralServicesFromDb } from '@/utils/staticDataStore';
+import { allowLegacyStaticPreview } from '@/lib/independentResourcePolicy';
 
 export const useRuralServiceData = () => {
   const [dbServices, setDbServices] = useState<RuralService[]>([]);
@@ -24,7 +25,9 @@ export const useRuralServiceData = () => {
   }, []);
 
   // Keep published resource locations, not inherited payer/staffing enrichments.
-  const ruralServices = (dbServices.length > 0 ? dbServices : rawRuralServices).map(({ operational, operationalServiceClass, ...location }) => location);
+  const fallback = allowLegacyStaticPreview(import.meta.env.DEV, import.meta.env.VITE_ENABLE_UNREVIEWED_DATA_PREVIEW)
+    ? rawRuralServices : [];
+  const ruralServices = (dbServices.length > 0 ? dbServices : fallback).map(({ operational, operationalServiceClass, ...location }) => location);
 
   return { ruralServices, dbLoaded };
 };
