@@ -26,6 +26,10 @@ for (const path of forbiddenFiles) {
 }
 const facilities = read('src/data/facilities.ts');
 failIf(/\bvolume:\s*\d+\s*,\s*tier:\s*['"]tier1['"]/.test(facilities), 'Claims-derived provider tier/volume rows remain');
+const operational = read('src/data/operational-metadata.ts');
+failIf(!/export const operationalTags: OperationalTag\[\] = \[\];/.test(operational), 'Legacy Medicaid enrollment verification rows remain');
+const coverageLabels = read('src/data/operational-coverage.ts');
+failIf(/available statewide|same-day in-person response approximation/.test(coverageLabels), 'Unverified statewide telehealth or field-response claim remains');
 const originalProject = 'wewqlnghxffinngxolor';
 const backendConfig = read('supabase/config.toml');
 failIf(backendConfig.includes(originalProject), 'Original Supabase project configured');
