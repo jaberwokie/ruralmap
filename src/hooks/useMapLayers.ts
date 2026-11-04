@@ -28,7 +28,6 @@ const DEFAULT_LAYERS: LayerState = {
   countyUtilization: false,
   providerUtilizationReach: false,
   tribalUtilization: false,
-  sshpCatchments: false,
 };
 
 const DEFAULT_COVERAGE: CoverageState = {
