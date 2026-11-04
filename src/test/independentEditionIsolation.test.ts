@@ -22,14 +22,15 @@ describe('independent implementation — staffing and payer isolation', () => {
   });
 
   it('never promises universal telehealth or same-day field access', () => {
-    expect(Object.values(COVERAGE_TYPE_LABELS).join(' ')).not.toMatch(/Same-day|Telehealth \\/ Remote Support/i);
+    expect(Object.values(COVERAGE_TYPE_LABELS).join(' ')).not.toContain('Same-day');
     expect(Object.values(COVERAGE_TYPE_DESCRIPTIONS).join(' ')).not.toMatch(/available statewide|same-day in-person response/i);
   });
 
   it('does not publish a 100% remote staffing claim in the county panel', () => {
     const panel = readFileSync(resolve(__dirname, '../components/map/CoverageDetailPanel.tsx'), 'utf8');
     const badgeSection = panel.split('/** Capacity Status section for county panel */')[0];
-    expect(badgeSection).not.toMatch(/Telehealth \\/ Remote<\\/span>|100%<\\/span>/);
+    expect(badgeSection).not.toContain('Telehealth / Remote</span>');
+    expect(badgeSection).not.toContain('100%</span>');
   });
   it('retains previously listed clinic location pins without claims ranking attributes', () => {
     const formerRankedClinics = defaultFacilities.filter(f => /^t[0-9]+$/.test(f.id));
