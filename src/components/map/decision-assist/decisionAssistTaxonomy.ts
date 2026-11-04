@@ -163,7 +163,7 @@ export const NEEDS: NeedDef[] = [
     id: 'case_mgmt', label: 'Case management', domain: 'behavioral',
     facilityMatch: () => [],
     serviceMatch: byCategory(['Coordinated Entry', 'Family Services']),
-    fallbackAction: 'Review local resources and coordinate with the receiving organization's authorized staff.',
+    fallbackAction: "Review local resources and coordinate with the receiving organization's authorized staff.",
     pathway: 'Case management',
   },
   {
