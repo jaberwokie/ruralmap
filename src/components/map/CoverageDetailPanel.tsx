@@ -1716,14 +1716,14 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       </DetailSection>
 
       {/* Member Volume */}
-      {!isPublicSafe && (
+      {false && !isPublicSafe && (
         <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
           <MemberVolumeSection county={county} />
         </DetailSection>
       )}
 
-      {/* Utilization & Engagement */}
-      {hasUtilization && !isPublicSafe && (
+      {/* Payer utilization/engagement disabled in independent edition */}
+      {false && hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
