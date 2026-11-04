@@ -1,16 +1,5 @@
-/**
- * EngagementOwnershipBlock
- *
- * Display-only ownership summary derived from FTE field coverage.
- * Two states (no third "No CHW Coverage" state):
- *   - Primary CHW Coverage  → county has at least one field FTE (hubLocation !== null)
- *   - Remote CHW Coverage   → county has no field FTE; remote CHW owns telehealth
- *
- * Does NOT change scoring, layers, filters, or assignment logic.
- */
-
-import { CheckCircle2, AlertTriangle, Headphones } from 'lucide-react';
-import { getEngagementOwnership, type MemberPointContext } from '@/utils/engagementOwnership';
+/** No organization-specific response staffing is included in the independent edition. */
+import type { MemberPointContext } from '@/utils/engagementOwnership';
 
 interface EngagementOwnershipBlockProps {
   county: string | null | undefined;
