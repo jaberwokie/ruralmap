@@ -54,9 +54,4 @@ export interface DecisionAssistResult {
   primary: string;
   /** Optional backup line. Null when none needed. */
   backup: string | null;
-  /**
-   * Informational SSHP payer-pathway context for this member's county.
-   * NON-SCORING. Never alters tier, distance, primary, backup, or constraint.
-   */
-  payerPathwayContext?: string | null;
 }
