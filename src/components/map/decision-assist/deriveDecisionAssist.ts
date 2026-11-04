@@ -8,7 +8,7 @@
  *   reuses the established 10/25/40 mi access tiers.
  * - Wraps existing helpers only:
  *     - getCountyForLocation
- *     - getFTEForCounty + getLoadStatus
+ *     - provider locations and independently verifiable geographic context
  *     - checkHighwayAccess
  *     - mobilityManagers (county lookup, never rendered as a map pin)
  *     - taxonomy predicates (facilityMatch / serviceMatch)
