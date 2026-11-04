@@ -327,7 +327,7 @@ export const deriveDecisionAssist = (
   if (steps.length === 0) {
     steps.push({ step: n++, action: need.fallbackAction });
   }
-  steps.push({ step: n++, action: 'Document the referral outcome using the receiving organization's approved process.' });
+  steps.push({ step: n++, action: "Document the referral outcome using the receiving organization's approved process." });
 
   const nextStaffAction = steps[0].action;
 
