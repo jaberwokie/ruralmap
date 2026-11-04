@@ -63,7 +63,6 @@ import { getDriveEstimate } from '@/utils/driveEstimate';
 import { getProviderAccessTierByKm } from '@/utils/providerAccessTiers';
 import MemberAccessSearch from '@/components/map/MemberAccessSearch';
 import type { MemberLocation, MemberAccessAnalysis } from '@/hooks/useMemberAccess';
-import { getProviderClaimsMetrics } from '@/utils/providerClaimsMetrics';
 import { tribalNations, ensureTribalBoundaries, type TribalNation } from '@/data/tribal-nations';
 import { railCorridors, railStations } from '@/data/rail-corridors';
 import { localTransitZones } from '@/data/local-transit-zones';
