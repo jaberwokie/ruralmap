@@ -13,8 +13,8 @@
 
 import type { Facility } from '@/data/facilities';
 
-const STORAGE_KEY = 'nbh_imported_facilities_v1';
-const EVENT_NAME = 'nbh:imported-facilities-changed';
+const STORAGE_KEY = 'iterum_wingedwolf_imported_facilities_v1';
+const EVENT_NAME = 'iterum-wingedwolf:imported-facilities-changed';
 
 const safeParse = (raw: string | null): Facility[] => {
   if (!raw) return [];
