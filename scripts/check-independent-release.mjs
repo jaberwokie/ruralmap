@@ -39,6 +39,15 @@ const serviceHook = read('src/hooks/useRuralServiceData.ts');
 failIf(serviceHook.includes('enrichedRuralServices'), 'Service hook still includes inherited operational enrichments');
 const providerHook = read('src/hooks/useFacilityData.ts');
 failIf(providerHook.includes('return enrichFacilities('), 'Provider hook still applies inherited operational enrichment');
+const cleanSchema = read('independent/schema.sql');
+for (const table of ['facilities', 'rural_services']) {
+  failIf(!cleanSchema.includes(`ALTER TABLE public.${table} ENABLE ROW LEVEL SECURITY;`), `Missing RLS for ${table}`);
+  failIf(!cleanSchema.includes(`ALTER TABLE public.${table} FORCE ROW LEVEL SECURITY;`), `Missing enforced RLS for ${table}`);
+}
+failIf((cleanSchema.match(/USING \\(publication_status = 'approved'\\)/g) ?? []).length !== 2,
+  'Independent schema must allow public reads only for approved records');
+const fallbackPolicy = read('src/lib/independentResourcePolicy.ts');
+failIf(!fallbackPolicy.includes('return isDevelopment && explicitOptIn'), 'Unreviewed static records are not limited to local opt-in');
 const manifest = JSON.parse(read('docs/winged-wolf-provenance-manifest.json'));
 failIf(!Array.isArray(manifest.sources) || manifest.sources.length === 0, 'Source rights manifest is missing');
 if (process.argv.includes('--release')) {
