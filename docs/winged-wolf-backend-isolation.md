@@ -32,3 +32,14 @@
 ## Release gate
 
 A release requires evidence of: new backend ID and owner; credentials isolation; migration review; RLS/auth test; provenance manifest; no proprietary data in current build or Git package; end-to-end browser QA; legal usage rights; Iterum/Winged Wolf roles and license terms. Passing unit tests alone is insufficient.
+
+
+## Independent minimal schema (added after the initial audit)
+
+- The only proposed clean schema is `independent/schema.sql`. Do **not** apply the legacy `supabase/migrations` directory to the new project.
+- It defines empty `public.facilities` and `public.rural_services` tables with required source URL, license, verification date and explicit `publication_status`.
+- Public/anonymous and authenticated reads can return rows only if `publication_status = 'approved'`. There are no browser insert/update/delete policies or grants. A separately designed server-side import and admin workflow is still required.
+- Unreviewed static fallback records remain in repository files solely for engineering continuity. They are **not displayed in production**. To inspect them locally in an isolated development environment, explicitly set `VITE_ENABLE_UNREVIEWED_DATA_PREVIEW=true`; the flag is ignored outside Vite development mode.
+- CI uses synthetic Supabase settings. A successful compiled build with synthetic settings is not a usable production site.
+- Run `node scripts/check-independent-release.mjs` for repository-level source checks. The `--release` mode is expected to **fail** until provenance and separate backend approval are completed.
+- The SQL has source-level tests, not a completed database integration or RLS penetration test. Do not assign an actual production key or migrate a live dataset before those tests are performed.
