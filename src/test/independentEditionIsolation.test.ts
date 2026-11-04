@@ -16,7 +16,7 @@ import { resolve } from 'node:path';
 
 describe('independent implementation — staffing and payer isolation', () => {
   it('retains previously listed clinic location pins without claims ranking attributes', () => {
-    const formerRankedClinics = defaultFacilities.filter(f => /^t\\d+$/.test(f.id));
+    const formerRankedClinics = defaultFacilities.filter(f => /^t[0-9]+$/.test(f.id));
     expect(formerRankedClinics).toHaveLength(15);
     expect(formerRankedClinics.every(f => Number.isFinite(f.lat) && Number.isFinite(f.lng))).toBe(true);
     expect(defaultFacilities.every(f => f.volume === undefined && f.tier !== 'tier1')).toBe(true);
