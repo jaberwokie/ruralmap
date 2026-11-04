@@ -28,6 +28,8 @@ jobs:
           cache: npm
       # Existing Vite 8 / lovable-tagger peer range is incompatible; don't mutate production dependencies here.
       - run: npm ci --legacy-peer-deps
+      - name: Independent source safety gate
+        run: node scripts/check-independent-release.mjs
       - name: TypeScript
         run: npx tsc --noEmit
       - name: Build
