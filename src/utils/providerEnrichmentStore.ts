@@ -10,9 +10,9 @@
  * Shape is chosen so a future Supabase swap is a one-file change.
  */
 
-const STORAGE_KEY = 'nbh_provider_enrichment_v1';
-const AUDIT_KEY = 'nbh_provider_enrichment_audit_v1';
-const EVENT_NAME = 'nbh:provider-enrichment-changed';
+const STORAGE_KEY = 'iterum_wingedwolf_provider_enrichment_v1';
+const AUDIT_KEY = 'iterum_wingedwolf_provider_enrichment_audit_v1';
+const EVENT_NAME = 'iterum-wingedwolf:provider-enrichment-changed';
 
 export interface ProviderEnrichmentRecord {
   /** Stable id of the matched Facility (Facility.id). */

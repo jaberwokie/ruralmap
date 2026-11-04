@@ -46,58 +46,21 @@ export interface FTECapacity {
   counties: string[];
 }
 
-/** Configurable capacity baselines */
+/**
+ * No organization-specific staffing assignments ship with the independent edition.
+ * A partner may configure verified staffing separately in its own isolated backend.
+ * Never infer coverage or staff availability from public provider locations.
+ */
 export const FTE_CAPACITY_CONFIG = {
-  carsonFieldPerDay: 5,
-  pahrumpFieldPerDay: 4,
-  remoteCoordinationPerDay: 12,
+  carsonFieldPerDay: 0,
+  pahrumpFieldPerDay: 0,
+  remoteCoordinationPerDay: 0,
 };
 
-export const fteCapacityData: FTECapacity[] = [
-  {
-    id: 'carson',
-    label: 'Carson City FTE',
-    capacity: FTE_CAPACITY_CONFIG.carsonFieldPerDay,
-    currentLoad: 3,
-    // Anchored at FISH (Friends In Service Helping), Carson City
-    hubLocation: { lat: 39.16204, lng: -119.75747 },
-    anchorSite: {
-      name: 'FISH',
-      fullName: 'Friends In Service Helping',
-      type: 'Community partner site',
-      address: '138 E Long St, Carson City, NV',
-    },
-    deployment: 'field',
-    counties: ['Carson City', 'Douglas', 'Lyon', 'Washoe', 'Churchill', 'Storey'],
-  },
-  {
-    id: 'pahrump',
-    label: 'Pahrump FTE',
-    capacity: FTE_CAPACITY_CONFIG.pahrumpFieldPerDay,
-    currentLoad: 4,
-    // Anchored at NYECC (Nye Communities Coalition), Pahrump
-    hubLocation: { lat: 36.21290, lng: -115.96974 },
-    anchorSite: {
-      name: 'NYECC',
-      fullName: 'Nye Communities Coalition',
-      type: 'Community coalition site',
-      address: '1845 E Calvada Blvd, Pahrump, NV',
-    },
-    deployment: 'field',
-    counties: ['Nye', 'Clark', 'Esmeralda'],
-  },
-  {
-    id: 'remote',
-    label: 'Remote FTE',
-    capacity: FTE_CAPACITY_CONFIG.remoteCoordinationPerDay,
-    currentLoad: 6,
-    hubLocation: null, // remote — no physical anchor by design
-    deployment: 'remote',
-    counties: ['Humboldt', 'Pershing', 'Lander', 'Eureka', 'Elko', 'White Pine', 'Mineral', 'Lincoln'],
-  },
-];
+export const fteCapacityData: FTECapacity[] = [];
 
 export function getLoadStatus(current: number, capacity: number): LoadStatus {
+  if (capacity <= 0) return 'over';
   const ratio = current / capacity;
   if (ratio >= 1) return 'over';
   if (ratio >= 0.7) return 'near';
@@ -117,11 +80,7 @@ export const LOAD_STATUS_COLORS: Record<LoadStatus, { bg: string; text: string; 
 };
 
 /** Role colors — base identity per FTE */
-export const FTE_ROLE_COLORS: Record<string, { primary: string; light: string; border: string }> = {
-  carson:  { primary: 'hsl(174, 50%, 40%)', light: 'bg-teal-50',   border: 'border-teal-200' },
-  pahrump: { primary: 'hsl(217, 70%, 50%)', light: 'bg-blue-50',   border: 'border-blue-200' },
-  remote:  { primary: 'hsl(270, 30%, 55%)', light: 'bg-purple-50', border: 'border-purple-200' },
-};
+export const FTE_ROLE_COLORS: Record<string, { primary: string; light: string; border: string }> = {};
 
 export const LOAD_STATUS_GUIDANCE: Record<LoadStatus, string> = {
   available: 'Can accept new engagements',

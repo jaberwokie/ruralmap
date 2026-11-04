@@ -9,8 +9,8 @@
  * Shape chosen so a future Supabase swap is a one-file change.
  */
 
-const STORAGE_KEY = 'nbh_provider_notes_v1';
-const EVENT_NAME = 'nbh:provider-notes-changed';
+const STORAGE_KEY = 'iterum_wingedwolf_provider_notes_v1';
+const EVENT_NAME = 'iterum-wingedwolf:provider-notes-changed';
 const MAX_NOTES = 200;
 
 export type ProviderNoteType =

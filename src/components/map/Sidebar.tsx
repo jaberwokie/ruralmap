@@ -873,7 +873,7 @@ const Sidebar = ({
               behavioralHealth: true,
               services: true,
               tribalNations: true,
-              tier1Highlight: true,
+              tier1Highlight: false,
             })),
           },
         ];
@@ -1022,25 +1022,7 @@ const Sidebar = ({
                               dependency: highlight has no visible effect when
                               Provider Locations is OFF.
                             */}
-                            {key === 'serviceLocations' && (() => {
-                              const tier1Count = allFacilities.filter(f => f.tier === 'tier1').length;
-                              const providersOff = !layers.serviceLocations;
-                              return (
-                                <div className="ml-5 mt-0.5">
-                                  {renderLayerToggleRow({
-                                    label: 'Tier 1 Providers',
-                                    icon: Circle,
-                                    iconClassName: 'text-tier1 translate-x-[5px]',
-                                    checked: layers.tier1Highlight,
-                                    onCheckedChange: () => onToggleLayer('tier1Highlight'),
-                                    subtitle: providersOff
-                                      ? `${tier1Count} Tier 1 · shown alone when Provider Access Infrastructure is off`
-                                      : `${tier1Count} Tier 1 · highlighted among provider access points`,
-                                    helpKey: 'tier1Providers',
-                                  })}
-                                </div>
-                              );
-                            })()}
+                            {/* Claims-derived Tier 1 designation intentionally excluded from independent edition. */}
                           </div>
                         );
                       })}
@@ -1052,7 +1034,7 @@ const Sidebar = ({
                   {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
                   {operationsOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
+                      {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).filter(() => false).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         return (
                           <div key={key}>
@@ -1367,8 +1349,8 @@ const Sidebar = ({
                 </div>
 
                 <div>
-                  {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
-                  {utilizationOpen && (
+                  {false && renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
+                  {false && utilizationOpen && (
                     <div className="mt-0.5 space-y-0.5">
                       {/* section intro removed for cleanup */}
                       {(() => {
@@ -1490,7 +1472,7 @@ const Sidebar = ({
                   )}
                 </div>
 
-                {!isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
+                {false && !isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
 
                 <div data-tutorial="section-transit">
                   {renderSectionHeader('TRANSPORTATION ACCESS', transitOpen, toggleTransit)}
@@ -1511,14 +1493,6 @@ const Sidebar = ({
                         checked: layers.localTransitZones,
                         onCheckedChange: () => onToggleLayer('localTransitZones'),
                         subtitle: 'Local operators · approximate service footprints',
-                      })}
-                      {!isPublicSafe && renderLayerToggleRow({
-                        label: 'SilverSummit Rural Catchments',
-                        icon: MapPin,
-                        iconClassName: 'text-muted-foreground',
-                        checked: layers.sshpCatchments,
-                        onCheckedChange: () => onToggleLayer('sshpCatchments'),
-                        subtitle: 'Payer-pathway overlay · informational only',
                       })}
 
                       {/* Transportation access providers — additive utility list (not a facility/provider/service) */}

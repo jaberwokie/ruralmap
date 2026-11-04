@@ -1,0 +1,38 @@
+name: Independent edition verification
+
+on:
+  push:
+    branches:
+      - 'work/winged-wolf-independent-*'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # CI-only synthetic endpoint. No production credentials or live project.
+      VITE_SUPABASE_PROJECT_ID: winged-wolf-ci-only
+      VITE_SUPABASE_URL: https://winged-wolf-ci-only.supabase.co/
+      VITE_SUPABASE_PUBLISHABLE_KEY: synthetic-ci-key-not-for-deployment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      # Existing Vite 8 / lovable-tagger peer range is incompatible; don't mutate production dependencies here.
+      - run: npm ci --legacy-peer-deps
+      - name: Independent source safety gate
+        run: node scripts/check-independent-release.mjs
+      - name: TypeScript
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: npm test -- --run

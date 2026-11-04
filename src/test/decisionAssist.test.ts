@@ -30,8 +30,7 @@ describe('deriveDecisionAssist', () => {
     expect(r.constraint).toBeTruthy();
   });
 
-  it('returns high confidence for a tier1 nearby clinic when FTE is available', () => {
-    // Carson City FTE: 3/5 load → 'available'
+  it('returns medium confidence for a nearby clinic without verified operational availability', () => {
     const carsonMember = { lat: 39.1638, lng: -119.7674 };
     const ctx: DecisionAssistContext = {
       member: carsonMember,
@@ -39,7 +38,7 @@ describe('deriveDecisionAssist', () => {
       services: [],
     };
     const r = deriveDecisionAssist(ctx, 'physical', 'primary_care');
-    expect(r.confidence).toBe('high');
+    expect(r.confidence).toBe('medium');
     expect(r.primaryTargets[0].tier).toBe('Local Access');
     expect(r.constraint).toBeNull();
   });
@@ -53,7 +52,7 @@ describe('deriveDecisionAssist', () => {
     };
     const r = deriveDecisionAssist(ctx, 'physical', 'primary_care');
     expect(r.confidence).toBe('low');
-    expect(r.constraint).toMatch(/non-viable/i);
+    expect(r.constraint).toMatch(/verify travel feasibility/i);
     expect(r.primaryTargets[0].tier).toBe('Non-Viable');
   });
 

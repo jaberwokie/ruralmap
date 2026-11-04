@@ -260,50 +260,27 @@ const buildAnalytics = (
   ),
 });
 
+/**
+ * The independent edition has no licensed payer-demand dataset.
+ * Fail closed with empty indices, and never request a historical asset path.
+ */
 let cache: Promise<UtilizationDataset> | null = null;
 
 export const loadUtilizationDataset = (): Promise<UtilizationDataset> => {
   if (cache) return cache;
-  cache = (async () => {
-    const fetchJson = async (file: string): Promise<unknown[]> => {
-      const res = await fetch(`${BASE}/${file}`);
-      if (!res.ok) throw new Error(`Failed to load ${file}: ${res.status}`);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    };
-    const fetchJsonOptional = async (file: string): Promise<unknown[]> => {
-      try {
-        return await fetchJson(file);
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn(`[Utilization] optional dataset ${file} failed to load — continuing.`, err);
-        return [];
-      }
-    };
-    const [zipDemandRaw, countyGapRaw, providerUtilRaw, tribalRaw, zipRollupRaw] = await Promise.all([
-      fetchJson('zip_member_demand.json'),
-      fetchJson('county_gap_summary.json'),
-      fetchJson('provider_util_flat.json'),
-      fetchJson('tribal_provider_summary.json'),
-      fetchJsonOptional('zip_provider_rollup.json'),
-    ]);
-    const zipDemand = parseZipDemand(zipDemandRaw);
-    const countyGap = parseCountyGap(countyGapRaw);
-    const providerUtil = parseProviderUtil(providerUtilRaw);
-    const tribal = parseTribal(tribalRaw);
-    const zipRollup = parseZipRollup(zipRollupRaw);
-    return {
-      zipDemand,
-      countyGap,
-      providerUtil,
-      tribal,
-      zipRollup,
-      indices: buildIndices(zipDemand, countyGap, providerUtil, tribal, zipRollup),
-      analytics: buildAnalytics(zipDemand, countyGap),
-    };
-  })().catch((err) => {
-    cache = null;
-    throw err;
+  const zipDemand: ZipDemandRecord[] = [];
+  const countyGap: CountyGapSummary[] = [];
+  const providerUtil: ProviderUtilizationRecord[] = [];
+  const tribal: TribalUtilizationSummary[] = [];
+  const zipRollup: ZipProviderRollupRecord[] = [];
+  cache = Promise.resolve({
+    zipDemand,
+    countyGap,
+    providerUtil,
+    tribal,
+    zipRollup,
+    indices: buildIndices(zipDemand, countyGap, providerUtil, tribal, zipRollup),
+    analytics: buildAnalytics(zipDemand, countyGap),
   });
   return cache;
 };

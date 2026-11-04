@@ -8,7 +8,7 @@
  * locality-level precision.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   readAzureMapsConfig,
   createAzureMapsMemberGeocoder,
@@ -468,10 +468,10 @@ describe('azure adapter isolation', () => {
   });
 
   it('exposes no Azure key or member provider config to the browser bundle', () => {
+    expect(existsSync('.env')).toBe(false);
     const clientFiles = [
       'src/hooks/useMemberAccess.ts',
       'src/components/map/MemberAccessSearch.tsx',
-      '.env',
     ];
     for (const file of clientFiles) {
       const src = read(file);

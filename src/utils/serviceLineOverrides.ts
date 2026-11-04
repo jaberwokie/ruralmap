@@ -6,7 +6,7 @@
 import { defaultFacilities } from '@/data/facilities';
 import type { PsychiatricServiceFields, InpatientServiceFields } from '@/types/service-lines';
 
-const STORAGE_KEY = 'nbh_serviceline_overrides';
+const STORAGE_KEY = 'iterum_wingedwolf_serviceline_overrides';
 
 export interface ServiceLineOverride {
   entity_id: string;

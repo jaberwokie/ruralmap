@@ -25,11 +25,8 @@ export const listFacilitiesFromDb = async (): Promise<Facility[]> => {
     lat: r.lat!,
     lng: r.lng!,
     notes: r.notes ?? undefined,
-    tier: (r.tier as Facility['tier']) ?? undefined,
     service: r.service ?? undefined,
-    volume: r.volume ?? undefined,
     accessType: (r.access_type as Facility['accessType']) ?? undefined,
-    operational: (r.operational as Facility['operational']) ?? undefined,
     psychiatric: (r.psychiatric as Facility['psychiatric']) ?? undefined,
     inpatient: (r.inpatient as Facility['inpatient']) ?? undefined,
   }));
@@ -60,7 +57,5 @@ export const listRuralServicesFromDb = async (): Promise<RuralService[]> => {
     bhEntityType: r.bh_entity_type ?? undefined,
     bhServiceType: r.bh_service_type ?? undefined,
     serviceTags: r.service_tags ?? undefined,
-    operational: (r.operational as RuralService['operational']) ?? undefined,
-    operationalServiceClass: (r.operational_service_class as RuralService['operationalServiceClass']) ?? undefined,
   }));
 };

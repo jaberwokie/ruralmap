@@ -1,7 +1,7 @@
 /**
  * Source-trust tiers for Behavioral Health ingestion.
  *
- * Trusted partners (e.g. SilverSummit) supply pre-curated rosters where
+ * Independently verified sources can supply pre-curated rosters where
  * formatting drift and category ambiguity are noise — but address gaps,
  * coordinate mismatches, and missing required fields still matter for
  * map accuracy. This utility lets us downgrade *non-critical* warnings
@@ -11,7 +11,7 @@
 import type { StagingBhRow, ValidationMessage } from '@/types/mappingPipeline';
 
 /** Configured trusted sources. Match against source_file_name OR verification_source. */
-export const TRUSTED_BH_SOURCES = ['silversummit'] as const;
+export const TRUSTED_BH_SOURCES: readonly string[] = [];
 
 export type BhSourceTrust = 'high' | 'standard';
 

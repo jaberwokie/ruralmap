@@ -11,8 +11,6 @@
  * field strain, geocoding, clustering, or coverage geometry.
  */
 
-import { countyHasFieldCoverage, isPointInActiveFieldCoverage } from '@/utils/fieldCoverageStatus';
-import { ACTIVE_COVERAGE_RADIUS_KM } from '@/data/operational-coverage';
 
 export type EngagementOwnershipType = 'primary' | 'remote' | 'none';
 
@@ -56,23 +54,13 @@ export function getEngagementOwnership(
       ownershipLabel: 'No Engagement Ownership',
     };
   }
-  // When a member point is supplied, it is the operational source of truth:
-  // in-person availability must match the rendered active coverage geometry.
-  // Otherwise fall back to the county rollup.
-  const isPrimary = memberPoint
-    ? isPointInActiveFieldCoverage(
-        memberPoint.lat,
-        memberPoint.lng,
-        memberPoint.radiusKm ?? ACTIVE_COVERAGE_RADIUS_KM,
-      )
-    : countyHasFieldCoverage(county);
+  // Staff assignments are not configured for the independent edition.
+  // A public provider or rural county never proves partner field or remote coverage.
   return {
     county,
-    inPersonAvailable: isPrimary,
-    // Mirrors EngagementOwnershipBlock: telehealth is always available when a
-    // county is resolved (Remote CHW is the fallback ownership state).
-    telehealthAvailable: true,
-    ownershipType: isPrimary ? 'primary' : 'remote',
-    ownershipLabel: isPrimary ? 'Primary CHW Coverage' : 'Remote CHW Coverage',
+    inPersonAvailable: false,
+    telehealthAvailable: false,
+    ownershipType: 'none',
+    ownershipLabel: 'No Engagement Ownership',
   };
 }

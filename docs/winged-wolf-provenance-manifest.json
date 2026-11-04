@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "distributionAuthorized": false,
+  "recordsReviewed": false,
+  "sources": [
+    {
+      "id": "static-facilities",
+      "path": "src/data/facilities.ts",
+      "category": "provider_locations",
+      "sourceUrl": null,
+      "rightsEvidence": null,
+      "reviewStatus": "pending",
+      "notes": "Clinic/hospital pins retained, but the underlying record-by-record provenance and license have not been verified."
+    },
+    {
+      "id": "static-rural-services",
+      "path": "src/data/rural-services.ts",
+      "category": "service_locations",
+      "sourceUrl": null,
+      "rightsEvidence": null,
+      "reviewStatus": "pending",
+      "notes": "Source provenance is not documented for the entire directory; eligibility for redistribution is not established."
+    },
+    {
+      "id": "cloud-verified-resources",
+      "path": "src/hooks/useLiveVerifiedRecords.ts",
+      "category": "verified_service_locations",
+      "sourceUrl": null,
+      "rightsEvidence": null,
+      "reviewStatus": "pending",
+      "notes": "Do not copy records from the existing production database; only re-import independently authorized source data."
+    },
+    {
+      "id": "geographical-boundaries",
+      "path": "src/data/nevada-counties.ts",
+      "category": "geographic",
+      "sourceUrl": null,
+      "rightsEvidence": null,
+      "reviewStatus": "pending",
+      "notes": "Code comments claim Census origin, but exact vintage and redistribution/attribution evidence require verification."
+    }
+  ]
+}

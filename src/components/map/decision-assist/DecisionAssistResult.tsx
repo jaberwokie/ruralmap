@@ -19,7 +19,6 @@ import type { Facility } from '@/data/facilities';
 import type { RuralService } from '@/data/rural-services';
 
 import type { DecisionAssistResult } from './decisionAssistTypes';
-import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
 interface Props {
   result: DecisionAssistResult;
@@ -88,7 +87,6 @@ const buildPlanText = (
 };
 
 const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySelect, onServiceSelect, onFocusLocation }: Props) => {
-  const { isPublicSafe } = usePublicSafeMode();
   const conf = CONFIDENCE_STYLE[result.confidence];
   const ConfIcon = conf.Icon;
 
@@ -185,20 +183,6 @@ const DecisionAssistResultView = ({ result, domainLabel, needLabel, onFacilitySe
         </div>
       )}
 
-      {/* Payer Pathway Context — informational, non-authoritative, non-scoring */}
-      {!isPublicSafe && result.payerPathwayContext && (
-        <div className="rounded-md border border-border/60 bg-muted/40 px-2 py-1.5">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground mb-0.5">
-            Payer Pathway Context
-          </p>
-          <p className="text-[11px] leading-snug text-foreground/90">
-            {result.payerPathwayContext}
-          </p>
-          <p className="mt-1 text-[10px] italic text-muted-foreground">
-            Informational only · Non-authoritative · Does not change operational scoring.
-          </p>
-        </div>
-      )}
 
       {/* Copy Plan */}
       <div className="pt-1">

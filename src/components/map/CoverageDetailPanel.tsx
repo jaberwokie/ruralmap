@@ -146,49 +146,15 @@ const GapContextAlerts = ({ county, serviceCount }: { county: string; serviceCou
 };
 
 /** Coverage Breakdown badge for county-based entities (FTE fixed-distance model) */
-const CoverageBreakdownBadge = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
-  const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
-
-  // Determine if county is remote-only based on FTE assignments
-  const serving = fteCapacityData.filter(f => f.counties.includes(county));
-  const hasField = serving.some(f => f.hubLocation !== null);
-  const isRemoteOnly = serving.length === 0 || !hasField;
-
-  // Override breakdown for remote-only counties
-  const activePercent = isRemoteOnly ? 0 : breakdown.activePercent;
-  const scheduledPercent = isRemoteOnly ? 0 : breakdown.scheduledPercent;
-
-  return (
-    <div className="rounded-md border border-teal-200 bg-teal-50/50 px-2 py-1.5 mb-2">
-      <div className="flex items-center gap-1.5 mb-1">
-        <Radio className="w-3 h-3 flex-shrink-0 text-teal-700" />
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-teal-800">Coverage Breakdown</span>
-      </div>
-      <div className="space-y-0.5">
-        <div className="flex justify-between text-[11px]">
-          <span className="text-teal-700">Active Field Coverage</span>
-          <span className="font-bold text-teal-800">{activePercent}%</span>
-        </div>
-        {!isRemoteOnly && (
-          <div className="flex justify-between text-[11px]">
-            <span className="text-teal-600">Scheduled Outreach</span>
-            <span className="font-bold text-teal-700">{scheduledPercent}%</span>
-          </div>
-        )}
-        <div className="flex justify-between text-[11px]">
-          <span className="text-muted-foreground">Telehealth / Remote</span>
-          <span className="font-medium text-muted-foreground">100%</span>
-        </div>
-      </div>
-      {breakdown.anchoringFtes.length > 0 && (
-        <div className="flex items-center gap-1 mt-1 pt-1 border-t border-teal-100">
-          <Users className="w-3 h-3 flex-shrink-0 text-teal-600 opacity-70" />
-          <span className="text-[10px] text-teal-700">{breakdown.anchoringFtes.join(', ')}</span>
-        </div>
-      )}
-    </div>
-  );
-};
+const CoverageBreakdownBadge = ({ county }: { county: string; coverageRadiusKm: number }) => (
+  <div className="rounded-md border border-border bg-secondary/30 px-2 py-1.5 mb-2">
+    <p className="text-[10px] font-semibold uppercase tracking-wide">Partner coverage not configured</p>
+    <p className="text-[11px] text-muted-foreground mt-1">
+      Field staffing, same-day response and remote coordination have not been verified for {county}.
+      Provider locations elsewhere in this tool are geographic records, not coverage commitments.
+    </p>
+  </div>
+);
 
 /** Capacity Status section for county panel */
 const CapacityStatusSection = ({ county, coverageRadiusKm }: { county: string; coverageRadiusKm: number }) => {
@@ -679,8 +645,8 @@ const CoverageAreaContent = ({ area }: { area: CoverageArea }) => {
 
 // ActionStep extracted to ./detail/SharedDetailParts.
 
-// ── NBH Routing ──
-const NBHRoutingSection = ({ county, coverageRadiusKm, countyServiceCount }: { county: string; coverageRadiusKm: number; countyServiceCount: Map<string, number> }) => {
+// ── Resource coordination (organization-neutral) ──
+const ResourceCoordinationSection = ({ county, coverageRadiusKm, countyServiceCount }: { county: string; coverageRadiusKm: number; countyServiceCount: Map<string, number> }) => {
   const breakdown = getCountyCoverageBreakdown(county, coverageRadiusKm);
   const serviceCount = countyServiceCount.get(county) ?? 0;
   const hasServices = serviceCount > 0;
@@ -690,15 +656,15 @@ const NBHRoutingSection = ({ county, coverageRadiusKm, countyServiceCount }: { c
   const serving = fteCapacityData.filter(f => f.counties.includes(county));
   const hasField = serving.some(f => f.hubLocation !== null);
   const hasRemote = serving.some(f => f.hubLocation === null);
-  const coverageType = serving.length === 0 ? 'remote' : hasField && hasRemote ? 'mixed' : hasField ? 'active' : 'remote';
-  const isRemoteOnly = coverageType === 'remote';
+  const coverageType = serving.length === 0 ? 'unconfigured' : hasField && hasRemote ? 'mixed' : hasField ? 'active' : 'unconfigured';
+  const isRemoteOnly = coverageType === 'unconfigured';
 
   return (
     <div className="mb-3">
       <div className="flex items-center gap-1.5 mb-2">
         <Route className="w-3.5 h-3.5 text-primary flex-shrink-0" />
         <span className="text-[11px] font-bold uppercase tracking-wide text-foreground">
-          {isRemoteOnly ? 'Remote Coordination' : 'NBH Routing'}
+          'Resource Coordination'
         </span>
       </div>
 
@@ -726,15 +692,15 @@ const NBHRoutingSection = ({ county, coverageRadiusKm, countyServiceCount }: { c
           <div className="rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1.5 space-y-0.5">
             <div className="flex items-center gap-1.5">
               <AlertTriangle className="w-3 h-3 flex-shrink-0 text-destructive" />
-              <span className="text-[10px] font-bold uppercase tracking-wide text-destructive">In-Person Engagement: Not Available</span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-destructive">Staffing Coverage: Unverified</span>
             </div>
             <div className="text-[10px] text-destructive/90 leading-snug">
-              This area is outside active field coverage. In-person engagement does not occur in this region.
+              No organization-specific field staffing has been configured for this edition. Verify arrangements directly.
             </div>
           </div>
           <div className="rounded-md border border-border bg-secondary/50 px-2 py-1.5 space-y-0.5">
             <div className="text-[11px] font-semibold text-foreground">Remote Coordination</div>
-            <div className="text-[10px] text-muted-foreground">Telephonic and virtual coordination only. No routine field-based outreach is currently available in this county.</div>
+            <div className="text-[10px] text-muted-foreground">Remote coordination availability has not been verified. Contact the service provider directly.</div>
           </div>
         </div>
       )}
@@ -1686,7 +1652,7 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
 
       {/* Routing & Action Path */}
       <DetailSection title="Routing & Action Path" isOpen={isOpen('routing')} onToggle={() => toggle('routing')}>
-        <NBHRoutingSection county={county} coverageRadiusKm={coverageRadiusKm} countyServiceCount={countyServiceCount} />
+        <ResourceCoordinationSection county={county} coverageRadiusKm={coverageRadiusKm} countyServiceCount={countyServiceCount} />
       </DetailSection>
 
       {/* Local Resource Network */}
@@ -1716,14 +1682,14 @@ const CountyContent = ({ county, coverageRadiusKm, liveServices, onServiceSelect
       </DetailSection>
 
       {/* Member Volume */}
-      {!isPublicSafe && (
+      {false && !isPublicSafe && (
         <DetailSection title="Member Volume" isOpen={isOpen('memberVolume')} onToggle={() => toggle('memberVolume')}>
           <MemberVolumeSection county={county} />
         </DetailSection>
       )}
 
-      {/* Utilization & Engagement */}
-      {hasUtilization && !isPublicSafe && (
+      {/* Payer utilization/engagement disabled in independent edition */}
+      {false && hasUtilization && !isPublicSafe && (
         <DetailSection title="Utilization & Engagement" isOpen={isOpen('utilization')} onToggle={() => toggle('utilization')}>
           <UtilizationEngagementSection county={county} allFacilities={allFacilities} />
           <UtilizationMetricsCard county={county} />
@@ -2191,12 +2157,10 @@ const FacilityContent = ({
   const isBillingProvider = facility.type === 'hospital' || facility.type === 'clinic';
   const { isOpen, toggle: rawToggle } = useAccordion('provider');
   const toggle = (s: string) => { logEvent('detail_section_expanded', { section: s, provider: facility.name, county: facility.county }); rawToggle(s); };
-  const isHighUtilClinic = facility.tier === 'tier1';
+  const isHighUtilClinic = false;
   const classification = getFacilityClassification(facility);
   const dataConfidence = getFacilityDataConfidence(facility);
-  const typeLabel = classification === 'clinic_provider' && isHighUtilClinic
-    ? 'Clinic / Community Provider (High Utilization)'
-    : getFacilityTypeLabel(facility);
+  const typeLabel = getFacilityTypeLabel(facility);
   const typeColor = facility.type === 'hospital' ? 'bg-red-500' : 'bg-blue-500';
   const coverageArea = getCountyArea(facility.county);
   const countyData = nevadaCounties.find(c => c.name === facility.county);
