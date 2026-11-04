@@ -210,30 +210,10 @@ VALUES
    NULL, 'degraded', true, 'src/data/enriched-rural-services.ts is used when the database returns no rows.',
    'Evidence: src/hooks/useRuralServiceData.ts (DB first, static fallback), src/data/enriched-rural-services.ts. Original directory provenance not documented in the repository.'),
 
-  ('sshp_payer_pathways','SilverSummit rural catchments payer-pathway overlay','payer',NULL,NULL,'static_code',
-   'internal', false, 'ingest_internal', 'Manual edit of src/data/sshpCatchments.ts', NULL, NULL, 'unknown', false, false,
-   NULL, 'cosmetic', false, NULL,
-   'Evidence: src/data/sshpCatchments.ts header — strictly additive/informational, explicitly non-scoring. Must stay non-scoring.'),
 
-  ('provider_utilization','Provider utilization / claims-derived rankings','utilization',NULL,NULL,'static_code',
-   'sensitive_internal', false, 'ingest_internal', 'Manual edit of src/data/provider-utilization.ts', NULL, NULL, 'unknown', false, false,
-   NULL, 'degraded', false, NULL,
-   'Evidence: src/data/provider-utilization.ts — named providers with member and visit counts. Claims-derived; suppressed in Public Safe Mode.'),
 
-  ('utilization_json_datasets','County / ZIP / tribal utilization datasets','utilization',NULL,NULL,'json',
-   'sensitive_internal', true, 'ingest_internal', 'Manual replacement of public/data/utilization/*.json', NULL, NULL, 'unknown', false, false,
-   NULL, 'degraded', true, 'Utilization panels are display-only and lazy-loaded; failure hides those panels.',
-   'Evidence: src/data/utilization.ts L26 BASE=''/data/utilization'' + L269 fetch, public/data/utilization/{county_gap_summary,zip_member_demand,zip_provider_rollup,tribal_provider_summary}.json.'),
 
-  ('fte_staffing_capacity','FTE / staffing capacity model','staffing',NULL,NULL,'static_code',
-   'internal', false, 'ingest_internal', 'Manual edit of src/data/fte-capacity.ts', NULL, NULL, 'unknown', false, false,
-   NULL, 'degraded', false, NULL,
-   'Evidence: src/data/fte-capacity.ts header states baseline capacity and current load are placeholder values to be replaced with real data.'),
 
-  ('member_volume','County member and engaged-member volume','utilization',NULL,NULL,'static_code',
-   'sensitive_internal', false, 'ingest_internal', 'Manual edit of src/data/member-volume.ts and engaged-member-volume.ts', NULL, NULL, 'unknown', false, false,
-   NULL, 'degraded', false, NULL,
-   'Evidence: src/data/member-volume.ts, src/data/engaged-member-volume.ts. No effective date or extract identifier in the repository. Suppressed in Public Safe Mode.'),
 
   ('census_county_boundaries','Nevada county and state boundary geometry','geographic','U.S. Census Bureau',NULL,'static_code',
    'public', true, 'cache_internal', 'Manual edit of src/data/nevada-counties.ts', NULL, NULL, 'unknown', true, false,
