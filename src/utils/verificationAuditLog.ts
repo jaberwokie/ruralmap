@@ -4,7 +4,7 @@
  */
 import type { PsychiatricServiceFields, InpatientServiceFields } from '@/types/service-lines';
 
-const STORAGE_KEY = 'nbh_verification_audit_log';
+const STORAGE_KEY = 'iterum_wingedwolf_verification_audit_log';
 
 export interface AuditChangedField {
   field: string;
