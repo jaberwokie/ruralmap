@@ -18,8 +18,6 @@ import { getCountyForLocation } from '@/utils/countyLookup';
 import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
-import { getSshpTagsForCounty, SSHP_CATEGORY_COLOR, isInternalSshpTag } from '@/data/sshpCatchments';
-import { usePublicSafeMode } from '@/hooks/usePublicSafeMode';
 
 const TIER_COLORS: Record<AccessTierKey, string> = {
   local: 'hsl(142, 60%, 40%)',
@@ -268,7 +266,6 @@ interface MemberAccessPanelProps {
 }
 
 const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
-  const { isPublicSafe } = usePublicSafeMode();
   // Engagement-ownership gating — uses the SAME source of truth as the
   // Engagement Ownership card (getEngagementOwnership). When a member point
   // is supplied, the operational source of truth is the point's position
@@ -555,38 +552,9 @@ const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect,
       {(() => {
         const memberCounty = getCountyForLocation(analysis.location.lat, analysis.location.lng);
         if (!memberCounty) return null;
-        // In Public Safe Mode, hide internal SSHP/payer/partnership tags
-        // but allow generic clinical-pathway labels through.
-        const sshpTags = getSshpTagsForCounty(memberCounty)
-          .filter(t => !isPublicSafe || !isInternalSshpTag(t));
         return (
           <div className="mt-3">
             <EngagementOwnershipBlock county={memberCounty} compact memberPoint={memberPointCtx} />
-            {sshpTags.length > 0 && (
-              <>
-                <div className="mt-1.5 flex flex-wrap gap-1" aria-label="SSHP catchment context (informational only)">
-                  {sshpTags.map((t) => (
-                    <span
-                      key={`${t.label}-${t.category}`}
-                      role="note"
-                      aria-disabled="true"
-                      tabIndex={-1}
-                      className="inline-flex items-center text-[9px] font-medium px-1.5 py-0.5 rounded-sm border-l-2 select-none pointer-events-none cursor-default shadow-none hover:shadow-none hover:bg-transparent focus:outline-none"
-                      style={{
-                        color: SSHP_CATEGORY_COLOR[t.category],
-                        borderLeftColor: SSHP_CATEGORY_COLOR[t.category],
-                        background: 'transparent',
-                      }}
-                    >
-                      {t.label}
-                    </span>
-                  ))}
-                </div>
-                <p className="mt-1 text-[9px] italic text-muted-foreground leading-snug">
-                  Informational only · Non-authoritative · Does not change operational scoring.
-                </p>
-              </>
-            )}
           </div>
         );
       })()}
