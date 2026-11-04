@@ -99,7 +99,7 @@ function useVerificationLastActivity(): string | null {
     };
     compute();
     const onStorage = (e: StorageEvent) => {
-      if (e.key === 'nbh_verification_audit_log') compute();
+      if (e.key === 'iterum_wingedwolf_verification_audit_log') compute();
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);
