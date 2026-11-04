@@ -307,7 +307,6 @@ const MobileEntry = ({
                   railCorridor: false,
                   localTransitZones: false,
                   tribalNations: false,
-                  sshpCatchments: false,
                   utilizationIntensity: false,
                   engagementGap: false,
                   fteCapacity: false,
