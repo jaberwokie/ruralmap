@@ -15,7 +15,6 @@ import {
   type LocalTransitSupportLevel,
 } from '@/data/local-transit-providers';
 import { getCountyForLocation } from '@/utils/countyLookup';
-import { getEngagementOwnership } from '@/utils/engagementOwnership';
 import EngagementOwnershipBlock from '@/components/map/EngagementOwnershipBlock';
 import TransportationCoordinationSection from '@/components/map/TransportationCoordinationSection';
 
@@ -266,60 +265,27 @@ interface MemberAccessPanelProps {
 }
 
 const MemberAccessPanel = ({ analysis, coverageRadiusKm = 120, onFacilitySelect, onServiceSelect }: MemberAccessPanelProps) => {
-  // Engagement-ownership gating — uses the SAME source of truth as the
-  // Engagement Ownership card (getEngagementOwnership). When a member point
-  // is supplied, the operational source of truth is the point's position
-  // inside the active FTE fixed-distance polygon (matches rendered teal
-  // coverage geometry), not the county rollup. This prevents claiming
-  // "Local in-person engagement viable" for a point outside active reach.
-  const memberCountyForRec = getCountyForLocation(analysis.location.lat, analysis.location.lng);
+  // Geographic resource presence does not establish staffing or appointment availability.
   const memberPointCtx = {
     lat: analysis.location.lat,
     lng: analysis.location.lng,
     radiusKm: coverageRadiusKm,
   };
-  const ownership = getEngagementOwnership(memberCountyForRec, memberPointCtx);
-  const inPersonAvailable = ownership.inPersonAvailable;
-  const remoteSupportAvailable = ownership.telehealthAvailable;
-
   const baseRecStyle = RECOMMENDATION_STYLE[analysis.recommendation] ?? {
     icon: AlertTriangle,
     color: 'hsl(0, 0%, 55%)',
-    support: 'No realistic in-person options were found within the defined access ranges.',
+    support: 'No nearby verified resource in the selected distance bands.',
   };
-
-  // If the upstream recommendation claims local in-person viability but in-person engagement
-  // is not actually owned for this area, replace it with ownership-gated guidance.
-  const claimsLocalInPerson = analysis.recommendation === 'Local in-person engagement viable';
-  let displayedRecommendation = analysis.recommendation;
-  let recStyle = baseRecStyle;
-  if (claimsLocalInPerson && !inPersonAvailable) {
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.warn('[EngagementOwnership] mismatch: upstream recommended local in-person but ownership reports in-person unavailable', {
-        memberLat: analysis.location.lat,
-        memberLng: analysis.location.lng,
-        county: ownership.county,
-        upstreamRecommendation: analysis.recommendation,
-        ownership,
-      });
-    }
-    if (remoteSupportAvailable) {
-      displayedRecommendation = 'Remote coordination with possible scheduled outreach';
-      recStyle = {
-        icon: AlertTriangle,
-        color: 'hsl(0, 65%, 55%)',
-        support: 'This member point is outside active field coverage. Use remote CHW/telehealth coordination, with scheduled outreach if feasible. Do not treat this as local in-person field coverage.',
-      };
-    } else {
-      displayedRecommendation = 'No engagement ownership available';
-      recStyle = {
-        icon: AlertTriangle,
-        color: 'hsl(0, 0%, 55%)',
-        support: 'No assigned in-person or remote engagement ownership is available for this area in the current data.',
-      };
-    }
-  }
+  const displayedRecommendation =
+    analysis.recommendation === 'Local in-person engagement viable'
+      ? 'Nearby resource identified — verify access'
+      : analysis.recommendation === 'Remote engagement recommended'
+        ? 'No nearby resource — review distant options'
+        : analysis.recommendation;
+  const recStyle = {
+    ...baseRecStyle,
+    support: 'Resource proximity is geographic only. Confirm services, eligibility, hours, transportation and availability before referral.',
+  };
   const RecIcon = recStyle.icon;
 
   const handleSelectResource = (r: TaggedResource) => {
