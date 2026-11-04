@@ -5,7 +5,6 @@
 import { describe, it, expect } from 'vitest';
 import { fteCapacityData } from '@/data/fte-capacity';
 import { getEngagementOwnership } from '@/utils/engagementOwnership';
-import { deriveDecisionAssist } from '@/components/map/decision-assist/deriveDecisionAssist';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
