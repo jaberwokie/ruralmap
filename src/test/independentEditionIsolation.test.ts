@@ -4,6 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { fteCapacityData } from '@/data/fte-capacity';
+import { defaultFacilities } from '@/data/facilities';
 import { memberVolumeData } from '@/data/member-volume';
 import { engagedMemberVolumeData } from '@/data/engaged-member-volume';
 import { providerUtilizationData } from '@/data/provider-utilization';
@@ -14,6 +15,12 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 describe('independent implementation — staffing and payer isolation', () => {
+  it('retains previously listed clinic location pins without claims ranking attributes', () => {
+    const formerRankedClinics = defaultFacilities.filter(f => /^t\\d+$/.test(f.id));
+    expect(formerRankedClinics).toHaveLength(15);
+    expect(formerRankedClinics.every(f => Number.isFinite(f.lat) && Number.isFinite(f.lng))).toBe(true);
+    expect(defaultFacilities.every(f => f.volume === undefined && f.tier !== 'tier1')).toBe(true);
+  });
   it('ships no payer member, engagement or provider claims rows', () => {
     expect(memberVolumeData).toEqual([]);
     expect(engagedMemberVolumeData).toEqual([]);
