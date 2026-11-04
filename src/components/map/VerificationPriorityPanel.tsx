@@ -67,7 +67,7 @@ const APPLY_ELIGIBLE: OutreachStatus[] = ['confirmed', 'not_offered', 'wrong_lis
 
 // ── localStorage persistence ──
 
-const STORAGE_KEY = 'nbh_verification_outreach';
+const STORAGE_KEY = 'iterum_wingedwolf_verification_outreach';
 
 function loadOutreachMap(): Map<string, OutreachRecord> {
   try {
