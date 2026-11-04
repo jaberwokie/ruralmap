@@ -1052,7 +1052,7 @@ const Sidebar = ({
                   {renderSectionHeader('OPERATIONS', operationsOpen, toggleOperations)}
                   {operationsOpen && (
                     <div className="mt-0.5 space-y-0.5">
-                      {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).map((key) => {
+                      {(['operationalCoverage', 'fteCapacity', 'engagementGap'] as const).filter(() => false).map((key) => {
                         const { label, colorClassName, icon } = getLayerConfig(key);
                         return (
                           <div key={key}>
@@ -1367,8 +1367,8 @@ const Sidebar = ({
                 </div>
 
                 <div>
-                  {renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
-                  {utilizationOpen && (
+                  {false && renderSectionHeader('UTILIZATION', utilizationOpen, toggleUtilization)}
+                  {false && utilizationOpen && (
                     <div className="mt-0.5 space-y-0.5">
                       {/* section intro removed for cleanup */}
                       {(() => {
@@ -1490,7 +1490,7 @@ const Sidebar = ({
                   )}
                 </div>
 
-                {!isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
+                {false && !isPublicSafe && <DemandUtilizationPanel layers={layers} onToggleLayer={onToggleLayer} />}
 
                 <div data-tutorial="section-transit">
                   {renderSectionHeader('TRANSPORTATION ACCESS', transitOpen, toggleTransit)}
